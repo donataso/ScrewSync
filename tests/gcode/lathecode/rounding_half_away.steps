@@ -1,0 +1,4 @@
+# exact .5 du rounds away from zero
+3 feed z=0 x=-1 f=1000000
+4 feed z=0 x=-3 f=1000000
+5 feed z=-20004 x=-3 f=1000000

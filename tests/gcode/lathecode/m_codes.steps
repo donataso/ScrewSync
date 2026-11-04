@@ -1,0 +1,5 @@
+3 feed z=50000 x=50000 f=1000000
+4 pause
+5 feed z=60000 x=60000 f=1000000
+6 optional-pause
+7 end

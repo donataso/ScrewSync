@@ -1,0 +1,235 @@
+const COLOR_SELECTED = 7037
+const COLOR_BUTTON = 8485
+
+// In settings no mode shows as selected; the firmware's pick is put back on close.
+function hideModeSelection():
+  if (menu0.bco == COLOR_SELECTED) {
+    menuSel.val = 0
+    menu0.bco = COLOR_BUTTON
+  }
+  if (menu1.bco == COLOR_SELECTED) {
+    menuSel.val = 1
+    menu1.bco = COLOR_BUTTON
+  }
+  if (menu2.bco == COLOR_SELECTED) {
+    menuSel.val = 2
+    menu2.bco = COLOR_BUTTON
+  }
+  if (menu3.bco == COLOR_SELECTED) {
+    menuSel.val = 3
+    menu3.bco = COLOR_BUTTON
+  }
+  if (menu4.bco == COLOR_SELECTED) {
+    menuSel.val = 4
+    menu4.bco = COLOR_BUTTON
+  }
+  if (menu5.bco == COLOR_SELECTED) {
+    menuSel.val = 5
+    menu5.bco = COLOR_BUTTON
+  }
+  if (menu6.bco == COLOR_SELECTED) {
+    menuSel.val = 6
+    menu6.bco = COLOR_BUTTON
+  }
+  if (menu7.bco == COLOR_SELECTED) {
+    menuSel.val = 7
+    menu7.bco = COLOR_BUTTON
+  }
+  if (menu8.bco == COLOR_SELECTED) {
+    menuSel.val = 8
+    menu8.bco = COLOR_BUTTON
+  }
+  if (menu9.bco == COLOR_SELECTED) {
+    menuSel.val = 9
+    menu9.bco = COLOR_BUTTON
+  }
+
+function restoreModeSelection():
+  switch (menuSel.val) {
+    case 0:
+      menu0.bco = COLOR_SELECTED
+      break
+    case 1:
+      menu1.bco = COLOR_SELECTED
+      break
+    case 2:
+      menu2.bco = COLOR_SELECTED
+      break
+    case 3:
+      menu3.bco = COLOR_SELECTED
+      break
+    case 4:
+      menu4.bco = COLOR_SELECTED
+      break
+    case 5:
+      menu5.bco = COLOR_SELECTED
+      break
+    case 6:
+      menu6.bco = COLOR_SELECTED
+      break
+    case 7:
+      menu7.bco = COLOR_SELECTED
+      break
+    case 8:
+      menu8.bco = COLOR_SELECTED
+      break
+    case 9:
+      menu9.bco = COLOR_SELECTED
+      break
+  }
+  menuSel.val = -1
+
+// Slots the firmware left without a mode stay hidden.
+function setMenu(shown: number):
+  menuOpen.val = shown
+  if (shown && settingsOpen.val) {
+    hideModeSelection()
+  } else if (!shown) {
+    restoreModeSelection()
+  }
+  if (shown) {
+    refreshPanel()
+  }
+  vis menuBg,shown
+  var v = shown && menuCmd0.txt != "" ? 1 : 0
+  vis menu0,v
+  v = shown && menuCmd1.txt != "" ? 1 : 0
+  vis menu1,v
+  v = shown && menuCmd2.txt != "" ? 1 : 0
+  vis menu2,v
+  v = shown && menuCmd3.txt != "" ? 1 : 0
+  vis menu3,v
+  v = shown && menuCmd4.txt != "" ? 1 : 0
+  vis menu4,v
+  v = shown && menuCmd5.txt != "" ? 1 : 0
+  vis menu5,v
+  v = shown && menuCmd6.txt != "" ? 1 : 0
+  vis menu6,v
+  v = shown && menuCmd7.txt != "" ? 1 : 0
+  vis menu7,v
+  v = shown && menuCmd8.txt != "" ? 1 : 0
+  vis menu8,v
+  v = shown && menuCmd9.txt != "" ? 1 : 0
+  vis menu9,v
+  vis menuSettings,shown
+  if (!shown) {
+    refreshPanel()
+  }
+
+function setSettings(shown: number):
+  settingsOpen.val = shown
+  if (shown) {
+    refreshPanel()
+  }
+  vis setBg,shown
+  vis unitsLabel,shown
+  vis unitMm,shown
+  vis unitIn,shown
+  vis pitchAsLabel,shown
+  vis pitchAsPitch,shown
+  vis pitchAsTpi,shown
+  vis netLabel,shown
+  vis wifiLabel,shown
+  vis wifiOn,shown
+  vis wifiOff,shown
+  vis apLabel,shown
+  vis apOn,shown
+  vis apOff,shown
+  vis stateLabel,shown
+  vis wifiState,shown
+  vis ipLabel,shown
+  vis wifiIp,shown
+  if (!shown) {
+    refreshPanel()
+  }
+
+function pickMode(name: text):
+  send("mode " + name)
+  setMenu(0)
+  if (settingsOpen.val) {
+    setSettings(0)
+    mode.txt = modeName.txt
+  }
+  ref 0
+
+function setTpiEntry(on: number):
+  tpiEntry.val = on
+  pitchAsPitch.bco = on ? COLOR_BUTTON : COLOR_SELECTED
+  pitchAsTpi.bco = on ? COLOR_SELECTED : COLOR_BUTTON
+
+// Clicked by the firmware after it updates modeName.
+on modeSync.down:
+  if (settingsOpen.val == 0) {
+    mode.txt = modeName.txt
+  }
+
+on mode.up:
+  if (menuOpen.val) {
+    setMenu(0)
+  } else {
+    setKeypad(0)
+    setMenu(1)
+  }
+  ref 0
+
+on menu0.up:
+  pickMode(menuCmd0.txt)
+
+on menu1.up:
+  pickMode(menuCmd1.txt)
+
+on menu2.up:
+  pickMode(menuCmd2.txt)
+
+on menu3.up:
+  pickMode(menuCmd3.txt)
+
+on menu4.up:
+  pickMode(menuCmd4.txt)
+
+on menu5.up:
+  pickMode(menuCmd5.txt)
+
+on menu6.up:
+  pickMode(menuCmd6.txt)
+
+on menu7.up:
+  pickMode(menuCmd7.txt)
+
+on menu8.up:
+  pickMode(menuCmd8.txt)
+
+on menu9.up:
+  pickMode(menuCmd9.txt)
+
+on menuSettings.up:
+  setMenu(0)
+  if (settingsOpen.val == 0) {
+    mode.txt = "SETTINGS"
+    setSettings(1)
+  }
+  ref 0
+
+on unitMm.up:
+  send("units mm")
+
+on unitIn.up:
+  send("units inch")
+
+on pitchAsPitch.up:
+  setTpiEntry(0)
+
+on pitchAsTpi.up:
+  setTpiEntry(1)
+
+on wifiOn.up:
+  send("wifi on")
+
+on wifiOff.up:
+  send("wifi off")
+
+on apOn.up:
+  send("wifi ap on")
+
+on apOff.up:
+  send("wifi ap off")

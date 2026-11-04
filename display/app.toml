@@ -1,0 +1,21 @@
+format = 1
+name = "ScrewSync"
+language = "nxlang"
+screen = "NX8048P050"
+rotation = 0
+encoding = "utf-8"
+memory_file_storage_size = 65536
+pages = [
+    "page0",
+    "threads",
+]
+pictures = []
+fonts = [
+    "NotoSans24",
+    "DejaVuSansMonoBook40",
+    "DejaVuSansBold32",
+    "DejaVuSansBold24",
+    "DejaVuSansMonoBook34",
+    "DejaVuSansMonoBook28",
+    "DejaVuSansBold26",
+]

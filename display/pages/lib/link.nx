@@ -1,0 +1,6 @@
+// Sends one command line to the firmware (docs/screen.md). The lead byte
+// must match DISPLAY_CMD_LEAD_BYTE in main/src/config.hpp.
+function send(line: text):
+  printh 7C
+  prints line,0
+  printh FF FF FF

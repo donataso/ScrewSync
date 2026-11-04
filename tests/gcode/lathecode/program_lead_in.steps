@@ -1,0 +1,6 @@
+# header comments and the paren comment on lines 1-3 produce nothing
+5 rapid z=0 x=125000
+7 feed z=0 x=100000 f=1000000
+9 feed z=-10000 x=100000 f=800000
+10 feed z=-20000 x=100000 f=800000
+11 feed z=-20000 x=95000 f=600000

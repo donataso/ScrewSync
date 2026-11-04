@@ -1,0 +1,3 @@
+mainmenu "ScrewSync"
+
+source "Kconfig.zephyr"

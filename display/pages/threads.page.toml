@@ -1,0 +1,1052 @@
+[page]
+name = "threads"
+type = "page"
+x = 0
+y = 0
+w = 800
+h = 480
+bco = 2178
+
+[[component]]
+name = "tab0"
+type = "button"
+x = 8
+y = 8
+w = 76
+h = 56
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tab1"
+type = "button"
+x = 88
+y = 8
+w = 76
+h = 56
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tab2"
+type = "button"
+x = 168
+y = 8
+w = 76
+h = 56
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tab3"
+type = "button"
+x = 248
+y = 8
+w = 76
+h = 56
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tab4"
+type = "button"
+x = 328
+y = 8
+w = 76
+h = 56
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tab5"
+type = "button"
+x = 408
+y = 8
+w = 76
+h = 56
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tab6"
+type = "button"
+x = 488
+y = 8
+w = 76
+h = 56
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tab7"
+type = "button"
+x = 568
+y = 8
+w = 76
+h = 56
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tab8"
+type = "button"
+x = 648
+y = 8
+w = 76
+h = 56
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "back"
+type = "button"
+x = 732
+y = 8
+w = 60
+h = 56
+style = 0
+bco = 45316
+bco2 = 52069
+pco = 59262
+pco2 = 59262
+txt = "✕"
+font = 2
+
+[[component]]
+name = "g0"
+type = "button"
+x = 8
+y = 72
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g1"
+type = "button"
+x = 165
+y = 72
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g2"
+type = "button"
+x = 322
+y = 72
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g3"
+type = "button"
+x = 479
+y = 72
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g4"
+type = "button"
+x = 636
+y = 72
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g5"
+type = "button"
+x = 8
+y = 130
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g6"
+type = "button"
+x = 165
+y = 130
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g7"
+type = "button"
+x = 322
+y = 130
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g8"
+type = "button"
+x = 479
+y = 130
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g9"
+type = "button"
+x = 636
+y = 130
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g10"
+type = "button"
+x = 8
+y = 188
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g11"
+type = "button"
+x = 165
+y = 188
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g12"
+type = "button"
+x = 322
+y = 188
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g13"
+type = "button"
+x = 479
+y = 188
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g14"
+type = "button"
+x = 636
+y = 188
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g15"
+type = "button"
+x = 8
+y = 246
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g16"
+type = "button"
+x = 165
+y = 246
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g17"
+type = "button"
+x = 322
+y = 246
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g18"
+type = "button"
+x = 479
+y = 246
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g19"
+type = "button"
+x = 636
+y = 246
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g20"
+type = "button"
+x = 8
+y = 304
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g21"
+type = "button"
+x = 165
+y = 304
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g22"
+type = "button"
+x = 322
+y = 304
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g23"
+type = "button"
+x = 479
+y = 304
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g24"
+type = "button"
+x = 636
+y = 304
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g25"
+type = "button"
+x = 8
+y = 362
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g26"
+type = "button"
+x = 165
+y = 362
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g27"
+type = "button"
+x = 322
+y = 362
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g28"
+type = "button"
+x = 479
+y = 362
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g29"
+type = "button"
+x = 636
+y = 362
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g30"
+type = "button"
+x = 8
+y = 420
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g31"
+type = "button"
+x = 165
+y = 420
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g32"
+type = "button"
+x = 322
+y = 420
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g33"
+type = "button"
+x = 479
+y = 420
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "g34"
+type = "button"
+x = 636
+y = 420
+w = 151
+h = 52
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "pickerSync"
+type = "hotspot"
+x = 798
+y = 478
+w = 2
+h = 2
+
+[[component]]
+name = "tabCmd0"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tabCmd1"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tabCmd2"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tabCmd3"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tabCmd4"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tabCmd5"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tabCmd6"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tabCmd7"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "tabCmd8"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "gCmd0"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd1"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd2"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd3"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd4"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd5"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd6"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd7"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd8"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd9"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd10"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd11"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd12"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd13"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd14"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd15"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd16"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd17"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd18"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd19"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd20"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd21"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd22"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd23"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd24"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd25"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd26"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd27"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd28"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd29"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd30"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd31"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd32"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd33"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "gCmd34"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 16
+
+[[component]]
+name = "pickerGroup"
+type = "variable"
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "blockShade"
+type = "text"
+x = 0
+y = 0
+w = 800
+h = 480
+bco = 32768
+pco = 65535
+txt = ""
+aph = 48
+
+[[component]]
+name = "block"
+type = "text"
+x = 0
+y = 168
+w = 800
+h = 144
+bco = 45316
+pco = 65535
+txt = "No connection to controller"
+font = 2
+xcen = 1
+ycen = 1
+txt_maxl = 32
+
+[[component]]
+name = "blockTouch"
+type = "hotspot"
+x = 0
+y = 0
+w = 800
+h = 480
+
+[[component]]
+name = "tmLink"
+type = "timer"
+tim = 250
+en = 1
+
+[[component]]
+name = "blockState"
+type = "variable"
+val = 1

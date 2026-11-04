@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* Tailwind v4's automatic content detection only covers this project's own
+   root -- every screen actually lives in ../client/ (imported via the
+   @/client alias, see vite.config.ts), which is outside that root and
+   otherwise gets silently skipped, producing a build with zero utility
+   rules for any class used only there. */
+@source "../../client";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Minimal token set - only what client/ui/primitives.tsx actually
+   references. Kept separate from the Next.js preview's shadcn theme so
+   this build carries no unused design-system CSS into the firmware image. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  color-scheme: light;
+  --background: #fefcfa;
+  --foreground: #221c15;
+  --card: #ffffff;
+  --card-foreground: #221c15;
+  --primary: #ea580c;
+  --primary-foreground: #fffaf5;
+  --secondary: #f5efe9;
+  --secondary-foreground: #3d3225;
+  --muted: #f5f0ea;
+  --muted-foreground: #7c6f63;
+  --destructive: #dc2626;
+  --border: #e8ddd2;
+  --input: #e8ddd2;
+  --ring: #ea580c;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #221c15;
+  --foreground: #f5efe6;
+  --card: #2c251c;
+  --card-foreground: #f5efe6;
+  --primary: #fb923c;
+  --primary-foreground: #221806;
+  --secondary: #3a3025;
+  --secondary-foreground: #f5efe6;
+  --muted: #352c21;
+  --muted-foreground: #b8a891;
+  --destructive: #ef4444;
+  --border: #3d3325;
+  --input: #453a2a;
+  --ring: #fb923c;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}

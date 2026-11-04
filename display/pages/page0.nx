@@ -1,0 +1,89 @@
+include "lib/block.nx"
+include "lib/link.nx"
+include "page0/axes.nx"
+include "page0/keypad.nx"
+include "page0/menu.nx"
+include "page0/panel.nx"
+
+// sendme tells the firmware the page changed, so it pushes this page.
+on page0.load:
+  sendme
+  // Per-component vis is slow on the panel: hide all, then show the base.
+  // Components are global, so the panel lays out from the kept cell kinds.
+  vis 255,0
+  vis hdrBg,1
+  vis rpm,1
+  vis angle,1
+  vis mode,1
+  vis leftBg,1
+  vis zEnable,1
+  vis zPosBg,1
+  vis zPos,1
+  vis zZero,1
+  vis xEnable,1
+  vis xPosBg,1
+  vis xPos,1
+  vis xZero,1
+  vis step0,1
+  vis step1,1
+  vis step2,1
+  vis stepCustom,1
+  vis zMinus,1
+  vis zPlus,1
+  vis xMinus,1
+  vis xPlus,1
+  vis modeSync,1
+  vis toastShow,1
+  vis layoutSync,1
+  vis toastHide,1
+  menuOpen.val = 0
+  settingsOpen.val = 0
+  kpRightOpen.val = 0
+  kpOpen.val = 0
+  layoutPanel(1)
+  setTpiEntry(tpiEntry.val)
+  linkAge = 0
+  blockState.val = BLOCK_NONE
+  updateBlock()
+
+on page0.up:
+  tmJog.en = 0
+
+function setToast(shown: number):
+  vis toastShade,shown
+  vis toast,shown
+  vis toastHint,shown
+  vis toastDismiss,shown
+
+function hideToast():
+  tmToast.en = 0
+  setToast(0)
+  ref 0
+
+// Clicked by the firmware after it sets toast.txt. While shown, a
+// full-screen hotspot takes the next tap so it only dismisses. While
+// tripped (estop.val) it stays up and the tap acknowledges.
+on toastShow.down:
+  tmJog.en = 0
+  toastHint.txt = estop.val ? "tap to acknowledge" : "tap to dismiss"
+  setToast(1)
+  tmToast.en = 0
+  if (!estop.val) {
+    tmToast.en = 1
+  }
+
+on toastDismiss.up:
+  if (estop.val) {
+    send("estop ack")
+  } else {
+    hideToast()
+  }
+
+on toastHide.down:
+  hideToast()
+
+on tmToast.timer:
+  hideToast()
+
+on angle.up:
+  send("zero spindle")

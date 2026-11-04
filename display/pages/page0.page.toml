@@ -1,0 +1,2753 @@
+[page]
+name = "page0"
+type = "page"
+x = 0
+y = 0
+w = 800
+h = 480
+bco = 2178
+
+[[component]]
+name = "hdrBg"
+type = "text"
+vscope = 1
+x = 0
+y = 0
+w = 800
+h = 72
+bco = 6570
+pco = 59262
+txt = ""
+
+[[component]]
+name = "rpm"
+type = "text"
+vscope = 1
+x = 8
+y = 8
+w = 208
+h = 56
+bco = 6570
+pco = 59262
+txt = "0 RPM"
+font = 1
+xcen = 2
+txt_maxl = 12
+
+[[component]]
+name = "angle"
+type = "text"
+vscope = 1
+x = 224
+y = 8
+w = 168
+h = 56
+bco = 6570
+pco = 59262
+txt = "0.0°"
+font = 1
+xcen = 2
+txt_maxl = 12
+
+[[component]]
+name = "mode"
+type = "button"
+vscope = 1
+x = 552
+y = 12
+w = 240
+h = 48
+style = 0
+bco = 10829
+bco2 = 15089
+pco = 59262
+pco2 = 59262
+txt = "GEAR"
+txt_maxl = 20
+font = 6
+
+[[component]]
+name = "leftBg"
+type = "text"
+vscope = 1
+x = 0
+y = 72
+w = 312
+h = 408
+bco = 4324
+pco = 59262
+txt = ""
+
+[[component]]
+name = "zEnable"
+type = "button"
+vscope = 1
+x = 8
+y = 80
+w = 64
+h = 64
+style = 0
+bco = 2927
+bco2 = 5203
+pco = 59262
+pco2 = 59262
+txt = "Z"
+font = 1
+
+[[component]]
+name = "zPosBg"
+type = "text"
+vscope = 1
+x = 80
+y = 80
+w = 172
+h = 64
+style = 1
+borderc = 8485
+bco = 8485
+pco = 59262
+txt = ""
+
+[[component]]
+name = "zPos"
+type = "text"
+vscope = 1
+x = 82
+y = 82
+w = 162
+h = 60
+bco = 8485
+pco = 59262
+txt = "0.000"
+font = 4
+xcen = 2
+txt_maxl = 12
+
+[[component]]
+name = "zZero"
+type = "button"
+vscope = 1
+x = 260
+y = 80
+w = 44
+h = 64
+style = 0
+bco = 45763
+bco2 = 52069
+pco = 59262
+pco2 = 59262
+txt = "→0"
+font = 3
+
+[[component]]
+name = "xEnable"
+type = "button"
+vscope = 1
+x = 8
+y = 152
+w = 64
+h = 64
+style = 0
+bco = 27124
+bco2 = 33432
+pco = 59262
+pco2 = 59262
+txt = "X"
+font = 1
+
+[[component]]
+name = "xPosBg"
+type = "text"
+vscope = 1
+x = 80
+y = 152
+w = 172
+h = 64
+style = 1
+borderc = 8485
+bco = 8485
+pco = 59262
+txt = ""
+
+[[component]]
+name = "xPos"
+type = "text"
+vscope = 1
+x = 82
+y = 154
+w = 162
+h = 60
+bco = 8485
+pco = 59262
+txt = "0.000"
+font = 4
+xcen = 2
+txt_maxl = 12
+
+[[component]]
+name = "xZero"
+type = "button"
+vscope = 1
+x = 260
+y = 152
+w = 44
+h = 64
+style = 0
+bco = 45763
+bco2 = 52069
+pco = 59262
+pco2 = 59262
+txt = "→0"
+font = 3
+
+[[component]]
+name = "step0"
+type = "button"
+vscope = 1
+x = 8
+y = 224
+w = 68
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "0.01"
+txt_maxl = 12
+
+[[component]]
+name = "step1"
+type = "button"
+vscope = 1
+x = 84
+y = 224
+w = 68
+h = 48
+style = 0
+bco = 7037
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "0.1"
+txt_maxl = 12
+
+[[component]]
+name = "step2"
+type = "button"
+vscope = 1
+x = 160
+y = 224
+w = 68
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "1"
+txt_maxl = 12
+
+[[component]]
+name = "stepCustom"
+type = "button"
+vscope = 1
+x = 236
+y = 224
+w = 68
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "..."
+txt_maxl = 12
+
+[[component]]
+name = "zMinus"
+type = "button"
+vscope = 1
+x = 8
+y = 280
+w = 144
+h = 92
+style = 0
+bco = 2927
+bco2 = 5203
+pco = 59262
+pco2 = 59262
+txt = "← Z"
+font = 2
+
+[[component]]
+name = "zPlus"
+type = "button"
+vscope = 1
+x = 160
+y = 280
+w = 144
+h = 92
+style = 0
+bco = 2927
+bco2 = 5203
+pco = 59262
+pco2 = 59262
+txt = "Z →"
+font = 2
+
+[[component]]
+name = "xPlus"
+type = "button"
+vscope = 1
+x = 8
+y = 380
+w = 144
+h = 92
+style = 0
+bco = 27124
+bco2 = 33432
+pco = 59262
+pco2 = 59262
+txt = "↓ X"
+font = 2
+
+[[component]]
+name = "xMinus"
+type = "button"
+vscope = 1
+x = 160
+y = 380
+w = 144
+h = 92
+style = 0
+bco = 27124
+bco2 = 33432
+pco = 59262
+pco2 = 59262
+txt = "X ↑"
+font = 2
+
+[[component]]
+name = "c0"
+type = "button"
+vscope = 1
+x = 320
+y = 80
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c0a"
+type = "button"
+vscope = 1
+x = 320
+y = 80
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c0b"
+type = "button"
+vscope = 1
+x = 440
+y = 80
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c1"
+type = "button"
+vscope = 1
+x = 560
+y = 80
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c1a"
+type = "button"
+vscope = 1
+x = 560
+y = 80
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c1b"
+type = "button"
+vscope = 1
+x = 680
+y = 80
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c2"
+type = "button"
+vscope = 1
+x = 320
+y = 136
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c2a"
+type = "button"
+vscope = 1
+x = 320
+y = 136
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c2b"
+type = "button"
+vscope = 1
+x = 440
+y = 136
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c3"
+type = "button"
+vscope = 1
+x = 560
+y = 136
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c3a"
+type = "button"
+vscope = 1
+x = 560
+y = 136
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c3b"
+type = "button"
+vscope = 1
+x = 680
+y = 136
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c4"
+type = "button"
+vscope = 1
+x = 320
+y = 192
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c4a"
+type = "button"
+vscope = 1
+x = 320
+y = 192
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c4b"
+type = "button"
+vscope = 1
+x = 440
+y = 192
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c5"
+type = "button"
+vscope = 1
+x = 560
+y = 192
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c5a"
+type = "button"
+vscope = 1
+x = 560
+y = 192
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c5b"
+type = "button"
+vscope = 1
+x = 680
+y = 192
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c6"
+type = "button"
+vscope = 1
+x = 320
+y = 248
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c6a"
+type = "button"
+vscope = 1
+x = 320
+y = 248
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c6b"
+type = "button"
+vscope = 1
+x = 440
+y = 248
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c7"
+type = "button"
+vscope = 1
+x = 560
+y = 248
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c7a"
+type = "button"
+vscope = 1
+x = 560
+y = 248
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c7b"
+type = "button"
+vscope = 1
+x = 680
+y = 248
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c8"
+type = "button"
+vscope = 1
+x = 320
+y = 304
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c8a"
+type = "button"
+vscope = 1
+x = 320
+y = 304
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c8b"
+type = "button"
+vscope = 1
+x = 440
+y = 304
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c9"
+type = "button"
+vscope = 1
+x = 560
+y = 304
+w = 232
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c9a"
+type = "button"
+vscope = 1
+x = 560
+y = 304
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c9b"
+type = "button"
+vscope = 1
+x = 680
+y = 304
+w = 112
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "c10"
+type = "button"
+vscope = 1
+x = 320
+y = 248
+w = 152
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c11"
+type = "button"
+vscope = 1
+x = 480
+y = 248
+w = 152
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c12"
+type = "button"
+vscope = 1
+x = 640
+y = 248
+w = 152
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c13"
+type = "button"
+vscope = 1
+x = 320
+y = 304
+w = 152
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c14"
+type = "button"
+vscope = 1
+x = 480
+y = 304
+w = 152
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "c15"
+type = "button"
+vscope = 1
+x = 640
+y = 304
+w = 152
+h = 48
+style = 1
+borderc = 8485
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 32
+
+[[component]]
+name = "picker"
+type = "button"
+vscope = 1
+x = 640
+y = 304
+w = 152
+h = 48
+style = 0
+bco = 10829
+bco2 = 15089
+pco = 59262
+pco2 = 59262
+txt = "Library"
+txt_maxl = 20
+
+[[component]]
+name = "ovrMinus"
+type = "button"
+vscope = 1
+x = 320
+y = 304
+w = 152
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 8
+
+[[component]]
+name = "ovr"
+type = "button"
+vscope = 1
+x = 480
+y = 304
+w = 152
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "100%"
+txt_maxl = 8
+
+[[component]]
+name = "ovrPlus"
+type = "button"
+vscope = 1
+x = 640
+y = 304
+w = 152
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 8
+
+[[component]]
+name = "startStop"
+type = "button"
+vscope = 1
+x = 320
+y = 380
+w = 472
+h = 92
+style = 0
+bco = 9254
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "START"
+font = 2
+
+[[component]]
+name = "stopPass"
+type = "button"
+vscope = 1
+x = 320
+y = 380
+w = 316
+h = 92
+style = 0
+bco = 45316
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "STOP"
+font = 2
+txt_maxl = 16
+
+[[component]]
+name = "skip"
+type = "button"
+vscope = 1
+x = 644
+y = 380
+w = 148
+h = 92
+style = 0
+bco = 45763
+bco2 = 52069
+pco = 59262
+pco2 = 59262
+txt = "SKIP"
+font = 2
+
+[[component]]
+name = "gcodePic"
+type = "external-picture"
+vscope = 1
+x = 320
+y = 80
+w = 464
+h = 288
+
+[[component]]
+name = "gcodeTool"
+type = "text"
+vscope = 1
+x = 320
+y = 80
+w = 8
+h = 8
+bco = 63488
+txt = ""
+
+[[component]]
+name = "gcodeEmpty"
+type = "text"
+vscope = 1
+x = 320
+y = 80
+w = 464
+h = 288
+bco = 2178
+pco = 59262
+txt = ""
+xcen = 1
+ycen = 1
+txt_maxl = 48
+
+[[component]]
+name = "gcodeName"
+type = "text"
+vscope = 1
+x = 480
+y = 342
+w = 304
+h = 26
+bco = 2178
+pco = 59262
+txt = ""
+xcen = 2
+ycen = 1
+txt_maxl = 40
+
+[[component]]
+name = "gcodeProgress"
+type = "text"
+vscope = 1
+x = 320
+y = 342
+w = 160
+h = 26
+bco = 2178
+pco = 59262
+txt = ""
+xcen = 0
+ycen = 1
+txt_maxl = 24
+
+[[component]]
+name = "probeOn"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "probePhase"
+type = "text"
+vscope = 1
+x = 320
+y = 304
+w = 472
+h = 48
+bco = 2178
+pco = 59262
+txt = ""
+xcen = 1
+ycen = 1
+txt_maxl = 24
+
+[[component]]
+name = "probeUp"
+type = "button"
+vscope = 1
+x = 480
+y = 136
+w = 152
+h = 48
+style = 0
+bco = 27124
+bco2 = 33432
+pco = 59262
+pco2 = 59262
+txt = "X ↑"
+font = 2
+
+[[component]]
+name = "probeLeft"
+type = "button"
+vscope = 1
+x = 320
+y = 192
+w = 152
+h = 48
+style = 0
+bco = 2927
+bco2 = 5203
+pco = 59262
+pco2 = 59262
+txt = "← Z"
+font = 2
+
+[[component]]
+name = "probeLight"
+type = "button"
+vscope = 1
+x = 480
+y = 192
+w = 152
+h = 48
+style = 1
+borderc = 8485
+bco = 14824
+pco = 59262
+txt = ""
+
+[[component]]
+name = "probeRight"
+type = "button"
+vscope = 1
+x = 640
+y = 192
+w = 152
+h = 48
+style = 0
+bco = 2927
+bco2 = 5203
+pco = 59262
+pco2 = 59262
+txt = "Z →"
+font = 2
+
+[[component]]
+name = "probeDown"
+type = "button"
+vscope = 1
+x = 480
+y = 248
+w = 152
+h = 48
+style = 0
+bco = 27124
+bco2 = 33432
+pco = 59262
+pco2 = 59262
+txt = "↓ X"
+font = 2
+
+[[component]]
+name = "gcodeResume"
+type = "button"
+vscope = 1
+x = 320
+y = 380
+w = 316
+h = 92
+style = 0
+bco = 9254
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "START"
+font = 2
+
+[[component]]
+name = "gcodeStop"
+type = "button"
+vscope = 1
+x = 644
+y = 380
+w = 148
+h = 92
+style = 0
+bco = 45316
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "STOP"
+font = 2
+
+[[component]]
+name = "setBg"
+type = "text"
+vscope = 1
+x = 312
+y = 72
+w = 488
+h = 408
+bco = 2178
+pco = 59262
+txt = ""
+
+[[component]]
+name = "unitsLabel"
+type = "text"
+vscope = 1
+x = 320
+y = 80
+w = 152
+h = 48
+bco = 2178
+pco = 36019
+txt = "Units"
+xcen = 0
+
+[[component]]
+name = "unitMm"
+type = "button"
+vscope = 1
+x = 480
+y = 80
+w = 152
+h = 48
+style = 0
+bco = 7037
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "mm"
+
+[[component]]
+name = "unitIn"
+type = "button"
+vscope = 1
+x = 640
+y = 80
+w = 152
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "inch"
+
+[[component]]
+name = "pitchAsLabel"
+type = "text"
+vscope = 1
+x = 320
+y = 136
+w = 152
+h = 48
+bco = 2178
+pco = 36019
+txt = "Pitch as"
+xcen = 0
+
+[[component]]
+name = "pitchAsPitch"
+type = "button"
+vscope = 1
+x = 480
+y = 136
+w = 152
+h = 48
+style = 0
+bco = 7037
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "Pitch"
+
+[[component]]
+name = "pitchAsTpi"
+type = "button"
+vscope = 1
+x = 640
+y = 136
+w = 152
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "TPI"
+
+[[component]]
+name = "netLabel"
+type = "text"
+vscope = 1
+x = 320
+y = 200
+w = 472
+h = 40
+bco = 2178
+pco = 59262
+txt = "Network"
+xcen = 0
+
+[[component]]
+name = "wifiLabel"
+type = "text"
+vscope = 1
+x = 320
+y = 248
+w = 152
+h = 48
+bco = 2178
+pco = 36019
+txt = "Wi-Fi"
+xcen = 0
+
+[[component]]
+name = "wifiOn"
+type = "button"
+vscope = 1
+x = 480
+y = 248
+w = 152
+h = 48
+style = 0
+bco = 7037
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "On"
+
+[[component]]
+name = "wifiOff"
+type = "button"
+vscope = 1
+x = 640
+y = 248
+w = 152
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "Off"
+
+[[component]]
+name = "apLabel"
+type = "text"
+vscope = 1
+x = 320
+y = 304
+w = 152
+h = 48
+bco = 2178
+pco = 36019
+txt = "Force AP"
+xcen = 0
+
+[[component]]
+name = "apOn"
+type = "button"
+vscope = 1
+x = 480
+y = 304
+w = 152
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "On"
+
+[[component]]
+name = "apOff"
+type = "button"
+vscope = 1
+x = 640
+y = 304
+w = 152
+h = 48
+style = 0
+bco = 7037
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "Off"
+
+[[component]]
+name = "stateLabel"
+type = "text"
+vscope = 1
+x = 320
+y = 360
+w = 152
+h = 48
+bco = 2178
+pco = 36019
+txt = "Status"
+xcen = 0
+
+[[component]]
+name = "wifiState"
+type = "text"
+vscope = 1
+x = 480
+y = 360
+w = 312
+h = 48
+bco = 2178
+pco = 59262
+txt = "connected"
+xcen = 0
+txt_maxl = 40
+
+[[component]]
+name = "ipLabel"
+type = "text"
+vscope = 1
+x = 320
+y = 416
+w = 152
+h = 48
+bco = 2178
+pco = 36019
+txt = "IP"
+xcen = 0
+
+[[component]]
+name = "wifiIp"
+type = "text"
+vscope = 1
+x = 480
+y = 416
+w = 312
+h = 48
+bco = 2178
+pco = 59262
+txt = "192.168.1.50"
+xcen = 0
+txt_maxl = 40
+
+[[component]]
+name = "menuBg"
+type = "text"
+vscope = 1
+x = 312
+y = 72
+w = 488
+h = 408
+bco = 2178
+pco = 59262
+txt = ""
+
+[[component]]
+name = "menu0"
+type = "button"
+vscope = 1
+x = 320
+y = 80
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menu1"
+type = "button"
+vscope = 1
+x = 560
+y = 80
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menu2"
+type = "button"
+vscope = 1
+x = 320
+y = 136
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menu3"
+type = "button"
+vscope = 1
+x = 560
+y = 136
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menu4"
+type = "button"
+vscope = 1
+x = 320
+y = 192
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menu5"
+type = "button"
+vscope = 1
+x = 560
+y = 192
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menu6"
+type = "button"
+vscope = 1
+x = 320
+y = 248
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menu7"
+type = "button"
+vscope = 1
+x = 560
+y = 248
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menu8"
+type = "button"
+vscope = 1
+x = 320
+y = 304
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menu9"
+type = "button"
+vscope = 1
+x = 560
+y = 304
+w = 232
+h = 48
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuSettings"
+type = "button"
+vscope = 1
+x = 320
+y = 360
+w = 472
+h = 48
+style = 0
+bco = 10829
+bco2 = 15089
+pco = 59262
+pco2 = 59262
+txt = "Settings"
+
+[[component]]
+name = "kpDismiss"
+type = "hotspot"
+x = 0
+y = 0
+w = 800
+h = 480
+
+[[component]]
+name = "kpBgLeft"
+type = "text"
+vscope = 1
+x = 0
+y = 72
+w = 312
+h = 408
+bco = 4292
+pco = 59262
+txt = ""
+
+[[component]]
+name = "kpBgRight"
+type = "text"
+vscope = 1
+x = 312
+y = 72
+w = 488
+h = 408
+bco = 4292
+pco = 59262
+txt = ""
+
+[[component]]
+name = "kpValue"
+type = "text"
+vscope = 1
+x = 8
+y = 80
+w = 214
+h = 56
+bco = 2178
+pco = 59262
+txt = ""
+font = 1
+xcen = 2
+txt_maxl = 8
+
+[[component]]
+name = "kpEsc"
+type = "button"
+vscope = 1
+x = 230
+y = 80
+w = 66
+h = 56
+style = 0
+bco = 41285
+bco2 = 49607
+pco = 59262
+pco2 = 59262
+txt = "✕"
+font = 2
+
+[[component]]
+name = "kp7"
+type = "button"
+vscope = 1
+x = 8
+y = 144
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "7"
+font = 0
+
+[[component]]
+name = "kp8"
+type = "button"
+vscope = 1
+x = 82
+y = 144
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "8"
+font = 0
+
+[[component]]
+name = "kp9"
+type = "button"
+vscope = 1
+x = 156
+y = 144
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "9"
+font = 0
+
+[[component]]
+name = "kpDel"
+type = "button"
+vscope = 1
+x = 230
+y = 144
+w = 66
+h = 76
+style = 0
+bco = 39744
+bco2 = 48160
+pco = 59262
+pco2 = 59262
+txt = "⌫"
+font = 3
+
+[[component]]
+name = "kp4"
+type = "button"
+vscope = 1
+x = 8
+y = 228
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "4"
+font = 0
+
+[[component]]
+name = "kp5"
+type = "button"
+vscope = 1
+x = 82
+y = 228
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "5"
+font = 0
+
+[[component]]
+name = "kp6"
+type = "button"
+vscope = 1
+x = 156
+y = 228
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "6"
+font = 0
+
+[[component]]
+name = "kpClr"
+type = "button"
+vscope = 1
+x = 230
+y = 228
+w = 66
+h = 76
+style = 0
+bco = 45763
+bco2 = 52069
+pco = 59262
+pco2 = 59262
+txt = "CLR"
+font = 0
+
+[[component]]
+name = "kp1"
+type = "button"
+vscope = 1
+x = 8
+y = 312
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "1"
+font = 0
+
+[[component]]
+name = "kp2"
+type = "button"
+vscope = 1
+x = 82
+y = 312
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "2"
+font = 0
+
+[[component]]
+name = "kp3"
+type = "button"
+vscope = 1
+x = 156
+y = 312
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "3"
+font = 0
+
+[[component]]
+name = "kpOk"
+type = "button"
+vscope = 1
+x = 230
+y = 312
+w = 66
+h = 160
+style = 0
+bco = 9254
+bco2 = 11528
+pco = 59262
+pco2 = 59262
+txt = "OK"
+font = 0
+
+[[component]]
+name = "kpSign"
+type = "button"
+vscope = 1
+x = 8
+y = 396
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "±"
+
+[[component]]
+name = "kp0"
+type = "button"
+vscope = 1
+x = 82
+y = 396
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "0"
+
+[[component]]
+name = "kpDot"
+type = "button"
+vscope = 1
+x = 156
+y = 396
+w = 66
+h = 76
+style = 0
+bco = 12711
+bco2 = 19051
+pco = 59262
+pco2 = 59262
+txt = "."
+
+[[component]]
+name = "zeroShade"
+type = "text"
+vscope = 1
+x = 0
+y = 0
+w = 800
+h = 480
+bco = 0
+pco = 65535
+txt = ""
+aph = 48
+
+[[component]]
+name = "zeroDismiss"
+type = "hotspot"
+x = 0
+y = 0
+w = 800
+h = 480
+
+[[component]]
+name = "zeroPanel"
+type = "text"
+vscope = 1
+x = 120
+y = 296
+w = 560
+h = 176
+style = 1
+borderc = 33808
+borderw = 3
+bco = 6570
+pco = 59262
+txt = ""
+
+[[component]]
+name = "zeroAsk"
+type = "text"
+vscope = 1
+x = 123
+y = 308
+w = 554
+h = 64
+bco = 6570
+pco = 59262
+txt = "Go to zero first?"
+font = 6
+xcen = 1
+ycen = 1
+txt_maxl = 24
+
+[[component]]
+name = "zeroYes"
+type = "button"
+vscope = 1
+x = 136
+y = 384
+w = 168
+h = 64
+style = 0
+bco = 9254
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "Go to zero"
+font = 6
+txt_maxl = 12
+
+[[component]]
+name = "zeroNo"
+type = "button"
+vscope = 1
+x = 316
+y = 384
+w = 168
+h = 64
+style = 0
+bco = 10829
+bco2 = 15089
+pco = 59262
+pco2 = 59262
+txt = "Start here"
+font = 6
+txt_maxl = 12
+
+[[component]]
+name = "zeroCancel"
+type = "button"
+vscope = 1
+x = 496
+y = 384
+w = 168
+h = 64
+style = 0
+bco = 45763
+bco2 = 52069
+pco = 59262
+pco2 = 59262
+txt = "Cancel"
+font = 6
+txt_maxl = 12
+
+[[component]]
+name = "toastShade"
+type = "text"
+vscope = 1
+x = 0
+y = 0
+w = 800
+h = 480
+bco = 32768
+pco = 65535
+txt = ""
+aph = 48
+
+[[component]]
+name = "toast"
+type = "text"
+vscope = 1
+x = 0
+y = 168
+w = 800
+h = 76
+bco = 45316
+pco = 65535
+txt = ""
+font = 2
+xcen = 1
+ycen = 2
+isbr = 1
+txt_maxl = 60
+
+[[component]]
+name = "toastHint"
+type = "text"
+vscope = 1
+x = 0
+y = 244
+w = 800
+h = 68
+bco = 45316
+pco = 52825
+txt = "tap to dismiss"
+xcen = 1
+ycen = 0
+txt_maxl = 20
+
+[[component]]
+name = "toastDismiss"
+type = "hotspot"
+x = 0
+y = 0
+w = 800
+h = 480
+
+[[component]]
+name = "blockShade"
+type = "text"
+vscope = 1
+x = 0
+y = 0
+w = 800
+h = 480
+bco = 32768
+pco = 65535
+txt = ""
+aph = 48
+
+[[component]]
+name = "block"
+type = "text"
+vscope = 1
+x = 0
+y = 168
+w = 800
+h = 144
+bco = 45316
+pco = 65535
+txt = "No connection to controller"
+font = 2
+xcen = 1
+ycen = 1
+txt_maxl = 32
+
+[[component]]
+name = "blockTouch"
+type = "hotspot"
+x = 0
+y = 0
+w = 800
+h = 480
+
+[[component]]
+name = "modeSync"
+type = "hotspot"
+x = 798
+y = 478
+w = 2
+h = 2
+
+[[component]]
+name = "toastShow"
+type = "hotspot"
+x = 796
+y = 478
+w = 2
+h = 2
+
+[[component]]
+name = "layoutSync"
+type = "hotspot"
+x = 794
+y = 478
+w = 2
+h = 2
+
+[[component]]
+name = "toastHide"
+type = "hotspot"
+x = 792
+y = 478
+w = 2
+h = 2
+
+[[component]]
+name = "tmToast"
+type = "timer"
+tim = 10000
+en = 0
+
+[[component]]
+name = "tmJog"
+type = "timer"
+tim = 100
+en = 0
+
+[[component]]
+name = "jogDir"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 8
+
+[[component]]
+name = "jogTicks"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "menuOpen"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "settingsOpen"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "modeName"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 20
+
+[[component]]
+name = "kpDotUsed"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpLen"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpLast"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 1
+
+[[component]]
+name = "kpTarget"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpDigits"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 8
+
+[[component]]
+name = "kpNeg"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpNum"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpWhole"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 8
+
+[[component]]
+name = "kpFrac"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "kpFrac4"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 4
+
+[[component]]
+name = "unitsInch"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "zOn"
+type = "variable"
+vscope = 1
+val = 1
+
+[[component]]
+name = "xOn"
+type = "variable"
+vscope = 1
+val = 1
+
+[[component]]
+name = "running"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "tpiEntry"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cCmd0"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cCmd1"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cCmd2"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cCmd3"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cCmd4"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cCmd5"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cCmd6"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cCmd7"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cCmd8"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cCmd9"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cKind10"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cCmd10"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cKind11"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cCmd11"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cKind12"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cCmd12"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cKind13"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cCmd13"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cKind14"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cCmd14"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cKind15"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cCmd15"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "cKind0"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cKind1"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cKind2"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cKind3"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cKind4"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cKind5"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cKind6"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cKind7"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cKind8"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "cKind9"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "menuCmd0"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuCmd1"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuCmd2"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuCmd3"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuCmd4"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuCmd5"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuCmd6"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuCmd7"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuCmd8"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "menuCmd9"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 12
+
+[[component]]
+name = "canSkip"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "ovrOn"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "picOn"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "gcodeOn"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "gcodeLoaded"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "gcodePaused"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "gcodeToolOn"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpCmd"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "kpKind"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpRightOpen"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpOpen"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "needZero"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "zeroFor"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "menuSel"
+type = "variable"
+vscope = 1
+val = -1
+
+[[component]]
+name = "kpField"
+type = "variable"
+vscope = 1
+val = -1
+
+[[component]]
+name = "choice"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 48
+
+[[component]]
+name = "ready"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpSignOn"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "kpDotOn"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "stepDu0"
+type = "variable"
+vscope = 1
+val = 100
+
+[[component]]
+name = "stepDu1"
+type = "variable"
+vscope = 1
+val = 1000
+
+[[component]]
+name = "stepDu2"
+type = "variable"
+vscope = 1
+val = 10000
+
+[[component]]
+name = "tmLink"
+type = "timer"
+tim = 250
+en = 1
+
+[[component]]
+name = "blockState"
+type = "variable"
+vscope = 1
+val = 1
+
+[[component]]
+name = "estop"
+type = "variable"
+vscope = 1

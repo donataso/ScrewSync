@@ -1,0 +1,297 @@
+const KEYPAD_LEFT = 0
+const KEYPAD_RIGHT = 404
+const TARGET_CELL = 1
+const TARGET_STEP = 2
+const TARGET_Z_POS = 3
+const TARGET_X_POS = 4
+const COLOR_KEY_TEXT = 59262
+const COLOR_KEY_DIM = 36019
+const FIELD_NONE = -1
+const FIELD_Z_POS = 20
+const FIELD_X_POS = 21
+
+function setKeypad(shown: number):
+  kpOpen.val = shown
+  if (!shown) {
+    kpRightOpen.val = 0
+  }
+  vis kpDismiss,shown
+  vis kpBgLeft,0
+  vis kpBgRight,0
+  vis kpValue,shown
+  vis kpEsc,shown
+  vis kp7,shown
+  vis kp8,shown
+  vis kp9,shown
+  vis kpDel,shown
+  vis kp4,shown
+  vis kp5,shown
+  vis kp6,shown
+  vis kpClr,shown
+  vis kp1,shown
+  vis kp2,shown
+  vis kp3,shown
+  vis kpOk,shown
+  vis kpSign,shown
+  vis kp0,shown
+  vis kpDot,shown
+
+function placeKeypad(left: number):
+  kpValue.x = left + 8
+  kpEsc.x = left + 230
+  kp7.x = left + 8
+  kp8.x = left + 82
+  kp9.x = left + 156
+  kpDel.x = left + 230
+  kp4.x = left + 8
+  kp5.x = left + 82
+  kp6.x = left + 156
+  kpClr.x = left + 230
+  kp1.x = left + 8
+  kp2.x = left + 82
+  kp3.x = left + 156
+  kpOk.x = left + 230
+  kpSign.x = left + 8
+  kp0.x = left + 82
+  kpDot.x = left + 156
+
+// Cells are fields 0-15, by slot.
+function setFieldBorder(color: number):
+  switch (kpField.val) {
+    case 0:
+      c0.borderc = color
+      break
+    case 1:
+      c1.borderc = color
+      break
+    case 2:
+      c2.borderc = color
+      break
+    case 3:
+      c3.borderc = color
+      break
+    case 4:
+      c4.borderc = color
+      break
+    case 5:
+      c5.borderc = color
+      break
+    case 6:
+      c6.borderc = color
+      break
+    case 7:
+      c7.borderc = color
+      break
+    case 8:
+      c8.borderc = color
+      break
+    case 9:
+      c9.borderc = color
+      break
+    case 10:
+      c10.borderc = color
+      break
+    case 11:
+      c11.borderc = color
+      break
+    case 12:
+      c12.borderc = color
+      break
+    case 13:
+      c13.borderc = color
+      break
+    case 14:
+      c14.borderc = color
+      break
+    case 15:
+      c15.borderc = color
+      break
+    case FIELD_Z_POS:
+      zPosBg.borderc = color
+      break
+    case FIELD_X_POS:
+      xPosBg.borderc = color
+      break
+  }
+
+// Opens the keypad on the half opposite the field being edited.
+function openKeypad(left: number, target: number, kind: number, field: number):
+  kpField.val = field
+  setFieldBorder(COLOR_SELECTED)
+  kpTarget.val = target
+  kpKind.val = kind
+  kpRightOpen.val = left == KEYPAD_RIGHT ? 1 : 0
+  setMenu(0)
+  placeKeypad(left)
+  kpDigits.txt = ""
+  kpNeg.val = 0
+  kpDotUsed.val = 0
+  kpShow()
+  kpSignOn.val = target == TARGET_Z_POS || target == TARGET_X_POS || kind == KIND_ANGLE ? 1 : 0
+  kpDotOn.val = kind != KIND_COUNT ? 1 : 0
+  kpSign.pco = kpSignOn.val ? COLOR_KEY_TEXT : COLOR_KEY_DIM
+  kpDot.pco = kpDotOn.val ? COLOR_KEY_TEXT : COLOR_KEY_DIM
+  setKeypad(1)
+  if (left == KEYPAD_LEFT) {
+    vis kpBgLeft,1
+  } else {
+    vis kpBgRight,1
+  }
+  ref 0
+
+function closeKeypad():
+  setFieldBorder(COLOR_BUTTON)
+  kpField.val = FIELD_NONE
+  setKeypad(0)
+  refreshPanel()
+  ref 0
+
+function kpShow():
+  if (kpNeg.val) {
+    kpValue.txt = "-" + kpDigits.txt
+  } else {
+    kpValue.txt = kpDigits.txt
+  }
+
+function kpType(key: text):
+  kpDigits.txt += key
+  kpShow()
+
+// The typed value with 4 fraction digits: "1.25" -> 12500.
+function kpScaled() -> number:
+  kpWhole.txt = ""
+  kpFrac.txt = ""
+  spstr kpDigits.txt,kpWhole.txt,".",0
+  spstr kpDigits.txt,kpFrac.txt,".",1
+  kpFrac.txt += "0000"
+  substr kpFrac.txt,kpFrac4.txt,0,4
+  covx kpWhole.txt,kpNum.val,0,0
+  covx kpFrac4.txt,kpLen.val,0,0
+  return kpNum.val * 10000 + kpLen.val
+
+// 1/10000 of the display unit -> deci-microns.
+function toDu(scaled: number) -> number:
+  var du = scaled
+  if (unitsInch.val) {
+    du = scaled * 127 / 5
+  }
+  return du
+
+// TPI with 4 fraction digits -> deci-microns.
+function tpiToDu(scaled: number) -> number:
+  var du = 0
+  if (scaled >= 100) {
+    du = 25400000 / (scaled / 100)
+  }
+  return du
+
+// Count and angle go as typed; lengths and pitches convert to deci-microns.
+function sendCell(du: number):
+  switch (kpKind.val) {
+    case KIND_COUNT:
+      send(kpCmd.txt + kpWhole.txt)
+      break
+    case KIND_ANGLE:
+      send(kpCmd.txt + kpValue.txt)
+      break
+    default:
+      send(kpCmd.txt + du)
+  }
+
+function applyKeypad():
+  if (kpDigits.txt != "") {
+    var scaled = kpScaled()
+    var du = kpKind.val == KIND_PITCH && tpiEntry.val ? tpiToDu(scaled) : toDu(scaled)
+    if (kpNeg.val) {
+      du = -du
+    }
+    switch (kpTarget.val) {
+      case TARGET_CELL:
+        sendCell(du)
+        break
+      case TARGET_Z_POS:
+        send("zero z " + du)
+        break
+      case TARGET_X_POS:
+        send("zero x " + du)
+        break
+      case TARGET_STEP:
+        if (du > 0) {
+          send("jog step " + du)
+        }
+        break
+    }
+  }
+
+on kp0.up:
+  kpType("0")
+
+on kp1.up:
+  kpType("1")
+
+on kp2.up:
+  kpType("2")
+
+on kp3.up:
+  kpType("3")
+
+on kp4.up:
+  kpType("4")
+
+on kp5.up:
+  kpType("5")
+
+on kp6.up:
+  kpType("6")
+
+on kp7.up:
+  kpType("7")
+
+on kp8.up:
+  kpType("8")
+
+on kp9.up:
+  kpType("9")
+
+on kpSign.up:
+  if (kpSignOn.val) {
+    kpNeg.val = 1 - kpNeg.val
+    kpShow()
+  }
+
+on kpDot.up:
+  if (kpDotOn.val && kpDotUsed.val == 0) {
+    if (kpDigits.txt == "") {
+      kpType("0")
+    }
+    kpType(".")
+    kpDotUsed.val = 1
+  }
+
+on kpDel.up:
+  strlen kpDigits.txt,kpLen.val
+  if (kpLen.val > 0) {
+    kpLen.val -= 1
+    substr kpDigits.txt,kpLast.txt,kpLen.val,1
+    if (kpLast.txt == ".") {
+      kpDotUsed.val = 0
+    }
+    kpDigits.txt -= 1
+    kpShow()
+  }
+
+on kpClr.up:
+  kpDigits.txt = ""
+  kpNeg.val = 0
+  kpDotUsed.val = 0
+  kpShow()
+
+on kpOk.up:
+  applyKeypad()
+  closeKeypad()
+
+on kpEsc.up:
+  closeKeypad()
+
+on kpDismiss.up:
+  closeKeypad()

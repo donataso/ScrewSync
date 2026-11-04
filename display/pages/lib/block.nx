@@ -1,0 +1,37 @@
+// Blocking toast: the firmware's heartbeat zeroes linkAge and sets
+// linkFlashing; tmLink ages the link. Lost after DISPLAY_PING_TIMEOUT_MS
+// (main/src/config.hpp) worth of ticks.
+const LINK_LOST_TICKS = 6
+const BLOCK_NONE = 0
+const BLOCK_LOST = 1
+const BLOCK_FLASHING = 2
+
+function updateBlock():
+  var state = BLOCK_NONE
+  if (linkFlashing) {
+    state = BLOCK_FLASHING
+  } else if (linkAge > LINK_LOST_TICKS) {
+    state = BLOCK_LOST
+  }
+  if (state != blockState.val) {
+    blockState.val = state
+    if (state == BLOCK_FLASHING) {
+      blockShade.bco = 16
+      block.bco = 10840
+      block.txt = "Updating firmware"
+    } else {
+      blockShade.bco = 32768
+      block.bco = 45316
+      block.txt = "No connection to controller"
+    }
+    var shown = state == BLOCK_NONE ? 0 : 1
+    vis blockShade,shown
+    vis block,shown
+    vis blockTouch,shown
+  }
+
+on tmLink.timer:
+  if (linkAge <= LINK_LOST_TICKS) {
+    linkAge++
+  }
+  updateBlock()

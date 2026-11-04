@@ -1,0 +1,5 @@
+# mirrors the real kachurovskiy/lathecode generator output, CRLF line endings
+13 feed z=0 x=200000 f=1000000
+16 feed z=-15000 x=200000 f=1000000
+17 feed z=-20000 x=197500 f=1000000
+20 feed z=-20000 x=196500 f=800000

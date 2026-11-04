@@ -1,0 +1,10 @@
+.west/
+.build
+.cache
+
+*.swp
+.vscode
+
+notes
+docs/images/screenshots.md
+__pycache__/

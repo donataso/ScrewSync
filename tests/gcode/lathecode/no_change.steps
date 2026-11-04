@@ -1,0 +1,2 @@
+# lines 3 and 4 target the start position exactly, no step emitted
+5 feed z=0 x=50000 f=500000

@@ -1,0 +1,366 @@
+// cKindN.val, matching CellType in main/lib/Display/Display.cpp.
+const KIND_HIDDEN = 0
+const KIND_LENGTH = 1
+const KIND_PITCH = 2
+const KIND_COUNT = 3
+const KIND_ANGLE = 4
+const KIND_TOGGLE = 5
+const KIND_PICKER = 6
+const KIND_LATCH = 7
+const ZERO_FOR_START = 0
+const ZERO_FOR_Z = 1
+const ZERO_FOR_X = 2
+const ZERO_FOR_CONFIRM = 3
+
+function overlayOpen() -> number:
+  return menuOpen.val || settingsOpen.val || kpRightOpen.val ? 1 : 0
+
+// The mode panel hides under an overlay, so firmware pushes to it can't
+// draw over one.
+function layoutPanel(shown: number):
+  var v = 0
+  v = shown && cKind0.val == KIND_TOGGLE ? 1 : 0
+  vis c0a,v
+  vis c0b,v
+  v = shown && cKind0.val > KIND_HIDDEN && cKind0.val != KIND_TOGGLE ? 1 : 0
+  vis c0,v
+  v = shown && cKind1.val == KIND_TOGGLE ? 1 : 0
+  vis c1a,v
+  vis c1b,v
+  v = shown && cKind1.val > KIND_HIDDEN && cKind1.val != KIND_TOGGLE ? 1 : 0
+  vis c1,v
+  v = shown && cKind2.val == KIND_TOGGLE ? 1 : 0
+  vis c2a,v
+  vis c2b,v
+  v = shown && cKind2.val > KIND_HIDDEN && cKind2.val != KIND_TOGGLE ? 1 : 0
+  vis c2,v
+  v = shown && cKind3.val == KIND_TOGGLE ? 1 : 0
+  vis c3a,v
+  vis c3b,v
+  v = shown && cKind3.val > KIND_HIDDEN && cKind3.val != KIND_TOGGLE ? 1 : 0
+  vis c3,v
+  v = shown && cKind4.val == KIND_TOGGLE ? 1 : 0
+  vis c4a,v
+  vis c4b,v
+  v = shown && cKind4.val > KIND_HIDDEN && cKind4.val != KIND_TOGGLE ? 1 : 0
+  vis c4,v
+  v = shown && cKind5.val == KIND_TOGGLE ? 1 : 0
+  vis c5a,v
+  vis c5b,v
+  v = shown && cKind5.val > KIND_HIDDEN && cKind5.val != KIND_TOGGLE ? 1 : 0
+  vis c5,v
+  v = shown && cKind6.val == KIND_TOGGLE ? 1 : 0
+  vis c6a,v
+  vis c6b,v
+  v = shown && cKind6.val > KIND_HIDDEN && cKind6.val != KIND_TOGGLE ? 1 : 0
+  vis c6,v
+  v = shown && cKind7.val == KIND_TOGGLE ? 1 : 0
+  vis c7a,v
+  vis c7b,v
+  v = shown && cKind7.val > KIND_HIDDEN && cKind7.val != KIND_TOGGLE ? 1 : 0
+  vis c7,v
+  v = shown && cKind8.val == KIND_TOGGLE ? 1 : 0
+  vis c8a,v
+  vis c8b,v
+  v = shown && cKind8.val > KIND_HIDDEN && cKind8.val != KIND_TOGGLE ? 1 : 0
+  vis c8,v
+  v = shown && cKind9.val == KIND_TOGGLE ? 1 : 0
+  vis c9a,v
+  vis c9b,v
+  v = shown && cKind9.val > KIND_HIDDEN && cKind9.val != KIND_TOGGLE ? 1 : 0
+  vis c9,v
+  v = shown && cKind10.val > KIND_HIDDEN && cKind10.val != KIND_PICKER ? 1 : 0
+  vis c10,v
+  v = shown && cKind11.val > KIND_HIDDEN && cKind11.val != KIND_PICKER ? 1 : 0
+  vis c11,v
+  v = shown && cKind12.val > KIND_HIDDEN && cKind12.val != KIND_PICKER ? 1 : 0
+  vis c12,v
+  v = shown && cKind13.val > KIND_HIDDEN && cKind13.val != KIND_PICKER ? 1 : 0
+  vis c13,v
+  v = shown && cKind14.val > KIND_HIDDEN && cKind14.val != KIND_PICKER ? 1 : 0
+  vis c14,v
+  v = shown && cKind15.val > KIND_HIDDEN && cKind15.val != KIND_PICKER ? 1 : 0
+  vis c15,v
+  v = shown && cKind15.val == KIND_PICKER ? 1 : 0
+  vis picker,v
+  v = shown && ovrOn.val ? 1 : 0
+  vis ovrMinus,v
+  vis ovr,v
+  vis ovrPlus,v
+  v = shown && !canSkip.val && !(gcodeOn.val && gcodePaused.val) && !(probeOn.val && !running.val) ? 1 : 0
+  vis startStop,v
+  v = shown && canSkip.val && !(gcodeOn.val && gcodePaused.val) ? 1 : 0
+  vis stopPass,v
+  vis skip,v
+  v = shown && gcodeOn.val && gcodePaused.val ? 1 : 0
+  vis gcodeResume,v
+  vis gcodeStop,v
+  v = shown && gcodeOn.val && gcodeLoaded.val && picOn.val ? 1 : 0
+  vis gcodePic,v
+  v = v && gcodeToolOn.val ? 1 : 0
+  vis gcodeTool,v
+  v = shown && gcodeOn.val && gcodeLoaded.val ? 1 : 0
+  vis gcodeName,v
+  vis gcodeProgress,v
+  v = shown && gcodeOn.val && !gcodeLoaded.val ? 1 : 0
+  vis gcodeEmpty,v
+  v = shown && probeOn.val ? 1 : 0
+  vis probePhase,v
+  vis probeUp,v
+  vis probeLeft,v
+  vis probeLight,v
+  vis probeRight,v
+  vis probeDown,v
+
+function refreshPanel():
+  layoutPanel(overlayOpen() ? 0 : 1)
+
+function openCell(cmd: text, kind: number, slot: number):
+  kpCmd.txt = cmd
+  openKeypad(KEYPAD_LEFT, TARGET_CELL, kind, slot)
+
+// A latch cell's command is the flip the firmware set up.
+function narrowCell(cmd: text, kind: number, slot: number):
+  if (kind == KIND_LATCH) {
+    send(cmd)
+  } else {
+    openCell(cmd, kind, slot)
+  }
+
+// A toggle cell's command holds both choices, "a|b".
+function sendChoice(cmds: text, index: number):
+  spstr cmds,choice.txt,"|",index
+  send(choice.txt)
+
+// Clicked by the firmware after a cell kind or canSkip changes.
+on layoutSync.down:
+  refreshPanel()
+
+on picker.up:
+  page threads
+
+function openZeroAsk(target: number):
+  zeroFor.val = target
+  if (target == ZERO_FOR_Z) {
+    zeroAsk.txt = "Z axis"
+    zeroNo.txt = "Set zero"
+  } else if (target == ZERO_FOR_X) {
+    zeroAsk.txt = "X axis"
+    zeroNo.txt = "Set zero"
+  } else if (target == ZERO_FOR_CONFIRM) {
+    zeroAsk.txt = "Not at zero. Start here?"
+    zeroNo.txt = "Start"
+  } else {
+    zeroAsk.txt = "Go to zero first?"
+    zeroNo.txt = "Start here"
+  }
+  setZeroAsk(1)
+  if (target == ZERO_FOR_CONFIRM) {
+    vis zeroYes,0
+  }
+
+function setZeroAsk(shown: number):
+  vis zeroShade,shown
+  vis zeroDismiss,shown
+  vis zeroPanel,shown
+  vis zeroAsk,shown
+  vis zeroYes,shown
+  vis zeroNo,shown
+  vis zeroCancel,shown
+  if (!shown) {
+    ref 0
+  }
+
+on startStop.up:
+  if (running.val) {
+    send("stop")
+  } else if (ready.val && !kpOpen.val) {
+    if (needZero.val == 2) {
+      openZeroAsk(ZERO_FOR_CONFIRM)
+    } else if (needZero.val) {
+      openZeroAsk(ZERO_FOR_START)
+    } else {
+      send("start")
+    }
+  }
+
+on zeroYes.up:
+  setZeroAsk(0)
+  if (zeroFor.val == ZERO_FOR_Z) {
+    send("move z to 0")
+  } else if (zeroFor.val == ZERO_FOR_X) {
+    send("move x to 0")
+  } else {
+    send("start zero")
+  }
+
+on zeroNo.up:
+  setZeroAsk(0)
+  if (zeroFor.val == ZERO_FOR_Z) {
+    send("zero z")
+  } else if (zeroFor.val == ZERO_FOR_X) {
+    send("zero x")
+  } else {
+    send("start")
+  }
+
+on zeroCancel.up:
+  setZeroAsk(0)
+
+on zeroDismiss.up:
+  setZeroAsk(0)
+
+on stopPass.up:
+  send("stop")
+
+on skip.up:
+  send("skip")
+
+on gcodeResume.up:
+  send("start")
+
+on gcodeStop.up:
+  send("stop")
+
+on probeUp.up:
+  if (xOn.val) {
+    send("probe go x-")
+  }
+
+on probeDown.up:
+  if (xOn.val) {
+    send("probe go x+")
+  }
+
+on probeLeft.up:
+  if (zOn.val) {
+    send("probe go z-")
+  }
+
+on probeRight.up:
+  if (zOn.val) {
+    send("probe go z+")
+  }
+
+on ovrMinus.up:
+  if (running.val) {
+    send("override -")
+  }
+
+on ovr.up:
+  if (running.val) {
+    send("override reset")
+  }
+
+on ovrPlus.up:
+  if (running.val) {
+    send("override +")
+  }
+
+on c0.up:
+  openCell(cCmd0.txt, cKind0.val, 0)
+
+on c0a.up:
+  sendChoice(cCmd0.txt, 0)
+
+on c0b.up:
+  sendChoice(cCmd0.txt, 1)
+
+on c1.up:
+  openCell(cCmd1.txt, cKind1.val, 1)
+
+on c1a.up:
+  sendChoice(cCmd1.txt, 0)
+
+on c1b.up:
+  sendChoice(cCmd1.txt, 1)
+
+on c2.up:
+  openCell(cCmd2.txt, cKind2.val, 2)
+
+on c2a.up:
+  sendChoice(cCmd2.txt, 0)
+
+on c2b.up:
+  sendChoice(cCmd2.txt, 1)
+
+on c3.up:
+  openCell(cCmd3.txt, cKind3.val, 3)
+
+on c3a.up:
+  sendChoice(cCmd3.txt, 0)
+
+on c3b.up:
+  sendChoice(cCmd3.txt, 1)
+
+on c4.up:
+  openCell(cCmd4.txt, cKind4.val, 4)
+
+on c4a.up:
+  sendChoice(cCmd4.txt, 0)
+
+on c4b.up:
+  sendChoice(cCmd4.txt, 1)
+
+on c5.up:
+  openCell(cCmd5.txt, cKind5.val, 5)
+
+on c5a.up:
+  sendChoice(cCmd5.txt, 0)
+
+on c5b.up:
+  sendChoice(cCmd5.txt, 1)
+
+on c6.up:
+  openCell(cCmd6.txt, cKind6.val, 6)
+
+on c6a.up:
+  sendChoice(cCmd6.txt, 0)
+
+on c6b.up:
+  sendChoice(cCmd6.txt, 1)
+
+on c7.up:
+  openCell(cCmd7.txt, cKind7.val, 7)
+
+on c7a.up:
+  sendChoice(cCmd7.txt, 0)
+
+on c7b.up:
+  sendChoice(cCmd7.txt, 1)
+
+on c8.up:
+  openCell(cCmd8.txt, cKind8.val, 8)
+
+on c8a.up:
+  sendChoice(cCmd8.txt, 0)
+
+on c8b.up:
+  sendChoice(cCmd8.txt, 1)
+
+on c9.up:
+  openCell(cCmd9.txt, cKind9.val, 9)
+
+on c9a.up:
+  sendChoice(cCmd9.txt, 0)
+
+on c9b.up:
+  sendChoice(cCmd9.txt, 1)
+
+on c10.up:
+  narrowCell(cCmd10.txt, cKind10.val, 10)
+
+on c11.up:
+  narrowCell(cCmd11.txt, cKind11.val, 11)
+
+on c12.up:
+  narrowCell(cCmd12.txt, cKind12.val, 12)
+
+on c13.up:
+  narrowCell(cCmd13.txt, cKind13.val, 13)
+
+on c14.up:
+  narrowCell(cCmd14.txt, cKind14.val, 14)
+
+on c15.up:
+  narrowCell(cCmd15.txt, cKind15.val, 15)

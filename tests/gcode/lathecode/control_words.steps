@@ -1,0 +1,2 @@
+# "%" wrapper lines and T (tool select) are accepted and ignored
+4 feed z=0 x=10000 f=100000

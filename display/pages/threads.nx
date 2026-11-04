@@ -1,0 +1,247 @@
+include "lib/block.nx"
+include "lib/link.nx"
+
+// Slots the firmware left empty stay hidden.
+function layoutPicker():
+  var v = 0
+  v = tabCmd0.txt != "" ? 1 : 0
+  vis tab0,v
+  v = tabCmd1.txt != "" ? 1 : 0
+  vis tab1,v
+  v = tabCmd2.txt != "" ? 1 : 0
+  vis tab2,v
+  v = tabCmd3.txt != "" ? 1 : 0
+  vis tab3,v
+  v = tabCmd4.txt != "" ? 1 : 0
+  vis tab4,v
+  v = tabCmd5.txt != "" ? 1 : 0
+  vis tab5,v
+  v = tabCmd6.txt != "" ? 1 : 0
+  vis tab6,v
+  v = tabCmd7.txt != "" ? 1 : 0
+  vis tab7,v
+  v = tabCmd8.txt != "" ? 1 : 0
+  vis tab8,v
+  v = gCmd0.txt != "" ? 1 : 0
+  vis g0,v
+  v = gCmd1.txt != "" ? 1 : 0
+  vis g1,v
+  v = gCmd2.txt != "" ? 1 : 0
+  vis g2,v
+  v = gCmd3.txt != "" ? 1 : 0
+  vis g3,v
+  v = gCmd4.txt != "" ? 1 : 0
+  vis g4,v
+  v = gCmd5.txt != "" ? 1 : 0
+  vis g5,v
+  v = gCmd6.txt != "" ? 1 : 0
+  vis g6,v
+  v = gCmd7.txt != "" ? 1 : 0
+  vis g7,v
+  v = gCmd8.txt != "" ? 1 : 0
+  vis g8,v
+  v = gCmd9.txt != "" ? 1 : 0
+  vis g9,v
+  v = gCmd10.txt != "" ? 1 : 0
+  vis g10,v
+  v = gCmd11.txt != "" ? 1 : 0
+  vis g11,v
+  v = gCmd12.txt != "" ? 1 : 0
+  vis g12,v
+  v = gCmd13.txt != "" ? 1 : 0
+  vis g13,v
+  v = gCmd14.txt != "" ? 1 : 0
+  vis g14,v
+  v = gCmd15.txt != "" ? 1 : 0
+  vis g15,v
+  v = gCmd16.txt != "" ? 1 : 0
+  vis g16,v
+  v = gCmd17.txt != "" ? 1 : 0
+  vis g17,v
+  v = gCmd18.txt != "" ? 1 : 0
+  vis g18,v
+  v = gCmd19.txt != "" ? 1 : 0
+  vis g19,v
+  v = gCmd20.txt != "" ? 1 : 0
+  vis g20,v
+  v = gCmd21.txt != "" ? 1 : 0
+  vis g21,v
+  v = gCmd22.txt != "" ? 1 : 0
+  vis g22,v
+  v = gCmd23.txt != "" ? 1 : 0
+  vis g23,v
+  v = gCmd24.txt != "" ? 1 : 0
+  vis g24,v
+  v = gCmd25.txt != "" ? 1 : 0
+  vis g25,v
+  v = gCmd26.txt != "" ? 1 : 0
+  vis g26,v
+  v = gCmd27.txt != "" ? 1 : 0
+  vis g27,v
+  v = gCmd28.txt != "" ? 1 : 0
+  vis g28,v
+  v = gCmd29.txt != "" ? 1 : 0
+  vis g29,v
+  v = gCmd30.txt != "" ? 1 : 0
+  vis g30,v
+  v = gCmd31.txt != "" ? 1 : 0
+  vis g31,v
+  v = gCmd32.txt != "" ? 1 : 0
+  vis g32,v
+  v = gCmd33.txt != "" ? 1 : 0
+  vis g33,v
+  v = gCmd34.txt != "" ? 1 : 0
+  vis g34,v
+
+// sendme tells the firmware the page changed, so it pushes this page.
+on threads.load:
+  sendme
+  // The firmware's pickerSync lays out the tabs and cells.
+  vis 255,0
+  vis back,1
+  vis pickerSync,1
+  linkAge = 0
+  blockState.val = BLOCK_NONE
+
+// Clicked by the firmware after the tabs or entries change.
+on pickerSync.down:
+  layoutPicker()
+
+function pick(designation: text):
+  send("thread preset " + pickerGroup.txt + " " + designation)
+  page page0
+
+on back.up:
+  page page0
+
+on tab0.up:
+  send("ui threads " + tabCmd0.txt)
+
+on tab1.up:
+  send("ui threads " + tabCmd1.txt)
+
+on tab2.up:
+  send("ui threads " + tabCmd2.txt)
+
+on tab3.up:
+  send("ui threads " + tabCmd3.txt)
+
+on tab4.up:
+  send("ui threads " + tabCmd4.txt)
+
+on tab5.up:
+  send("ui threads " + tabCmd5.txt)
+
+on tab6.up:
+  send("ui threads " + tabCmd6.txt)
+
+on tab7.up:
+  send("ui threads " + tabCmd7.txt)
+
+on tab8.up:
+  send("ui threads " + tabCmd8.txt)
+
+on g0.up:
+  pick(gCmd0.txt)
+
+on g1.up:
+  pick(gCmd1.txt)
+
+on g2.up:
+  pick(gCmd2.txt)
+
+on g3.up:
+  pick(gCmd3.txt)
+
+on g4.up:
+  pick(gCmd4.txt)
+
+on g5.up:
+  pick(gCmd5.txt)
+
+on g6.up:
+  pick(gCmd6.txt)
+
+on g7.up:
+  pick(gCmd7.txt)
+
+on g8.up:
+  pick(gCmd8.txt)
+
+on g9.up:
+  pick(gCmd9.txt)
+
+on g10.up:
+  pick(gCmd10.txt)
+
+on g11.up:
+  pick(gCmd11.txt)
+
+on g12.up:
+  pick(gCmd12.txt)
+
+on g13.up:
+  pick(gCmd13.txt)
+
+on g14.up:
+  pick(gCmd14.txt)
+
+on g15.up:
+  pick(gCmd15.txt)
+
+on g16.up:
+  pick(gCmd16.txt)
+
+on g17.up:
+  pick(gCmd17.txt)
+
+on g18.up:
+  pick(gCmd18.txt)
+
+on g19.up:
+  pick(gCmd19.txt)
+
+on g20.up:
+  pick(gCmd20.txt)
+
+on g21.up:
+  pick(gCmd21.txt)
+
+on g22.up:
+  pick(gCmd22.txt)
+
+on g23.up:
+  pick(gCmd23.txt)
+
+on g24.up:
+  pick(gCmd24.txt)
+
+on g25.up:
+  pick(gCmd25.txt)
+
+on g26.up:
+  pick(gCmd26.txt)
+
+on g27.up:
+  pick(gCmd27.txt)
+
+on g28.up:
+  pick(gCmd28.txt)
+
+on g29.up:
+  pick(gCmd29.txt)
+
+on g30.up:
+  pick(gCmd30.txt)
+
+on g31.up:
+  pick(gCmd31.txt)
+
+on g32.up:
+  pick(gCmd32.txt)
+
+on g33.up:
+  pick(gCmd33.txt)
+
+on g34.up:
+  pick(gCmd34.txt)

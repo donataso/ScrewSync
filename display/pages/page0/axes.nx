@@ -1,0 +1,94 @@
+// Repeats before a press counts as a hold, so a slow tap stays one step.
+const HOLD_DELAY_TICKS = 3
+
+function jogPress(dir: text):
+  jogDir.txt = dir
+  jogTicks.val = 0
+  send("jog " + dir)
+  tmJog.en = 1
+
+on zPlus.down:
+  if (zOn.val) {
+    jogPress("z +")
+  }
+
+on zPlus.up:
+  tmJog.en = 0
+
+on zMinus.down:
+  if (zOn.val) {
+    jogPress("z -")
+  }
+
+on zMinus.up:
+  tmJog.en = 0
+
+on xPlus.down:
+  if (xOn.val) {
+    jogPress("x +")
+  }
+
+on xPlus.up:
+  tmJog.en = 0
+
+on xMinus.down:
+  if (xOn.val) {
+    jogPress("x -")
+  }
+
+on xMinus.up:
+  tmJog.en = 0
+
+on tmJog.timer:
+  jogTicks.val += 1
+  if (jogTicks.val >= HOLD_DELAY_TICKS) {
+    send("jog " + jogDir.txt + " hold")
+  }
+
+on zPos.up:
+  if (zOn.val) {
+    openKeypad(KEYPAD_RIGHT, TARGET_Z_POS, KIND_LENGTH, FIELD_Z_POS)
+  }
+
+on zPosBg.up:
+  if (zOn.val) {
+    openKeypad(KEYPAD_RIGHT, TARGET_Z_POS, KIND_LENGTH, FIELD_Z_POS)
+  }
+
+on xPos.up:
+  if (xOn.val) {
+    openKeypad(KEYPAD_RIGHT, TARGET_X_POS, KIND_LENGTH, FIELD_X_POS)
+  }
+
+on xPosBg.up:
+  if (xOn.val) {
+    openKeypad(KEYPAD_RIGHT, TARGET_X_POS, KIND_LENGTH, FIELD_X_POS)
+  }
+
+on zZero.up:
+  if (zOn.val && !kpOpen.val) {
+    openZeroAsk(ZERO_FOR_Z)
+  }
+
+on xZero.up:
+  if (xOn.val && !kpOpen.val) {
+    openZeroAsk(ZERO_FOR_X)
+  }
+
+on zEnable.up:
+  send(zOn.val ? "enable z off" : "enable z on")
+
+on xEnable.up:
+  send(xOn.val ? "enable x off" : "enable x on")
+
+on step0.up:
+  send("jog step " + stepDu0.val)
+
+on step1.up:
+  send("jog step " + stepDu1.val)
+
+on step2.up:
+  send("jog step " + stepDu2.val)
+
+on stepCustom.up:
+  openKeypad(KEYPAD_RIGHT, TARGET_STEP, KIND_LENGTH, FIELD_NONE)
