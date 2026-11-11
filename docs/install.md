@@ -7,15 +7,17 @@ into different connectors than the labels on the case say.
 
 The table is laid out like the connectors on the back of the case:
 
-|       |         |         |       |         |
-|-------|---------|---------|-------|---------|
-| -     | Z motor | X motor | -     | -       |
-| PROBE | -       | -       | -     | -       |
-| -     | -       | -       | POWER | ENCODER |
+|       |             |             |       |         |
+|-------|-------------|-------------|-------|---------|
+| -     | Z motor     | X motor     | -     | -       |
+| PROBE | Z handwheel | X handwheel | -     | -       |
+| -     | -           | -           | POWER | ENCODER |
 
 * **PROBE** (optional): - GND SIG -
 * **Z motor**: 5V, ENA, DIR, STEP
+* **Z handwheel** (optional): 5V, GND, B, A
 * **X motor** (optional): 5V, ENA, DIR, STEP
+* **X handwheel** (optional): 5V, GND, B, A
 * **ENCODER**: 5V, GND, A, B
 * **POWER**: 5V, 5V, GND, GND
 

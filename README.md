@@ -76,7 +76,7 @@ connectors. See [docs/install.md](docs/install.md).
 |--------------------------------|-----------------------------------------|
 | [Install](docs/install.md)     | connectors, flashing, first setup       |
 | [Features](docs/features.md)   | everything it does                      |
-| [Manual notes](docs/manual.md) | behaviour that is easy to miss          |
+| [Manual](docs/manual.md)       | how to operate it                       |
 | [Probe](docs/probe.md)         | probe hardware, settings and cycle      |
 | [Design](docs/design.md)       | architecture and machine state          |
 | [Protocol](docs/protocol.md)   | command set for serial, display and web |
