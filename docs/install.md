@@ -23,7 +23,7 @@ The table is laid out like the connectors on the back of the case:
 
 GPIO numbers of every connector: [pin_map.md](pin_map.md).
 
-Why the motors move: the STEP pin of the Z connector is GPIO35, which on
+**Why the connections were moved**: the STEP pin of the Z connector is GPIO35, which on
 the ESP32-S3R8 is one of the octal PSRAM data lines, bonded inside the chip
 package. Driving it as a stepper output corrupts the PSRAM bus, which
 breaks Wi-Fi (its driver allocates from PSRAM) with symptoms ranging from
@@ -32,7 +32,8 @@ them, sit one connector to the right, and there is no Y axis.
 
 Other hardware notes:
 
-- Flip the display 180 degrees so its viewing angles are correct.
+- **Flip the display 180 degrees** so its viewing angles are correct.
+  Alternatively, flash `display/display_180.tft` on the web client.
 - Probe wiring and probe types: [probe.md](probe.md).
 
 ## Firmware
