@@ -74,6 +74,8 @@ in the `Makefile`.
 - Machine settings are on the web client only: lead screw pitch, motor
   steps, speeds, travel and backlash per axis, and the spindle encoder
   resolution.
+- Each axis has separate acceleration and deceleration settings. Friction
+  helps the motor stop, so deceleration can be higher than acceleration.
 - -Z is toward the chuck and -X toward the centerline. If an axis moves the
   wrong way, toggle its `invertDirection` setting.
 - The spindle angle must increase when the spindle turns forward. If it

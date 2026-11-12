@@ -60,6 +60,8 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 
 - Jog: tap for one step, hold to move continuously with acceleration.
 - Handwheels on both axes.
+- Separate acceleration and deceleration per axis. Friction helps the motor
+  stop, so an axis can stop faster than it starts.
 - Per-axis enable/disable, de-energizing the motor for manual cranking.
 - Zero either axis, or go to zero with a confirmation.
 

@@ -63,6 +63,7 @@ namespace
         bool running;
         bool holdRequested;
         bool disabled;
+        int32_t speedRemainderMicro = 0;
     };
 
     AxisState g_axisZ = {
@@ -179,7 +180,7 @@ namespace
         if (direction == 0) {
             return;
         }
-        int64_t distance = Stepper::stoppingDistance(s.currentSpeed, s.cfg->acceleration);
+        int64_t distance = Stepper::stoppingDistance(s.currentSpeed, s.cfg->deceleration);
         moveToLocked(s, s.currentPos + direction * distance, s.moveMaxSpeed);
     }
 
@@ -232,7 +233,8 @@ namespace
             }
 
             s.currentSpeed = Stepper::nextRampSpeed(s.currentSpeed, distRemaining, s.cfg->acceleration,
-                                                    s.cfg->speedStart, maxSpeedOf(s));
+                                                    s.cfg->deceleration, s.cfg->speedStart, maxSpeedOf(s),
+                                                    s.speedRemainderMicro);
 
             armNext(s, 1000000 / s.currentSpeed);
             k_spin_unlock(&s.lock, key);
@@ -355,7 +357,8 @@ namespace Stepper
             return;
         }
         int32_t speed = moving != 0 ? s.currentSpeed : s.cfg->speedStart;
-        int64_t ahead = s.currentPos + direction * runAheadDistance(speed, s.cfg->acceleration, maxSpeedOf(s), horizonUs);
+        int64_t ahead = s.currentPos + direction * runAheadDistance(speed, s.cfg->acceleration, s.cfg->deceleration,
+                                                                    maxSpeedOf(s), horizonUs);
         bool alreadyFurther = moving != 0 && (direction > 0 ? s.targetPos >= ahead : s.targetPos <= ahead);
         if (!alreadyFurther) {
             moveToLocked(s, ahead, 0);

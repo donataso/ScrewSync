@@ -28,17 +28,20 @@ namespace Stepper
     // time to land on the target exactly. Above maxSpeed (lowered
     // mid-move) it decelerates down to it rather than jumping. The floor is
     // speedStart, or maxSpeed when that is lower. No Zephyr/hardware dependency,
-    // so it's host/native_sim testable on its own.
+    // so it's host/native_sim testable on its own. speedRemainderMicro is
+    // caller-kept state: the fraction of a step/s not yet applied.
     int32_t nextRampSpeed(int32_t currentSpeedStepsPerSec, int64_t distanceRemainingSteps,
-                          int32_t accelerationStepsPerSec2, int32_t speedStartStepsPerSec,
-                          int32_t maxSpeedStepsPerSec);
+                          int32_t accelerationStepsPerSec2, int32_t decelerationStepsPerSec2,
+                          int32_t speedStartStepsPerSec, int32_t maxSpeedStepsPerSec,
+                          int32_t &speedRemainderMicro);
 
-    int64_t stoppingDistance(int32_t speedStepsPerSec, int32_t accelerationStepsPerSec2);
+    int64_t stoppingDistance(int32_t speedStepsPerSec, int32_t decelerationStepsPerSec2);
 
     // Distance to keep ahead of the axis so it can keep accelerating for
     // horizonUs and still stop by the target if no further extension comes.
     int64_t runAheadDistance(int32_t speedStepsPerSec, int32_t accelerationStepsPerSec2,
-                             int32_t maxSpeedStepsPerSec, uint32_t horizonUs);
+                             int32_t decelerationStepsPerSec2, int32_t maxSpeedStepsPerSec,
+                             uint32_t horizonUs);
 }
 
 #endif

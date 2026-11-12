@@ -4,8 +4,15 @@ const HOLD_DELAY_TICKS = 3
 function jogPress(dir: text):
   jogDir.txt = dir
   jogTicks.val = 0
-  send("jog " + dir)
   tmJog.en = 1
+
+function jogRelease():
+  if (tmJog.en) {
+    tmJog.en = 0
+    if (jogTicks.val < HOLD_DELAY_TICKS) {
+      send("jog " + jogDir.txt)
+    }
+  }
 
 on zPlus.down:
   if (zOn.val) {
@@ -13,7 +20,7 @@ on zPlus.down:
   }
 
 on zPlus.up:
-  tmJog.en = 0
+  jogRelease()
 
 on zMinus.down:
   if (zOn.val) {
@@ -21,7 +28,7 @@ on zMinus.down:
   }
 
 on zMinus.up:
-  tmJog.en = 0
+  jogRelease()
 
 on xPlus.down:
   if (xOn.val) {
@@ -29,7 +36,7 @@ on xPlus.down:
   }
 
 on xPlus.up:
-  tmJog.en = 0
+  jogRelease()
 
 on xMinus.down:
   if (xOn.val) {
@@ -37,7 +44,7 @@ on xMinus.down:
   }
 
 on xMinus.up:
-  tmJog.en = 0
+  jogRelease()
 
 on tmJog.timer:
   jogTicks.val += 1

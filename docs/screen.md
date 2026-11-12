@@ -67,6 +67,8 @@
 ## Jog
 
 - Tap moves one step; hold moves continuously, accelerating, until release.
+- The tap is sent on release. A press longer than the hold delay sends
+  only hold commands, so the axis does not stop between tap and hold.
 - Hold is sent as repeated jog command lines from a page timer, each
   extending the target just past the stopping distance -- motion ends by
   itself if repeats stop (lost frame, display reset, cable), so no separate
