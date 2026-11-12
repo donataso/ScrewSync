@@ -85,6 +85,28 @@ display-ota:
 test:
 	$(MAIN_ZEPHYR_ENV) west build -b native_sim -d $(TEST_ZEPHYR_BUILD) $(TEST_ZEPHYR_APP) -t run
 
+CPP_SOURCES = $(shell find $(MAIN_ZEPHYR_APP) -name '*.cpp' -o -name '*.hpp')
+TIDY_DB := $(CURDIR)/.build/tidy-db
+
+format:
+	clang-format -i $(CPP_SOURCES)
+
+format-check:
+	clang-format --dry-run --Werror $(CPP_SOURCES)
+
+# Needs the compile databases of `make build` and `make test`. Clang cannot
+# parse all of the cross-compiled code, so its own diagnostics are dropped.
+tidy:
+	python3 scripts/gen_tidy_db.py $(MAIN_ZEPHYR_BUILD)/main $(TEST_ZEPHYR_BUILD) $(TIDY_DB)/compile_commands.json
+	find $(MAIN_ZEPHYR_APP) -name '*.cpp' | xargs -P$(shell nproc) -I{} clang-tidy -p $(TIDY_DB) --quiet {} 2>/dev/null \
+	| awk '/^[^[:space:]].*: (error|warning): .*\[.*\]$$/ { keep = ($$0 !~ /clang-diagnostic/); if (keep) found = 1 } keep { print } END { exit found }'
+
+web-lint:
+	python3 scripts/lint_web.py
+
+web-lint-fix:
+	python3 scripts/lint_web.py --fix
+
 clean:
 	rm -rf $(MAIN_ZEPHYR_BUILD) $(TEST_ZEPHYR_BUILD)
 

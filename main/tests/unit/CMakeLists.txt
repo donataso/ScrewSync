@@ -41,6 +41,8 @@ target_include_directories(app PRIVATE
     ${CMAKE_BINARY_DIR}/include
 )
 
+target_compile_options(app PRIVATE -Werror)
+
 # Gcode test vectors (tests/gcode/<flavor>/, shared with the web parser),
 # bundled into one embedded file with "=== <name>.<ext>" separators.
 set(GCODE_LATHECODE_DIR ${REPO_DIR}/tests/gcode/lathecode)

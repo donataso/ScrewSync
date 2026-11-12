@@ -118,6 +118,8 @@ target_include_directories(app PRIVATE
     ${ZEPHYR_BASE}/subsys/net/lib/websocket
 )
 
+target_compile_options(app PRIVATE -Werror)
+
 zephyr_linker_sources(SECTIONS sections-rom.ld)
 
 execute_process(
