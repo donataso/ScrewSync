@@ -15,7 +15,9 @@ export interface AxesHeader {
 // The header line, if the text has one; null if there's no header (no check).
 export function parseAxesHeader(text: string): AxesHeader | null {
   const m = HEADER_RE.exec(text)
-  if (!m) return null
+  if (!m) {
+return null
+}
   const nl = text.indexOf("\n", m.index)
   return {
     zDir: m[1].toLowerCase() as "left" | "right",
@@ -32,7 +34,9 @@ export function axesMismatched(header: AxesHeader): boolean {
 // Negates one word's numeric value, preserving its format otherwise: "0"
 // stays "0" (no sign added), "-0.1" -> "0.1", "20" -> "-20".
 function negateDigits(sign: string, digits: string): string {
-  if (/^0+(\.0+)?$/.test(digits)) return digits
+  if (/^0+(\.0+)?$/.test(digits)) {
+return digits
+}
   return sign === "-" ? digits : "-" + digits
 }
 
@@ -50,10 +54,14 @@ function negateAxisWordsInLine(line: string, letters: Set<string>): string {
       out += line.slice(i)
       break
     }
-    if (c === "(") inParen = true
+    if (c === "(") {
+inParen = true
+}
     if (inParen) {
       out += c
-      if (c === ")") inParen = false
+      if (c === ")") {
+inParen = false
+}
       i++
       continue
     }
@@ -72,7 +80,9 @@ function negateAxisWordsInLine(line: string, letters: Set<string>): string {
 }
 
 function negateAxisWords(text: string, letters: Set<string>): string {
-  if (letters.size === 0) return text
+  if (letters.size === 0) {
+return text
+}
   return text
     .split("\n")
     .map((line) => negateAxisWordsInLine(line, letters))
@@ -83,11 +93,17 @@ function negateAxisWords(text: string, letters: Set<string>): string {
 // words everywhere else. No-op if there's no header or it already matches.
 export function flipMismatchedAxes(text: string): string {
   const header = parseAxesHeader(text)
-  if (!header || !axesMismatched(header)) return text
+  if (!header || !axesMismatched(header)) {
+return text
+}
 
   const letters = new Set<string>()
-  if (header.zDir !== "right") letters.add("Z")
-  if (header.xDir !== "down") letters.add("X")
+  if (header.zDir !== "right") {
+letters.add("Z")
+}
+  if (header.xDir !== "down") {
+letters.add("X")
+}
 
   const before = text.slice(0, header.start)
   const headerLine = text

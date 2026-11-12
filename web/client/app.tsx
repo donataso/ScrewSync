@@ -24,11 +24,21 @@ const NAV = [
 ]
 
 function screenFor(path: string) {
-  if (path.startsWith("/threads")) return <ThreadsScreen />
-  if (path.startsWith("/gcode")) return <GcodeScreen />
-  if (path.startsWith("/network")) return <NetworkScreen />
-  if (path.startsWith("/device")) return <DeviceScreen />
-  if (path.startsWith("/appearance")) return <AppearanceScreen />
+  if (path.startsWith("/threads")) {
+return <ThreadsScreen />
+}
+  if (path.startsWith("/gcode")) {
+return <GcodeScreen />
+}
+  if (path.startsWith("/network")) {
+return <NetworkScreen />
+}
+  if (path.startsWith("/device")) {
+return <DeviceScreen />
+}
+  if (path.startsWith("/appearance")) {
+return <AppearanceScreen />
+}
   return <SettingsScreen />
 }
 

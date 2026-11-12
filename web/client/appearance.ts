@@ -15,10 +15,14 @@ interface AppearancePrefs {
 const DEFAULT_PREFS: AppearancePrefs = { theme: "system", timeFormat: "system" }
 
 function readPrefs(): AppearancePrefs {
-  if (typeof window === "undefined") return DEFAULT_PREFS
+  if (typeof window === "undefined") {
+return DEFAULT_PREFS
+}
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return DEFAULT_PREFS
+    if (!raw) {
+return DEFAULT_PREFS
+}
     const parsed = JSON.parse(raw)
     return { ...DEFAULT_PREFS, ...parsed }
   } catch {
@@ -76,7 +80,9 @@ export function useAppearanceState(): AppearanceContextValue {
 
 export function useAppearance(): AppearanceContextValue {
   const ctx = useContext(AppearanceContext)
-  if (!ctx) throw new Error("useAppearance must be used within AppearanceContext.Provider")
+  if (!ctx) {
+throw new Error("useAppearance must be used within AppearanceContext.Provider")
+}
   return ctx
 }
 

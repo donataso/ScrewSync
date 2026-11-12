@@ -249,18 +249,24 @@ export const MACHINE_CONFIG_FIELDS: MachineConfigField[] = MACHINE_CONFIG_SECTIO
 
 export function parseMachineConfig(data: unknown): Record<string, string> {
   const out: Record<string, string> = {}
-  for (const [key, value] of Object.entries((data ?? {}) as Record<string, unknown>)) out[key] = String(value)
+  for (const [key, value] of Object.entries((data ?? {}) as Record<string, unknown>)) {
+out[key] = String(value)
+}
   return out
 }
 
 export function toDisplayValue(field: MachineConfigField, raw: string | undefined): number | boolean {
-  if (field.type === "checkbox") return raw === "true" || raw === "1"
+  if (field.type === "checkbox") {
+return raw === "true" || raw === "1"
+}
   const n = Number(raw ?? 0)
   return field.scale ? n / field.scale : n
 }
 
 export function toRawValue(field: MachineConfigField, display: number | boolean): string {
-  if (field.type === "checkbox") return display ? "1" : "0"
+  if (field.type === "checkbox") {
+return display ? "1" : "0"
+}
   const n = display as number
   return String(field.scale ? Math.round(n * field.scale) : n)
 }

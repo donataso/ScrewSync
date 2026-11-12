@@ -40,14 +40,18 @@ interface ParseResult {
 
 function parseGcode(text: string, flavorId: string): ParseResult {
   const flavor = find(flavorId)
-  if (!flavor) return { steps: [], error: { line: 0, message: "unknown flavor" } }
+  if (!flavor) {
+return { steps: [], error: { line: 0, message: "unknown flavor" } }
+}
   flavor.begin(0, 0)
   const steps: Step[] = []
   const sink: StepSink = { emit: (s) => steps.push(s) }
   const lines = text.split("\n")
   for (let i = 0; i < lines.length; i++) {
     const err = interpretLine(flavor, lines[i], i + 1, sink)
-    if (err) return { steps, error: { line: i + 1, message: err } }
+    if (err) {
+return { steps, error: { line: i + 1, message: err } }
+}
   }
   return { steps, error: null }
 }
@@ -115,7 +119,9 @@ export function GcodeScreen() {
       setListResult(r)
       if (openActive && r.active?.id) {
         const activeText = await fetchGcodeActiveText()
-        if (activeText !== null) openProgram(activeText, r.active.name, r.active.flavor, r.active.id)
+        if (activeText !== null) {
+openProgram(activeText, r.active.name, r.active.flavor, r.active.id)
+}
       }
       return r
     } catch (e) {
@@ -129,7 +135,9 @@ export function GcodeScreen() {
   // Initial load: the active program, unless the URL names a saved one
   // (a refresh), in which case the URL effect below opens that instead.
   useEffect(() => {
-    if (!idFromPath(path)) load(true)
+    if (!idFromPath(path)) {
+load(true)
+}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -153,13 +161,17 @@ export function GcodeScreen() {
       }
       return
     }
-    if (id === openedId) return
+    if (id === openedId) {
+return
+}
     setBusy(true)
     ;(async () => {
       try {
         const programText = await fetchGcodeProgramText(id)
         const listRes = listResult ?? (await fetchGcodeList())
-        if (!listResult) setListResult(listRes)
+        if (!listResult) {
+setListResult(listRes)
+}
         const info = listRes.programs.find((p) => p.id === id)
         openProgram(programText, info?.name ?? "", info?.flavor ?? flavorId, id)
       } catch (e) {
@@ -172,47 +184,71 @@ export function GcodeScreen() {
   }, [path])
 
   useEffect(() => {
-    if (!text || flavorTouched) return
+    if (!text || flavorTouched) {
+return
+}
     const detected = detectFlavor(text)
-    if (detected) setFlavorId(detected)
+    if (detected) {
+setFlavorId(detected)
+}
   }, [text, flavorTouched])
 
   useEffect(() => {
-    if (nameTouched) return
-    if (sourceMode === "file" && file) setName(stripExtension(file.name))
-    else if (sourceMode === "paste") setName(timestampName())
+    if (nameTouched) {
+return
+}
+    if (sourceMode === "file" && file) {
+setName(stripExtension(file.name))
+} else if (sourceMode === "paste") {
+setName(timestampName())
+}
   }, [sourceMode, file, nameTouched])
 
   useEffect(() => {
-    if (text) renderPreview(text, flavorId)
+    if (text) {
+renderPreview(text, flavorId)
+}
   }, [text, flavorId])
 
   function renderPreview(sourceText: string, forFlavorId: string) {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) {
+return
+}
     const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    if (!ctx) {
+return
+}
     const { steps } = parseGcode(sourceText, forFlavorId)
     drawPreview(ctx, forFlavorId === "lathecode" ? markLathecodeTravel(sourceText, steps) : steps)
   }
 
   async function sendPreviewToDisplay() {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) {
+return
+}
     const blob = await canvasToJpeg(canvas)
     if (!blob) {
       toast.push("Preview image too large for the display, even at low quality.", "warn")
       return
     }
-    if (!extents) return
+    if (!extents) {
+return
+}
     const result = await uploadDisplayPreview(blob, extents)
-    if (!result.ok) toast.push(`Display preview not sent: ${result.message}`, "warn")
+    if (!result.ok) {
+toast.push(`Display preview not sent: ${result.message}`, "warn")
+}
   }
 
   function fixAxes() {
     const fixed = flipMismatchedAxes(text)
-    if (sourceMode === "file") setFileText(fixed)
-    else setPasteText(fixed)
+    if (sourceMode === "file") {
+setFileText(fixed)
+} else {
+setPasteText(fixed)
+}
   }
 
   function onPickFile(f: File | null) {
@@ -230,7 +266,9 @@ export function GcodeScreen() {
   }
 
   async function save() {
-    if (!text || parsed.error || !name.trim()) return
+    if (!text || parsed.error || !name.trim()) {
+return
+}
     setBusy(true)
     try {
       const trimmedName = name.trim()
@@ -252,7 +290,9 @@ export function GcodeScreen() {
       setSavedFlavor(flavorId)
       setName(trimmedName)
       setOpenedId(result.id)
-      if (result.id) navigate(`${ROUTE}/${encodeURIComponent(result.id)}`)
+      if (result.id) {
+navigate(`${ROUTE}/${encodeURIComponent(result.id)}`)
+}
       await load()
     } catch (e) {
       toast.push(`Save failed: ${(e as Error).message}`, "bad")
@@ -263,7 +303,9 @@ export function GcodeScreen() {
 
   // Makes the form's program the one the lathe runs, and shows it on the display.
   async function runOnLathe() {
-    if (!text || parsed.error || !name.trim()) return
+    if (!text || parsed.error || !name.trim()) {
+return
+}
     setBusy(true)
     try {
       const unchangedSaved = openedId !== null && !changed
@@ -277,8 +319,11 @@ export function GcodeScreen() {
       renderPreview(text, flavorId)
       await sendPreviewToDisplay()
       const outcome = await sendCommand(cmd.mode("gcode"))
-      if (outcome.status === "denied") toast.push(`Display not switched to Gcode mode: ${outcome.msg}`, "warn")
-      else toast.push("Loaded on the lathe.", "good")
+      if (outcome.status === "denied") {
+toast.push(`Display not switched to Gcode mode: ${outcome.msg}`, "warn")
+} else {
+toast.push("Loaded on the lathe.", "good")
+}
       await load()
     } catch (e) {
       toast.push(`Load failed: ${(e as Error).message}`, "bad")
@@ -301,14 +346,18 @@ export function GcodeScreen() {
   }
 
   async function deleteProgram(p: GcodeProgramInfo) {
-    if (!window.confirm(`Delete saved program "${p.name}"?`)) return
+    if (!window.confirm(`Delete saved program "${p.name}"?`)) {
+return
+}
     setBusy(true)
     try {
       const result = await deleteGcode(p.id)
       if (result.ok) {
         toast.push("Deleted.", "good")
         setOpenedId(null)
-        if (p.id === openedId) navigate(ROUTE)
+        if (p.id === openedId) {
+navigate(ROUTE)
+}
         await load()
       } else {
         toast.push(`Delete rejected: ${result.message}`, "bad")

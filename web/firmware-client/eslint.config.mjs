@@ -14,6 +14,8 @@ export default tseslint.config(
     rules: {
       curly: ["error", "all"],
       "@stylistic/brace-style": ["error", "1tbs", { allowSingleLine: false }],
+      "no-empty": ["error", { allowEmptyCatch: true }],
+      "@typescript-eslint/no-unused-vars": ["error", { ignoreRestSiblings: true }],
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "error",
     },

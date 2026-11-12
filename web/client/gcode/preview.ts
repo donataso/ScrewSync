@@ -46,7 +46,9 @@ export function computeMapping(steps: Step[]): Mapping {
   let xMin = 0
   let xMax = 0
   for (const s of steps) {
-    if (s.kind !== "rapid" && s.kind !== "feed" && s.kind !== "thread") continue
+    if (s.kind !== "rapid" && s.kind !== "feed" && s.kind !== "thread") {
+continue
+}
     const zMm = duToMm(s.zDu)
     const xMm = duToMm(s.xDu)
     zMin = Math.min(zMin, zMm)
@@ -110,7 +112,9 @@ export function drawPreview(ctx: CanvasRenderingContext2D, steps: Step[]): Mappi
   let zMm = 0
   let xMm = 0
   for (const s of steps) {
-    if (s.kind !== "rapid" && s.kind !== "feed" && s.kind !== "thread") continue
+    if (s.kind !== "rapid" && s.kind !== "feed" && s.kind !== "thread") {
+continue
+}
     const nextZMm = duToMm(s.zDu)
     const nextXMm = duToMm(s.xDu)
     const [x0, y0] = toPx(zMm, xMm)
@@ -154,7 +158,9 @@ export async function canvasToJpeg(canvas: HTMLCanvasElement, maxBytes = 64 * 10
   const qualities = [0.85, 0.7, 0.6, 0.5]
   for (const quality of qualities) {
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality))
-    if (blob && blob.size <= maxBytes) return blob
+    if (blob && blob.size <= maxBytes) {
+return blob
+}
   }
   return null
 }

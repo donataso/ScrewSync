@@ -73,18 +73,23 @@ export function ThreadsScreen() {
 
   useEffect(() => {
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const selName = groups?.[sel]?.name
   useEffect(() => {
-    if (selName !== undefined) window.history.replaceState(null, "", `#${ROUTE}/${encodeURIComponent(selName)}`)
+    if (selName !== undefined) {
+window.history.replaceState(null, "", `#${ROUTE}/${encodeURIComponent(selName)}`)
+}
   }, [selName])
 
   const dirty = groups !== null && JSON.stringify(toJson(groups)) !== saved
   const valid = groups !== null && tableValid(groups)
 
   async function save() {
-    if (!groups) return
+    if (!groups) {
+return
+}
     setBusy(true)
     try {
       const json = toJson(groups)
@@ -101,7 +106,9 @@ export function ThreadsScreen() {
   }
 
   async function reset() {
-    if (!window.confirm("Replace the whole thread table with the built-in defaults?")) return
+    if (!window.confirm("Replace the whole thread table with the built-in defaults?")) {
+return
+}
     setBusy(true)
     try {
       const r = await sendCommand("threads reset")
@@ -156,7 +163,9 @@ export function ThreadsScreen() {
   }
 
   function addGroup() {
-    if (!groups) return
+    if (!groups) {
+return
+}
     const g: ThreadGroup = {
       name: newGroupName(groups),
       depthExternal: NEW_GROUP_DEPTH_EXTERNAL,
@@ -170,21 +179,30 @@ export function ThreadsScreen() {
   }
 
   function deleteGroup() {
-    if (!groups) return
+    if (!groups) {
+return
+}
     const threads = group.entries.length ? ` and its ${group.entries.length} threads` : ""
-    if (!window.confirm(`Delete group "${group.name}"${threads}?`)) return
+    if (!window.confirm(`Delete group "${group.name}"${threads}?`)) {
+return
+}
     setGroups(groups.filter((_, i) => i !== sel))
     setSel(Math.max(sel - 1, 0))
   }
 
   function finishEdit(entry: ThreadEntry) {
-    if (editing === "new") setEntries([...group.entries, entry])
-    else if (editing !== null) setEntries(group.entries.map((e, i) => (i === editing ? entry : e)))
+    if (editing === "new") {
+setEntries([...group.entries, entry])
+} else if (editing !== null) {
+setEntries(group.entries.map((e, i) => (i === editing ? entry : e)))
+}
     setEditing(null)
   }
 
   function deleteEntry() {
-    if (typeof editing === "number") setEntries(group.entries.filter((_, i) => i !== editing))
+    if (typeof editing === "number") {
+setEntries(group.entries.filter((_, i) => i !== editing))
+}
     setEditing(null)
   }
 
@@ -275,7 +293,9 @@ function ThreadList({
   const [dragIndex, setDragIndex] = useState<number | null>(null)
 
   function onPointerMove(e: React.PointerEvent) {
-    if (dragIndex === null || !listRef.current) return
+    if (dragIndex === null || !listRef.current) {
+return
+}
     const rows = Array.from(listRef.current.children)
     let target = rows.length - 1
     for (let i = 0; i < rows.length; i++) {
@@ -285,7 +305,9 @@ function ThreadList({
         break
       }
     }
-    if (target === dragIndex) return
+    if (target === dragIndex) {
+return
+}
     const next = [...entries]
     const [moved] = next.splice(dragIndex, 1)
     next.splice(target, 0, moved)
@@ -388,24 +410,38 @@ function ThreadEditor({
 
   // Converts every dimension field; unparsable text is left as typed.
   function switchUnits(next: Units) {
-    if (next === edUnits) return
+    if (next === edUnits) {
+return
+}
     const convert = (text: string, set: (t: string) => void) => {
       const du = parseLength(text, edUnits)
-      if (Number.isFinite(du)) set(formatLength(du, next))
+      if (Number.isFinite(du)) {
+set(formatLength(du, next))
+}
     }
     convert(major, setMajor)
     convert(depthExt, setDepthExt)
     convert(depthInt, setDepthInt)
-    if (pitchOk) setPitch(formatPitch(pitchDu, next))
+    if (pitchOk) {
+setPitch(formatPitch(pitchDu, next))
+}
     setEdUnits(next)
   }
 
   function depthError(text: string): string | undefined {
-    if (text.trim() === "") return undefined
+    if (text.trim() === "") {
+return undefined
+}
     const du = parseLength(text, edUnits)
-    if (Number.isNaN(du)) return "Not a number"
-    if (!(du > 0)) return "Must be above 0"
-    if (pitchOk && du >= 2 * pitchDu) return `Must be under ${formatLength(2 * pitchDu, edUnits)} ${unit}`
+    if (Number.isNaN(du)) {
+return "Not a number"
+}
+    if (!(du > 0)) {
+return "Must be above 0"
+}
+    if (pitchOk && du >= 2 * pitchDu) {
+return `Must be under ${formatLength(2 * pitchDu, edUnits)} ${unit}`
+}
     return undefined
   }
 

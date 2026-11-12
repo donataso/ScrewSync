@@ -48,11 +48,15 @@ let pending: { expectedType: string; resolve: (o: CmdOutcome) => void; timer: Re
 const listeners = new Set<Listener>()
 
 function notifyConnected(connected: boolean, error: string | null) {
-  for (const l of listeners) l.onConnected?.(connected, error)
+  for (const l of listeners) {
+l.onConnected?.(connected, error)
+}
 }
 
 function resolvePending(outcome: CmdOutcome) {
-  if (!pending) return
+  if (!pending) {
+return
+}
   clearTimeout(pending.timer)
   pending.resolve(outcome)
   pending = null
@@ -63,9 +67,15 @@ function resolvePending(outcome: CmdOutcome) {
 // on the push type this command's domain actually changes.
 function expectedReplyType(line: string): string {
   const verb = line.split(" ", 1)[0]
-  if (verb === "settings") return "settings"
-  if (verb === "display") return "display"
-  if (verb === "wifi") return line.startsWith("wifi scan") ? "scan" : "wifi"
+  if (verb === "settings") {
+return "settings"
+}
+  if (verb === "display") {
+return "display"
+}
+  if (verb === "wifi") {
+return line.startsWith("wifi scan") ? "scan" : "wifi"
+}
   return "status"
 }
 
@@ -92,7 +102,9 @@ function connect() {
     notifyConnected(true, null)
     lastRecvMs = Date.now()
     staleTimer = setInterval(() => {
-      if (Date.now() - lastRecvMs > STALE_MS) ws.close()
+      if (Date.now() - lastRecvMs > STALE_MS) {
+ws.close()
+}
     }, STALE_MS)
   }
 
@@ -119,22 +131,32 @@ function connect() {
 
     if (msg.type === "status") {
       const { type, ...status } = msg
-      for (const l of listeners) l.onStatus?.(status as StatusPush)
+      for (const l of listeners) {
+l.onStatus?.(status as StatusPush)
+}
     } else if (msg.type === "scan") {
       const { type, ...scan } = msg
-      for (const l of listeners) l.onScan?.(scan as ScanResult)
+      for (const l of listeners) {
+l.onScan?.(scan as ScanResult)
+}
     } else if (msg.type === "wifi") {
       const { type, ...wifi } = msg
-      for (const l of listeners) l.onWifi?.(wifi as WifiPush)
+      for (const l of listeners) {
+l.onWifi?.(wifi as WifiPush)
+}
     }
   }
 
   ws.onclose = (ev) => {
-    if (staleTimer) clearInterval(staleTimer)
+    if (staleTimer) {
+clearInterval(staleTimer)
+}
     resolvePending({ status: "unconfirmed" })
     const full = ev.code === SERVER_FULL_CLOSE_CODE
     notifyConnected(false, full ? "Server has reached its client limit." : null)
-    if (full) reconnectDelay = Math.max(reconnectDelay, FULL_RETRY_MS)
+    if (full) {
+reconnectDelay = Math.max(reconnectDelay, FULL_RETRY_MS)
+}
     scheduleReconnect()
   }
 
@@ -142,22 +164,32 @@ function connect() {
 }
 
 function scheduleReconnect() {
-  if (uploading) return // suspended entirely -- nothing to connect to mid-upload
-  if (reconnectTimer) return
+  if (uploading) {
+return
+} // suspended entirely -- nothing to connect to mid-upload
+  if (reconnectTimer) {
+return
+}
   const delay = reloadOnReconnect ? FLASHING_RETRY_MS : reconnectDelay
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null
     connect()
   }, delay)
-  if (!reloadOnReconnect) reconnectDelay = Math.min(reconnectDelay * 2, RECONNECT_MAX_MS)
+  if (!reloadOnReconnect) {
+reconnectDelay = Math.min(reconnectDelay * 2, RECONNECT_MAX_MS)
+}
 }
 
 function sendRaw(line: string) {
-  if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "cmd", line }))
+  if (socket?.readyState === WebSocket.OPEN) {
+socket.send(JSON.stringify({ type: "cmd", line }))
+}
 }
 
 export function wsConnect() {
-  if (!socket) connect()
+  if (!socket) {
+connect()
+}
 }
 
 // Call when a firmware upload starts/ends: suspends reconnect attempts

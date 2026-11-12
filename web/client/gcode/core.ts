@@ -42,7 +42,9 @@ function isSpace(c: string): boolean {
 // Returns null if there are no digits at the given position.
 function parseNumber(s: string, pos: number): { value: number; end: number } | null {
   let p = pos
-  while (p < s.length && isSpace(s[p])) p++
+  while (p < s.length && isSpace(s[p])) {
+p++
+}
 
   let negative = false
   if (s[p] === "+" || s[p] === "-") {
@@ -70,10 +72,14 @@ function parseNumber(s: string, pos: number): { value: number; end: number } | n
     }
   }
 
-  if (!anyDigits) return null
+  if (!anyDigits) {
+return null
+}
 
   let value = intPart + fracPart / fracScale
-  if (negative) value = -value
+  if (negative) {
+value = -value
+}
   return { value, end: p }
 }
 
@@ -85,7 +91,9 @@ export function tokenize(text: string): { error: string | null; words: Word[] } 
   let inComment = false
   for (let i = 0; i < text.length; i++) {
     const c = text[i]
-    if (c === ";") break
+    if (c === ";") {
+break
+}
     if (c === "(") {
       inComment = true
       continue
@@ -94,7 +102,9 @@ export function tokenize(text: string): { error: string | null; words: Word[] } 
       inComment = false
       continue
     }
-    if (inComment) continue
+    if (inComment) {
+continue
+}
     if (buf.length + 1 >= MAX_LINE_LEN) {
       return { error: "line too long", words: [] }
     }
@@ -102,13 +112,17 @@ export function tokenize(text: string): { error: string | null; words: Word[] } 
   }
 
   let i = 0
-  while (i < buf.length && isSpace(buf[i])) i++
+  while (i < buf.length && isSpace(buf[i])) {
+i++
+}
   if (i >= buf.length) {
     return { error: null, words: [] }
   }
   if (buf[i] === "%") {
     let k = i + 1
-    while (k < buf.length && isSpace(buf[k])) k++
+    while (k < buf.length && isSpace(buf[k])) {
+k++
+}
     if (k >= buf.length) {
       return { error: null, words: [] }
     }
@@ -116,8 +130,12 @@ export function tokenize(text: string): { error: string | null; words: Word[] } 
 
   const words: Word[] = []
   while (i < buf.length) {
-    while (i < buf.length && isSpace(buf[i])) i++
-    if (i >= buf.length) break
+    while (i < buf.length && isSpace(buf[i])) {
+i++
+}
+    if (i >= buf.length) {
+break
+}
 
     let letter = buf[i]
     if (letter >= "a" && letter <= "z") {
@@ -134,7 +152,9 @@ export function tokenize(text: string): { error: string | null; words: Word[] } 
     }
     i = num.end
 
-    if (letter === "N") continue
+    if (letter === "N") {
+continue
+}
     if (words.length >= MAX_WORDS) {
       return { error: "too many words", words: [] }
     }
@@ -145,7 +165,11 @@ export function tokenize(text: string): { error: string | null; words: Word[] } 
 
 export function interpretLine(flavor: Flavor, text: string, lineNo: number, sink: StepSink): string | null {
   const { error, words } = tokenize(text)
-  if (error) return error
-  if (words.length === 0) return null
+  if (error) {
+return error
+}
+  if (words.length === 0) {
+return null
+}
   return flavor.line(words, lineNo, sink)
 }

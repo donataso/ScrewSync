@@ -10,7 +10,9 @@ interface RouterContextValue {
 const RouterContext = createContext<RouterContextValue | null>(null)
 
 function currentPath(): string {
-  if (typeof window === "undefined") return "/"
+  if (typeof window === "undefined") {
+return "/"
+}
   const hash = window.location.hash.slice(1)
   return hash ? (hash.startsWith("/") ? hash : "/" + hash) : "/"
 }
@@ -26,7 +28,9 @@ export function RouterProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const navigate = useCallback((to: string) => {
-    if (to === currentPath()) return
+    if (to === currentPath()) {
+return
+}
     window.location.hash = to
     setPath(to)
   }, [])
@@ -36,6 +40,8 @@ export function RouterProvider({ children }: { children: React.ReactNode }) {
 
 export function useRouter(): RouterContextValue {
   const ctx = useContext(RouterContext)
-  if (!ctx) throw new Error("useRouter must be used within RouterProvider")
+  if (!ctx) {
+throw new Error("useRouter must be used within RouterProvider")
+}
   return ctx
 }

@@ -76,10 +76,18 @@ export function fromJson(json: ThreadTableJson): ThreadGroup[] {
   }
   for (const o of json.overrides ?? []) {
     const e = byName.get(o.group)?.entries.find((x) => x.designation === o.designation)
-    if (!e) continue
-    if (o.depthExternalDu) e.depthExternalDu = o.depthExternalDu
-    if (o.depthInternalDu) e.depthInternalDu = o.depthInternalDu
-    if (o.hasTaper) e.taper = o.taper
+    if (!e) {
+continue
+}
+    if (o.depthExternalDu) {
+e.depthExternalDu = o.depthExternalDu
+}
+    if (o.depthInternalDu) {
+e.depthInternalDu = o.depthInternalDu
+}
+    if (o.hasTaper) {
+e.taper = o.taper
+}
   }
   return groups
 }
@@ -132,7 +140,9 @@ export function formatLength(du: number, units: Units): string {
 }
 
 export function parseLength(text: string, units: Units): number {
-  if (text.trim() === "") return NaN
+  if (text.trim() === "") {
+return NaN
+}
   return Math.round(Number(text) * (units === "inch" ? DU_PER_INCH : DU_PER_MM))
 }
 
@@ -146,31 +156,53 @@ export function parseTpi(text: string): number {
 }
 
 export function nameError(name: string, taken: string[], what: string, maxLen: number): string | undefined {
-  if (!name) return `${what} is empty`
-  if (name.length > maxLen) return `At most ${maxLen} characters`
-  if (/[ ,]/.test(name)) return "No spaces or commas"
-  if (taken.includes(name)) return `${what} already exists`
+  if (!name) {
+return `${what} is empty`
+}
+  if (name.length > maxLen) {
+return `At most ${maxLen} characters`
+}
+  if (/[ ,]/.test(name)) {
+return "No spaces or commas"
+}
+  if (taken.includes(name)) {
+return `${what} already exists`
+}
   return undefined
 }
 
 export function factorError(text: string): string | undefined {
   const v = Number(text)
-  if (text.trim() === "" || Number.isNaN(v)) return "Not a number"
-  if (!(v > 0 && v < MAX_DEPTH_FACTOR)) return `Must be between 0 and ${MAX_DEPTH_FACTOR}`
+  if (text.trim() === "" || Number.isNaN(v)) {
+return "Not a number"
+}
+  if (!(v > 0 && v < MAX_DEPTH_FACTOR)) {
+return `Must be between 0 and ${MAX_DEPTH_FACTOR}`
+}
   return undefined
 }
 
 export function flankAngleError(text: string): string | undefined {
   const v = Number(text)
-  if (text.trim() === "" || Number.isNaN(v)) return "Not a number"
-  if (!(v > 0 && v < MAX_FLANK_ANGLE)) return `Must be between 0 and ${MAX_FLANK_ANGLE}°`
+  if (text.trim() === "" || Number.isNaN(v)) {
+return "Not a number"
+}
+  if (!(v > 0 && v < MAX_FLANK_ANGLE)) {
+return `Must be between 0 and ${MAX_FLANK_ANGLE}°`
+}
   return undefined
 }
 
 export function taperError(ratio: number | undefined): string | undefined {
-  if (ratio === undefined) return undefined
-  if (Number.isNaN(ratio)) return "Not a number"
-  if (!(Math.abs(ratio) < MAX_TAPER)) return `Must be under ${trim(ratioToDegrees(MAX_TAPER), 2)}° (1:${MAX_TAPER})`
+  if (ratio === undefined) {
+return undefined
+}
+  if (Number.isNaN(ratio)) {
+return "Not a number"
+}
+  if (!(Math.abs(ratio) < MAX_TAPER)) {
+return `Must be under ${trim(ratioToDegrees(MAX_TAPER), 2)}° (1:${MAX_TAPER})`
+}
   return undefined
 }
 
@@ -214,6 +246,8 @@ export function newGroupName(groups: ThreadGroup[]): string {
   const names = groups.map((g) => g.name)
   for (let i = 1; ; i++) {
     const name = i === 1 ? "new" : `new${i}`
-    if (!names.includes(name)) return name
+    if (!names.includes(name)) {
+return name
+}
   }
 }

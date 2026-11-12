@@ -8,7 +8,9 @@ export async function sendCommand(line: string): Promise<CmdOutcome> {
 
 export async function fetchDeviceLog(): Promise<string[]> {
   const res = await fetch("/log")
-  if (!res.ok) throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
+  if (!res.ok) {
+throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
+}
   return res.json()
 }
 
@@ -28,15 +30,20 @@ export async function uploadFirmware(
     // Raw body, not FormData/multipart -- firmware's /update handler writes
     // the POST body straight into flash as the image, same as `curl --data-binary`.
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100))
+      if (e.lengthComputable && onProgress) {
+onProgress(Math.round((e.loaded / e.total) * 100))
+}
     }
     xhr.onload = () => {
       const ok = xhr.status >= 200 && xhr.status < 300
       // Only now do we know the device is actually rebooting -- arms the
       // reload-on-reconnect. A rejected/failed upload just goes back to
       // normal reconnect behavior, nothing to wait for.
-      if (ok) wsNotifyFlashed()
-      else wsNotifyFlashing(false)
+      if (ok) {
+wsNotifyFlashed()
+} else {
+wsNotifyFlashing(false)
+}
       resolve({ ok, message: xhr.responseText })
     }
     xhr.onerror = () => {
@@ -58,7 +65,9 @@ export async function uploadDisplay(
   return new Promise((resolve) => {
     const xhr = new XMLHttpRequest()
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100))
+      if (e.lengthComputable && onProgress) {
+onProgress(Math.round((e.loaded / e.total) * 100))
+}
     }
     const done = (ok: boolean, message: string) => {
       wsNotifyFlashing(false)
@@ -69,14 +78,18 @@ export async function uploadDisplay(
     wsNotifyFlashing(true)
     xhr.open("POST", "/update-display")
     xhr.setRequestHeader("Content-Type", "application/octet-stream")
-    if (store) xhr.setRequestHeader("X-Display-Store", "1")
+    if (store) {
+xhr.setRequestHeader("X-Display-Store", "1")
+}
     xhr.send(file)
   })
 }
 
 export async function downloadBackup(): Promise<Blob> {
   const res = await fetch("/backup")
-  if (!res.ok) throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
+  if (!res.ok) {
+throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
+}
   return res.blob()
 }
 
@@ -88,7 +101,9 @@ export async function uploadBackup(file: File): Promise<{ ok: boolean; message: 
 
 export async function fetchThreads(): Promise<ThreadTableJson> {
   const res = await fetch("/threads")
-  if (!res.ok) throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
+  if (!res.ok) {
+throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
+}
   return res.json()
 }
 

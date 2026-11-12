@@ -39,7 +39,9 @@ export function DeviceScreen() {
 
   async function loadDisplayInfo() {
     const outcome = await sendCommand(cmd.displayInfo())
-    if (outcome.status === "ok") setStoredDisplay(parseDisplayInfo(String((outcome.data as { msg?: string })?.msg ?? "")))
+    if (outcome.status === "ok") {
+setStoredDisplay(parseDisplayInfo(String((outcome.data as { msg?: string })?.msg ?? "")))
+}
   }
 
   useEffect(() => {
@@ -47,29 +49,41 @@ export function DeviceScreen() {
   }, [])
 
   async function uploadDisplayFile() {
-    if (!displayFile) return
+    if (!displayFile) {
+return
+}
     setBusy(true)
     setDisplayProgress(0)
     try {
       const result = await uploadDisplay(displayFile, displayStore, setDisplayProgress)
-      if (result.ok) toast.push(`Display flashed: ${result.message}`, "good")
-      else toast.push(`Display update failed: ${result.message}`, "bad")
+      if (result.ok) {
+toast.push(`Display flashed: ${result.message}`, "good")
+} else {
+toast.push(`Display update failed: ${result.message}`, "bad")
+}
     } finally {
       setBusy(false)
       setDisplayProgress(null)
       setDisplayFile(null)
-      if (displayInputRef.current) displayInputRef.current.value = ""
+      if (displayInputRef.current) {
+displayInputRef.current.value = ""
+}
     }
     loadDisplayInfo()
   }
 
   async function flashStoredDisplay() {
-    if (!confirm("Flash the stored display firmware to the display now?")) return
+    if (!confirm("Flash the stored display firmware to the display now?")) {
+return
+}
     setBusy(true)
     try {
       const outcome = await sendCommand(cmd.displayFlash())
-      if (outcome.status === "ok") toast.push("Flashing the display from the stored image.", "info")
-      else toast.push(outcome.status === "denied" ? `Denied: ${outcome.msg}` : "No reply from device.", "bad")
+      if (outcome.status === "ok") {
+toast.push("Flashing the display from the stored image.", "info")
+} else {
+toast.push(outcome.status === "denied" ? `Denied: ${outcome.msg}` : "No reply from device.", "bad")
+}
     } finally {
       setBusy(false)
     }
@@ -92,36 +106,49 @@ export function DeviceScreen() {
   }
 
   async function importDeviceBackup() {
-    if (!deviceBackupFile) return
+    if (!deviceBackupFile) {
+return
+}
     setBusy(true)
     try {
       const result = await uploadBackup(deviceBackupFile)
       if (result.ok) {
         toast.push("Imported.", "good")
         await sendCommand("settings get")
-      } else toast.push(`Import rejected: ${result.message}`, "bad")
+      } else {
+toast.push(`Import rejected: ${result.message}`, "bad")
+}
     } catch (e) {
       toast.push(`Import failed: ${e instanceof Error ? e.message : String(e)}`, "bad")
     } finally {
       setBusy(false)
       setDeviceBackupFile(null)
-      if (deviceBackupInputRef.current) deviceBackupInputRef.current.value = ""
+      if (deviceBackupInputRef.current) {
+deviceBackupInputRef.current.value = ""
+}
     }
   }
 
   async function uploadFirmwareFile() {
-    if (!firmwareFile) return
+    if (!firmwareFile) {
+return
+}
     setBusy(true)
     setProgress(0)
     try {
       const result = await uploadFirmware(firmwareFile, setProgress)
-      if (result.ok) toast.push("Update accepted - device is rebooting. Do not close this tab or power off for about 10 seconds.", "good")
-      else toast.push(`Update rejected: ${result.message}`, "bad")
+      if (result.ok) {
+toast.push("Update accepted - device is rebooting. Do not close this tab or power off for about 10 seconds.", "good")
+} else {
+toast.push(`Update rejected: ${result.message}`, "bad")
+}
     } finally {
       setBusy(false)
       setProgress(null)
       setFirmwareFile(null)
-      if (firmwareInputRef.current) firmwareInputRef.current.value = ""
+      if (firmwareInputRef.current) {
+firmwareInputRef.current.value = ""
+}
     }
   }
 
@@ -130,8 +157,11 @@ export function DeviceScreen() {
     try {
       const lines = await fetchDeviceLog()
       setLogLines(lines)
-      if (!lines.length) toast.push("Log is empty.", "info")
-      else toast.push(`Fetched ${lines.length} line(s).`, "good")
+      if (!lines.length) {
+toast.push("Log is empty.", "info")
+} else {
+toast.push(`Fetched ${lines.length} line(s).`, "good")
+}
     } catch (e) {
       toast.push(`Fetch failed: ${e instanceof Error ? e.message : String(e)}`, "bad")
     } finally {
@@ -140,12 +170,17 @@ export function DeviceScreen() {
   }
 
   async function reboot() {
-    if (!confirm("Reboot the device now?")) return
+    if (!confirm("Reboot the device now?")) {
+return
+}
     setBusy(true)
     try {
       const outcome = await sendCommand(cmd.reboot())
-      if (outcome.status === "denied") toast.push(`Denied: ${outcome.msg || "rejected by device"}`, "bad")
-      else toast.push("Reboot requested.", "info")
+      if (outcome.status === "denied") {
+toast.push(`Denied: ${outcome.msg || "rejected by device"}`, "bad")
+} else {
+toast.push("Reboot requested.", "info")
+}
     } finally {
       setBusy(false)
     }

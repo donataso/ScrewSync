@@ -34,14 +34,18 @@ export function StateProvider({ children }: { children: React.ReactNode }) {
 
 export function useDeviceState(): StateContextValue {
   const ctx = useContext(StateContext)
-  if (!ctx) throw new Error("useDeviceState must be used within StateProvider")
+  if (!ctx) {
+throw new Error("useDeviceState must be used within StateProvider")
+}
   return ctx
 }
 
 // Mirrors the firmware's refuseUnlessIdle(): Idle state and no mode running.
 export function useCanConfigure(): boolean {
   const ctx = useContext(StateContext)
-  if (!ctx) throw new Error("useCanConfigure must be used within StateProvider")
+  if (!ctx) {
+throw new Error("useCanConfigure must be used within StateProvider")
+}
   return ctx.state !== null && ctx.state.state === "idle" && !ctx.state.running
 }
 

@@ -29,7 +29,9 @@ function parseSteps(text: string): Expectation[] {
   const out: Expectation[] = []
   for (const raw of text.split("\n")) {
     const line = raw.trim()
-    if (!line || line.startsWith("#")) continue
+    if (!line || line.startsWith("#")) {
+continue
+}
     const toks = line.split(/\s+/)
     const lineNo = parseInt(toks[0], 10)
     if (toks[1] === "error") {
@@ -39,9 +41,13 @@ function parseSteps(text: string): Expectation[] {
     const kind = toks[1] as StepKind
     const e: Expectation = { line: lineNo, isError: false, kind }
     for (const tok of toks.slice(2)) {
-      if (tok.startsWith("z=")) e.zDu = parseInt(tok.slice(2), 10)
-      else if (tok.startsWith("x=")) e.xDu = parseInt(tok.slice(2), 10)
-      else if (tok.startsWith("f=")) e.feed = parseInt(tok.slice(2), 10)
+      if (tok.startsWith("z=")) {
+e.zDu = parseInt(tok.slice(2), 10)
+} else if (tok.startsWith("x=")) {
+e.xDu = parseInt(tok.slice(2), 10)
+} else if (tok.startsWith("f=")) {
+e.feed = parseInt(tok.slice(2), 10)
+}
     }
     out.push(e)
   }

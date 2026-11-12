@@ -12,24 +12,34 @@ const INT32_MIN = -2147483648
 // that would overflow int32.
 function scaledValueToDu(value: number, unitScaleDu: number): number | null {
   const scaled = value * unitScaleDu
-  if (!Number.isFinite(scaled) || scaled > INT32_MAX || scaled < INT32_MIN) return null
+  if (!Number.isFinite(scaled) || scaled > INT32_MAX || scaled < INT32_MIN) {
+return null
+}
   // Half away from zero, like the firmware's llround.
   return Math.sign(scaled) * Math.round(Math.abs(scaled))
 }
 
 function axisTargetDu(value: number, currentDu: number, absolute: boolean, unitScaleDu: number): number | null {
   const rawDu = scaledValueToDu(value, unitScaleDu)
-  if (rawDu === null) return null
+  if (rawDu === null) {
+return null
+}
   const target = absolute ? rawDu : currentDu + rawDu
-  if (target < INT32_MIN || target > INT32_MAX) return null
+  if (target < INT32_MIN || target > INT32_MAX) {
+return null
+}
   return target
 }
 
 // G/M codes must be exact integers; no rounding.
 function exactInt(value: number): number | null {
-  if (!(value >= 0 && value <= 1000)) return null
+  if (!(value >= 0 && value <= 1000)) {
+return null
+}
   const truncated = Math.trunc(value)
-  if (truncated !== value) return null
+  if (truncated !== value) {
+return null
+}
   return truncated
 }
 
@@ -81,7 +91,9 @@ export class Lathecode implements Flavor {
       switch (w.letter) {
         case "G": {
           const g = exactInt(w.value)
-          if (g === null) return "unsupported command"
+          if (g === null) {
+return "unsupported command"
+}
           switch (g) {
             case 0:
               this.motion = Motion.Rapid
@@ -115,7 +127,9 @@ export class Lathecode implements Flavor {
         }
         case "M": {
           const m = exactInt(w.value)
-          if (m === null) return "unsupported command"
+          if (m === null) {
+return "unsupported command"
+}
           switch (m) {
             case 0:
               mKind = "pause"
@@ -136,17 +150,23 @@ export class Lathecode implements Flavor {
         case "T":
           break
         case "F":
-          if (hasF) return "duplicate word"
+          if (hasF) {
+return "duplicate word"
+}
           hasF = true
           fVal = w.value
           break
         case "Z":
-          if (hasZ) return "duplicate word"
+          if (hasZ) {
+return "duplicate word"
+}
           hasZ = true
           zVal = w.value
           break
         case "X":
-          if (hasX) return "duplicate word"
+          if (hasX) {
+return "duplicate word"
+}
           hasX = true
           xVal = w.value
           break
@@ -155,14 +175,20 @@ export class Lathecode implements Flavor {
       }
     }
 
-    if (hasG32 && !hasZ && !hasX) return "G32 requires axis move"
+    if (hasG32 && !hasZ && !hasX) {
+return "G32 requires axis move"
+}
 
     // G32's F is the thread lead for this move, not the modal feed.
     const threadMove = this.motion === Motion.Thread
     if (hasF) {
-      if (fVal <= 0) return "value out of range"
+      if (fVal <= 0) {
+return "value out of range"
+}
       const fDu = scaledValueToDu(fVal, this.unitScaleDu)
-      if (fDu === null || fDu <= 0) return "value out of range"
+      if (fDu === null || fDu <= 0) {
+return "value out of range"
+}
       if (threadMove) {
         this.threadLeadDu = fDu
         this.threadLeadSet = true
@@ -177,12 +203,16 @@ export class Lathecode implements Flavor {
       let newXDu = this.xDu
       if (hasZ) {
         const z = axisTargetDu(zVal, this.zDu, this.absolute, this.unitScaleDu)
-        if (z === null) return "value out of range"
+        if (z === null) {
+return "value out of range"
+}
         newZDu = z
       }
       if (hasX) {
         const x = axisTargetDu(xVal, this.xDu, this.absolute, this.unitScaleDu)
-        if (x === null) return "value out of range"
+        if (x === null) {
+return "value out of range"
+}
         newXDu = x
       }
 
@@ -193,11 +223,15 @@ export class Lathecode implements Flavor {
           kind = "rapid"
           feed = 0
         } else if (this.motion === Motion.Feed) {
-          if (!this.feedSet) return "no feed rate"
+          if (!this.feedSet) {
+return "no feed rate"
+}
           kind = "feed"
           feed = this.feedDuPerMin
         } else {
-          if (!this.threadLeadSet) return "no feed rate"
+          if (!this.threadLeadSet) {
+return "no feed rate"
+}
           kind = "thread"
           feed = this.threadLeadDu
         }

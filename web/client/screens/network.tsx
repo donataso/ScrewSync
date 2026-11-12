@@ -20,7 +20,9 @@ export function NetworkScreen() {
 
   async function reload() {
     const s = await sendCommand("wifi status")
-    if (s.status === "ok") setStatus(s.data as WifiPush)
+    if (s.status === "ok") {
+setStatus(s.data as WifiPush)
+}
   }
 
   useEffect(() => {
@@ -43,8 +45,11 @@ export function NetworkScreen() {
     setConnecting(true)
     try {
       const outcome = await sendCommand(cmd.wifiUse(ssid))
-      if (outcome.status === "denied") toast.push(`Denied: ${outcome.msg || "rejected by device"}`, "bad")
-      else toast.push(`Connecting to "${ssid}"...`, "good")
+      if (outcome.status === "denied") {
+toast.push(`Denied: ${outcome.msg || "rejected by device"}`, "bad")
+} else {
+toast.push(`Connecting to "${ssid}"...`, "good")
+}
       await reload()
     } finally {
       setConnecting(false)
@@ -52,12 +57,17 @@ export function NetworkScreen() {
   }
 
   async function removeSaved(ssid: string) {
-    if (!confirm(`Remove saved network "${ssid}"?`)) return
+    if (!confirm(`Remove saved network "${ssid}"?`)) {
+return
+}
     setConnecting(true)
     try {
       const outcome = await sendCommand(cmd.wifiDel(ssid))
-      if (outcome.status === "denied") toast.push(`Denied: ${outcome.msg || "rejected by device"}`, "bad")
-      else toast.push(`Removed "${ssid}".`, "good")
+      if (outcome.status === "denied") {
+toast.push(`Denied: ${outcome.msg || "rejected by device"}`, "bad")
+} else {
+toast.push(`Removed "${ssid}".`, "good")
+}
       await reload()
     } finally {
       setConnecting(false)
@@ -68,8 +78,11 @@ export function NetworkScreen() {
     setJoining(true)
     try {
       const result = await joinWifi(ssid, password)
-      if (result.ok) toast.push("Joining network...", "good")
-      else toast.push(`Denied: ${result.message || "rejected"}`, "bad")
+      if (result.ok) {
+toast.push("Joining network...", "good")
+} else {
+toast.push(`Denied: ${result.message || "rejected"}`, "bad")
+}
       await reload()
     } finally {
       setJoining(false)

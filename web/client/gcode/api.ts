@@ -45,20 +45,28 @@ async function readError(res: Response): Promise<string> {
 
 export async function fetchGcodeList(): Promise<GcodeListResult> {
   const res = await fetch("/gcode")
-  if (!res.ok) throw new Error(await readError(res))
+  if (!res.ok) {
+throw new Error(await readError(res))
+}
   return res.json()
 }
 
 export async function fetchGcodeActiveText(): Promise<string | null> {
   const res = await fetch("/gcode/active")
-  if (res.status === 404) return null
-  if (!res.ok) throw new Error(await readError(res))
+  if (res.status === 404) {
+return null
+}
+  if (!res.ok) {
+throw new Error(await readError(res))
+}
   return res.text()
 }
 
 export async function fetchGcodeProgramText(id: string): Promise<string> {
   const res = await fetch(`/gcode/program?id=${encodeURIComponent(id)}`)
-  if (!res.ok) throw new Error(await readError(res))
+  if (!res.ok) {
+throw new Error(await readError(res))
+}
   return res.text()
 }
 
@@ -74,7 +82,9 @@ export async function uploadGcode(
     headers: { "Content-Type": "text/plain" },
     body: `${flavor}\t${name}\n${text}`,
   })
-  if (!res.ok) return { ok: false, error: await readError(res) }
+  if (!res.ok) {
+return { ok: false, error: await readError(res) }
+}
   return res.json()
 }
 
@@ -88,13 +98,17 @@ export async function updateGcode(
     headers: { "Content-Type": "text/plain" },
     body: `${changes.flavor ?? ""}\t${changes.name ?? ""}\n${changes.text ?? ""}`,
   })
-  if (!res.ok) return { ok: false, error: await readError(res) }
+  if (!res.ok) {
+return { ok: false, error: await readError(res) }
+}
   return res.json()
 }
 
 export async function selectGcode(id: string): Promise<GcodeUploadResult> {
   const res = await fetch(`/gcode/select?id=${encodeURIComponent(id)}`, { method: "POST" })
-  if (!res.ok) return { ok: false, error: await readError(res) }
+  if (!res.ok) {
+return { ok: false, error: await readError(res) }
+}
   return res.json()
 }
 

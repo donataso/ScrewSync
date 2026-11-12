@@ -1,6 +1,6 @@
 "use client"
 
-import { formatTime, useAppearance } from "../appearance"
+import { formatTime, useAppearance, type ThemePref, type TimeFormatPref } from "../appearance"
 import { Field, Panel, Select } from "../ui/primitives"
 
 export function AppearanceScreen() {
@@ -12,14 +12,14 @@ export function AppearanceScreen() {
       <Panel title="Display">
         <div className="grid gap-3 md:grid-cols-2">
           <Field label="Theme">
-            <Select value={appearance.theme} onChange={(e) => appearance.setTheme(e.target.value as any)}>
+            <Select value={appearance.theme} onChange={(e) => appearance.setTheme(e.target.value as ThemePref)}>
               <option value="system">System</option>
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </Select>
           </Field>
           <Field label="Time format" hint={`Preview: ${formatTime(new Date(), appearance.timeFormat)}`}>
-            <Select value={appearance.timeFormat} onChange={(e) => appearance.setTimeFormat(e.target.value as any)}>
+            <Select value={appearance.timeFormat} onChange={(e) => appearance.setTimeFormat(e.target.value as TimeFormatPref)}>
               <option value="system">System</option>
               <option value="24h">24-hour</option>
               <option value="12h">12-hour (AM/PM)</option>

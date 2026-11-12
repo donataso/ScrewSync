@@ -39,6 +39,7 @@ export function SettingsScreen() {
 
   useEffect(() => {
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useFooterBar(
@@ -59,21 +60,32 @@ export function SettingsScreen() {
   }
 
   async function save() {
-    if (!raw) return
+    if (!raw) {
+return
+}
     setBusy(true)
     try {
       const denials: string[] = []
       let changed = false
       for (const [key, value] of Object.entries(dirty)) {
-        if (value === raw[key]) continue
+        if (value === raw[key]) {
+continue
+}
         changed = true
         const r = await sendCommand(`settings set ${key} ${value}`)
-        if (r.status === "ok") raw[key] = value
-        else denials.push(r.status === "denied" ? r.msg : `${key}: no reply`)
+        if (r.status === "ok") {
+raw[key] = value
+} else {
+denials.push(r.status === "denied" ? r.msg : `${key}: no reply`)
+}
       }
-      if (!changed) toast.push("Nothing changed.", "info")
-      else if (denials.length) toast.push(`Some changes were denied: ${denials.join("; ")}`, "bad")
-      else toast.push("Applied and saved to flash.", "good")
+      if (!changed) {
+toast.push("Nothing changed.", "info")
+} else if (denials.length) {
+toast.push(`Some changes were denied: ${denials.join("; ")}`, "bad")
+} else {
+toast.push("Applied and saved to flash.", "good")
+}
       setDirty({})
       setRaw({ ...raw })
     } finally {

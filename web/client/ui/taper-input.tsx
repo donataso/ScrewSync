@@ -32,10 +32,14 @@ export function TaperInput({
 
   function editDeg(text: string) {
     setLastEdited("deg")
-    if (text.trim() === "") return empty()
+    if (text.trim() === "") {
+return empty()
+}
     setDeg(text)
     const d = Number(text)
-    if (Number.isNaN(d) || d < 0) return onChange(NaN)
+    if (Number.isNaN(d) || d < 0) {
+return onChange(NaN)
+}
     const ratio = d >= 90 ? Infinity : dir * degreesToRatio(d)
     setRatioN(Number.isFinite(ratio) ? formatRatioN(ratio) : "")
     onChange(ratio)
@@ -43,24 +47,35 @@ export function TaperInput({
 
   function editRatio(text: string) {
     setLastEdited("ratio")
-    if (text.trim() === "") return empty()
+    if (text.trim() === "") {
+return empty()
+}
     setRatioN(text)
     const n = Number(text)
-    if (!(n > 0)) return onChange(NaN)
+    if (!(n > 0)) {
+return onChange(NaN)
+}
     const ratio = dir / n
     setDeg(formatDegrees(ratio))
     onChange(ratio)
   }
 
   function blur(side: Side) {
-    if (value === undefined || !Number.isFinite(value)) return
-    if (side === "deg") setDeg(formatDegrees(value))
-    else setRatioN(formatRatioN(value))
+    if (value === undefined || !Number.isFinite(value)) {
+return
+}
+    if (side === "deg") {
+setDeg(formatDegrees(value))
+} else {
+setRatioN(formatRatioN(value))
+}
   }
 
   function setDirection(next: number) {
     setDir(next)
-    if (value !== undefined && Number.isFinite(value) && Math.sign(value) !== next) onChange(-value)
+    if (value !== undefined && Number.isFinite(value) && Math.sign(value) !== next) {
+onChange(-value)
+}
   }
 
   const error = taperError(value)
