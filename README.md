@@ -88,6 +88,10 @@ Then look in the [existing issues](https://github.com/donataso/ScrewSync/issues)
 for the same problem. If there is none, open a new issue, written in
 English, with the data that the troubleshooting doc asks for.
 
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Credits and license
 
 Built for the [nanoels](https://github.com/kachurovskiy/nanoels) H5 hardware.

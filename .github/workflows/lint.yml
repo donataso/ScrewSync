@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: make web-lint
+      - run: make web-test
 
   # clang-tidy reads the compile databases and generated headers of both builds.
   # Ubuntu's clang-tidy has the Xtensa target; the Ubuntu version sets its version.

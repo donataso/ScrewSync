@@ -110,6 +110,8 @@ web-lint:
 web-lint-fix:
 	python3 scripts/lint_web.py --fix
 
+lint: format-check web-lint tidy
+
 clean:
 	rm -rf $(MAIN_ZEPHYR_BUILD) $(TEST_ZEPHYR_BUILD)
 
