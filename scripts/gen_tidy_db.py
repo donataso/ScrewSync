@@ -9,6 +9,7 @@ know the cross g++'s libstdc++ search path, so it is queried and added.
 import glob
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -18,6 +19,8 @@ _SOURCES = os.path.join(_ROOT, "main") + os.sep
 
 
 def filtered(args):
+    # A module's -DNAME=-1 has no source line, so bugprone-macro-parentheses cannot be suppressed there.
+    args = [re.sub(r"^(-D\w+=)(-\d+)$", r"\1(\2)", a) for a in args]
     return [a for a in args if not a.startswith(("-f", "-m"))]
 
 

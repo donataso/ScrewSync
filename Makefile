@@ -97,12 +97,12 @@ format-check:
 	clang-format --dry-run --Werror $(CPP_SOURCES)
 	@! grep -nE '.{$(shell expr $(MAX_LINE_LENGTH) + 1)}' $(CPP_SOURCES)
 
-# Needs the compile databases of `make build` and `make test`. Clang cannot
-# parse all of the cross-compiled code, so its own diagnostics are dropped.
+# Needs the compile databases of `make build` and `make test`, and a clang-tidy
+# with the Xtensa target. Clang's own warnings are dropped, its errors are not.
 tidy:
 	python3 scripts/gen_tidy_db.py $(MAIN_ZEPHYR_BUILD)/main $(TEST_ZEPHYR_BUILD) $(TIDY_DB)/compile_commands.json
 	find $(MAIN_ZEPHYR_APP) -name '*.cpp' | xargs -P$(shell nproc) -I{} clang-tidy -p $(TIDY_DB) --quiet {} 2>/dev/null \
-	| awk '/^[^[:space:]].*: (error|warning): .*\[.*\]$$/ { keep = ($$0 !~ /clang-diagnostic/); if (keep) found = 1 } keep { print } END { exit found }'
+	| awk '/^([^[:space:]].*: )?(error|warning): .*\[.*\]$$/ { keep = ($$0 !~ /clang-diagnostic/ || $$0 ~ /clang-diagnostic-error/); if (keep) found = 1 } keep { print } END { exit found }'
 
 web-lint:
 	python3 scripts/lint_web.py
