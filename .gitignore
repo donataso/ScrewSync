@@ -5,6 +5,7 @@
 *.swp
 .vscode
 
+sandbox
 notes
 docs/images/screenshots.md
 __pycache__/

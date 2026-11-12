@@ -47,8 +47,6 @@ A spring pass at full depth finishes the thread.
 
 ### And more
 
-- **Same-groove threading**: stop, measure, run again. Thread mode, G32 and
-  Gear all pick up the same helix.
 - **Spindle direction check**: the job stops if the spindle turns the wrong
   way.
 - **Live feed override** while a job runs.
