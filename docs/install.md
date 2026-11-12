@@ -80,3 +80,5 @@ in the `Makefile`.
   decreases, toggle the `invertEncoder` setting.
 - Set the probe polarity (NO/NC) before the first probe. With a contact
   plate, touch the plate to the tool: the contact light must turn green.
+
+If the controller does not start: [troubleshooting.md](troubleshooting.md).

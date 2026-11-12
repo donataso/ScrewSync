@@ -70,15 +70,23 @@ connectors. See [docs/install.md](docs/install.md).
 
 ## Docs
 
-| Doc                            | What                                    |
-|--------------------------------|-----------------------------------------|
-| [Install](docs/install.md)     | connectors, flashing, first setup       |
-| [Features](docs/features.md)   | everything it does                      |
-| [Manual](docs/manual.md)       | how to operate it                       |
-| [Probe](docs/probe.md)         | probe hardware, settings and cycle      |
-| [Design](docs/design.md)       | architecture and machine state          |
-| [Protocol](docs/protocol.md)   | command set for serial, display and web |
-| [Display](docs/screen.md)      | display UI design and tooling           |
+| Doc                                        | What                                    |
+|--------------------------------------------|-----------------------------------------|
+| [Install](docs/install.md)                 | connectors, flashing, first setup       |
+| [Features](docs/features.md)               | everything it does                      |
+| [Manual](docs/manual.md)                   | how to operate it                       |
+| [Probe](docs/probe.md)                     | probe hardware, settings and cycle      |
+| [Design](docs/design.md)                   | architecture and machine state          |
+| [Protocol](docs/protocol.md)               | command set for serial, display and web |
+| [Display](docs/screen.md)                  | display UI design and tooling           |
+| [Troubleshooting](docs/troubleshooting.md) | boot problems, support                  |
+
+## Support
+
+Do the steps in [docs/troubleshooting.md](docs/troubleshooting.md) first.
+Then look in the [existing issues](https://github.com/donataso/ScrewSync/issues)
+for the same problem. If there is none, open a new issue, written in
+English, with the data that the troubleshooting doc asks for.
 
 ## Credits and license
 
