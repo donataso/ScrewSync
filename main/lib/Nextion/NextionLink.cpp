@@ -71,8 +71,7 @@ namespace
     // Frames end with 0xFF 0xFF 0xFF; fewer 0xFF are data.
     void feedByte(uint8_t b)
     {
-        if (b == 0xFF)
-        {
+        if (b == 0xFF) {
             if (++g_ffRun == 3) {
                 if (g_frameOverflow) {
                     LOG_WRN("oversized frame dropped");
@@ -94,8 +93,7 @@ namespace
         uart_irq_update(dev);
         uint8_t buf[32];
         bool received = false;
-        while (uart_irq_rx_ready(dev))
-        {
+        while (uart_irq_rx_ready(dev)) {
             int n = uart_fifo_read(dev, buf, sizeof(buf));
             if (n <= 0) {
                 break;
@@ -126,12 +124,10 @@ namespace
 
     void linkLoop(void *, void *, void *)
     {
-        while (true)
-        {
+        while (true) {
             k_sem_take(&g_rxSem, K_MSEC(LINK_LOOP_MS));
             k_mutex_lock(&g_linkMutex, K_FOREVER);
-            if (!atomic_get(&g_paused))
-            {
+            if (!atomic_get(&g_paused)) {
                 drainRing();
                 g_config.onService();
             }
@@ -158,9 +154,12 @@ namespace
     }
 }
 
-namespace Nextion::detail
+namespace Nextion::Detail
 {
-    const Config &config() { return g_config; }
+    const Config &config()
+    {
+        return g_config;
+    }
 
     void writeBytes(const uint8_t *data, size_t len)
     {
@@ -197,8 +196,7 @@ namespace Nextion::detail
     bool readByte(uint8_t &out, uint32_t timeoutMs)
     {
         uint32_t start = k_uptime_get_32();
-        for (;;)
-        {
+        for (;;) {
             if (uart_poll_in(g_dev, &out) == 0) {
                 return true;
             }
@@ -213,8 +211,7 @@ namespace Nextion::detail
     {
         uint32_t start = k_uptime_get_32();
         uint8_t b;
-        while (k_uptime_get_32() - start < timeoutMs)
-        {
+        while (k_uptime_get_32() - start < timeoutMs) {
             if (readByte(b, timeoutMs)) {
                 if (b == expected) {
                     return true;
@@ -248,7 +245,7 @@ namespace Nextion
     {
         g_config = config;
         g_dev = config.uart;
-        detail::setBaud(config.linkBaud);
+        Detail::setBaud(config.linkBaud);
         uart_irq_callback_user_data_set(g_dev, uartIsr, nullptr);
         restartRx();
     }
@@ -262,8 +259,8 @@ namespace Nextion
 
     void writeRaw(const char *cmd)
     {
-        detail::writeBytes((const uint8_t *)cmd, strlen(cmd));
-        detail::writeTerminator();
+        Detail::writeBytes((const uint8_t *)cmd, strlen(cmd));
+        Detail::writeTerminator();
     }
 
     void writeHeartbeat()
@@ -292,6 +289,6 @@ namespace Nextion
 
     void release()
     {
-        detail::release(false);
+        Detail::release(false);
     }
 }

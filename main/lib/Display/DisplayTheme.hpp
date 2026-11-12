@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 // Values shared with display/ and scripts/screenshots.py.
-namespace Display::theme
+namespace Display::Theme
 {
     // RGB565, matching display/pages/page0.page.toml.
     constexpr int COLOR_SELECTED = 7037;
@@ -50,7 +50,7 @@ namespace Display::theme
     // Mode panel cell types (cKindN.val), matching display/pages/page0.nx.
     // Value types pick the keypad's conversion; the cell's command gets the
     // typed value appended. Toggle cells hold two commands, "a|b".
-    enum class CellType : int
+    enum class CellType : uint8_t
     {
         Hidden = 0,
         Length = 1,

@@ -38,7 +38,8 @@ namespace
         return axis == Stepper::Axis::Z ? "disabledZ" : "disabledX";
     }
 
-    template <typename T> void loadValue(const char *key, T &value)
+    template <typename T>
+    void loadValue(const char *key, T &value)
     {
         T v;
         if (PersistBlob::load(NVS_NS, key, &v, sizeof(v)) == sizeof(v)) {
@@ -46,7 +47,8 @@ namespace
         }
     }
 
-    template <typename T> void store(const char *key, T &field, const T &value)
+    template <typename T>
+    void store(const char *key, T &field, const T &value)
     {
         k_mutex_lock(&g_lock, K_FOREVER);
         field = value;
@@ -54,7 +56,8 @@ namespace
         PersistBlob::save(NVS_NS, key, &value, sizeof(value));
     }
 
-    template <typename T> T read(const T &field)
+    template <typename T>
+    T read(const T &field)
     {
         k_mutex_lock(&g_lock, K_FOREVER);
         T v = field;
@@ -67,8 +70,7 @@ namespace RunSettings
 {
     void load()
     {
-        for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X})
-        {
+        for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
             bool disabled = false;
             loadValue(disabledKey(axis), disabled);
             Stepper::setDisabled(axis, disabled);
@@ -91,9 +93,18 @@ namespace RunSettings
         PersistBlob::save(NVS_NS, disabledKey(axis), &disabled, sizeof(disabled));
     }
 
-    Units units() { return read(g_units); }
-    const char *unitsName() { return units() == Units::Inch ? "inch" : "mm"; }
-    void setUnits(Units units) { store("units", g_units, units); }
+    Units units()
+    {
+        return read(g_units);
+    }
+    const char *unitsName()
+    {
+        return units() == Units::Inch ? "inch" : "mm";
+    }
+    void setUnits(Units units)
+    {
+        store("units", g_units, units);
+    }
 
     bool parseUnits(const char *name, Units &out)
     {
@@ -107,8 +118,14 @@ namespace RunSettings
         return true;
     }
 
-    int32_t jogStepDu() { return read(g_jogStepDu); }
-    bool jogStepValid(int32_t du) { return du > 0 && du <= MAX_JOG_STEP_DU; }
+    int32_t jogStepDu()
+    {
+        return read(g_jogStepDu);
+    }
+    bool jogStepValid(int32_t du)
+    {
+        return du > 0 && du <= MAX_JOG_STEP_DU;
+    }
 
     bool setJogStepDu(int32_t du)
     {
@@ -119,8 +136,14 @@ namespace RunSettings
         return true;
     }
 
-    Mode::Id mode() { return read(g_mode); }
-    void setMode(Mode::Id mode) { store("mode", g_mode, mode); }
+    Mode::Id mode()
+    {
+        return read(g_mode);
+    }
+    void setMode(Mode::Id mode)
+    {
+        store("mode", g_mode, mode);
+    }
 
     bool loadModeParams(const char *key, void *out, size_t size)
     {

@@ -59,15 +59,13 @@ namespace
     int handleUpdate(struct http_client_ctx *client, enum http_transaction_status status,
                      const struct http_request_ctx *request, struct http_response_ctx *response, void *)
     {
-        if (g_fw.done)
-        {
+        if (g_fw.done) {
             if (status == HTTP_SERVER_TRANSACTION_ABORTED) {
                 g_fw.done = false;
             }
             return 0;
         }
-        if (status == HTTP_SERVER_TRANSACTION_ABORTED)
-        {
+        if (status == HTTP_SERVER_TRANSACTION_ABORTED) {
             if (client == g_fw.owner) {
                 g_fw.abort();
             }
@@ -77,21 +75,18 @@ namespace
             return reply(response, HTTP_409_CONFLICT, "update already in progress\n");
         }
         // Every chunk: an upload is cut off if the machine starts running.
-        if (WebHttp::refuseUnlessUpdatable(response))
-        {
+        if (WebHttp::refuseUnlessUpdatable(response)) {
             g_fw.abort();
             return 0;
         }
-        if (!g_fw.receiving)
-        {
+        if (!g_fw.receiving) {
             g_fw.receiving = true;
             g_fw.owner = client;
             WsCommand::closeAll();
             LOG_INF("ota: receiving firmware");
         }
 
-        if (request->data_len && !Ota::writeChunk(request->data, request->data_len))
-        {
+        if (request->data_len && !Ota::writeChunk(request->data, request->data_len)) {
             g_fw.abort();
             if (status != HTTP_SERVER_REQUEST_DATA_FINAL) {
                 return 0;
@@ -146,15 +141,13 @@ namespace
     // False once it has replied with the refusal.
     bool startDisplayUpload(struct http_client_ctx *client, struct http_response_ctx *response)
     {
-        if (g_display.expected == 0 || g_display.expected > DISPLAY_IMAGE_MAX)
-        {
+        if (g_display.expected == 0 || g_display.expected > DISPLAY_IMAGE_MAX) {
             g_display = {};
             reply(response, HTTP_413_PAYLOAD_TOO_LARGE, "display image too large\n");
             return false;
         }
         const char *refusal = DisplayImage::beginFlash();
-        if (refusal)
-        {
+        if (refusal) {
             g_display = {};
             static char msg[48];
             snprintf(msg, sizeof(msg), "%s\n", refusal);
@@ -171,8 +164,7 @@ namespace
     int handleUpdateDisplay(struct http_client_ctx *client, enum http_transaction_status status,
                             const struct http_request_ctx *request, struct http_response_ctx *response, void *)
     {
-        if (status == HTTP_SERVER_TRANSACTION_ABORTED)
-        {
+        if (status == HTTP_SERVER_TRANSACTION_ABORTED) {
             if (client == g_display.owner) {
                 g_display = {};
                 DisplayImage::endFlash();
@@ -182,8 +174,7 @@ namespace
         if (g_display.started && client != g_display.owner) {
             return reply(response, HTTP_409_CONFLICT, "update already in progress\n");
         }
-        if (WebHttp::refuseUnlessUpdatable(response))
-        {
+        if (WebHttp::refuseUnlessUpdatable(response)) {
             if (g_display.started) {
                 DisplayImage::endFlash();
             }
@@ -206,8 +197,7 @@ namespace
 
         DisplayUpload upload = g_display;
         g_display = {};
-        if (upload.received != upload.expected)
-        {
+        if (upload.received != upload.expected) {
             DisplayImage::endFlash();
             return reply(response, HTTP_400_BAD_REQUEST, "display image size mismatch\n");
         }
@@ -226,13 +216,15 @@ namespace
 
 namespace WebRoutes
 {
-    struct http_resource_detail_dynamic update = {
+    struct http_resource_detail_dynamic g_update = {
         .common = {.bitmask_of_supported_http_methods = BIT(HTTP_POST), .type = HTTP_RESOURCE_TYPE_DYNAMIC},
-        .cb = handleUpdate, .user_data = nullptr,
+        .cb = handleUpdate,
+        .user_data = nullptr,
     };
 
-    struct http_resource_detail_dynamic updateDisplay = {
+    struct http_resource_detail_dynamic g_updateDisplay = {
         .common = {.bitmask_of_supported_http_methods = BIT(HTTP_POST), .type = HTTP_RESOURCE_TYPE_DYNAMIC},
-        .cb = handleUpdateDisplay, .user_data = nullptr,
+        .cb = handleUpdateDisplay,
+        .user_data = nullptr,
     };
 }

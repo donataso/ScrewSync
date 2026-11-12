@@ -183,8 +183,7 @@ namespace
 
     const char *kindName(StepKind kind)
     {
-        switch (kind)
-        {
+        switch (kind) {
         case StepKind::Rapid:
             return "rapid";
         case StepKind::Feed:

@@ -35,11 +35,11 @@ namespace
     constexpr int32_t ANOMALY_RPM_ABS = 2000;
     constexpr int64_t ANOMALY_LOG_MIN_INTERVAL_MS = 500;
 
-    struct k_mutex mutex;
-    int32_t currentRpm = 0;
+    struct k_mutex g_mutex;
+    int32_t g_currentRpm = 0;
 
-    K_THREAD_STACK_DEFINE(pollStack, 2048);
-    struct k_thread pollThreadData;
+    K_THREAD_STACK_DEFINE(g_pollStack, 2048);
+    struct k_thread g_pollThreadData;
 
     void pollLoop(void *, void *, void *)
     {
@@ -54,7 +54,7 @@ namespace
             int64_t pos = Encoder::position();
             int64_t now = k_uptime_get();
             int64_t delta = pos - markPos;
-            int32_t target = Settings::active.encoderPpr * 2;
+            int32_t target = Settings::g_active.encoderPpr * 2;
 
             bool haveRpm = false;
             int32_t rpm = 0;
@@ -80,9 +80,9 @@ namespace
             prevPollPos = pos;
 
             if (haveRpm) {
-                k_mutex_lock(&mutex, K_FOREVER);
-                currentRpm = rpm;
-                k_mutex_unlock(&mutex);
+                k_mutex_lock(&g_mutex, K_FOREVER);
+                g_currentRpm = rpm;
+                k_mutex_unlock(&g_mutex);
                 Machine::setSpinning(rpm != 0);
             }
         }
@@ -93,17 +93,17 @@ namespace Rpm
 {
     void begin()
     {
-        k_mutex_init(&mutex);
-        k_thread_create(&pollThreadData, pollStack, K_THREAD_STACK_SIZEOF(pollStack),
-                         pollLoop, nullptr, nullptr, nullptr,
-                         K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
+        k_mutex_init(&g_mutex);
+        k_thread_create(&g_pollThreadData, g_pollStack, K_THREAD_STACK_SIZEOF(g_pollStack),
+                        pollLoop, nullptr, nullptr, nullptr,
+                        K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
     }
 
     int32_t value()
     {
-        k_mutex_lock(&mutex, K_FOREVER);
-        int32_t rpm = currentRpm;
-        k_mutex_unlock(&mutex);
+        k_mutex_lock(&g_mutex, K_FOREVER);
+        int32_t rpm = g_currentRpm;
+        k_mutex_unlock(&g_mutex);
         return rpm;
     }
 }

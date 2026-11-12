@@ -22,7 +22,7 @@
 
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     // Z feeds, X steps deeper each pass; no spindle.
     struct Slot
@@ -63,7 +63,7 @@ namespace
         g_job.levels = g_params.passes;
         g_job.starts = 1;
         g_job.retractToStart = true;
-        g_job.endReductionDu = Settings::active.slotLeftReductionDu;
+        g_job.endReductionDu = Settings::g_active.slotLeftReductionDu;
         g_job.feed = PassFeed::Timed;
         g_job.pitchDu = &g_params.speedDuPerMin;
         g_job.speedDuPerMin = &g_params.speedDuPerMin;
@@ -71,12 +71,21 @@ namespace
         return passBegin(g_job, spindlePos);
     }
 
-    void tickMode(int64_t spindlePos) { passTick(g_job, spindlePos); }
-    void progressMode(Mode::Progress &out) { passProgress(g_job, out); }
-    void skipMode() { passSkip(g_job); }
+    void tickMode(int64_t spindlePos)
+    {
+        passTick(g_job, spindlePos);
+    }
+    void progressMode(Mode::Progress &out)
+    {
+        passProgress(g_job, out);
+    }
+    void skipMode()
+    {
+        passSkip(g_job);
+    }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const Ops SLOT = {true, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
                       nullptr, nullptr, progressMode, skipMode};

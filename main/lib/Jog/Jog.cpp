@@ -43,12 +43,12 @@ namespace
         bool lastHandwheelCountValid; // false right after boot/resolution change
     };
 
-    AxisJog jogZ = {&Settings::active.z, Handwheel::z, {}, 1.0f, 0, false};
-    AxisJog jogX = {&Settings::active.x, Handwheel::x, {}, 1.0f, 0, false};
+    AxisJog g_jogZ = {&Settings::g_active.z, Handwheel::z, {}, 1.0f, 0, false};
+    AxisJog g_jogX = {&Settings::g_active.x, Handwheel::x, {}, 1.0f, 0, false};
 
     AxisJog &stateOf(Stepper::Axis axis)
     {
-        return axis == Stepper::Axis::Z ? jogZ : jogX;
+        return axis == Stepper::Axis::Z ? g_jogZ : g_jogX;
     }
 
     // Edge-triggered on the handwheel, not absolute-position-triggered: if
@@ -79,7 +79,7 @@ namespace
         }
 
         int64_t target = Jog::jogTarget(Stepper::position(axis), lastCount, handwheelCount, s.cfg->motorSteps,
-                                         s.cfg->handwheelPpr, resolutionMultiplier);
+                                        s.cfg->handwheelPpr, resolutionMultiplier);
         Stepper::moveTo(axis, target);
     }
 
@@ -88,25 +88,25 @@ namespace
         int wdt = Watchdog::add("jog");
         while (true) {
             Watchdog::feed(wdt);
-            tick(jogZ, Stepper::Axis::Z);
-            tick(jogX, Stepper::Axis::X);
+            tick(g_jogZ, Stepper::Axis::Z);
+            tick(g_jogX, Stepper::Axis::X);
             k_sleep(K_MSEC(POLL_PERIOD_MS));
         }
     }
 
-    K_THREAD_STACK_DEFINE(pollStack, 1024);
-    struct k_thread pollThreadData;
+    K_THREAD_STACK_DEFINE(g_pollStack, 1024);
+    struct k_thread g_pollThreadData;
 }
 
 namespace Jog
 {
     void begin()
     {
-        k_mutex_init(&jogZ.mutex);
-        k_mutex_init(&jogX.mutex);
-        k_thread_create(&pollThreadData, pollStack, K_THREAD_STACK_SIZEOF(pollStack),
-                         pollLoop, nullptr, nullptr, nullptr,
-                         K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
+        k_mutex_init(&g_jogZ.mutex);
+        k_mutex_init(&g_jogX.mutex);
+        k_thread_create(&g_pollThreadData, g_pollStack, K_THREAD_STACK_SIZEOF(g_pollStack),
+                        pollLoop, nullptr, nullptr, nullptr,
+                        K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
     }
 
     void setResolution(Stepper::Axis axis, float multiplier)

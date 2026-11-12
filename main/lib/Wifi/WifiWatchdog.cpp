@@ -24,7 +24,7 @@
 
 LOG_MODULE_DECLARE(main);
 
-using namespace Wifi::detail;
+using namespace Wifi::Detail;
 
 namespace
 {
@@ -52,11 +52,9 @@ namespace
         int64_t t0 = k_uptime_get();
         int rc = zsock_connect(fd, (net_sockaddr *)&addr, sizeof(addr));
         bool ok = (rc == 0);
-        if (rc < 0 && errno == EINPROGRESS)
-        {
+        if (rc < 0 && errno == EINPROGRESS) {
             zsock_pollfd pfd = {fd, ZSOCK_POLLOUT, 0};
-            if (zsock_poll(&pfd, 1, WATCHDOG_PROBE_TIMEOUT_MS) > 0)
-            {
+            if (zsock_poll(&pfd, 1, WATCHDOG_PROBE_TIMEOUT_MS) > 0) {
                 int err = 0;
                 net_socklen_t errLen = sizeof(err);
                 zsock_getsockopt(fd, ZSOCK_SOL_SOCKET, ZSOCK_SO_ERROR, &err, &errLen);
@@ -69,7 +67,7 @@ namespace
     }
 }
 
-namespace Wifi::detail
+namespace Wifi::Detail
 {
     void armWatchdog()
     {
@@ -89,15 +87,13 @@ namespace Wifi::detail
         if (gw.s_addr == 0) {
             return;
         }
-        if (probeGateway(gw))
-        {
+        if (probeGateway(gw)) {
             g_wdMisses = 0;
             return;
         }
         g_wdMisses++;
         LOG_WRN("wifi: gateway unreachable (miss %u/%u)", (unsigned)g_wdMisses, (unsigned)WATCHDOG_MAX_MISSES);
-        if (g_wdMisses >= WATCHDOG_MAX_MISSES)
-        {
+        if (g_wdMisses >= WATCHDOG_MAX_MISSES) {
             g_wdMisses = 0;
             LOG_INF("wifi: watchdog forcing reconnect (stale route?)");
             beginConnectSequence();

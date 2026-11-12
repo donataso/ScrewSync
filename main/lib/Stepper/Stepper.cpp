@@ -65,24 +65,48 @@ namespace
         bool disabled;
     };
 
-    AxisState axisZ = {
+    AxisState g_axisZ = {
         GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), z_step_gpios),
         GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), z_dir_gpios),
         GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), z_ena_gpios),
-        nullptr, &Settings::active.z, {}, 0, 0, 0, 0, 0, 0, false, false,
-        false, false, false,
+        nullptr,
+        &Settings::g_active.z,
+        {},
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        false,
+        false,
+        false,
+        false,
+        false,
     };
-    AxisState axisX = {
+    AxisState g_axisX = {
         GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), x_step_gpios),
         GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), x_dir_gpios),
         GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), x_ena_gpios),
-        nullptr, &Settings::active.x, {}, 0, 0, 0, 0, 0, 0, false, false,
-        false, false, false,
+        nullptr,
+        &Settings::g_active.x,
+        {},
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        false,
+        false,
+        false,
+        false,
+        false,
     };
 
     AxisState &stateOf(Stepper::Axis axis)
     {
-        return axis == Stepper::Axis::Z ? axisZ : axisX;
+        return axis == Stepper::Axis::Z ? g_axisZ : g_axisX;
     }
 
     // Caller holds s.lock. The one place that decides whether the axis
@@ -121,8 +145,7 @@ namespace
         // instead of accepting a new one, so an in-flight ramp sees zero
         // distance remaining and stops on its very next tick.
         Machine::State ms = Machine::state();
-        if (ms == Machine::State::Flashing || ms == Machine::State::EStop || s.disabled)
-        {
+        if (ms == Machine::State::Flashing || ms == Machine::State::EStop || s.disabled) {
             s.targetPos = s.currentPos;
             return s.targetPos;
         }
@@ -225,11 +248,10 @@ namespace Stepper
 {
     void begin()
     {
-        axisZ.timer = DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(timer2), counter));
-        axisX.timer = DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(timer3), counter));
+        g_axisZ.timer = DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(timer2), counter));
+        g_axisX.timer = DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(timer3), counter));
 
-        for (AxisState *s : {&axisZ, &axisX})
-        {
+        for (AxisState *s : {&g_axisZ, &g_axisX}) {
             if (!gpio_is_ready_dt(&s->step) || !gpio_is_ready_dt(&s->dir) || !gpio_is_ready_dt(&s->ena)) {
                 LOG_ERR("stepper GPIOs not ready");
                 continue;
@@ -327,8 +349,7 @@ namespace Stepper
         AxisState &s = stateOf(axis);
         k_spinlock_key_t key = k_spin_lock(&s.lock);
         int moving = movingDirection(s);
-        if (moving == -direction)
-        {
+        if (moving == -direction) {
             stopLocked(s);
             k_spin_unlock(&s.lock, key);
             return;

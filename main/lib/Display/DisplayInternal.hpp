@@ -26,7 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-namespace Display::detail
+namespace Display::Detail
 {
     using Nextion::KEY_MAX;
 

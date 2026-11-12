@@ -221,16 +221,13 @@ namespace WsMessages
 
     int settings(char *out, size_t outMax)
     {
-        SettingsMsg m{"settings", Settings::active};
+        SettingsMsg m{"settings", Settings::g_active};
         return encode(SETTINGS_MSG_DESCR, m, out, outMax);
     }
 
     int wifi(char *out, size_t outMax)
     {
-        WifiMsg m{"wifi",          Wifi::modeName(),   Wifi::ip(),
-                  Wifi::rssi(),    Wifi::ssid(),       Wifi::apName(),
-                  Wifi::enabled(), Wifi::apFallback(), (int32_t)Wifi::savedCount(),
-                  {},              0};
+        WifiMsg m{"wifi", Wifi::modeName(), Wifi::ip(), Wifi::rssi(), Wifi::ssid(), Wifi::apName(), Wifi::enabled(), Wifi::apFallback(), (int32_t)Wifi::savedCount(), {}, 0};
         uint8_t n = MIN(Wifi::savedCount(), ARRAY_SIZE(m.saved));
         for (uint8_t i = 0; i < n; i++) {
             m.saved[i] = {Wifi::savedSsid(i), Wifi::savedIsPreferred(i)};

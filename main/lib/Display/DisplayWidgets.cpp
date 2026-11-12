@@ -18,25 +18,25 @@
 #include "DisplayInternal.hpp"
 #include <stdio.h>
 
-namespace Display::detail
+namespace Display::Detail
 {
     void pushSelected(const char *component, bool selected)
     {
-        Nextion::pushColor(component, "bco", selected ? theme::COLOR_SELECTED : theme::COLOR_BUTTON);
+        Nextion::pushColor(component, "bco", selected ? Theme::COLOR_SELECTED : Theme::COLOR_BUTTON);
     }
 
     void showToast(const char *msg)
     {
-        char text[theme::TOAST_MAX_CHARS + 1];
+        char text[Theme::TOAST_MAX_CHARS + 1];
         size_t n = 0;
-        for (; *msg && n < theme::TOAST_MAX_CHARS; msg++) {
+        for (; *msg && n < Theme::TOAST_MAX_CHARS; msg++) {
             if (*msg >= 32 && *msg <= 126) {
                 text[n++] = Nextion::safeChar(*msg);
             }
         }
         text[n] = '\0';
 
-        char cmd[theme::TOAST_MAX_CHARS + 16];
+        char cmd[Theme::TOAST_MAX_CHARS + 16];
         snprintf(cmd, sizeof(cmd), "toast.txt=\"%s\"", text);
         Nextion::writeCommand(cmd);
         Nextion::writeCommand("click toastShow,1");

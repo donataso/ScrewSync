@@ -21,7 +21,7 @@
 
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     // Main axis Z = turning (depth on X), X = facing (depth on Z).
     struct Turn
@@ -72,12 +72,21 @@ namespace
         return passBegin(g_job, spindlePos);
     }
 
-    void tickMode(int64_t spindlePos) { passTick(g_job, spindlePos); }
-    void progressMode(Mode::Progress &out) { passProgress(g_job, out); }
-    void skipMode() { passSkip(g_job); }
+    void tickMode(int64_t spindlePos)
+    {
+        passTick(g_job, spindlePos);
+    }
+    void progressMode(Mode::Progress &out)
+    {
+        passProgress(g_job, out);
+    }
+    void skipMode()
+    {
+        passSkip(g_job);
+    }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const Ops TURN = {true, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
                       nullptr, nullptr, progressMode, skipMode, &g_params.spindleReverse};

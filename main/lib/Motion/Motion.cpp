@@ -27,7 +27,7 @@ namespace
 {
     const Settings::Axis &cfgOf(Stepper::Axis axis)
     {
-        return axis == Stepper::Axis::Z ? Settings::active.z : Settings::active.x;
+        return axis == Stepper::Axis::Z ? Settings::g_active.z : Settings::g_active.x;
     }
 
     const char *moveToSteps(Stepper::Axis axis, int64_t target)
@@ -56,7 +56,7 @@ namespace Motion
 
     int32_t spindleCountsPerRev()
     {
-        return Settings::active.encoderPpr * 2;
+        return Settings::g_active.encoderPpr * 2;
     }
 
     bool idle()

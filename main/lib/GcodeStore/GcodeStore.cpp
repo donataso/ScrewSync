@@ -34,8 +34,14 @@ namespace
 
     struct Guard
     {
-        Guard() { k_mutex_lock(&g_lock, K_FOREVER); }
-        ~Guard() { k_mutex_unlock(&g_lock); }
+        Guard()
+        {
+            k_mutex_lock(&g_lock, K_FOREVER);
+        }
+        ~Guard()
+        {
+            k_mutex_unlock(&g_lock);
+        }
     };
 
     // Saved programs are read here first, so a corrupt one can't clobber the active buffer.
@@ -146,8 +152,7 @@ namespace GcodeStore
         memcpy(nameBuf, name, nameLen);
         nameBuf[nameLen] = '\0';
 
-        if (save)
-        {
+        if (save) {
             if (!GcodeFiles::mount()) {
                 return fail("no filesystem");
             }
@@ -177,16 +182,14 @@ namespace GcodeStore
         if (active && blockedRunning()) {
             return fail("gcode job running");
         }
-        if (nameLen)
-        {
+        if (nameLen) {
             if (!GcodeMeta::validName(name, nameLen)) {
                 return fail("bad name");
             }
             memcpy(info.name, name, nameLen);
             info.name[nameLen] = '\0';
         }
-        if (flavorId[0])
-        {
+        if (flavorId[0]) {
             if (strlen(flavorId) > FLAVOR_MAX_LEN) {
                 return fail("unknown flavor");
             }

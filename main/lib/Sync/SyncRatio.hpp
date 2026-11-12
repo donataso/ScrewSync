@@ -27,8 +27,8 @@ namespace Sync
                  int32_t encoderStepsPerRev);
 
     int64_t ratioTarget(int64_t originAxisPosSteps, int64_t originSpindlePos, int64_t spindlePos,
-                         int32_t motorSteps, int32_t duprDu, int32_t starts, int32_t screwPitchDu,
-                         int32_t encoderStepsPerRev);
+                        int32_t motorSteps, int32_t duprDu, int32_t starts, int32_t screwPitchDu,
+                        int32_t encoderStepsPerRev);
 
     // A spindle count where an axis at refAxisPos lies on the helix through
     // axis 0 at originCount.

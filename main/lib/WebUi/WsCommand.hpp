@@ -20,7 +20,7 @@
 
 #include <zephyr/net/http/server.h>
 
-extern struct http_resource_detail_websocket wsCommandDetail;
+extern struct http_resource_detail_websocket g_wsCommandDetail;
 
 namespace WsCommand
 {

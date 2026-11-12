@@ -22,11 +22,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-namespace Display::detail
+namespace Display::Detail
 {
-    bool inchUnits() { return RunSettings::units() == RunSettings::Units::Inch; }
+    bool inchUnits()
+    {
+        return RunSettings::units() == RunSettings::Units::Inch;
+    }
 
-    const char *unitSuffix() { return inchUnits() ? "in" : "mm"; }
+    const char *unitSuffix()
+    {
+        return inchUnits() ? "in" : "mm";
+    }
 
     void formatLength(double du, char *out, size_t outMax)
     {
@@ -59,8 +65,7 @@ namespace Display::detail
     bool paramValue(const char *params, const char *name, char *out, size_t outMax)
     {
         size_t len = strlen(name);
-        for (const char *p = params; p && *p; p = strchr(p, ' '))
-        {
+        for (const char *p = params; p && *p; p = strchr(p, ' ')) {
             p += *p == ' ';
             if (!strncmp(p, name, len) && p[len] == '=') {
                 const char *v = p + len + 1;

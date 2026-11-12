@@ -24,7 +24,7 @@
 
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     struct Probe
     {
@@ -56,14 +56,17 @@ namespace
     volatile bool g_contactLatched = false;
     volatile int64_t g_latchedPos = 0;
 
-    int probeDirection() { return g_reverse ? 1 : -1; }
+    int probeDirection()
+    {
+        return g_reverse ? 1 : -1;
+    }
 
     ProbeCycle::Params cycleParams()
     {
         return {
             probeDirection(),
             duToSteps(g_axis, g_params.probeDstDu),
-            duToSteps(g_axis, Settings::active.probeBackOffDu),
+            duToSteps(g_axis, Settings::g_active.probeBackOffDu),
             duToSteps(g_axis, REPROBE_MARGIN_DU),
             duToSteps(g_axis, g_params.offsetDu),
         };
@@ -116,7 +119,7 @@ namespace
         }
         if (r.move && r.target != g_commanded) {
             g_commanded = r.target;
-            int32_t feedDuPerMin = r.reprobeFeed ? Settings::active.reprobeFeedDuPerMin : Settings::active.probeFeedDuPerMin;
+            int32_t feedDuPerMin = r.reprobeFeed ? Settings::g_active.reprobeFeedDuPerMin : Settings::g_active.probeFeedDuPerMin;
             int32_t speed = duPerMinToStepsPerSec(g_axis, feedDuPerMin);
             if (Stepper::moveTo(g_axis, r.target, speed) != r.target) {
                 g_watching = false;
@@ -127,8 +130,7 @@ namespace
 
     void progressMode(Mode::Progress &out)
     {
-        switch (g_cycle.phase)
-        {
+        switch (g_cycle.phase) {
         case ProbeCycle::Phase::Approach:
             out.phase = "approach";
             break;
@@ -146,17 +148,17 @@ namespace
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
-    const Ops PROBE = {true,       &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
-                       nullptr,    nullptr,   progressMode,     nullptr, nullptr,            nullptr};
+    const Ops PROBE = {true, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
+                       nullptr, nullptr, progressMode, nullptr, nullptr, nullptr};
 }
 
 namespace Mode
 {
     const char *probeGo(Stepper::Axis axis, bool reverse)
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         if (running()) {
             return "already running";
         }

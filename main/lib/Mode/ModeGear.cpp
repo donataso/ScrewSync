@@ -24,7 +24,7 @@
 
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     constexpr double MAX_PITCH_DU = 1000000;
     constexpr double MAX_LENGTH_DU = 10000000;
@@ -51,7 +51,10 @@ namespace
     int64_t g_phase;
     int64_t g_lastSpindle;
 
-    int32_t signedPitch() { return signedDu(g_params.pitchDu, g_params.reverse); }
+    int32_t signedPitch()
+    {
+        return signedDu(g_params.pitchDu, g_params.reverse);
+    }
 
     void relink(int32_t dupr, int64_t spindlePos)
     {
@@ -108,14 +111,11 @@ namespace
             g_waiting = false;
         }
         int64_t target = g_link.target(spindlePos);
-        if (g_endDirection > 0 && target > g_endSteps) {
-            target = g_endSteps;
-        } else if (g_endDirection < 0 && target < g_endSteps) {
+        if ((g_endDirection > 0 && target > g_endSteps) || (g_endDirection < 0 && target < g_endSteps)) {
             target = g_endSteps;
         }
         Stepper::moveTo(g_link.axis, target, rapidSpeed(g_link.axis));
-        if (g_tapered)
-        {
+        if (g_tapered) {
             double towardChuckDu = -stepsToDu(Stepper::Axis::Z, Stepper::position(Stepper::Axis::Z) - g_zStart);
             int64_t x = g_xStart + duToSteps(Stepper::Axis::X, towardChuckDu * (double)g_params.taper / 2);
             Stepper::moveTo(Stepper::Axis::X, x, rapidSpeed(Stepper::Axis::X));
@@ -132,7 +132,7 @@ namespace
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const Ops GEAR = {false, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
                       onLiveChange, nullptr, nullptr, nullptr};
@@ -142,7 +142,7 @@ namespace Mode
 {
     Gear gear()
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         return g_params;
     }
 }

@@ -24,7 +24,7 @@
 
 LOG_MODULE_DECLARE(nextion);
 
-using namespace Nextion::detail;
+using namespace Nextion::Detail;
 using Nextion::writeCommand;
 using Nextion::writeRaw;
 
@@ -56,8 +56,7 @@ namespace
         bool found = false;
         int ffRun = 0;
         uint32_t start = k_uptime_get_32();
-        while (k_uptime_get_32() - start < timeoutMs)
-        {
+        while (k_uptime_get_32() - start < timeoutMs) {
             uint8_t b;
             if (!readByte(b, 20)) {
                 continue;
@@ -145,8 +144,7 @@ namespace
         if (!readByte(code, timeoutMs)) {
             return -1;
         }
-        for (int i = 0; i < 3; i++)
-        {
+        for (int i = 0; i < 3; i++) {
             uint8_t b;
             if (!readByte(b, timeoutMs) || b != 0xFF) {
                 return -1;
@@ -166,8 +164,7 @@ namespace
     // The last packet is answered with the transfer's end (0xFD) instead of an ack.
     bool sendTwfilePacket(uint16_t id, const uint8_t *data, uint16_t len, bool last)
     {
-        for (int attempt = 0; attempt < TWFILE_ATTEMPTS; attempt++)
-        {
+        for (int attempt = 0; attempt < TWFILE_ATTEMPTS; attempt++) {
             if (attempt) {
                 k_sleep(K_MSEC(25)); // a >20 ms gap discards a partial packet
                 drainInput();
@@ -179,8 +176,7 @@ namespace
             if (got && b == 0x05) {
                 return true;
             }
-            if (got && b == 0xFD && last)
-            {
+            if (got && b == 0xFD && last) {
                 uint8_t t;
                 for (int i = 0; i < 3; i++) {
                     readByte(t, TWFILE_ACK_TIMEOUT_MS);
@@ -211,11 +207,9 @@ namespace
         }
         size_t sent = 0;
         uint16_t id = 0;
-        while (sent < len)
-        {
+        while (sent < len) {
             uint16_t chunk = (uint16_t)MIN(len - sent, PACKET_SIZE);
-            if (!sendTwfilePacket(id++, data + sent, chunk, sent + chunk == len))
-            {
+            if (!sendTwfilePacket(id++, data + sent, chunk, sent + chunk == len)) {
                 k_sleep(K_MSEC(25));
                 writeTwfileHeader(0xFFFF, 0);
                 readReply(TWFILE_ACK_TIMEOUT_MS);
@@ -266,8 +260,7 @@ namespace Nextion
     bool flashChunk(const uint8_t *data, size_t len)
     {
         size_t offset = 0;
-        while (offset < len)
-        {
+        while (offset < len) {
             size_t n = MIN(len - offset, PACKET_SIZE - g_packetLen);
             memcpy(g_packet + g_packetLen, data + offset, n);
             g_packetLen += n;

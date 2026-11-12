@@ -30,8 +30,8 @@
 #include <zephyr/sys/atomic.h>
 #include <zephyr/sys/util.h>
 
-using namespace Display::detail;
-using namespace Display::theme;
+using namespace Display::Detail;
+using namespace Display::Theme;
 using namespace Nextion;
 
 LOG_MODULE_DECLARE(display);
@@ -74,13 +74,11 @@ namespace
             pushColor(name, "bco2", a.enabled ? onPressed : COLOR_AXIS_OFF);
             pushColor(name, "pco", a.enabled ? COLOR_TEXT : COLOR_DIM);
         };
-        for (const char *suffix : SUFFIXES)
-        {
+        for (const char *suffix : SUFFIXES) {
             snprintf(key, sizeof(key), "%c%s", letter, suffix);
             pushAxisButton(key);
         }
-        for (const char *name : z ? PROBE_Z : PROBE_X)
-        {
+        for (const char *name : z ? PROBE_Z : PROBE_X) {
             pushAxisButton(name);
         }
     }
@@ -93,8 +91,7 @@ namespace
         bool custom = true;
         char key[KEY_MAX];
         char label[24];
-        for (size_t i = 0; i < 3; i++)
-        {
+        for (size_t i = 0; i < 3; i++) {
             bool selected = presets[i] == stepDu;
             custom = custom && !selected;
             snprintf(key, sizeof(key), "step%u", (unsigned)i);
@@ -128,7 +125,13 @@ namespace
         } else {
             pushText("startStop.txt", active ? "STOP" : "START");
         }
-        pushColor("startStop", "bco", active ? COLOR_STOP : ready ? COLOR_START : COLOR_AXIS_OFF);
+        int startStopColor = COLOR_AXIS_OFF;
+        if (active) {
+            startStopColor = COLOR_STOP;
+        } else if (ready) {
+            startStopColor = COLOR_START;
+        }
+        pushColor("startStop", "bco", startStopColor);
         pushColor("startStop", "pco", active || ready ? COLOR_TEXT : COLOR_DIM);
         bool skipChanged = pushNum("canSkip.val", canSkip);
         return runChanged || skipChanged;
@@ -138,8 +141,7 @@ namespace
     bool pushOverride(Mode::Id current, bool running, int32_t pct)
     {
         bool shown = Mode::hasFeedOverride(current);
-        if (shown)
-        {
+        if (shown) {
             pushText("ovrMinus.txt", "-%d%%", (int)Mode::OVERRIDE_STEP_PCT);
             pushText("ovrPlus.txt", "+%d%%", (int)Mode::OVERRIDE_STEP_PCT);
             pushText("ovr.txt", "%d%%", (int)pct);
@@ -164,8 +166,7 @@ namespace
     {
         Display::PreviewMapping m = g_previewMapping;
         bool shown = atomic_get(&g_previewLoaded) && m.pxPerMm > 0;
-        if (shown)
-        {
+        if (shown) {
             float zMm = (float)(Motion::stepsToDu(Stepper::Axis::Z, s.z.pos) / Gcode::DU_PER_MM);
             float xMm = (float)(Motion::stepsToDu(Stepper::Axis::X, s.x.pos) / Gcode::DU_PER_MM);
             pushNum("gcodeTool.x", previewPx(PREVIEW_X, PREVIEW_W, m.originX + zMm * m.pxPerMm));
@@ -201,7 +202,15 @@ namespace
         if (current != Mode::Id::Probe) {
             return changed;
         }
-        pushText("probePhase.txt", "%s", s.running ? s.job.phase : *s.error ? s.error : "ready");
+        const char *phase;
+        if (s.running) {
+            phase = s.job.phase;
+        } else if (*s.error) {
+            phase = s.error;
+        } else {
+            phase = "ready";
+        }
+        pushText("probePhase.txt", "%s", phase);
         pushColor("probeLight", "bco", s.probeContact ? COLOR_START : COLOR_AXIS_OFF);
         return changed;
     }
@@ -262,8 +271,7 @@ namespace
         pushSelected("wifiOff", !Wifi::enabled());
         pushSelected("apOn", m == Wifi::Mode::AccessPoint);
         pushSelected("apOff", m != Wifi::Mode::AccessPoint);
-        switch (m)
-        {
+        switch (m) {
         case Wifi::Mode::Station:
             pushText("wifiState.txt", "%s", Wifi::ssid());
             break;
@@ -279,7 +287,7 @@ namespace
     }
 }
 
-namespace Display::detail
+namespace Display::Detail
 {
     void pushStatus()
     {
@@ -308,9 +316,15 @@ namespace Display::detail
         pushWifi();
     }
 
-    void pushSoon() { g_lastPushMs = 0; }
+    void pushSoon()
+    {
+        g_lastPushMs = 0;
+    }
 
-    void clearPreview() { atomic_set(&g_previewLoaded, 0); }
+    void clearPreview()
+    {
+        atomic_set(&g_previewLoaded, 0);
+    }
 }
 
 namespace Display
@@ -321,8 +335,7 @@ namespace Display
             return false;
         }
         bool ok = Nextion::twfile(PREVIEW_PATH, jpeg, len);
-        if (ok)
-        {
+        if (ok) {
             // Re-setting the path redraws a picture already showing.
             writeRaw("gcodePic.path=\"\"");
             char cmd[48];

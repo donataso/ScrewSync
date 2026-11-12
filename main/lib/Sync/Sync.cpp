@@ -23,10 +23,13 @@ namespace
 {
     const Settings::Axis &cfgOf(Stepper::Axis axis)
     {
-        return axis == Stepper::Axis::Z ? Settings::active.z : Settings::active.x;
+        return axis == Stepper::Axis::Z ? Settings::g_active.z : Settings::g_active.x;
     }
 
-    int32_t countsPerRev() { return Settings::active.encoderPpr * 2; }
+    int32_t countsPerRev()
+    {
+        return Settings::g_active.encoderPpr * 2;
+    }
 }
 
 namespace Sync

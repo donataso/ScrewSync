@@ -22,7 +22,7 @@
 #include <stdint.h>
 
 // The "display" partition's layout; must match scripts/pack_display_image.py.
-namespace DisplayImage::detail
+namespace DisplayImage::Detail
 {
     // Keeps image unless already stored; returns the outcome line.
     const char *storeImage(const uint8_t *image, size_t len);

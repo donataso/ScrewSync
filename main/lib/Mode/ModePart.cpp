@@ -22,7 +22,7 @@
 
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     // Part: X pecks deeper each pass and returns to the engage point.
     struct Part
@@ -91,11 +91,10 @@ namespace
 
     void tickMode(int64_t spindlePos)
     {
-        switch (g_phase)
-        {
+        switch (g_phase) {
         case Phase::Approach:
             if (!g_entered) {
-                int64_t safe = duToSteps(Stepper::Axis::X, Settings::active.safeDistanceDu);
+                int64_t safe = duToSteps(Stepper::Axis::X, Settings::g_active.safeDistanceDu);
                 int64_t previous = passEnd(g_pass - 1) - g_direction * safe;
                 g_approach = (previous - g_start) * g_direction > 0 ? previous : g_start;
                 g_entered = true;
@@ -136,8 +135,8 @@ namespace
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const Ops PART = {true, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
-                     nullptr, nullptr, progressMode, nullptr, &g_params.spindleReverse};
+                      nullptr, nullptr, progressMode, nullptr, &g_params.spindleReverse};
 }

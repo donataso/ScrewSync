@@ -27,7 +27,7 @@ namespace
 {
     constexpr const char *NVS_NS = "settings";
 
-    enum class Type
+    enum class Type : uint8_t
     {
         I32,
         Bool,
@@ -39,50 +39,50 @@ namespace
         const char *name;
         Type type;
         void *ptr;
-        float min, max; // unused for Bool
+        double min, max; // unused for Bool
     };
 
-    using Settings::active;
+    using Settings::g_active;
 
     const FieldDef FIELDS[] = {
-        {"encoderPpr", Type::I32, &active.encoderPpr, 1, 15000},
-        {"encoderBacklash", Type::I32, &active.encoderBacklash, 0, 30000},
-        {"invertEncoder", Type::Bool, &active.invertEncoder, 0, 0},
-        {"axisEncoderBacklash", Type::I32, &active.axisEncoderBacklash, 0, 30000},
-        {"stepTimeMs", Type::I32, &active.stepTimeMs, 1, 10000},
-        {"delayBetweenStepsMs", Type::I32, &active.delayBetweenStepsMs, 0, 10000},
-        {"safeDistanceDu", Type::I32, &active.safeDistanceDu, 0, 10000000},
-        {"slotLeftReductionDu", Type::I32, &active.slotLeftReductionDu, 0, 10000000},
-        {"statusPushIntervalMs", Type::I32, &active.statusPushIntervalMs, 50, 10000},
+        {"encoderPpr", Type::I32, &g_active.encoderPpr, 1, 15000},
+        {"encoderBacklash", Type::I32, &g_active.encoderBacklash, 0, 30000},
+        {"invertEncoder", Type::Bool, &g_active.invertEncoder, 0, 0},
+        {"axisEncoderBacklash", Type::I32, &g_active.axisEncoderBacklash, 0, 30000},
+        {"stepTimeMs", Type::I32, &g_active.stepTimeMs, 1, 10000},
+        {"delayBetweenStepsMs", Type::I32, &g_active.delayBetweenStepsMs, 0, 10000},
+        {"safeDistanceDu", Type::I32, &g_active.safeDistanceDu, 0, 10000000},
+        {"slotLeftReductionDu", Type::I32, &g_active.slotLeftReductionDu, 0, 10000000},
+        {"statusPushIntervalMs", Type::I32, &g_active.statusPushIntervalMs, 50, 10000},
 
-        {"probePolarityNc", Type::Bool, &active.probePolarityNc, 0, 0},
-        {"probeFeedDuPerMin", Type::I32, &active.probeFeedDuPerMin, 1, 60000000},
-        {"reprobeFeedDuPerMin", Type::I32, &active.reprobeFeedDuPerMin, 1, 60000000},
-        {"probeBackOffDu", Type::I32, &active.probeBackOffDu, 1, 10000000},
+        {"probePolarityNc", Type::Bool, &g_active.probePolarityNc, 0, 0},
+        {"probeFeedDuPerMin", Type::I32, &g_active.probeFeedDuPerMin, 1, 60000000},
+        {"reprobeFeedDuPerMin", Type::I32, &g_active.reprobeFeedDuPerMin, 1, 60000000},
+        {"probeBackOffDu", Type::I32, &g_active.probeBackOffDu, 1, 10000000},
 
-        {"screwPitchDuZ", Type::I32, &active.z.screwPitchDu, 1, 10000000},
-        {"motorStepsZ", Type::I32, &active.z.motorSteps, 1, 1000000},
-        {"speedStartZ", Type::I32, &active.z.speedStart, 1, 1000000},
-        {"accelerationZ", Type::I32, &active.z.acceleration, 1, 100000000},
-        {"speedManualMoveZ", Type::I32, &active.z.speedManualMove, 1, 1000000},
-        {"invertDirectionZ", Type::Bool, &active.z.invertDirection, 0, 0},
-        {"invertEnableZ", Type::Bool, &active.z.invertEnable, 0, 0},
-        {"maxTravelMmZ", Type::I32, &active.z.maxTravelMm, 1, 10000},
-        {"backlashDuZ", Type::I32, &active.z.backlashDu, 0, 10000000},
-        {"handwheelPprZ", Type::Float, &active.z.handwheelPpr, 1, 100000},
-        {"invertHandwheelZ", Type::Bool, &active.z.invertHandwheel, 0, 0},
+        {"screwPitchDuZ", Type::I32, &g_active.z.screwPitchDu, 1, 10000000},
+        {"motorStepsZ", Type::I32, &g_active.z.motorSteps, 1, 1000000},
+        {"speedStartZ", Type::I32, &g_active.z.speedStart, 1, 1000000},
+        {"accelerationZ", Type::I32, &g_active.z.acceleration, 1, 100000000},
+        {"speedManualMoveZ", Type::I32, &g_active.z.speedManualMove, 1, 1000000},
+        {"invertDirectionZ", Type::Bool, &g_active.z.invertDirection, 0, 0},
+        {"invertEnableZ", Type::Bool, &g_active.z.invertEnable, 0, 0},
+        {"maxTravelMmZ", Type::I32, &g_active.z.maxTravelMm, 1, 10000},
+        {"backlashDuZ", Type::I32, &g_active.z.backlashDu, 0, 10000000},
+        {"handwheelPprZ", Type::Float, &g_active.z.handwheelPpr, 1, 100000},
+        {"invertHandwheelZ", Type::Bool, &g_active.z.invertHandwheel, 0, 0},
 
-        {"screwPitchDuX", Type::I32, &active.x.screwPitchDu, 1, 10000000},
-        {"motorStepsX", Type::I32, &active.x.motorSteps, 1, 1000000},
-        {"speedStartX", Type::I32, &active.x.speedStart, 1, 1000000},
-        {"accelerationX", Type::I32, &active.x.acceleration, 1, 100000000},
-        {"speedManualMoveX", Type::I32, &active.x.speedManualMove, 1, 1000000},
-        {"invertDirectionX", Type::Bool, &active.x.invertDirection, 0, 0},
-        {"invertEnableX", Type::Bool, &active.x.invertEnable, 0, 0},
-        {"maxTravelMmX", Type::I32, &active.x.maxTravelMm, 1, 10000},
-        {"backlashDuX", Type::I32, &active.x.backlashDu, 0, 10000000},
-        {"handwheelPprX", Type::Float, &active.x.handwheelPpr, 1, 100000},
-        {"invertHandwheelX", Type::Bool, &active.x.invertHandwheel, 0, 0},
+        {"screwPitchDuX", Type::I32, &g_active.x.screwPitchDu, 1, 10000000},
+        {"motorStepsX", Type::I32, &g_active.x.motorSteps, 1, 1000000},
+        {"speedStartX", Type::I32, &g_active.x.speedStart, 1, 1000000},
+        {"accelerationX", Type::I32, &g_active.x.acceleration, 1, 100000000},
+        {"speedManualMoveX", Type::I32, &g_active.x.speedManualMove, 1, 1000000},
+        {"invertDirectionX", Type::Bool, &g_active.x.invertDirection, 0, 0},
+        {"invertEnableX", Type::Bool, &g_active.x.invertEnable, 0, 0},
+        {"maxTravelMmX", Type::I32, &g_active.x.maxTravelMm, 1, 10000},
+        {"backlashDuX", Type::I32, &g_active.x.backlashDu, 0, 10000000},
+        {"handwheelPprX", Type::Float, &g_active.x.handwheelPpr, 1, 100000},
+        {"invertHandwheelX", Type::Bool, &g_active.x.invertHandwheel, 0, 0},
     };
     constexpr size_t FIELD_COUNT = sizeof(FIELDS) / sizeof(FIELDS[0]);
 
@@ -101,8 +101,7 @@ namespace
 
     void loadField(const FieldDef &f)
     {
-        switch (f.type)
-        {
+        switch (f.type) {
         case Type::I32:
         {
             int32_t v;
@@ -132,8 +131,7 @@ namespace
 
     bool saveField(const FieldDef &f)
     {
-        switch (f.type)
-        {
+        switch (f.type) {
         case Type::I32:
             return PersistBlob::save(NVS_NS, f.name, f.ptr, sizeof(int32_t));
         case Type::Bool:
@@ -149,7 +147,7 @@ namespace
 
     const void *fieldIn(const FieldDef &f, const Settings::Conf &conf)
     {
-        return (const uint8_t *)&conf + ((const uint8_t *)f.ptr - (const uint8_t *)&active);
+        return (const uint8_t *)&conf + ((const uint8_t *)f.ptr - (const uint8_t *)&g_active);
     }
 
     size_t fieldSize(const FieldDef &f)
@@ -159,8 +157,7 @@ namespace
 
     void formatField(const FieldDef &f, char *out, size_t outMax)
     {
-        switch (f.type)
-        {
+        switch (f.type) {
         case Type::I32:
             snprintf(out, outMax, "%ld", (long)*(int32_t *)f.ptr);
             break;
@@ -176,7 +173,7 @@ namespace
 
 namespace Settings
 {
-    Conf active;
+    Conf g_active;
 
     const struct json_obj_descr CONF_JSON_DESCR[] = {
         JSON_OBJ_DESCR_PRIM(Settings::Conf, encoderPpr, JSON_TOK_NUMBER),
@@ -237,20 +234,17 @@ namespace Settings
 
     bool setByName(const char *name, const char *value, char *out, size_t outMax)
     {
-        for (const FieldDef &f : FIELDS)
-        {
+        for (const FieldDef &f : FIELDS) {
             if (strcmp(f.name, name) != 0) {
                 continue;
             }
 
-            switch (f.type)
-            {
+            switch (f.type) {
             case Type::I32:
             {
                 char *end;
                 long v = strtol(value, &end, 10);
-                if (end == value || *end || v < f.min || v > f.max)
-                {
+                if (end == value || *end || (double)v < f.min || (double)v > f.max) {
                     snprintf(out, outMax, "range [%ld, %ld]", (long)f.min, (long)f.max);
                     return false;
                 }
@@ -260,8 +254,7 @@ namespace Settings
             case Type::Bool:
             {
                 bool v;
-                if (!parseBool(value, v))
-                {
+                if (!parseBool(value, v)) {
                     snprintf(out, outMax, "expected 0|1|true|false|on|off");
                     return false;
                 }
@@ -272,8 +265,7 @@ namespace Settings
             {
                 char *end;
                 float v = strtof(value, &end);
-                if (end == value || *end || v < f.min || v > f.max)
-                {
+                if (end == value || *end || (double)v < f.min || (double)v > f.max) {
                     snprintf(out, outMax, "range [%g, %g]", (double)f.min, (double)f.max);
                     return false;
                 }
@@ -292,8 +284,7 @@ namespace Settings
         int n = snprintf(out, outMax, "{");
         char val[32];
         bool first = true;
-        for (const FieldDef &f : FIELDS)
-        {
+        for (const FieldDef &f : FIELDS) {
             if (n < 0 || (size_t)n >= outMax) {
                 break;
             }
@@ -308,21 +299,17 @@ namespace Settings
 
     bool validate(const Conf &conf, char *out, size_t outMax)
     {
-        for (const FieldDef &f : FIELDS)
-        {
+        for (const FieldDef &f : FIELDS) {
             const void *src = fieldIn(f, conf);
-            if (f.type == Type::I32)
-            {
+            if (f.type == Type::I32) {
                 int32_t v = *(const int32_t *)src;
-                if (v < f.min || v > f.max) {
+                if ((double)v < f.min || (double)v > f.max) {
                     snprintf(out, outMax, "%s: range [%ld, %ld]", f.name, (long)f.min, (long)f.max);
                     return false;
                 }
-            }
-            else if (f.type == Type::Float)
-            {
+            } else if (f.type == Type::Float) {
                 float v = *(const float *)src;
-                if (!(v >= f.min && v <= f.max)) {
+                if (!((double)v >= f.min && (double)v <= f.max)) {
                     snprintf(out, outMax, "%s: range [%g, %g]", f.name, (double)f.min, (double)f.max);
                     return false;
                 }
@@ -333,7 +320,7 @@ namespace Settings
 
     bool replace(const Conf &conf)
     {
-        active = conf;
+        g_active = conf;
         return save();
     }
 
@@ -348,7 +335,7 @@ namespace Settings
         memcpy(buf, json, len);
         buf[len] = '\0';
 
-        Conf temp = active;
+        Conf temp = g_active;
         int64_t mask = json_obj_parse(buf, len, CONF_JSON_DESCR, ARRAY_SIZE(CONF_JSON_DESCR), &temp);
         if (mask < 0) {
             snprintf(out, outMax, "invalid json");
@@ -358,8 +345,7 @@ namespace Settings
             return false;
         }
 
-        for (size_t i = 0; i < FIELD_COUNT; i++)
-        {
+        for (size_t i = 0; i < FIELD_COUNT; i++) {
             if (mask & BIT(i)) {
                 const FieldDef &f = FIELDS[i];
                 memcpy(f.ptr, fieldIn(f, temp), fieldSize(f));

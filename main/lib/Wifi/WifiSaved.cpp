@@ -21,7 +21,7 @@
 #include <zephyr/sys/reboot.h>
 #include "PersistBlob.hpp"
 
-using namespace Wifi::detail;
+using namespace Wifi::Detail;
 
 namespace
 {
@@ -51,7 +51,7 @@ namespace
     }
 }
 
-namespace Wifi::detail
+namespace Wifi::Detail
 {
     void loadLastSsid()
     {
@@ -72,7 +72,10 @@ namespace Wifi::detail
 
 namespace Wifi
 {
-    uint8_t savedCount() { return savedCache().n; }
+    uint8_t savedCount()
+    {
+        return savedCache().n;
+    }
 
     const char *savedSsid(uint8_t i)
     {
@@ -87,7 +90,10 @@ namespace Wifi
         return i < c.n && !strcmp(c.ssid[i], g_lastSsid);
     }
 
-    const char *preferredSsid() { return g_lastSsid; }
+    const char *preferredSsid()
+    {
+        return g_lastSsid;
+    }
 
     unsigned passLen()
     {
@@ -147,7 +153,10 @@ namespace Wifi
         connectSsid(ssid, strlen(ssid));
     }
 
-    void saveCredentials(const char *ssid, const char *pass) { addNetwork(ssid, pass); }
+    void saveCredentials(const char *ssid, const char *pass)
+    {
+        addNetwork(ssid, pass);
+    }
 
     void setCredentials(const char *ssid, const char *pass)
     {

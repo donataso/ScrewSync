@@ -20,9 +20,12 @@
 
 namespace
 {
-    using Command::detail::skipSpaces;
+    using Command::Detail::skipSpaces;
 
-    bool isIndex(const char *s) { return s[0] >= '0' && s[0] <= '9'; }
+    bool isIndex(const char *s)
+    {
+        return s[0] >= '0' && s[0] <= '9';
+    }
 
     void status(char *out, size_t outMax)
     {
@@ -37,8 +40,7 @@ namespace
     void list(char *out, size_t outMax)
     {
         int n = snprintf(out, outMax, "ok n=%u pref=\"%s\"", (unsigned)Wifi::savedCount(), Wifi::preferredSsid());
-        for (uint8_t i = 0; i < Wifi::savedCount() && n >= 0 && (size_t)n < outMax; i++)
-        {
+        for (uint8_t i = 0; i < Wifi::savedCount() && n >= 0 && (size_t)n < outMax; i++) {
             n += snprintf(out + n, outMax - (size_t)n, " %u=\"%s\"%s", (unsigned)i, Wifi::savedSsid(i),
                           Wifi::savedIsPreferred(i) ? "(pref)" : "");
         }
@@ -62,7 +64,7 @@ namespace
     }
 }
 
-namespace Command::detail
+namespace Command::Detail
 {
     void wifi(const char *args, char *out, size_t outMax)
     {

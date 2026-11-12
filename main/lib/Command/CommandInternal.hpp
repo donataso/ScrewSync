@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-namespace Command::detail
+namespace Command::Detail
 {
     using Handler = void (*)(const char *args, char *out, size_t outMax);
 

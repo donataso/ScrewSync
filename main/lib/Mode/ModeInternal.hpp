@@ -33,7 +33,7 @@
 // the rotation their "spindle" param names and stop on the other. Tapers
 // are diameter change per length, + = growing toward the chuck, whatever
 // the feed direction.
-namespace Mode::detail
+namespace Mode::Detail
 {
     enum class Kind : uint8_t
     {
@@ -95,8 +95,14 @@ namespace Mode::detail
 
     struct Guard
     {
-        Guard() { lock(); }
-        ~Guard() { unlock(); }
+        Guard()
+        {
+            lock();
+        }
+        ~Guard()
+        {
+            unlock();
+        }
     };
 
     // nullptr for an unimplemented mode.
@@ -125,12 +131,21 @@ namespace Mode::detail
     int spindleSign();
 
     // Spindle travel in the job's cutting rotation from one count to a later one.
-    inline int64_t spindleTravel(int64_t from, int64_t to) { return spindleSign() * (to - from); }
+    inline int64_t spindleTravel(int64_t from, int64_t to)
+    {
+        return spindleSign() * (to - from);
+    }
 
     // Step direction of a positive-forward feed.
-    inline int feedDirection(int64_t pitchOrSpeed) { return pitchOrSpeed > 0 ? -1 : 1; }
+    inline int feedDirection(int64_t pitchOrSpeed)
+    {
+        return pitchOrSpeed > 0 ? -1 : 1;
+    }
 
-    inline int32_t signedDu(int32_t magnitude, bool reverse) { return reverse ? -magnitude : magnitude; }
+    inline int32_t signedDu(int32_t magnitude, bool reverse)
+    {
+        return reverse ? -magnitude : magnitude;
+    }
 
     // Drives the axis toward target at speed (0 = rapid). True once at rest
     // there; a travel-clamped target ends the mode.

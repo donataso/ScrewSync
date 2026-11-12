@@ -22,25 +22,32 @@
 #include "SyncRatio.hpp"
 #include <math.h>
 #include <stdlib.h>
+#include <zephyr/sys/util.h>
 
 namespace
 {
     const Settings::Axis &cfgOf(Stepper::Axis axis)
     {
-        return axis == Stepper::Axis::Z ? Settings::active.z : Settings::active.x;
+        return axis == Stepper::Axis::Z ? Settings::g_active.z : Settings::g_active.x;
     }
 
     void endOnClamp(Stepper::Axis axis)
     {
-        Mode::detail::finish(Stepper::isDisabled(axis) ? "axis disabled" : "travel limit");
+        Mode::Detail::finish(Stepper::isDisabled(axis) ? "axis disabled" : "travel limit");
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
-    int64_t duToSteps(Stepper::Axis axis, double du) { return Motion::duToSteps(axis, du); }
+    int64_t duToSteps(Stepper::Axis axis, double du)
+    {
+        return Motion::duToSteps(axis, du);
+    }
 
-    double stepsToDu(Stepper::Axis axis, int64_t steps) { return Motion::stepsToDu(axis, steps); }
+    double stepsToDu(Stepper::Axis axis, int64_t steps)
+    {
+        return Motion::stepsToDu(axis, steps);
+    }
 
     int32_t rapidSpeed(Stepper::Axis axis)
     {
@@ -57,7 +64,10 @@ namespace Mode::detail
         return speed > cfg.speedManualMove ? cfg.speedManualMove : (int32_t)speed;
     }
 
-    int32_t countsPerRev() { return Motion::spindleCountsPerRev(); }
+    int32_t countsPerRev()
+    {
+        return Motion::spindleCountsPerRev();
+    }
 
     bool moveAndWait(Stepper::Axis axis, int64_t target, int32_t speed)
     {
@@ -97,7 +107,7 @@ namespace Mode::detail
         lastSpindle = spindlePos;
         double lo = (double)(direction > 0 ? from : to);
         double hi = (double)(direction > 0 ? to : from);
-        pos = pos < lo ? lo : (pos > hi ? hi : pos);
+        pos = CLAMP(pos, lo, hi);
         int64_t target = (int64_t)llround(pos);
         if (Stepper::moveTo(axis, target, rapidSpeed(axis)) != target) {
             endOnClamp(axis);

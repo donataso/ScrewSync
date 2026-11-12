@@ -59,15 +59,13 @@ namespace
     void urlDecode(const char *src, size_t len, char *out, size_t outMax)
     {
         size_t n = 0;
-        for (size_t i = 0; i < len && n + 1 < outMax; i++)
-        {
+        for (size_t i = 0; i < len && n + 1 < outMax; i++) {
             char c = src[i];
             if (c == '+') {
                 c = ' ';
             } else if (c == '%' && i + 2 < len) {
                 char hi = hexVal(src[i + 1]), lo = hexVal(src[i + 2]);
-                if (hi >= 0 && lo >= 0)
-                {
+                if (hi >= 0 && lo >= 0) {
                     c = (char)((hi << 4) | lo);
                     i += 2;
                 }
@@ -81,8 +79,7 @@ namespace
     bool parseField(const char *body, size_t len, const char *key, char *out, size_t outMax)
     {
         size_t keyLen = strlen(key);
-        for (size_t i = 0; i + keyLen <= len; i++)
-        {
+        for (size_t i = 0; i + keyLen <= len; i++) {
             if ((i != 0 && body[i - 1] != '&') ||
                 memcmp(body + i, key, keyLen) != 0 || i + keyLen >= len ||
                 body[i + keyLen] != '=') {
@@ -99,36 +96,32 @@ namespace
     }
 
     int wifiPortalHandler(struct http_client_ctx *client, enum http_transaction_status status,
-                           const struct http_request_ctx *request_ctx,
-                           struct http_response_ctx *response_ctx, void *)
+                          const struct http_request_ctx *requestCtx,
+                          struct http_response_ctx *responseCtx, void *)
     {
         static char body[256] EXT_RAM_BSS;
         static size_t cursor;
 
-        if (status == HTTP_SERVER_TRANSACTION_ABORTED || status == HTTP_SERVER_TRANSACTION_COMPLETE)
-        {
+        if (status == HTTP_SERVER_TRANSACTION_ABORTED || status == HTTP_SERVER_TRANSACTION_COMPLETE) {
             cursor = 0;
             return 0;
         }
 
-        if (Machine::blocksTraffic())
-        {
+        if (Machine::blocksTraffic()) {
             cursor = 0;
             static char msg[32];
             snprintf(msg, sizeof(msg), "%s\n", Machine::stateName());
-            response_ctx->status = HTTP_503_SERVICE_UNAVAILABLE;
-            response_ctx->body = (const uint8_t *)msg;
-            response_ctx->body_len = strlen(msg);
-            response_ctx->final_chunk = true;
+            responseCtx->status = HTTP_503_SERVICE_UNAVAILABLE;
+            responseCtx->body = (const uint8_t *)msg;
+            responseCtx->body_len = strlen(msg);
+            responseCtx->final_chunk = true;
             return 0;
         }
 
-        if (client->method == HTTP_POST)
-        {
-            if (request_ctx->data_len + cursor < sizeof(body))
-            {
-                memcpy(body + cursor, request_ctx->data, request_ctx->data_len);
-                cursor += request_ctx->data_len;
+        if (client->method == HTTP_POST) {
+            if (requestCtx->data_len + cursor < sizeof(body)) {
+                memcpy(body + cursor, requestCtx->data, requestCtx->data_len);
+                cursor += requestCtx->data_len;
             }
         }
 
@@ -136,8 +129,7 @@ namespace
             return 0;
         }
 
-        if (client->method == HTTP_POST)
-        {
+        if (client->method == HTTP_POST) {
             char ssid[33] = {0};
             char pass[65] = {0};
             size_t n = cursor;
@@ -147,34 +139,30 @@ namespace
             parseField(body, n, "p", pass, sizeof(pass));
 
             static char msg[64];
-            if (!haveSsid || !ssid[0])
-            {
+            if (!haveSsid || !ssid[0]) {
                 snprintf(msg, sizeof(msg), "SSID required\n");
-                response_ctx->status = HTTP_400_BAD_REQUEST;
-            }
-            else
-            {
+                responseCtx->status = HTTP_400_BAD_REQUEST;
+            } else {
                 strncpy(g_pendingSsid, ssid, sizeof(g_pendingSsid) - 1);
                 g_pendingSsid[sizeof(g_pendingSsid) - 1] = '\0';
                 strncpy(g_pendingPass, pass, sizeof(g_pendingPass) - 1);
                 g_pendingPass[sizeof(g_pendingPass) - 1] = '\0';
                 k_work_schedule(&g_applyCredentialsWork, K_MSEC(500));
                 snprintf(msg, sizeof(msg), "Saved -- connecting to '%s'\n", ssid);
-                response_ctx->status = HTTP_200_OK;
+                responseCtx->status = HTTP_200_OK;
             }
-            response_ctx->body = (const uint8_t *)msg;
-            response_ctx->body_len = strlen(msg);
-            response_ctx->final_chunk = true;
+            responseCtx->body = (const uint8_t *)msg;
+            responseCtx->body_len = strlen(msg);
+            responseCtx->final_chunk = true;
             return 0;
         }
 
-        if (Wifi::mode() != Wifi::Mode::AccessPoint)
-        {
-            static const struct http_header redirect[] = {{"Location", "/"}};
-            response_ctx->status = HTTP_302_FOUND;
-            response_ctx->headers = redirect;
-            response_ctx->header_count = 1;
-            response_ctx->final_chunk = true;
+        if (Wifi::mode() != Wifi::Mode::AccessPoint) {
+            static const struct http_header REDIRECT[] = {{"Location", "/"}};
+            responseCtx->status = HTTP_302_FOUND;
+            responseCtx->headers = REDIRECT;
+            responseCtx->header_count = 1;
+            responseCtx->final_chunk = true;
             return 0;
         }
 
@@ -182,15 +170,11 @@ namespace
         char host[48];
         snprintf(host, sizeof(host), "%s.local", Wifi::mdnsHost());
         size_t n = 0;
-        for (const char *src = WEB_WIFI_HTML; *src && n + 1 < sizeof(page);)
-        {
-            if (!strncmp(src, "{{MDNS_HOST}}", 13))
-            {
+        for (const char *src = WEB_WIFI_HTML; *src && n + 1 < sizeof(page);) {
+            if (!strncmp(src, "{{MDNS_HOST}}", 13)) {
                 n += snprintf(page + n, sizeof(page) - n, "%s", host);
                 src += 13;
-            }
-            else if (!strncmp(src, "{{DEVICE_NAME}}", 15))
-            {
+            } else if (!strncmp(src, "{{DEVICE_NAME}}", 15)) {
                 n += snprintf(page + n, sizeof(page) - n, "%s", DEVICE_NAME);
                 src += 15;
             } else {
@@ -199,15 +183,15 @@ namespace
         }
         page[n < sizeof(page) ? n : sizeof(page) - 1] = '\0';
 
-        response_ctx->status = HTTP_200_OK;
-        response_ctx->body = (const uint8_t *)page;
-        response_ctx->body_len = strlen(page);
-        response_ctx->final_chunk = true;
+        responseCtx->status = HTTP_200_OK;
+        responseCtx->body = (const uint8_t *)page;
+        responseCtx->body_len = strlen(page);
+        responseCtx->final_chunk = true;
         return 0;
     }
 }
 
-struct http_resource_detail_dynamic wifiPortalDetail = {
+struct http_resource_detail_dynamic g_wifiPortalDetail = {
     .common = {
         .bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
         .type = HTTP_RESOURCE_TYPE_DYNAMIC,

@@ -29,24 +29,24 @@ namespace
     uint16_t g_port = 80;
 }
 
-HTTP_SERVICE_DEFINE(webUiHttpService, NULL, &g_port, CONFIG_HTTP_SERVER_MAX_CLIENTS, 10, NULL, NULL, NULL);
-HTTP_RESOURCE_DEFINE(g_indexResource, webUiHttpService, "/", &indexDetail);
-HTTP_RESOURCE_DEFINE(g_wifiResource, webUiHttpService, "/wifi", &wifiPortalDetail);
-HTTP_RESOURCE_DEFINE(g_wsResource, webUiHttpService, "/ws", &wsCommandDetail);
-HTTP_RESOURCE_DEFINE(g_updateResource, webUiHttpService, "/update", &WebRoutes::update);
-HTTP_RESOURCE_DEFINE(g_updateDisplayResource, webUiHttpService, "/update-display", &WebRoutes::updateDisplay);
-HTTP_RESOURCE_DEFINE(g_previewResource, webUiHttpService, "/display-preview", &WebRoutes::preview);
-HTTP_RESOURCE_DEFINE(g_threadsResource, webUiHttpService, "/threads", &WebRoutes::threads);
-HTTP_RESOURCE_DEFINE(g_backupResource, webUiHttpService, "/backup", &WebRoutes::backup);
-HTTP_RESOURCE_DEFINE(g_logResource, webUiHttpService, "/log", &WebRoutes::logRing);
-HTTP_RESOURCE_DEFINE(g_gcodeResource, webUiHttpService, "/gcode", &WebRoutes::gcodeList);
-HTTP_RESOURCE_DEFINE(g_gcodeSaveResource, webUiHttpService, "/gcode/save", &WebRoutes::gcodeSave);
-HTTP_RESOURCE_DEFINE(g_gcodeUpdateResource, webUiHttpService, "/gcode/update", &WebRoutes::gcodeUpdate);
-HTTP_RESOURCE_DEFINE(g_gcodeRunResource, webUiHttpService, "/gcode/run", &WebRoutes::gcodeRun);
-HTTP_RESOURCE_DEFINE(g_gcodeActiveResource, webUiHttpService, "/gcode/active", &WebRoutes::gcodeActive);
-HTTP_RESOURCE_DEFINE(g_gcodeProgramResource, webUiHttpService, "/gcode/program", &WebRoutes::gcodeProgram);
-HTTP_RESOURCE_DEFINE(g_gcodeSelectResource, webUiHttpService, "/gcode/select", &WebRoutes::gcodeSelect);
-HTTP_RESOURCE_DEFINE(g_gcodeDeleteResource, webUiHttpService, "/gcode/delete", &WebRoutes::gcodeDelete);
+HTTP_SERVICE_DEFINE(WEB_UI_HTTP_SERVICE, NULL, &g_port, CONFIG_HTTP_SERVER_MAX_CLIENTS, 10, NULL, NULL, NULL);
+HTTP_RESOURCE_DEFINE(INDEX_RESOURCE, WEB_UI_HTTP_SERVICE, "/", &g_indexDetail);
+HTTP_RESOURCE_DEFINE(WIFI_RESOURCE, WEB_UI_HTTP_SERVICE, "/wifi", &g_wifiPortalDetail);
+HTTP_RESOURCE_DEFINE(WS_RESOURCE, WEB_UI_HTTP_SERVICE, "/ws", &g_wsCommandDetail);
+HTTP_RESOURCE_DEFINE(UPDATE_RESOURCE, WEB_UI_HTTP_SERVICE, "/update", &WebRoutes::g_update);
+HTTP_RESOURCE_DEFINE(UPDATE_DISPLAY_RESOURCE, WEB_UI_HTTP_SERVICE, "/update-display", &WebRoutes::g_updateDisplay);
+HTTP_RESOURCE_DEFINE(PREVIEW_RESOURCE, WEB_UI_HTTP_SERVICE, "/display-preview", &WebRoutes::g_preview);
+HTTP_RESOURCE_DEFINE(THREADS_RESOURCE, WEB_UI_HTTP_SERVICE, "/threads", &WebRoutes::g_threads);
+HTTP_RESOURCE_DEFINE(BACKUP_RESOURCE, WEB_UI_HTTP_SERVICE, "/backup", &WebRoutes::g_backup);
+HTTP_RESOURCE_DEFINE(LOG_RESOURCE, WEB_UI_HTTP_SERVICE, "/log", &WebRoutes::g_logRing);
+HTTP_RESOURCE_DEFINE(GCODE_RESOURCE, WEB_UI_HTTP_SERVICE, "/gcode", &WebRoutes::g_gcodeList);
+HTTP_RESOURCE_DEFINE(GCODE_SAVE_RESOURCE, WEB_UI_HTTP_SERVICE, "/gcode/save", &WebRoutes::g_gcodeSave);
+HTTP_RESOURCE_DEFINE(GCODE_UPDATE_RESOURCE, WEB_UI_HTTP_SERVICE, "/gcode/update", &WebRoutes::g_gcodeUpdate);
+HTTP_RESOURCE_DEFINE(GCODE_RUN_RESOURCE, WEB_UI_HTTP_SERVICE, "/gcode/run", &WebRoutes::g_gcodeRun);
+HTTP_RESOURCE_DEFINE(GCODE_ACTIVE_RESOURCE, WEB_UI_HTTP_SERVICE, "/gcode/active", &WebRoutes::g_gcodeActive);
+HTTP_RESOURCE_DEFINE(GCODE_PROGRAM_RESOURCE, WEB_UI_HTTP_SERVICE, "/gcode/program", &WebRoutes::g_gcodeProgram);
+HTTP_RESOURCE_DEFINE(GCODE_SELECT_RESOURCE, WEB_UI_HTTP_SERVICE, "/gcode/select", &WebRoutes::g_gcodeSelect);
+HTTP_RESOURCE_DEFINE(GCODE_DELETE_RESOURCE, WEB_UI_HTTP_SERVICE, "/gcode/delete", &WebRoutes::g_gcodeDelete);
 
 namespace WebUi
 {

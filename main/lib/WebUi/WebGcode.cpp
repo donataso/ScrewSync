@@ -41,7 +41,7 @@ namespace
     };
     Upload g_uploadState;
 
-    enum class Target
+    enum class Target : uint8_t
     {
         Save,
         Run,
@@ -54,8 +54,7 @@ namespace
     void writeActive(JsonWriter &j)
     {
         GcodeStore::ActiveInfo a = GcodeStore::active();
-        if (!a.present)
-        {
+        if (!a.present) {
             j.raw("null");
             return;
         }
@@ -67,14 +66,11 @@ namespace
     int replyResult(struct http_response_ctx *response, const GcodeStore::Result &r)
     {
         JsonWriter j(g_reply, REPLY_MAX);
-        if (r.ok)
-        {
+        if (r.ok) {
             j.raw("{\"ok\":true,\"id\":").strOrNull(r.savedId).raw(",\"active\":");
             writeActive(j);
             j.raw("}");
-        }
-        else
-        {
+        } else {
             j.raw("{\"ok\":false,\"error\":").str(r.error ? r.error : "error").fmt(",\"line\":%u}", (unsigned)r.line);
         }
         return WebHttp::replyJson(response, r.ok ? HTTP_200_OK : HTTP_400_BAD_REQUEST, j);
@@ -112,8 +108,7 @@ namespace
         }
         JsonWriter j(g_listJson, LIST_JSON_MAX);
         j.raw("{\"programs\":[");
-        for (size_t i = 0; j.ok && i < g_list.count; i++)
-        {
+        for (size_t i = 0; j.ok && i < g_list.count; i++) {
             const GcodeStore::ProgramInfo &p = g_list.programs[i];
             j.raw(i ? ",{\"id\":" : "{\"id\":").str(p.id).raw(",\"name\":").str(p.name);
             j.raw(",\"flavor\":").str(p.flavor).fmt(",\"size\":%zu}", p.size);
@@ -125,11 +120,10 @@ namespace
     }
 
     int handleUpload(struct http_client_ctx *client, enum http_transaction_status status,
-                     const struct http_request_ctx *request, struct http_response_ctx *response, void *user_data)
+                     const struct http_request_ctx *request, struct http_response_ctx *response, void *userData)
     {
         Upload &u = g_uploadState;
-        if (status == HTTP_SERVER_TRANSACTION_ABORTED)
-        {
+        if (status == HTTP_SERVER_TRANSACTION_ABORTED) {
             if (client == u.owner) {
                 u = {};
             }
@@ -141,8 +135,7 @@ namespace
         if (u.owner && client != u.owner) {
             return reply(response, HTTP_409_CONFLICT, "upload in progress\n");
         }
-        if (!u.owner)
-        {
+        if (!u.owner) {
             uint32_t len = request->header_count ? WebHttp::contentLength(request) : 0;
             if (len == 0 || len > GcodeStore::ENCODED_MAX) {
                 return reply(response, HTTP_413_PAYLOAD_TOO_LARGE, "program too large\n");
@@ -165,9 +158,8 @@ namespace
             return reply(response, HTTP_400_BAD_REQUEST, "size mismatch\n");
         }
         const char *body = (const char *)g_upload;
-        Target target = *(const Target *)user_data;
-        if (target == Target::Update)
-        {
+        Target target = *(const Target *)userData;
+        if (target == Target::Update) {
             char id[GcodeStore::ID_LEN + 1];
             queryId(client, id);
             return replyResult(response, GcodeStore::updateEncoded(id, body, done.received));
@@ -230,20 +222,21 @@ namespace
     }
 }
 
-#define GCODE_ROUTE(name, method, handler, data)                                                                   \
-    struct http_resource_detail_dynamic name = {                                                                   \
-        .common = {.bitmask_of_supported_http_methods = BIT(method), .type = HTTP_RESOURCE_TYPE_DYNAMIC},          \
-        .cb = handler, .user_data = (void *)(data),                                                                \
+#define GCODE_ROUTE(name, method, handler, data)                                                          \
+    struct http_resource_detail_dynamic name = {                                                          \
+        .common = {.bitmask_of_supported_http_methods = BIT(method), .type = HTTP_RESOURCE_TYPE_DYNAMIC}, \
+        .cb = (handler),                                                                                  \
+        .user_data = (void *)(data),                                                                      \
     }
 
 namespace WebRoutes
 {
-    GCODE_ROUTE(gcodeList, HTTP_GET, handleList, nullptr);
-    GCODE_ROUTE(gcodeSave, HTTP_POST, handleUpload, &SAVE);
-    GCODE_ROUTE(gcodeUpdate, HTTP_POST, handleUpload, &UPDATE);
-    GCODE_ROUTE(gcodeRun, HTTP_POST, handleUpload, &RUN);
-    GCODE_ROUTE(gcodeActive, HTTP_GET, handleActive, nullptr);
-    GCODE_ROUTE(gcodeProgram, HTTP_GET, handleProgram, nullptr);
-    GCODE_ROUTE(gcodeSelect, HTTP_POST, handleSelect, nullptr);
-    GCODE_ROUTE(gcodeDelete, HTTP_POST, handleDelete, nullptr);
+    GCODE_ROUTE(g_gcodeList, HTTP_GET, handleList, nullptr);
+    GCODE_ROUTE(g_gcodeSave, HTTP_POST, handleUpload, &SAVE);
+    GCODE_ROUTE(g_gcodeUpdate, HTTP_POST, handleUpload, &UPDATE);
+    GCODE_ROUTE(g_gcodeRun, HTTP_POST, handleUpload, &RUN);
+    GCODE_ROUTE(g_gcodeActive, HTTP_GET, handleActive, nullptr);
+    GCODE_ROUTE(g_gcodeProgram, HTTP_GET, handleProgram, nullptr);
+    GCODE_ROUTE(g_gcodeSelect, HTTP_POST, handleSelect, nullptr);
+    GCODE_ROUTE(g_gcodeDelete, HTTP_POST, handleDelete, nullptr);
 }

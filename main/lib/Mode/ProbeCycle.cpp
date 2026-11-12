@@ -21,7 +21,10 @@ namespace
 {
     using namespace ProbeCycle;
 
-    int64_t absDelta(int64_t a, int64_t b) { return a > b ? a - b : b - a; }
+    int64_t absDelta(int64_t a, int64_t b)
+    {
+        return a > b ? a - b : b - a;
+    }
 
     void touch(State &s, const Params &p, Result &r, int64_t currentPos, bool contactNow, bool justContacted,
                int64_t contactPos, int64_t maxSteps, bool reprobeFeed, Phase next)
@@ -75,14 +78,16 @@ namespace ProbeCycle
         return nullptr;
     }
 
-    bool watching(const State &s) { return s.phase == Phase::Approach || s.phase == Phase::Reprobe; }
+    bool watching(const State &s)
+    {
+        return s.phase == Phase::Approach || s.phase == Phase::Reprobe;
+    }
 
     Result tick(State &s, const Params &p, int64_t currentPos, bool contactNow, bool justContacted,
                 int64_t contactPos)
     {
         Result r;
-        switch (s.phase)
-        {
+        switch (s.phase) {
         case Phase::Idle:
         case Phase::Done:
             r.done = true;

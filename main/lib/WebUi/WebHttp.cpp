@@ -24,8 +24,8 @@
 #include <strings.h>
 
 // Needed so request headers carry them: only registered headers are captured.
-HTTP_SERVER_REGISTER_HEADER_CAPTURE(g_contentLengthCapture, "Content-Length");
-HTTP_SERVER_REGISTER_HEADER_CAPTURE(g_displayStoreCapture, "X-Display-Store");
+HTTP_SERVER_REGISTER_HEADER_CAPTURE(CONTENT_LENGTH_CAPTURE, "Content-Length");
+HTTP_SERVER_REGISTER_HEADER_CAPTURE(DISPLAY_STORE_CAPTURE, "X-Display-Store");
 
 namespace
 {
@@ -34,8 +34,7 @@ namespace
     {
         size_t nameLen = strlen(name);
         const char *q = strchr((const char *)client->url_buffer, '?');
-        while (q)
-        {
+        while (q) {
             q++;
             if (!strncmp(q, name, nameLen) && q[nameLen] == '=') {
                 return q + nameLen + 1;
@@ -47,8 +46,7 @@ namespace
 
     const char *escape(char c, char (&buf)[8])
     {
-        switch (c)
-        {
+        switch (c) {
         case '"':
             return "\\\"";
         case '\\':
@@ -60,8 +58,7 @@ namespace
         case '\t':
             return "\\t";
         default:
-            if ((unsigned char)c < 0x20)
-            {
+            if ((unsigned char)c < 0x20) {
                 snprintf(buf, sizeof(buf), "\\u%04x", (unsigned char)c);
                 return buf;
             }
@@ -165,8 +162,7 @@ namespace WebHttp
     JsonWriter &JsonWriter::str(const char *s)
     {
         raw("\"");
-        for (; *s && ok; s++)
-        {
+        for (; *s && ok; s++) {
             char esc[8];
             const char *e = escape(*s, esc);
             if (e) {

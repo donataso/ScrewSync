@@ -36,8 +36,7 @@ namespace
     bool waitReconnect()
     {
         int64_t end = k_uptime_get() + DISPLAY_RECONNECT_TIMEOUT_MS;
-        while (!Display::connected())
-        {
+        while (!Display::connected()) {
             if (k_uptime_get() >= end) {
                 return false;
             }
@@ -48,7 +47,7 @@ namespace
 
     bool flashFromPartition()
     {
-        bool ok = DisplayImage::detail::readStored(Nextion::flashBegin, Nextion::flashChunk) && Nextion::flashFinish();
+        bool ok = DisplayImage::Detail::readStored(Nextion::flashBegin, Nextion::flashChunk) && Nextion::flashFinish();
         if (!ok) {
             Nextion::flashAbort();
         }
@@ -57,8 +56,7 @@ namespace
 
     void worker(void *, void *, void *)
     {
-        while (true)
-        {
+        while (true) {
             k_sem_take(&g_start, K_FOREVER);
             LOG_INF("flashing stored image");
             bool ok = flashFromPartition();
@@ -68,7 +66,8 @@ namespace
     }
 }
 
-K_THREAD_DEFINE(g_displayImageWorker, 4096, worker, nullptr, nullptr, nullptr, K_PRIO_PREEMPT(7), 0, 0);
+// NOLINTNEXTLINE(bugprone-branch-clone): inside the Zephyr macro
+K_THREAD_DEFINE(DISPLAY_IMAGE_WORKER, 4096, worker, nullptr, nullptr, nullptr, K_PRIO_PREEMPT(7), 0, 0);
 
 namespace DisplayImage
 {
@@ -87,8 +86,7 @@ namespace DisplayImage
         if (!claim()) {
             return "display flash in progress";
         }
-        if (!Machine::setFlashing(true))
-        {
+        if (!Machine::setFlashing(true)) {
             release();
             return "machine not idle";
         }
@@ -104,8 +102,7 @@ namespace DisplayImage
     bool flash(const uint8_t *image, size_t len, bool store, const char *&reply)
     {
         bool ok = Nextion::flashBegin(len) && Nextion::flashChunk(image, len) && Nextion::flashFinish();
-        if (!ok)
-        {
+        if (!ok) {
             Nextion::flashAbort();
             reply = "display flash failed";
             return false;
@@ -115,7 +112,7 @@ namespace DisplayImage
         } else if (!waitReconnect()) {
             reply = "ok, not stored: display did not reconnect";
         } else {
-            reply = detail::storeImage(image, len);
+            reply = Detail::storeImage(image, len);
         }
         return true;
     }

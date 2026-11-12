@@ -1,4 +1,4 @@
-Checks: '-*,bugprone-*,performance-*,readability-braces-around-statements,readability-identifier-naming'
+Checks: '-*,bugprone-*,-bugprone-easily-swappable-parameters,performance-*,readability-braces-around-statements,readability-identifier-naming'
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*/main/(lib|src|tests)/.*'
 FormatStyle: file
@@ -33,3 +33,10 @@ CheckOptions:
     value: UPPER_CASE
   - key: readability-identifier-naming.ConstexprVariableCase
     value: UPPER_CASE
+  # Identifiers that the ZTEST macros generate.
+  - key: readability-identifier-naming.GlobalFunctionIgnoredRegexp
+    value: '^_?[a-z0-9_]+_test_\w+$'
+  - key: readability-identifier-naming.GlobalVariableIgnoredRegexp
+    value: '^z_ztest_\w+$'
+  - key: readability-identifier-naming.GlobalConstantIgnoredRegexp
+    value: '^z_ztest_\w+$'

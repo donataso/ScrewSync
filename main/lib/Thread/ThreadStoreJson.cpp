@@ -85,20 +85,17 @@ namespace ThreadStore
     void toJson(const Table &table, JsonTable &json)
     {
         json.groupCount = table.groupCount;
-        for (size_t i = 0; i < table.groupCount; i++)
-        {
+        for (size_t i = 0; i < table.groupCount; i++) {
             const Group &g = table.groups[i];
             json.groups[i] = {g.name, g.depthExternal, g.depthInternal, g.taper, g.flankAngle};
         }
         json.entryCount = table.entryCount;
-        for (size_t i = 0; i < table.entryCount; i++)
-        {
+        for (size_t i = 0; i < table.entryCount; i++) {
             const Entry &e = table.entries[i];
             json.entries[i] = {table.groups[e.group].name, e.designation, e.majorDu, e.pitchDu};
         }
         json.overrideCount = 0;
-        for (size_t i = 0; i < table.entryCount; i++)
-        {
+        for (size_t i = 0; i < table.entryCount; i++) {
             const Entry &e = table.entries[i];
             if (e.depthExternalDu || e.depthInternalDu || e.hasTaper) {
                 json.overrides[json.overrideCount++] = {table.groups[e.group].name, e.designation, e.depthExternalDu,
@@ -110,8 +107,7 @@ namespace ThreadStore
     const char *fromJson(const JsonTable &json, Table &out)
     {
         out.groupCount = json.groupCount;
-        for (size_t i = 0; i < json.groupCount; i++)
-        {
+        for (size_t i = 0; i < json.groupCount; i++) {
             const JsonGroup &j = json.groups[i];
             Group &g = out.groups[i];
             if (!copyName(g.name, sizeof(g.name), j.name)) {
@@ -123,8 +119,7 @@ namespace ThreadStore
             g.flankAngle = j.flankAngle;
         }
         out.entryCount = json.entryCount;
-        for (size_t i = 0; i < json.entryCount; i++)
-        {
+        for (size_t i = 0; i < json.entryCount; i++) {
             const JsonEntry &j = json.entries[i];
             Entry &e = out.entries[i];
             int g = j.group ? ThreadTable::findGroup(out, j.group) : -1;
@@ -139,8 +134,7 @@ namespace ThreadStore
             e.majorDu = j.majorDu;
             e.pitchDu = j.pitchDu;
         }
-        for (size_t i = 0; i < json.overrideCount; i++)
-        {
+        for (size_t i = 0; i < json.overrideCount; i++) {
             const JsonOverride &j = json.overrides[i];
             Entry *e = j.group && j.designation ? const_cast<Entry *>(ThreadTable::find(out, j.group, j.designation))
                                                 : nullptr;

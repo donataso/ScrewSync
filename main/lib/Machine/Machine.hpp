@@ -26,7 +26,7 @@
 // docs/design.md "Machine state".
 namespace Machine
 {
-    enum class State
+    enum class State : uint8_t
     {
         Idle,
         Running,

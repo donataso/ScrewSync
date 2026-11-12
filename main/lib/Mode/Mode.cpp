@@ -30,18 +30,32 @@ LOG_MODULE_REGISTER(mode, LOG_LEVEL_INF);
 
 namespace
 {
-    using Mode::detail::Ops;
+    using Mode::Detail::Ops;
 
     constexpr int32_t TICK_PERIOD_MS = 2;
 
     const char *const NAMES[Mode::COUNT] = {
-        "gear", "async", "turn", "thread", "part", "slot", "ellipse", "gcode", "probe",
+        "gear",
+        "async",
+        "turn",
+        "thread",
+        "part",
+        "slot",
+        "ellipse",
+        "gcode",
+        "probe",
     };
 
     const Ops *const OPS[Mode::COUNT] = {
-        &Mode::detail::GEAR, &Mode::detail::ASYNC,   &Mode::detail::TURN,    &Mode::detail::THREAD,
-        &Mode::detail::PART, &Mode::detail::SLOT,    &Mode::detail::ELLIPSE, &Mode::detail::GCODE,
-        &Mode::detail::PROBE,
+        &Mode::Detail::GEAR,
+        &Mode::Detail::ASYNC,
+        &Mode::Detail::TURN,
+        &Mode::Detail::THREAD,
+        &Mode::Detail::PART,
+        &Mode::Detail::SLOT,
+        &Mode::Detail::ELLIPSE,
+        &Mode::Detail::GCODE,
+        &Mode::Detail::PROBE,
     };
 
     K_MUTEX_DEFINE(g_lock);
@@ -69,8 +83,7 @@ namespace
 
     void releaseAxes()
     {
-        for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X})
-        {
+        for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
             if (ownedFlag(axis)) {
                 ownedFlag(axis) = false;
                 Machine::setModeEngaged(axis, false);
@@ -89,24 +102,24 @@ namespace
     void tickHoming(int64_t spindlePos)
     {
         if (g_homing == Homing::Z) {
-            if (Mode::detail::moveAndWait(Stepper::Axis::Z, 0)) {
+            if (Mode::Detail::moveAndWait(Stepper::Axis::Z, 0)) {
                 g_homing = Homing::X;
             }
             return;
         }
-        if (!Mode::detail::moveAndWait(Stepper::Axis::X, 0)) {
+        if (!Mode::Detail::moveAndWait(Stepper::Axis::X, 0)) {
             return;
         }
         g_homing = Homing::None;
         releaseAxes();
         const char *refusal = g_active->start(spindlePos);
         if (refusal) {
-            Mode::detail::finish(refusal);
+            Mode::Detail::finish(refusal);
         }
     }
 
-    K_THREAD_STACK_DEFINE(runnerStack, 2048);
-    struct k_thread runnerThread;
+    K_THREAD_STACK_DEFINE(g_runnerStack, 2048);
+    struct k_thread g_runnerThread;
 
     void runnerLoop(void *, void *, void *)
     {
@@ -119,8 +132,8 @@ namespace
             } else if (g_active) {
                 int64_t spindlePos = Encoder::filteredPosition();
                 Encoder::Direction wrong = g_spindleReverse ? Encoder::Direction::Forward : Encoder::Direction::Reverse;
-                if (g_active->spindleReverse && Encoder::direction() == wrong) {
-                    Mode::detail::finish("wrong spindle direction");
+                if (g_active->spindleReverse != nullptr && Encoder::direction() == wrong) {
+                    Mode::Detail::finish("wrong spindle direction");
                 } else {
                     g_active->tick(spindlePos);
                 }
@@ -131,16 +144,31 @@ namespace
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
-    void lock() { k_mutex_lock(&g_lock, K_FOREVER); }
-    void unlock() { k_mutex_unlock(&g_lock); }
+    void lock()
+    {
+        k_mutex_lock(&g_lock, K_FOREVER);
+    }
+    void unlock()
+    {
+        k_mutex_unlock(&g_lock);
+    }
 
-    const Ops *ops(Id id) { return OPS[(size_t)id]; }
+    const Ops *ops(Id id)
+    {
+        return OPS[(size_t)id];
+    }
 
-    int32_t overridden(int32_t feed) { return (int32_t)((int64_t)feed * g_overridePct / 100); }
+    int32_t overridden(int32_t feed)
+    {
+        return (int32_t)((int64_t)feed * g_overridePct / 100);
+    }
 
-    int32_t feedOverridePct() { return g_overridePct; }
+    int32_t feedOverridePct()
+    {
+        return g_overridePct;
+    }
 
     int spindleSign()
     {
@@ -191,13 +219,12 @@ namespace Mode
 {
     void begin()
     {
-        for (size_t i = 0; i < COUNT; i++)
-        {
+        for (size_t i = 0; i < COUNT; i++) {
             if (OPS[i]) {
                 RunSettings::loadModeParams(NAMES[i], OPS[i]->params, OPS[i]->paramsSize);
             }
         }
-        k_thread_create(&runnerThread, runnerStack, K_THREAD_STACK_SIZEOF(runnerStack), runnerLoop, nullptr,
+        k_thread_create(&g_runnerThread, g_runnerStack, K_THREAD_STACK_SIZEOF(g_runnerStack), runnerLoop, nullptr,
                         nullptr, nullptr, K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
     }
 
@@ -208,8 +235,7 @@ namespace Mode
 
     bool parse(const char *name, Id &out)
     {
-        for (size_t i = 0; i < COUNT; i++)
-        {
+        for (size_t i = 0; i < COUNT; i++) {
             if (!strcmp(name, NAMES[i])) {
                 out = (Id)i;
                 return true;
@@ -225,19 +251,19 @@ namespace Mode
 
     bool running()
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         return g_active != nullptr;
     }
 
     bool owns(Stepper::Axis axis)
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         return ownedFlag(axis);
     }
 
     const char *select(Id id)
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         if (g_active) {
             return "stop first";
         }
@@ -247,7 +273,7 @@ namespace Mode
 
     const char *start(bool fromZero)
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         if (g_active) {
             return g_active->resume && g_active->resume() ? nullptr : "already running";
         }
@@ -256,7 +282,7 @@ namespace Mode
         if (!ops) {
             return "mode not implemented";
         }
-        const detail::Param *missing = detail::firstMissing(*ops);
+        const Detail::Param *missing = Detail::firstMissing(*ops);
         if (missing) {
             static char reason[32];
             snprintf(reason, sizeof(reason), "set %s first", missing->name);
@@ -267,9 +293,9 @@ namespace Mode
         g_overridePct = 100;
         const char *refusal = nullptr;
         if (fromZero) {
-            refusal = detail::claim(Stepper::Axis::Z);
+            refusal = Detail::claim(Stepper::Axis::Z);
             if (!refusal) {
-                refusal = detail::claim(Stepper::Axis::X);
+                refusal = Detail::claim(Stepper::Axis::X);
             }
             g_homing = Homing::Z;
         } else {
@@ -319,26 +345,26 @@ namespace Mode
 
     int32_t feedOverride()
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         return g_overridePct;
     }
 
     const char *setFeedOverride(int32_t pct)
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         if (!g_active) {
             return "not running";
         }
         if (!hasFeedOverride(g_activeId)) {
             return "no feed override in this mode";
         }
-        g_overridePct = pct < OVERRIDE_MIN_PCT ? OVERRIDE_MIN_PCT : pct > OVERRIDE_MAX_PCT ? OVERRIDE_MAX_PCT : pct;
+        g_overridePct = CLAMP(pct, OVERRIDE_MIN_PCT, OVERRIDE_MAX_PCT);
         return nullptr;
     }
 
     const char *skip()
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         if (!g_active) {
             return "not running";
         }
@@ -351,7 +377,7 @@ namespace Mode
 
     Progress progress()
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         Progress p = {"", 0, 0, false, 0};
         if (g_active) {
             p.phase = "run";
@@ -366,13 +392,13 @@ namespace Mode
 
     const char *lastError()
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         return g_lastError;
     }
 
     void stop()
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         releaseAll();
         for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
             Stepper::stop(axis);
@@ -381,7 +407,7 @@ namespace Mode
 
     void onAxisDisabled(Stepper::Axis axis)
     {
-        detail::Guard guard;
+        Detail::Guard guard;
         if (ownedFlag(axis)) {
             stop();
         }

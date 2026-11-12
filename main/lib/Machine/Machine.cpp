@@ -29,7 +29,7 @@ namespace
     constexpr const char *NVS_NS = "machine";
     constexpr const char *ESTOP_KEY = "estop";
 
-    struct k_mutex mutex;
+    struct k_mutex g_mutex;
     bool g_estop = false;
     bool g_flashing = false;
     bool g_spinning = false;
@@ -76,7 +76,7 @@ namespace Machine
 {
     void begin()
     {
-        k_mutex_init(&mutex);
+        k_mutex_init(&g_mutex);
         uint8_t v = 0;
         if (PersistBlob::load(NVS_NS, ESTOP_KEY, &v, sizeof(v)) == sizeof(v) && v) {
             g_estop = true;
@@ -91,52 +91,49 @@ namespace Machine
 
     void setSpinning(bool spinning)
     {
-        k_mutex_lock(&mutex, K_FOREVER);
+        k_mutex_lock(&g_mutex, K_FOREVER);
         g_spinning = spinning;
-        k_mutex_unlock(&mutex);
+        k_mutex_unlock(&g_mutex);
     }
 
     void setModeEngaged(Stepper::Axis axis, bool engaged)
     {
-        k_mutex_lock(&mutex, K_FOREVER);
+        k_mutex_lock(&g_mutex, K_FOREVER);
         (axis == Stepper::Axis::Z ? g_modeEngagedZ : g_modeEngagedX) = engaged;
-        k_mutex_unlock(&mutex);
+        k_mutex_unlock(&g_mutex);
     }
 
     bool setFlashing(bool flashing)
     {
-        k_mutex_lock(&mutex, K_FOREVER);
+        k_mutex_lock(&g_mutex, K_FOREVER);
         if (g_estop) {
-            k_mutex_unlock(&mutex);
+            k_mutex_unlock(&g_mutex);
             return false;
         }
-        if (flashing)
-        {
-            if (g_spinning || g_modeEngagedZ || g_modeEngagedX)
-            {
+        if (flashing) {
+            if (g_spinning || g_modeEngagedZ || g_modeEngagedX) {
                 tripEstopLocked(); // does not return
             }
             g_flashing = true;
-            k_mutex_unlock(&mutex);
+            k_mutex_unlock(&g_mutex);
             return true;
         }
         g_flashing = false;
-        k_mutex_unlock(&mutex);
+        k_mutex_unlock(&g_mutex);
         return true;
     }
 
     State state()
     {
-        k_mutex_lock(&mutex, K_FOREVER);
+        k_mutex_lock(&g_mutex, K_FOREVER);
         State s = stateLocked();
-        k_mutex_unlock(&mutex);
+        k_mutex_unlock(&g_mutex);
         return s;
     }
 
     const char *stateName()
     {
-        switch (state())
-        {
+        switch (state()) {
         case State::Running:
             return "running";
         case State::Flashing:
@@ -162,11 +159,11 @@ namespace Machine
 
     void ackEstop()
     {
-        k_mutex_lock(&mutex, K_FOREVER);
+        k_mutex_lock(&g_mutex, K_FOREVER);
         g_estop = false;
         uint8_t v = 0;
         PersistBlob::save(NVS_NS, ESTOP_KEY, &v, sizeof(v));
-        k_mutex_unlock(&mutex);
+        k_mutex_unlock(&g_mutex);
         sys_reboot(SYS_REBOOT_WARM);
     }
 }

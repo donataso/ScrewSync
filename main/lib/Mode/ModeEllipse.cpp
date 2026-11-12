@@ -24,7 +24,7 @@
 
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     // Quarter ellipse on the end of the stock, from the face (depth into X)
     // to the diameter (length along Z), engage point = the corner. Passes
@@ -76,7 +76,10 @@ namespace
     double g_angle;
     int64_t g_lastSpindle;
 
-    double scale() { return (double)g_pass / g_params.passes; }
+    double scale()
+    {
+        return (double)g_pass / g_params.passes;
+    }
 
     // Profile point at angle, as du offsets from the corner (x <= 0 = into the stock).
     void point(double angle, double &zDu, double &xDu)
@@ -103,9 +106,18 @@ namespace
         return v < 1 ? 1 : v;
     }
 
-    int64_t zAt(double zDu) { return g_z0 + g_zDirection * duToSteps(Stepper::Axis::Z, zDu); }
-    int64_t xAt(double xDu) { return g_x0 + duToSteps(Stepper::Axis::X, xDu); }
-    int64_t safe(Stepper::Axis axis) { return duToSteps(axis, Settings::active.safeDistanceDu); }
+    int64_t zAt(double zDu)
+    {
+        return g_z0 + g_zDirection * duToSteps(Stepper::Axis::Z, zDu);
+    }
+    int64_t xAt(double xDu)
+    {
+        return g_x0 + duToSteps(Stepper::Axis::X, xDu);
+    }
+    int64_t safe(Stepper::Axis axis)
+    {
+        return duToSteps(axis, Settings::g_active.safeDistanceDu);
+    }
 
     const char *startMode(int64_t)
     {
@@ -128,8 +140,7 @@ namespace
     {
         double zDu;
         double xDu;
-        switch (g_phase)
-        {
+        switch (g_phase) {
         case Phase::Backoff:
             if (moveAndWait(Stepper::Axis::Z, g_z0 - g_zDirection * safe(Stepper::Axis::Z))) {
                 g_phase = g_pass > g_params.passes ? Phase::HomeX : Phase::Position;
@@ -153,7 +164,7 @@ namespace
             double revs = (double)spindleTravel(g_lastSpindle, spindlePos) / countsPerRev();
             g_lastSpindle = spindlePos;
             g_angle += revs * abs(overridden(g_params.pitchDu)) / speed(g_angle);
-            g_angle = g_angle < 0 ? 0 : (g_angle > QUARTER_TURN ? QUARTER_TURN : g_angle);
+            g_angle = CLAMP(g_angle, 0, QUARTER_TURN);
             point(g_angle, zDu, xDu);
             int64_t z = zAt(zDu);
             int64_t x = xAt(xDu);
@@ -200,7 +211,7 @@ namespace
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const Ops ELLIPSE = {true, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
                          nullptr, nullptr, progressMode, skipMode, &g_params.spindleReverse};

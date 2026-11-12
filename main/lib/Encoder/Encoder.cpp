@@ -34,26 +34,26 @@ LOG_MODULE_REGISTER(encoder, LOG_LEVEL_INF);
 
 namespace
 {
-    const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(pcnt));
+    const struct device *g_dev = DEVICE_DT_GET(DT_NODELABEL(pcnt));
 
     constexpr int64_t STALE_MS = 100;
 
-    K_MUTEX_DEFINE(filterMutex);
-    int64_t filtered = 0;
-    bool seeded = false;
-    bool lastInvert = false;
-    int32_t lastBacklash = 0;
-    int64_t lastPollMs = 0;
-    int64_t lastMoveMs = 0;
-    Encoder::Direction lastDirection = Encoder::Direction::Stopped;
-    atomic_t originCount = ATOMIC_INIT(0);
+    K_MUTEX_DEFINE(g_filterMutex);
+    int64_t g_filtered = 0;
+    bool g_seeded = false;
+    bool g_lastInvert = false;
+    int32_t g_lastBacklash = 0;
+    int64_t g_lastPollMs = 0;
+    int64_t g_lastMoveMs = 0;
+    Encoder::Direction g_lastDirection = Encoder::Direction::Stopped;
+    atomic_t g_originCount = ATOMIC_INIT(0);
 }
 
 namespace Encoder
 {
     void begin()
     {
-        if (!device_is_ready(dev)) {
+        if (!device_is_ready(g_dev)) {
             LOG_ERR("pcnt device not ready");
         }
     }
@@ -61,45 +61,57 @@ namespace Encoder
     int64_t position()
     {
         struct sensor_value val = {0, 0};
-        sensor_sample_fetch_chan(dev, SENSOR_CHAN_ENCODER_COUNT);
-        sensor_channel_get(dev, SENSOR_CHAN_ENCODER_COUNT, &val);
+        sensor_sample_fetch_chan(g_dev, SENSOR_CHAN_ENCODER_COUNT);
+        sensor_channel_get(g_dev, SENSOR_CHAN_ENCODER_COUNT, &val);
 
         int64_t pos = val.val1;
-        return Settings::active.invertEncoder ? -pos : pos;
+        return Settings::g_active.invertEncoder ? -pos : pos;
     }
 
-    int64_t origin() { return atomic_get(&originCount); }
+    int64_t origin()
+    {
+        return atomic_get(&g_originCount);
+    }
 
-    void setOrigin(int64_t count) { atomic_set(&originCount, (atomic_val_t)count); }
+    void setOrigin(int64_t count)
+    {
+        atomic_set(&g_originCount, (atomic_val_t)count);
+    }
 
     int64_t filteredPosition()
     {
         int64_t raw = position();
         int64_t now = k_uptime_get();
 
-        k_mutex_lock(&filterMutex, K_FOREVER);
-        bool invert = Settings::active.invertEncoder;
-        int32_t backlash = Settings::active.encoderBacklash;
-        bool polled = now - lastPollMs <= STALE_MS;
-        lastPollMs = now;
-        int64_t previous = filtered;
-        if (!seeded || invert != lastInvert || backlash != lastBacklash) {
-            filtered = raw;
-            seeded = true;
-            lastInvert = invert;
-            lastBacklash = backlash;
+        k_mutex_lock(&g_filterMutex, K_FOREVER);
+        bool invert = Settings::g_active.invertEncoder;
+        int32_t backlash = Settings::g_active.encoderBacklash;
+        bool polled = now - g_lastPollMs <= STALE_MS;
+        g_lastPollMs = now;
+        int64_t previous = g_filtered;
+        if (!g_seeded || invert != g_lastInvert || backlash != g_lastBacklash) {
+            g_filtered = raw;
+            g_seeded = true;
+            g_lastInvert = invert;
+            g_lastBacklash = backlash;
             previous = raw;
-        } else if (raw > filtered + backlash) {
-            filtered = raw - backlash;
-        } else if (raw < filtered - backlash) {
-            filtered = raw + backlash;
+        } else if (raw > g_filtered + backlash) {
+            g_filtered = raw - backlash;
+        } else if (raw < g_filtered - backlash) {
+            g_filtered = raw + backlash;
         }
-        if (filtered != previous) {
-            lastDirection = !polled ? Direction::Stopped : filtered > previous ? Direction::Forward : Direction::Reverse;
-            lastMoveMs = now;
+        if (g_filtered != previous) {
+            if (!polled) {
+                g_lastDirection = Direction::Stopped;
+            } else if (g_filtered > previous) {
+                g_lastDirection = Direction::Forward;
+            } else {
+                g_lastDirection = Direction::Reverse;
+            }
+            g_lastMoveMs = now;
         }
-        int64_t out = filtered;
-        k_mutex_unlock(&filterMutex);
+        int64_t out = g_filtered;
+        k_mutex_unlock(&g_filterMutex);
 
         return out;
     }
@@ -107,9 +119,9 @@ namespace Encoder
     Direction direction()
     {
         filteredPosition();
-        k_mutex_lock(&filterMutex, K_FOREVER);
-        Direction out = k_uptime_get() - lastMoveMs <= STALE_MS ? lastDirection : Direction::Stopped;
-        k_mutex_unlock(&filterMutex);
+        k_mutex_lock(&g_filterMutex, K_FOREVER);
+        Direction out = k_uptime_get() - g_lastMoveMs <= STALE_MS ? g_lastDirection : Direction::Stopped;
+        k_mutex_unlock(&g_filterMutex);
         return out;
     }
 }

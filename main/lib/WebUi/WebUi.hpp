@@ -27,6 +27,6 @@ namespace WebUi
     void poll();
 }
 
-extern const struct http_service_desc webUiHttpService;
+extern const struct http_service_desc WEB_UI_HTTP_SERVICE;
 
 #endif

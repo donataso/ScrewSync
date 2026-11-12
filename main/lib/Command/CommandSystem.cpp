@@ -21,13 +21,12 @@
 #include "Settings.hpp"
 #include "WsCommand.hpp"
 
-namespace Command::detail
+namespace Command::Detail
 {
     void settings(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (!*a || !strcmp(a, "get"))
-        {
+        if (!*a || !strcmp(a, "get")) {
             int n = snprintf(out, outMax, "ok ");
             Settings::formatAll(out + n, outMax - (size_t)n);
             return;
@@ -37,14 +36,11 @@ namespace Command::detail
         }
 
         char reason[48];
-        if (!strcmp(a, "reset"))
-        {
-            Settings::active = Settings::Conf{};
+        if (!strcmp(a, "reset")) {
+            Settings::g_active = Settings::Conf{};
             Settings::save();
             snprintf(out, outMax, "ok reset");
-        }
-        else if (!strncmp(a, "set ", 4))
-        {
+        } else if (!strncmp(a, "set ", 4)) {
             char name[32] = {0};
             char value[32] = {0};
             if (sscanf(a + 4, "%31s %31s", name, value) != 2) {
@@ -54,18 +50,14 @@ namespace Command::detail
             } else {
                 snprintf(out, outMax, "err %s", reason);
             }
-        }
-        else if (!strncmp(a, "set-all ", 8))
-        {
+        } else if (!strncmp(a, "set-all ", 8)) {
             const char *js = skipSpaces(a + 8);
             if (Settings::setAllFromJson(js, strlen(js), reason, sizeof(reason))) {
                 snprintf(out, outMax, "ok set-all");
             } else {
                 snprintf(out, outMax, "err %s", reason);
             }
-        }
-        else
-        {
+        } else {
             snprintf(out, outMax, "err settings '%s'", a);
         }
     }
@@ -73,17 +65,14 @@ namespace Command::detail
     void display(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (!*a || !strcmp(a, "info"))
-        {
+        if (!*a || !strcmp(a, "info")) {
             DisplayImage::Info i = DisplayImage::info();
             if (i.stored) {
                 snprintf(out, outMax, "ok stored=1 length=%u crc=%08x", (unsigned)i.length, (unsigned)i.crc);
             } else {
                 snprintf(out, outMax, "ok stored=0");
             }
-        }
-        else if (!strcmp(a, "flash"))
-        {
+        } else if (!strcmp(a, "flash")) {
             if (refuseUnlessIdle(out, outMax)) {
                 return;
             }
@@ -93,9 +82,7 @@ namespace Command::detail
             } else {
                 snprintf(out, outMax, "ok display flash started");
             }
-        }
-        else
-        {
+        } else {
             snprintf(out, outMax, "err display info | flash");
         }
     }
@@ -106,7 +93,7 @@ namespace Command::detail
         RunSettings::Units u;
         if (RunSettings::parseUnits(a, u)) {
             RunSettings::setUnits(u);
-        } else if (*a && strcmp(a, "status")) {
+        } else if (*a && strcmp(a, "status") != 0) {
             snprintf(out, outMax, "err units mm|inch");
             return;
         }
@@ -116,21 +103,16 @@ namespace Command::detail
     void ws(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (!strcmp(a, "list"))
-        {
+        if (!strcmp(a, "list")) {
             WsCommand::describeClients(out, outMax);
-        }
-        else if (!strncmp(a, "kill ", 5))
-        {
+        } else if (!strncmp(a, "kill ", 5)) {
             const char *refusal = WsCommand::kill(atoi(skipSpaces(a + 5)));
             if (refusal) {
                 snprintf(out, outMax, "err ws kill: %s", refusal);
             } else {
                 snprintf(out, outMax, "ok ws kill");
             }
-        }
-        else
-        {
+        } else {
             snprintf(out, outMax, "err ws list | kill <n>");
         }
     }

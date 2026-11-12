@@ -59,11 +59,11 @@ namespace
         size_t n;
     };
 
-    int loadDirect(const char *key, size_t len, settings_read_cb read_cb, void *cb_arg, void *param)
+    int loadDirect(const char *key, size_t len, settings_read_cb readCb, void *cbArg, void *param)
     {
         LoadCtx *ctx = (LoadCtx *)param;
         size_t toRead = len < ctx->bufMax ? len : ctx->bufMax;
-        ssize_t rc = read_cb(cb_arg, ctx->buf, toRead);
+        ssize_t rc = readCb(cbArg, ctx->buf, toRead);
         ctx->n = rc > 0 ? (size_t)rc : 0;
         return 0;
     }
@@ -87,8 +87,7 @@ namespace
     Slot *reserve(const char *path, size_t len)
     {
         Slot *s = find(path);
-        if (!s)
-        {
+        if (!s) {
             if (g_slotCount == MAX_SLOTS) {
                 return nullptr;
             }
@@ -98,8 +97,7 @@ namespace
             s->len = 0;
             s->cap = 0;
         }
-        if (len > s->cap)
-        {
+        if (len > s->cap) {
             if (g_arenaUsed + len > ARENA_SIZE) {
                 return nullptr;
             }
@@ -110,7 +108,7 @@ namespace
         return s;
     }
 
-    int preloadOne(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg, void *)
+    int preloadOne(const char *name, size_t len, settings_read_cb readCb, void *cbArg, void *)
     {
         if (strlen(name) >= PATH_MAX_LEN) {
             return 0;
@@ -120,7 +118,7 @@ namespace
             g_cached = false;
             return 0;
         }
-        ssize_t rc = read_cb(cb_arg, g_arena + s->off, len);
+        ssize_t rc = readCb(cbArg, g_arena + s->off, len);
         s->len = rc > 0 ? (uint32_t)rc : 0;
         return 0;
     }
@@ -146,17 +144,13 @@ namespace PersistBlob
         makePath(path, ns, key);
         k_mutex_lock(&g_lock, K_FOREVER);
         size_t n = 0;
-        if (g_cached)
-        {
+        if (g_cached) {
             Slot *s = find(path);
-            if (s)
-            {
+            if (s) {
                 n = s->len < bufMax ? s->len : bufMax;
                 memcpy(buf, g_arena + s->off, n);
             }
-        }
-        else
-        {
+        } else {
             LoadCtx ctx{buf, bufMax, 0};
             settings_load_subtree_direct(path, loadDirect, &ctx);
             n = ctx.n;
@@ -171,16 +165,12 @@ namespace PersistBlob
         makePath(path, ns, key);
         k_mutex_lock(&g_lock, K_FOREVER);
         bool ok = settings_save_one(path, buf, len) == 0;
-        if (ok && g_cached)
-        {
+        if (ok && g_cached) {
             Slot *s = reserve(path, len);
-            if (s)
-            {
+            if (s) {
                 memcpy(g_arena + s->off, buf, len);
                 s->len = len;
-            }
-            else
-            {
+            } else {
                 g_cached = false;
                 LOG_WRN("cache full, loading from flash");
             }

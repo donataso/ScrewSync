@@ -31,9 +31,9 @@
 
 LOG_MODULE_DECLARE(main);
 
-DNS_SD_REGISTER_TCP_SERVICE(wifi_mdns_http, DEVICE_NAME, "_http", "local", "", 80);
+DNS_SD_REGISTER_TCP_SERVICE(WIFI_MDNS_HTTP, DEVICE_NAME, "_http", "local", "", 80);
 
-namespace Wifi::detail
+namespace Wifi::Detail
 {
     struct net_if *g_iface = nullptr;
     char g_ip[16] = {0};
@@ -45,7 +45,7 @@ namespace Wifi::detail
     bool g_triedLastSsid = false;
 }
 
-using namespace Wifi::detail;
+using namespace Wifi::Detail;
 
 namespace
 {
@@ -67,7 +67,13 @@ namespace
     net_mgmt_event_callback g_wifiCb;
 
     // net_mgmt calls from the driver's event context deadlock it, so event handling runs on this work item.
-    enum class PendingWifiWork { None, Connect, Disconnect, RestoreApIfIdle };
+    enum class PendingWifiWork : uint8_t
+    {
+        None,
+        Connect,
+        Disconnect,
+        RestoreApIfIdle
+    };
     PendingWifiWork g_pendingWifiWork = PendingWifiWork::None;
     wifi_status g_pendingStatus;
     struct k_work g_wifiWork;
@@ -85,8 +91,7 @@ namespace
     // AP only if fallback is on; otherwise Disconnected with a retry later.
     void enterNoConnect()
     {
-        if (g_apFallback)
-        {
+        if (g_apFallback) {
             g_quickRetries = 0;
             startAP();
             return;
@@ -95,8 +100,7 @@ namespace
         g_curSsid[0] = '\0';
         g_mode = Wifi::Mode::Disconnected;
 
-        if (g_quickRetries < QUICK_RETRY_MAX)
-        {
+        if (g_quickRetries < QUICK_RETRY_MAX) {
             g_quickRetries++;
             g_retryAt = k_uptime_get() + QUICK_RETRY_MS;
             LOG_INF("wifi: connect attempt failed -> retrying in %lld s (%u/%u)", (long long)(QUICK_RETRY_MS / 1000),
@@ -112,12 +116,10 @@ namespace
     void onConnectResult(const wifi_status *status)
     {
         g_lastConnStatus = status->conn_status;
-        if (status->conn_status != WIFI_STATUS_CONN_SUCCESS)
-        {
+        if (status->conn_status != WIFI_STATUS_CONN_SUCCESS) {
             LOG_WRN("wifi: connect failed (%s)", wifi_conn_status_txt((wifi_conn_status)status->conn_status));
             // The preferred SSID failed; any other saved network may still connect.
-            if (g_triedLastSsid)
-            {
+            if (g_triedLastSsid) {
                 g_triedLastSsid = false;
                 if (net_mgmt(NET_REQUEST_WIFI_CONNECT_STORED, g_iface, NULL, 0) == 0) {
                     return;
@@ -128,8 +130,7 @@ namespace
         }
 
         wifi_iface_status ifs = {};
-        if (net_mgmt(NET_REQUEST_WIFI_IFACE_STATUS, g_iface, &ifs, sizeof(ifs)) == 0 && ifs.ssid_len)
-        {
+        if (net_mgmt(NET_REQUEST_WIFI_IFACE_STATUS, g_iface, &ifs, sizeof(ifs)) == 0 && ifs.ssid_len) {
             size_t len = ifs.ssid_len < sizeof(g_curSsid) - 1 ? ifs.ssid_len : sizeof(g_curSsid) - 1;
             memcpy(g_curSsid, ifs.ssid, len);
             g_curSsid[len] = '\0';
@@ -158,8 +159,7 @@ namespace
 
     void wifiWorkHandler(k_work *)
     {
-        switch (g_pendingWifiWork)
-        {
+        switch (g_pendingWifiWork) {
         case PendingWifiWork::Connect:
             onConnectResult(&g_pendingStatus);
             break;
@@ -182,8 +182,7 @@ namespace
 
     void onWifiEvent(net_mgmt_event_callback *cb, uint64_t mgmtEvent, net_if *)
     {
-        switch (mgmtEvent)
-        {
+        switch (mgmtEvent) {
         case NET_EVENT_WIFI_CONNECT_RESULT:
             g_pendingStatus = *(const wifi_status *)cb->info;
             submit(PendingWifiWork::Connect);
@@ -235,7 +234,7 @@ namespace
     }
 }
 
-namespace Wifi::detail
+namespace Wifi::Detail
 {
     void startAP()
     {
@@ -263,8 +262,7 @@ namespace Wifi::detail
         apConfig.channel = WIFI_CHANNEL_ANY;
         apConfig.band = WIFI_FREQ_BAND_2_4_GHZ;
 
-        if (net_mgmt(NET_REQUEST_WIFI_AP_ENABLE, g_iface, &apConfig, sizeof(apConfig)) != 0)
-        {
+        if (net_mgmt(NET_REQUEST_WIFI_AP_ENABLE, g_iface, &apConfig, sizeof(apConfig)) != 0) {
             LOG_ERR("wifi: AP enable failed");
             return;
         }
@@ -326,8 +324,7 @@ namespace Wifi::detail
         g_curSsid[sizeof(g_curSsid) - 1] = '\0';
         g_mode = Mode::Connecting;
 
-        if (net_mgmt(NET_REQUEST_WIFI_CONNECT, g_iface, &params, sizeof(params)) != 0)
-        {
+        if (net_mgmt(NET_REQUEST_WIFI_CONNECT, g_iface, &params, sizeof(params)) != 0) {
             g_curSsid[0] = '\0';
             return false;
         }
@@ -338,13 +335,11 @@ namespace Wifi::detail
     // The last-known-good SSID first, then any other saved network.
     void beginConnectSequence()
     {
-        if (!g_enabled)
-        {
+        if (!g_enabled) {
             radioOff();
             return;
         }
-        if (wifi_credentials_is_empty())
-        {
+        if (wifi_credentials_is_empty()) {
             startAP();
             return;
         }
@@ -352,21 +347,17 @@ namespace Wifi::detail
         g_mode = Mode::Connecting;
         g_curSsid[0] = '\0';
 
-        if (g_lastSsid[0] && connectSsid(g_lastSsid, strlen(g_lastSsid)))
-        {
+        if (g_lastSsid[0] && connectSsid(g_lastSsid, strlen(g_lastSsid))) {
             g_triedLastSsid = true;
             return;
         }
 
         g_triedLastSsid = false;
         stopAP();
-        if (net_mgmt(NET_REQUEST_WIFI_CONNECT_STORED, g_iface, NULL, 0) != 0)
-        {
+        if (net_mgmt(NET_REQUEST_WIFI_CONNECT_STORED, g_iface, NULL, 0) != 0) {
             LOG_WRN("wifi: no saved network could be started");
             enterNoConnect();
-        }
-        else
-        {
+        } else {
             LOG_INF("wifi: connecting to a saved network");
         }
     }
@@ -377,8 +368,7 @@ namespace Wifi
     void begin()
     {
         g_iface = net_if_get_wifi_sap();
-        if (!g_iface)
-        {
+        if (!g_iface) {
             LOG_ERR("wifi: no AP-capable interface found");
             return;
         }
@@ -408,7 +398,10 @@ namespace Wifi
         scanTick();
     }
 
-    Mode mode() { return g_mode; }
+    Mode mode()
+    {
+        return g_mode;
+    }
 
     const char *modeName()
     {
@@ -440,11 +433,26 @@ namespace Wifi
         return ifs.rssi;
     }
 
-    const char *ssid() { return g_curSsid; }
-    const char *apName() { return g_apName; }
-    const char *mdnsHost() { return g_mdnsHost; }
-    bool enabled() { return g_enabled; }
-    bool apFallback() { return g_apFallback; }
+    const char *ssid()
+    {
+        return g_curSsid;
+    }
+    const char *apName()
+    {
+        return g_apName;
+    }
+    const char *mdnsHost()
+    {
+        return g_mdnsHost;
+    }
+    bool enabled()
+    {
+        return g_enabled;
+    }
+    bool apFallback()
+    {
+        return g_apFallback;
+    }
 
     void setApFallback(bool on)
     {
@@ -454,8 +462,7 @@ namespace Wifi
 
     void apMode(bool on)
     {
-        if (on)
-        {
+        if (on) {
             startAP();
             return;
         }

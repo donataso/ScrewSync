@@ -23,7 +23,7 @@
 
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     struct Async
     {
@@ -73,7 +73,7 @@ namespace
             return;
         }
         int32_t speed = duPerMinToStepsPerSec(axis, overridden(g_params.speedDuPerMin));
-        const Settings::Axis &cfg = axis == Stepper::Axis::Z ? Settings::active.z : Settings::active.x;
+        const Settings::Axis &cfg = axis == Stepper::Axis::Z ? Settings::g_active.z : Settings::g_active.x;
         int64_t target = Stepper::position(axis) +
                          g_direction * Stepper::runAheadDistance(speed, cfg.acceleration, speed, HORIZON_US);
         if (g_hasEnd && (g_direction > 0 ? target > g_endSteps : target < g_endSteps)) {
@@ -86,7 +86,7 @@ namespace
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const Ops ASYNC = {false, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
                        nullptr, nullptr, nullptr, nullptr};

@@ -21,8 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 
-using namespace Display::detail;
-using namespace Display::theme;
+using namespace Display::Detail;
+using namespace Display::Theme;
 using namespace Nextion;
 
 namespace
@@ -45,8 +45,7 @@ namespace
     void designationLabel(const char *designation, char *out, size_t outMax)
     {
         size_t n = 0;
-        for (const char *p = designation; *p && n + 3 < outMax; p++)
-        {
+        for (const char *p = designation; *p && n + 3 < outMax; p++) {
             bool times = *p == 'x' && p > designation && isdigit((unsigned char)p[-1]) && isdigit((unsigned char)p[1]);
             if (times) {
                 out[n++] = '\xC3';
@@ -99,8 +98,7 @@ namespace
         char item[ThreadTable::DESIGNATION_MAX];
         char label[ThreadTable::DESIGNATION_MAX + 4];
         const char *list = groups;
-        for (size_t i = 0; i < PICKER_TABS; i++)
-        {
+        for (size_t i = 0; i < PICKER_TABS; i++) {
             nextItem(list, item, sizeof(item));
             groupLabel(item, label, sizeof(label));
             snprintf(key, sizeof(key), "tab%u.txt", (unsigned)i);
@@ -137,8 +135,7 @@ namespace
         char item[ThreadTable::DESIGNATION_MAX];
         char label[ThreadTable::DESIGNATION_MAX + 4];
         const char *list = entries;
-        for (size_t i = 0; i < PICKER_CELLS; i++)
-        {
+        for (size_t i = 0; i < PICKER_CELLS; i++) {
             nextItem(list, item, sizeof(item));
             designationLabel(item, label, sizeof(label));
             snprintf(key, sizeof(key), "g%u.txt", (unsigned)i);
@@ -152,7 +149,7 @@ namespace
     }
 }
 
-namespace Display::detail
+namespace Display::Detail
 {
     void openPicker()
     {

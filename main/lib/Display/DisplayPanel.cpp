@@ -20,8 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-using namespace Display::detail;
-using namespace Display::theme;
+using namespace Display::Detail;
+using namespace Display::Theme;
 using namespace Nextion;
 using ModeCells::Cell;
 using ModeCells::Kind;
@@ -62,15 +62,21 @@ namespace
         char length[24];
         formatLength(du, length, sizeof(length));
         trimZeros(length);
-        const char *per = c.kind == Kind::Speed ? "/min" : c.kind == Kind::Feed ? "/rev" : "";
+        const char *per;
+        if (c.kind == Kind::Speed) {
+            per = "/min";
+        } else if (c.kind == Kind::Feed) {
+            per = "/rev";
+        } else {
+            per = "";
+        }
         snprintf(out, outMax, "%s %s%s", length, unitSuffix(), per);
         return du != 0;
     }
 
     CellType valueType(Kind kind)
     {
-        switch (kind)
-        {
+        switch (kind) {
         case Kind::Pitch:
             return CellType::Pitch;
         case Kind::Count:
@@ -135,8 +141,7 @@ namespace
         pushText(key, "%s %s %s|%s %s %s", mode, c.param, c.valueA, mode, c.param, c.valueB);
         static const char *const SIDES[] = {"a", "b"};
         const char *values[] = {c.valueA, c.valueB};
-        for (size_t i = 0; i < 2; i++)
-        {
+        for (size_t i = 0; i < 2; i++) {
             snprintf(key, sizeof(key), "c%u%s.txt", (unsigned)slot, SIDES[i]);
             pushText(key, "%s", labels[i]);
             snprintf(key, sizeof(key), "c%u%s.font", (unsigned)slot, SIDES[i]);
@@ -149,8 +154,7 @@ namespace
 
     bool pushCell(size_t slot, Mode::Id id, const Cell &c, const char *params)
     {
-        if (c.kind == Kind::Picker)
-        {
+        if (c.kind == Kind::Picker) {
             if (slot != PICKER_SLOT || !cellShown(c, params)) {
                 return pushCellType(slot, CellType::Hidden);
             }
@@ -172,15 +176,14 @@ namespace
     }
 }
 
-namespace Display::detail
+namespace Display::Detail
 {
     bool pushPanel(Mode::Id id, const char *params)
     {
         size_t count;
         const Cell *cells = ModeCells::cells(id, count);
         bool changed = false;
-        for (size_t slot = 0; slot < ModeCells::MAX; slot++)
-        {
+        for (size_t slot = 0; slot < ModeCells::MAX; slot++) {
             if (slot < count) {
                 changed |= pushCell(slot, id, cells[slot], params);
             } else {
@@ -193,8 +196,7 @@ namespace Display::detail
     void pushMenu(Mode::Id current)
     {
         char key[KEY_MAX];
-        for (size_t i = 0; i < MENU_SLOTS; i++)
-        {
+        for (size_t i = 0; i < MENU_SLOTS; i++) {
             bool used = i < Mode::COUNT;
             snprintf(key, sizeof(key), "menu%u.txt", (unsigned)i);
             pushText(key, "%s", used ? ModeCells::label((Mode::Id)i) : "");
@@ -203,7 +205,13 @@ namespace Display::detail
             snprintf(key, sizeof(key), "menu%u", (unsigned)i);
             bool selected = used && i == (size_t)current;
             bool probe = used && (Mode::Id)i == Mode::Id::Probe;
-            pushColor(key, "bco", selected ? COLOR_SELECTED : probe ? COLOR_SETTINGS : COLOR_BUTTON);
+            int color = COLOR_BUTTON;
+            if (selected) {
+                color = COLOR_SELECTED;
+            } else if (probe) {
+                color = COLOR_SETTINGS;
+            }
+            pushColor(key, "bco", color);
         }
     }
 }

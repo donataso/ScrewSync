@@ -65,10 +65,9 @@ namespace
     bool storedCrc(const struct flash_area *fa, uint32_t length, uint32_t &crc)
     {
         crc = 0;
-        for (uint32_t off = 0; off < length; off += SECTOR)
-        {
+        for (uint32_t off = 0; off < length; off += SECTOR) {
             size_t n = MIN(SECTOR, length - off);
-            if (flash_area_read(fa, DATA_OFFSET + off, g_chunk, n) != 0) {
+            if (flash_area_read(fa, DATA_OFFSET + (off_t)off, g_chunk, n) != 0) {
                 return false;
             }
             crc = crc32_ieee_update(crc, g_chunk, n);
@@ -94,17 +93,15 @@ namespace
             return "ok, not stored: too large";
         }
         bool ok = flash_area_erase(fa, 0, SECTOR) == 0;
-        for (size_t off = 0; ok && off < len; off += SECTOR)
-        {
+        for (size_t off = 0; ok && off < len; off += SECTOR) {
             size_t n = MIN(SECTOR, len - off);
             memcpy(g_chunk, image + off, n);
             size_t padded = ROUND_UP(n, 4);
             memset(g_chunk + n, 0xFF, padded - n);
-            ok = flash_area_erase(fa, DATA_OFFSET + off, SECTOR) == 0 &&
-                 flash_area_write(fa, DATA_OFFSET + off, g_chunk, padded) == 0;
+            ok = flash_area_erase(fa, DATA_OFFSET + (off_t)off, SECTOR) == 0 &&
+                 flash_area_write(fa, DATA_OFFSET + (off_t)off, g_chunk, padded) == 0;
         }
-        if (ok)
-        {
+        if (ok) {
             h = {MAGIC, (uint32_t)len, crc, 0xFFFFFFFF};
             memcpy(g_chunk, &h, sizeof(h));
             ok = flash_area_write(fa, 0, g_chunk, sizeof(h)) == 0;
@@ -124,17 +121,20 @@ namespace
     {
         size_t padded = ROUND_UP(g_storeChunkLen, 4);
         memset(g_chunk + g_storeChunkLen, 0xFF, padded - g_storeChunkLen);
-        bool ok = flash_area_erase(g_storeFa, DATA_OFFSET + g_storeOff, SECTOR) == 0 &&
-                  flash_area_write(g_storeFa, DATA_OFFSET + g_storeOff, g_chunk, padded) == 0;
+        bool ok = flash_area_erase(g_storeFa, DATA_OFFSET + (off_t)g_storeOff, SECTOR) == 0 &&
+                  flash_area_write(g_storeFa, DATA_OFFSET + (off_t)g_storeOff, g_chunk, padded) == 0;
         g_storeOff += g_storeChunkLen;
         g_storeChunkLen = 0;
         return ok;
     }
 }
 
-namespace DisplayImage::detail
+namespace DisplayImage::Detail
 {
-    const char *storeImage(const uint8_t *image, size_t len) { return writeImage(image, len); }
+    const char *storeImage(const uint8_t *image, size_t len)
+    {
+        return writeImage(image, len);
+    }
 
     bool readStored(bool (*onLength)(uint32_t length), bool (*onChunk)(const uint8_t *data, size_t len))
     {
@@ -144,17 +144,15 @@ namespace DisplayImage::detail
         }
         Header h;
         uint32_t crc;
-        if (!readHeader(fa, h) || !storedCrc(fa, h.length, crc) || crc != h.crc)
-        {
+        if (!readHeader(fa, h) || !storedCrc(fa, h.length, crc) || crc != h.crc) {
             flash_area_close(fa);
             LOG_ERR("stored image missing or corrupt");
             return false;
         }
         bool ok = onLength(h.length);
-        for (uint32_t off = 0; ok && off < h.length; off += SECTOR)
-        {
+        for (uint32_t off = 0; ok && off < h.length; off += SECTOR) {
             size_t n = MIN(SECTOR, h.length - off);
-            ok = flash_area_read(fa, DATA_OFFSET + off, g_chunk, n) == 0 && onChunk(g_chunk, n);
+            ok = flash_area_read(fa, DATA_OFFSET + (off_t)off, g_chunk, n) == 0 && onChunk(g_chunk, n);
         }
         flash_area_close(fa);
         return ok;
@@ -187,19 +185,16 @@ namespace DisplayImage
             return "display flash in progress";
         }
         g_storeFa = openPartition();
-        if (!g_storeFa)
-        {
+        if (!g_storeFa) {
             release();
             return "no partition";
         }
-        if (len == 0 || DATA_OFFSET + len > g_storeFa->fa_size)
-        {
+        if (len == 0 || DATA_OFFSET + len > g_storeFa->fa_size) {
             storeAbort();
             return "bad length";
         }
         // Header erased first and written last, so an interrupted store reads as empty.
-        if (flash_area_erase(g_storeFa, 0, SECTOR) != 0)
-        {
+        if (flash_area_erase(g_storeFa, 0, SECTOR) != 0) {
             storeAbort();
             return "flash erase failed";
         }
@@ -212,8 +207,7 @@ namespace DisplayImage
 
     bool storeChunk(const uint8_t *data, size_t len)
     {
-        while (len)
-        {
+        while (len) {
             size_t n = MIN(len, SECTOR - g_storeChunkLen);
             memcpy(g_chunk + g_storeChunkLen, data, n);
             g_storeChunkLen += n;
@@ -236,9 +230,7 @@ namespace DisplayImage
             reason = "length mismatch";
         } else if (!storedCrc(g_storeFa, g_storeLen, crc) || crc != g_storeCrc) {
             reason = "crc mismatch";
-        }
-        else
-        {
+        } else {
             Header h = {MAGIC, g_storeLen, g_storeCrc, 0xFFFFFFFF};
             memcpy(g_chunk, &h, sizeof(h));
             if (flash_area_write(g_storeFa, 0, g_chunk, sizeof(h)) != 0) {

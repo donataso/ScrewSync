@@ -20,6 +20,6 @@
 
 #include <zephyr/net/http/server.h>
 
-extern struct http_resource_detail_dynamic wifiPortalDetail;
+extern struct http_resource_detail_dynamic g_wifiPortalDetail;
 
 #endif

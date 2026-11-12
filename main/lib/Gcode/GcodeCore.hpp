@@ -48,7 +48,7 @@ namespace Gcode
     // else a static error string.
     const char *tokenize(const char *text, Words &out);
 
-    enum class StepKind
+    enum class StepKind : uint8_t
     {
         Rapid,
         Feed,
@@ -72,7 +72,8 @@ namespace Gcode
     struct StepSink
     {
         virtual void emit(const Step &step) = 0;
-        virtual ~StepSink() {}
+        virtual ~StepSink()
+        {}
     };
 
     struct Flavor
@@ -80,7 +81,8 @@ namespace Gcode
         virtual void begin(int32_t startZDu, int32_t startXDu) = 0;
         virtual const char *line(const Words &words, uint32_t lineNo, StepSink &sink) = 0;
         virtual const char *id() const = 0;
-        virtual ~Flavor() {}
+        virtual ~Flavor()
+        {}
     };
 
     const char *interpretLine(Flavor &flavor, const char *text, uint32_t lineNo, StepSink &sink);

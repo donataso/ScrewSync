@@ -23,17 +23,16 @@
 
 namespace
 {
-    using Mode::detail::Kind;
-    using Mode::detail::Ops;
-    using Mode::detail::Param;
+    using Mode::Detail::Kind;
+    using Mode::Detail::Ops;
+    using Mode::Detail::Param;
 
     constexpr size_t MAX_PARAMS_SIZE = 128;
     constexpr double RAD_PER_DEG = 3.14159265358979323846 / 180;
 
     const Param *findParam(const Ops &ops, const char *name)
     {
-        for (size_t i = 0; i < ops.paramCount; i++)
-        {
+        for (size_t i = 0; i < ops.paramCount; i++) {
             if (!strcmp(ops.paramTable[i].name, name)) {
                 return &ops.paramTable[i];
             }
@@ -110,8 +109,7 @@ namespace
     const char *parseInto(const Param &p, const char *value, uint8_t *params)
     {
         void *field = params + p.offset;
-        switch (p.kind)
-        {
+        switch (p.kind) {
         case Kind::Du:
         case Kind::Count:
             return parseNumber(p, value, (int32_t *)field);
@@ -152,8 +150,7 @@ namespace
     int formatParam(const Param &p, const uint8_t *params, char *out, size_t outMax)
     {
         const void *field = params + p.offset;
-        switch (p.kind)
-        {
+        switch (p.kind) {
         case Kind::Du:
         case Kind::Count:
             return snprintf(out, outMax, "%s=%ld", p.name, (long)*(const int32_t *)field);
@@ -188,12 +185,11 @@ namespace
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const Param *firstMissing(const Ops &ops)
     {
-        for (size_t i = 0; i < ops.paramCount; i++)
-        {
+        for (size_t i = 0; i < ops.paramCount; i++) {
             if (!isSet(ops.paramTable[i], (const uint8_t *)ops.params)) {
                 return &ops.paramTable[i];
             }
@@ -206,8 +202,8 @@ namespace Mode
 {
     const char *setParam(Id id, const char *param, const char *value)
     {
-        detail::Guard guard;
-        const Ops *ops = detail::ops(id);
+        Detail::Guard guard;
+        const Ops *ops = Detail::ops(id);
         if (!ops) {
             return "mode not implemented";
         }
@@ -215,7 +211,7 @@ namespace Mode
         if (!p) {
             return "unknown param";
         }
-        bool live = detail::isRunning(id);
+        bool live = Detail::isRunning(id);
         if (live && !p->live) {
             return "stop first";
         }
@@ -235,24 +231,23 @@ namespace Mode
             memcpy(ops->params, previous, ops->paramsSize);
             return refusal;
         }
-        detail::saveParams(id);
+        Detail::saveParams(id);
         return nullptr;
     }
 
     const char *loadParams(Id id, const char *line, bool commit)
     {
-        detail::Guard guard;
-        const Ops *ops = detail::ops(id);
+        Detail::Guard guard;
+        const Ops *ops = Detail::ops(id);
         if (!ops) {
             return "mode not implemented";
         }
-        if (detail::isRunning(id)) {
+        if (Detail::isRunning(id)) {
             return "stop first";
         }
         uint8_t params[MAX_PARAMS_SIZE];
         memcpy(params, ops->params, ops->paramsSize);
-        while (*line)
-        {
+        while (*line) {
             if (*line == ' ') {
                 line++;
                 continue;
@@ -272,36 +267,35 @@ namespace Mode
         }
         if (commit) {
             memcpy(ops->params, params, ops->paramsSize);
-            detail::saveParams(id);
+            Detail::saveParams(id);
         }
         return nullptr;
     }
 
     bool required(Id id, const char *param)
     {
-        const Ops *ops = detail::ops(id);
+        const Ops *ops = Detail::ops(id);
         const Param *p = ops ? findParam(*ops, param) : nullptr;
         return p && p->required;
     }
 
     bool ready()
     {
-        detail::Guard guard;
-        const Ops *ops = detail::ops(current());
-        return ops && !detail::firstMissing(*ops);
+        Detail::Guard guard;
+        const Ops *ops = Detail::ops(current());
+        return ops && !Detail::firstMissing(*ops);
     }
 
     bool describe(Id id, char *out, size_t outMax)
     {
-        detail::Guard guard;
-        const Ops *ops = detail::ops(id);
+        Detail::Guard guard;
+        const Ops *ops = Detail::ops(id);
         if (!ops) {
             return false;
         }
         size_t n = 0;
         out[0] = '\0';
-        for (size_t i = 0; i < ops->paramCount && n < outMax; i++)
-        {
+        for (size_t i = 0; i < ops->paramCount && n < outMax; i++) {
             if (i) {
                 n += snprintf(out + n, outMax - n, " ");
             }

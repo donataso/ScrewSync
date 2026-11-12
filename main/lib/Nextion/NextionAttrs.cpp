@@ -98,12 +98,24 @@ namespace Nextion
 
     char safeChar(char c)
     {
-        return c == '"' ? '\'' : c == '\\' ? '/' : c;
+        if (c == '"') {
+            return '\'';
+        }
+        if (c == '\\') {
+            return '/';
+        }
+        return c;
     }
 
-    void setPage(uint8_t page) { g_page = page; }
+    void setPage(uint8_t page)
+    {
+        g_page = page;
+    }
 
-    uint8_t page() { return g_page; }
+    uint8_t page()
+    {
+        return g_page;
+    }
 
     void resync()
     {

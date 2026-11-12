@@ -79,8 +79,7 @@ namespace
         memcpy(t.groups, g.groups, sizeof(g.groups));
         t.groupCount = g.count;
         t.entryCount = entryCount;
-        for (size_t first = 0; first < entryCount; first += ENTRIES_PER_CHUNK)
-        {
+        for (size_t first = 0; first < entryCount; first += ENTRIES_PER_CHUNK) {
             size_t n = MIN(ENTRIES_PER_CHUNK, entryCount - first);
             char key[12];
             chunkKey(first / ENTRIES_PER_CHUNK, key, sizeof(key));
@@ -101,8 +100,7 @@ namespace
         uint32_t entryCount = t.entryCount;
         PersistBlob::save(NVS_NS, "groups", &g, sizeof(g));
         PersistBlob::save(NVS_NS, "count", &entryCount, sizeof(entryCount));
-        for (size_t first = 0; first < t.entryCount; first += ENTRIES_PER_CHUNK)
-        {
+        for (size_t first = 0; first < t.entryCount; first += ENTRIES_PER_CHUNK) {
             size_t n = MIN(ENTRIES_PER_CHUNK, t.entryCount - first);
             char key[12];
             chunkKey(first / ENTRIES_PER_CHUNK, key, sizeof(key));
@@ -170,14 +168,12 @@ namespace ThreadStore
         size_t n = 0;
         bool full = false;
         out[0] = '\0';
-        for (size_t i = 0; i < g_table.entryCount; i++)
-        {
+        for (size_t i = 0; i < g_table.entryCount; i++) {
             const Entry &e = g_table.entries[i];
             if (e.group != g) {
                 continue;
             }
-            if (total >= offset && !full)
-            {
+            if (total >= offset && !full) {
                 size_t len = strlen(e.designation) + (n ? 1 : 0);
                 if (n + len >= outMax) {
                     full = true;

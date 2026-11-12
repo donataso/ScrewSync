@@ -30,8 +30,8 @@ namespace Stepper
     // speedStart, or maxSpeed when that is lower. No Zephyr/hardware dependency,
     // so it's host/native_sim testable on its own.
     int32_t nextRampSpeed(int32_t currentSpeedStepsPerSec, int64_t distanceRemainingSteps,
-                           int32_t accelerationStepsPerSec2, int32_t speedStartStepsPerSec,
-                           int32_t maxSpeedStepsPerSec);
+                          int32_t accelerationStepsPerSec2, int32_t speedStartStepsPerSec,
+                          int32_t maxSpeedStepsPerSec);
 
     int64_t stoppingDistance(int32_t speedStepsPerSec, int32_t accelerationStepsPerSec2);
 

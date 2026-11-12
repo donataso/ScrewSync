@@ -45,8 +45,7 @@ namespace
                       const struct http_request_ctx *request, struct http_response_ctx *response, void *)
     {
         PreviewUpload &u = g_previewUpload;
-        if (status == HTTP_SERVER_TRANSACTION_ABORTED)
-        {
+        if (status == HTTP_SERVER_TRANSACTION_ABORTED) {
             if (client == u.owner) {
                 u.owner = nullptr;
             }
@@ -55,8 +54,7 @@ namespace
         if (u.owner && client != u.owner) {
             return reply(response, HTTP_409_CONFLICT, "preview upload in progress\n");
         }
-        if (!u.owner)
-        {
+        if (!u.owner) {
             if (WebHttp::refuseUnlessUpdatable(response)) {
                 return 0;
             }
@@ -118,12 +116,11 @@ namespace
 
     // GET: the document as JSON. POST: replaces it.
     int handleJsonDoc(struct http_client_ctx *client, enum http_transaction_status status,
-                      const struct http_request_ctx *request, struct http_response_ctx *response, void *user_data)
+                      const struct http_request_ctx *request, struct http_response_ctx *response, void *userData)
     {
-        const JsonDocument *doc = (const JsonDocument *)user_data;
+        const JsonDocument *doc = (const JsonDocument *)userData;
         JsonUpload &u = g_jsonUpload;
-        if (status == HTTP_SERVER_TRANSACTION_ABORTED || status == HTTP_SERVER_TRANSACTION_COMPLETE)
-        {
+        if (status == HTTP_SERVER_TRANSACTION_ABORTED || status == HTTP_SERVER_TRANSACTION_COMPLETE) {
             if (client == u.owner) {
                 u = {};
             }
@@ -133,14 +130,12 @@ namespace
             return reply(response, HTTP_409_CONFLICT, "busy\n");
         }
         u.owner = client;
-        if (Machine::blocksTraffic())
-        {
+        if (Machine::blocksTraffic()) {
             u = {};
             return reply(response, HTTP_503_SERVICE_UNAVAILABLE, "busy\n");
         }
 
-        if (client->method == HTTP_POST && request->data_len)
-        {
+        if (client->method == HTTP_POST && request->data_len) {
             if (u.len + request->data_len < JSON_DOC_MAX) {
                 memcpy(g_jsonDoc + u.len, request->data, request->data_len);
                 u.len += request->data_len;
@@ -164,32 +159,36 @@ namespace
         return WebHttp::replyBody(response, HTTP_200_OK, WebHttp::ContentType::Json, g_jsonDoc, (size_t)len);
     }
 
-    const JsonDocument threadsDoc = {ThreadStore::toJson, ThreadStore::fromJson};
-    const JsonDocument backupDoc = {Backup::toJson, Backup::fromJson};
-    const JsonDocument logDoc = {LogRing::toJson, nullptr};
+    const JsonDocument THREADS_DOC = {ThreadStore::toJson, ThreadStore::fromJson};
+    const JsonDocument BACKUP_DOC = {Backup::toJson, Backup::fromJson};
+    const JsonDocument LOG_DOC = {LogRing::toJson, nullptr};
 }
 
 namespace WebRoutes
 {
-    struct http_resource_detail_dynamic preview = {
+    struct http_resource_detail_dynamic g_preview = {
         .common = {.bitmask_of_supported_http_methods = BIT(HTTP_POST), .type = HTTP_RESOURCE_TYPE_DYNAMIC},
-        .cb = handlePreview, .user_data = nullptr,
+        .cb = handlePreview,
+        .user_data = nullptr,
     };
 
-    struct http_resource_detail_dynamic threads = {
+    struct http_resource_detail_dynamic g_threads = {
         .common = {.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
                    .type = HTTP_RESOURCE_TYPE_DYNAMIC},
-        .cb = handleJsonDoc, .user_data = (void *)&threadsDoc,
+        .cb = handleJsonDoc,
+        .user_data = (void *)&THREADS_DOC,
     };
 
-    struct http_resource_detail_dynamic backup = {
+    struct http_resource_detail_dynamic g_backup = {
         .common = {.bitmask_of_supported_http_methods = BIT(HTTP_GET) | BIT(HTTP_POST),
                    .type = HTTP_RESOURCE_TYPE_DYNAMIC},
-        .cb = handleJsonDoc, .user_data = (void *)&backupDoc,
+        .cb = handleJsonDoc,
+        .user_data = (void *)&BACKUP_DOC,
     };
 
-    struct http_resource_detail_dynamic logRing = {
+    struct http_resource_detail_dynamic g_logRing = {
         .common = {.bitmask_of_supported_http_methods = BIT(HTTP_GET), .type = HTTP_RESOURCE_TYPE_DYNAMIC},
-        .cb = handleJsonDoc, .user_data = (void *)&logDoc,
+        .cb = handleJsonDoc,
+        .user_data = (void *)&LOG_DOC,
     };
 }

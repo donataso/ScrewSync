@@ -22,7 +22,7 @@
 
 LOG_MODULE_DECLARE(main);
 
-using namespace Wifi::detail;
+using namespace Wifi::Detail;
 
 namespace
 {
@@ -50,7 +50,7 @@ namespace
     }
 }
 
-namespace Wifi::detail
+namespace Wifi::Detail
 {
     void onScanResult(const wifi_scan_result *entry)
     {
@@ -76,8 +76,7 @@ namespace Wifi::detail
 
     void scanTick()
     {
-        if (g_scanBusy && k_uptime_get() >= g_scanDeadline)
-        {
+        if (g_scanBusy && k_uptime_get() >= g_scanDeadline) {
             g_scanBusy = false;
             LOG_WRN("wifi: scan timed out (no SCAN_DONE from the driver)");
             restoreApIfIdle();
@@ -89,8 +88,7 @@ namespace Wifi
 {
     void scan()
     {
-        if (g_scanBusy)
-        {
+        if (g_scanBusy) {
             LOG_WRN("wifi: scan already in progress");
             return;
         }
@@ -99,21 +97,33 @@ namespace Wifi
         g_scanBusy = true;
         g_scanDeadline = k_uptime_get() + SCAN_TIMEOUT_MS;
         int ret = net_mgmt(NET_REQUEST_WIFI_SCAN, g_iface, NULL, 0);
-        if (ret != 0)
-        {
+        if (ret != 0) {
             g_scanBusy = false;
             LOG_WRN("wifi: scan request failed (%d)", ret);
             restoreApIfIdle();
-        }
-        else
-        {
+        } else {
             LOG_INF("wifi: scan requested");
         }
     }
 
-    bool scanBusy() { return g_scanBusy; }
-    uint8_t scanCount() { return g_scanN; }
-    const char *scanSsid(uint8_t i) { return i < g_scanN ? g_scanList[i].ssid : ""; }
-    int scanRssi(uint8_t i) { return i < g_scanN ? g_scanList[i].rssi : 0; }
-    bool scanLocked(uint8_t i) { return i < g_scanN && g_scanList[i].locked; }
+    bool scanBusy()
+    {
+        return g_scanBusy;
+    }
+    uint8_t scanCount()
+    {
+        return g_scanN;
+    }
+    const char *scanSsid(uint8_t i)
+    {
+        return i < g_scanN ? g_scanList[i].ssid : "";
+    }
+    int scanRssi(uint8_t i)
+    {
+        return i < g_scanN ? g_scanList[i].rssi : 0;
+    }
+    bool scanLocked(uint8_t i)
+    {
+        return i < g_scanN && g_scanList[i].locked;
+    }
 }

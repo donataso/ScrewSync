@@ -41,11 +41,9 @@ namespace
         if (needleLen == 0 || to < needleLen) {
             return (size_t)-1;
         }
-        for (size_t i = from; i + needleLen <= to; i++)
-        {
+        for (size_t i = from; i + needleLen <= to; i++) {
             bool match = true;
-            for (size_t k = 0; k < needleLen; k++)
-            {
+            for (size_t k = 0; k < needleLen; k++) {
                 char c = text[i + k];
                 char lower = (c >= 'A' && c <= 'Z') ? (char)(c - 'A' + 'a') : c;
                 if (lower != needle[k]) {
@@ -68,8 +66,7 @@ namespace GcodeMeta
         if (!name || len == 0 || len > NAME_MAX_LEN) {
             return false;
         }
-        for (size_t i = 0; i < len; i++)
-        {
+        for (size_t i = 0; i < len; i++) {
             unsigned char c = (unsigned char)name[i];
             if (c < 0x20 || c == 0x7F) {
                 return false;
@@ -103,10 +100,8 @@ namespace GcodeMeta
 
         size_t tab = 0;
         bool found = false;
-        for (size_t k = 0; k < lineLen; k++)
-        {
-            if (text[k] == '\t')
-            {
+        for (size_t k = 0; k < lineLen; k++) {
+            if (text[k] == '\t') {
                 tab = k;
                 found = true;
                 break;
@@ -127,21 +122,17 @@ namespace GcodeMeta
     ValidateResult validateProgram(const char *text, size_t len, Gcode::Flavor &flavor)
     {
         ValidateResult r = {false, nullptr, 0, 0};
-        if (len == 0)
-        {
+        if (len == 0) {
             r.error = "empty program";
             return r;
         }
-        for (size_t i = 0; i < len; i++)
-        {
-            if (text[i] == '\0')
-            {
+        for (size_t i = 0; i < len; i++) {
+            if (text[i] == '\0') {
                 r.error = "embedded NUL byte";
                 return r;
             }
         }
-        if (axesMismatch(text, len))
-        {
+        if (axesMismatch(text, len)) {
             r.error = "axes mismatch: set AXES RIGHT DOWN in LatheCode and regenerate";
             return r;
         }
@@ -150,8 +141,7 @@ namespace GcodeMeta
         CountingSink sink;
         uint32_t lineNo = 0;
         size_t i = 0;
-        while (i < len)
-        {
+        while (i < len) {
             size_t lineStart = i;
             while (i < len && text[i] != '\n') {
                 i++;
@@ -166,8 +156,7 @@ namespace GcodeMeta
                 lineLen--;
             }
 
-            if (lineLen >= Gcode::MAX_LINE_LEN)
-            {
+            if (lineLen >= Gcode::MAX_LINE_LEN) {
                 r.error = "line too long";
                 r.line = lineNo;
                 return r;
@@ -178,16 +167,14 @@ namespace GcodeMeta
             lineBuf[lineLen] = '\0';
 
             const char *err = Gcode::interpretLine(flavor, lineBuf, lineNo, sink);
-            if (err)
-            {
+            if (err) {
                 r.error = err;
                 r.line = lineNo;
                 return r;
             }
         }
 
-        if (sink.motionSteps == 0)
-        {
+        if (sink.motionSteps == 0) {
             r.error = "no motion steps";
             return r;
         }

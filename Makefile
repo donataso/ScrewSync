@@ -91,8 +91,11 @@ TIDY_DB := $(CURDIR)/.build/tidy-db
 format:
 	clang-format -i $(CPP_SOURCES)
 
+MAX_LINE_LENGTH := 240
+
 format-check:
 	clang-format --dry-run --Werror $(CPP_SOURCES)
+	@! grep -nE '.{$(shell expr $(MAX_LINE_LENGTH) + 1)}' $(CPP_SOURCES)
 
 # Needs the compile databases of `make build` and `make test`. Clang cannot
 # parse all of the cross-compiled code, so its own diagnostics are dropped.

@@ -20,7 +20,10 @@
 
 namespace
 {
-    int64_t mod(int64_t v, int64_t m) { return ((v % m) + m) % m; }
+    int64_t mod(int64_t v, int64_t m)
+    {
+        return ((v % m) + m) % m;
+    }
 }
 
 namespace Sync
@@ -32,8 +35,8 @@ namespace Sync
     }
 
     int64_t ratioTarget(int64_t originAxisPosSteps, int64_t originSpindlePos, int64_t spindlePos,
-                         int32_t motorSteps, int32_t duprDu, int32_t starts, int32_t screwPitchDu,
-                         int32_t encoderStepsPerRev)
+                        int32_t motorSteps, int32_t duprDu, int32_t starts, int32_t screwPitchDu,
+                        int32_t encoderStepsPerRev)
     {
         double r = ratio(motorSteps, duprDu, starts, screwPitchDu, encoderStepsPerRev);
         return originAxisPosSteps + (int64_t)llround((double)(spindlePos - originSpindlePos) * r);

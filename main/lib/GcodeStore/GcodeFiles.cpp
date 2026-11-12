@@ -50,8 +50,7 @@ namespace
 
     bool isHex(const char *s, size_t len)
     {
-        for (size_t i = 0; i < len; i++)
-        {
+        for (size_t i = 0; i < len; i++) {
             char c = s[i];
             if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) {
                 return false;
@@ -111,8 +110,7 @@ namespace GcodeFiles
             return true;
         }
         int rc = fs_mount(&g_mnt);
-        if (rc != 0)
-        {
+        if (rc != 0) {
             LOG_ERR("mount failed: %d", rc);
             return false;
         }
@@ -130,11 +128,9 @@ namespace GcodeFiles
         uint32_t maxId = 0;
         struct fs_dir_t dir;
         fs_dir_t_init(&dir);
-        if (fs_opendir(&dir, MOUNT_POINT) == 0)
-        {
+        if (fs_opendir(&dir, MOUNT_POINT) == 0) {
             struct fs_dirent entry;
-            while (fs_readdir(&dir, &entry) == 0 && entry.name[0])
-            {
+            while (fs_readdir(&dir, &entry) == 0 && entry.name[0]) {
                 uint32_t id;
                 if (entry.type == FS_DIR_ENTRY_FILE && isProgramFile(entry.name, id) && id > maxId) {
                     maxId = id;
@@ -168,8 +164,7 @@ namespace GcodeFiles
             ok = fs_write(&f, text, len) == (ssize_t)len;
         }
         fs_close(&f);
-        if (!ok || fs_rename(tmpPath, finalPath) != 0)
-        {
+        if (!ok || fs_rename(tmpPath, finalPath) != 0) {
             fs_unlink(tmpPath);
             return false;
         }
@@ -229,8 +224,7 @@ namespace GcodeFiles
         }
 
         struct fs_dirent entry;
-        while (out.count < GcodeStore::LIST_MAX && fs_readdir(&dir, &entry) == 0 && entry.name[0])
-        {
+        while (out.count < GcodeStore::LIST_MAX && fs_readdir(&dir, &entry) == 0 && entry.name[0]) {
             uint32_t id;
             if (entry.type != FS_DIR_ENTRY_FILE || !isProgramFile(entry.name, id)) {
                 continue;

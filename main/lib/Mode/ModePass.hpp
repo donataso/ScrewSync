@@ -26,7 +26,7 @@
 // steps deeper each pass. Each pass: plunge, cut, retract, return to start
 // (approaching it in the cut direction so backlash is taken up before the
 // cut). After the last pass the aux axis returns to the engage point.
-namespace Mode::detail
+namespace Mode::Detail
 {
     enum class PassFeed : uint8_t
     {

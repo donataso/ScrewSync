@@ -25,16 +25,19 @@ LOG_MODULE_REGISTER(probe_input, LOG_LEVEL_INF);
 
 namespace
 {
-    const gpio_dt_spec g_probe = GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), probe_gpios);
+    const gpio_dt_spec PROBE = GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), probe_gpios);
     gpio_callback g_cb;
     ProbeInput::Callback g_onEdge = nullptr;
 
-    bool rawLevel() { return gpio_pin_get_dt(&g_probe) > 0; }
+    bool rawLevel()
+    {
+        return gpio_pin_get_dt(&PROBE) > 0;
+    }
 
     void isr(const struct device *, struct gpio_callback *, uint32_t)
     {
         if (g_onEdge) {
-            g_onEdge(ProbeInput::fromRaw(rawLevel(), Settings::active.probePolarityNc));
+            g_onEdge(ProbeInput::fromRaw(rawLevel(), Settings::g_active.probePolarityNc));
         }
     }
 }
@@ -44,18 +47,18 @@ namespace ProbeInput
     void begin(Callback onEdge)
     {
         g_onEdge = onEdge;
-        if (!gpio_is_ready_dt(&g_probe)) {
+        if (!gpio_is_ready_dt(&PROBE)) {
             LOG_ERR("probe GPIO not ready");
             return;
         }
-        gpio_pin_configure_dt(&g_probe, GPIO_INPUT);
-        gpio_pin_interrupt_configure_dt(&g_probe, GPIO_INT_EDGE_BOTH);
-        gpio_init_callback(&g_cb, isr, BIT(g_probe.pin));
-        gpio_add_callback(g_probe.port, &g_cb);
+        gpio_pin_configure_dt(&PROBE, GPIO_INPUT);
+        gpio_pin_interrupt_configure_dt(&PROBE, GPIO_INT_EDGE_BOTH);
+        gpio_init_callback(&g_cb, isr, BIT(PROBE.pin));
+        gpio_add_callback(PROBE.port, &g_cb);
     }
 
     bool contact()
     {
-        return fromRaw(rawLevel(), Settings::active.probePolarityNc);
+        return fromRaw(rawLevel(), Settings::g_active.probePolarityNc);
     }
 }

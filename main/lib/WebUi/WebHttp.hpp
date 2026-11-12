@@ -33,7 +33,7 @@ namespace WebHttp
 {
     // Sets a final response; returns 0 for the resource callback.
     int reply(struct http_response_ctx *response, enum http_status status, const char *body);
-    enum class ContentType
+    enum class ContentType : uint8_t
     {
         Text,
         Json,
@@ -59,7 +59,8 @@ namespace WebHttp
         size_t pos = 0;
         bool ok = true;
 
-        JsonWriter(char *b, size_t m) : buf(b), max(m) {}
+        JsonWriter(char *b, size_t m) : buf(b), max(m)
+        {}
         JsonWriter &raw(const char *s);
         JsonWriter &str(const char *s); // quoted and escaped
         JsonWriter &strOrNull(const char *s); // null when empty

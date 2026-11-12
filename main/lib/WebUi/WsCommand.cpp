@@ -67,9 +67,9 @@ namespace
 
     // The HTTP server registers every websocket with the resource's one
     // buffer, which the frame parser keeps state in; give each its own.
-    void setupContext(struct websocket_context *ctx, void *user_data)
+    void setupContext(struct websocket_context *ctx, void *userData)
     {
-        ContextSetup *setup = (ContextSetup *)user_data;
+        ContextSetup *setup = (ContextSetup *)userData;
         if (ctx->sock != setup->wsSock) {
             return;
         }
@@ -104,14 +104,11 @@ namespace
             return;
         }
         char ip[NET_IPV6_ADDR_LEN];
-        if (addr.ss_family == AF_INET)
-        {
+        if (addr.ss_family == AF_INET) {
             struct sockaddr_in *in = (struct sockaddr_in *)&addr;
             zsock_inet_ntop(AF_INET, &in->sin_addr, ip, sizeof(ip));
             snprintf(out, outMax, "%s:%u", ip, ntohs(in->sin_port));
-        }
-        else if (addr.ss_family == AF_INET6)
-        {
+        } else if (addr.ss_family == AF_INET6) {
             struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&addr;
             zsock_inet_ntop(AF_INET6, &in6->sin6_addr, ip, sizeof(ip));
             snprintf(out, outMax, "[%s]:%u", ip, ntohs(in6->sin6_port));
@@ -174,9 +171,9 @@ namespace
 
     bool isStatusVerb(const char *verb)
     {
-        static const char *const VERBS[] = {"jog",    "mode",  "start", "stop", "skip",    "gear",  "async",
-                                            "turn",   "thread", "part", "slot", "ellipse", "units", "enable",
-                                            "move",   "zero"};
+        static const char *const VERBS[] = {"jog", "mode", "start", "stop", "skip", "gear", "async",
+                                            "turn", "thread", "part", "slot", "ellipse", "units", "enable",
+                                            "move", "zero"};
         for (const char *v : VERBS) {
             if (!strcmp(verb, v)) {
                 return true;
@@ -205,7 +202,7 @@ namespace
 
         bool statusDue(uint32_t now) const
         {
-            return now - lastStatusMs >= (uint32_t)Settings::active.statusPushIntervalMs;
+            return now - lastStatusMs >= (uint32_t)Settings::g_active.statusPushIntervalMs;
         }
 
         void greet()
@@ -219,23 +216,19 @@ namespace
         bool idle()
         {
             uint32_t now = k_uptime_get_32();
-            if (g_clients[slot].kill)
-            {
+            if (g_clients[slot].kill) {
                 LOG_INF("ws: slot %d killed", slot);
                 return false;
             }
-            if (now - g_clients[slot].heardMs > SILENT_TIMEOUT_MS)
-            {
+            if (now - g_clients[slot].heardMs > SILENT_TIMEOUT_MS) {
                 LOG_WRN("ws: slot %d silent for %u ms, closing", slot, now - g_clients[slot].heardMs);
                 return false;
             }
-            if (now - lastPingMs >= PING_INTERVAL_MS)
-            {
+            if (now - lastPingMs >= PING_INTERVAL_MS) {
                 websocket_send_msg(sock, nullptr, 0, WEBSOCKET_OPCODE_PING, false, true, 1000);
                 lastPingMs = now;
             }
-            if (statusDue(now))
-            {
+            if (statusDue(now)) {
                 sendTo(sock, json, WsMessages::status(json, JSON_REPLY_BUF));
                 bool scanBusy = Wifi::scanBusy();
                 if (wasScanBusy && !scanBusy) {
@@ -253,7 +246,7 @@ namespace
             char verb[16];
             firstToken(line, verb, sizeof(verb));
             const char *sp = strchr(reply, ' ');
-            if (strncmp(reply, "ok", 2)) {
+            if (strncmp(reply, "ok", 2) != 0) {
                 sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, "error", sp ? sp + 1 : reply));
             } else if (!strcmp(verb, "commands") || !strcmp(verb, "display") || !strcmp(verb, "ws")) {
                 sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, verb, sp ? sp + 1 : ""));
@@ -264,8 +257,7 @@ namespace
             } else if (isStatusVerb(verb)) {
                 // Same throttle as idle(): a burst of commands must not raise the status rate.
                 uint32_t now = k_uptime_get_32();
-                if (statusDue(now))
-                {
+                if (statusDue(now)) {
                     broadcast(json, WsMessages::status(json, JSON_REPLY_BUF));
                     lastStatusMs = now;
                 }
@@ -276,8 +268,7 @@ namespace
         {
             LOG_INF("ws: slot %d recv %d bytes: %.*s", slot, n, n, (const char *)rx);
             const char *requested;
-            if (!WsMessages::parseCommand((char *)rx, (size_t)n, requested))
-            {
+            if (!WsMessages::parseCommand((char *)rx, (size_t)n, requested)) {
                 LOG_WRN("ws: slot %d bad request", slot);
                 sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, "error", "bad request"));
                 return;
@@ -295,24 +286,18 @@ namespace
     {
         uint8_t *rx = g_rx[s.slot];
         s.greet();
-        while (s.sock >= 0)
-        {
+        while (s.sock >= 0) {
             uint32_t msgType = 0;
             uint64_t remaining = 0;
             int n = websocket_recv_msg(s.sock, rx, WS_RX_BUF, &msgType, &remaining, 20);
-            if (n == -EAGAIN)
-            {
+            if (n == -EAGAIN) {
                 if (!s.idle()) {
                     return;
                 }
-            }
-            else if (n < 0 || (msgType & WEBSOCKET_FLAG_CLOSE))
-            {
+            } else if (n < 0 || (msgType & WEBSOCKET_FLAG_CLOSE)) {
                 LOG_INF("ws: slot %d recv ended (n=%d, msgType=0x%x)", s.slot, n, msgType);
                 return;
-            }
-            else
-            {
+            } else {
                 g_clients[s.slot].heardMs = k_uptime_get_32();
                 g_clients[s.slot].rxCount++;
                 if ((msgType & WEBSOCKET_FLAG_TEXT) && n > 0) {
@@ -326,12 +311,11 @@ namespace
     void wsWorker(void *p1, void *, void *)
     {
         int slot = (int)(intptr_t)p1;
-        for (;;)
-        {
+        for (;;) {
             k_sem_take(&g_wsReady[slot], K_FOREVER);
             uint32_t now = k_uptime_get_32();
-            Session s = {slot,          g_clients[slot].sock, g_json[slot], g_bigJson[slot],
-                         now - Settings::active.statusPushIntervalMs, now, Wifi::scanBusy()};
+            Session s = {slot, g_clients[slot].sock, g_json[slot], g_bigJson[slot],
+                         now - Settings::g_active.statusPushIntervalMs, now, Wifi::scanBusy()};
             serve(s);
 
             k_mutex_lock(&g_clientsLock, K_FOREVER);
@@ -344,7 +328,7 @@ namespace
         }
     }
 
-    int wsAccept(int ws_socket, struct http_request_ctx *, void *)
+    int wsAccept(int wsSocket, struct http_request_ctx *, void *)
     {
         if (Machine::blocksTraffic()) {
             LOG_WRN("ws: accept rejected, machine state=%s", Machine::stateName());
@@ -354,20 +338,18 @@ namespace
         k_mutex_lock(&g_clientsLock, K_FOREVER);
         int slot = -1;
         for (int i = 0; i < WS_MAX_CLIENTS; i++) {
-            if (g_clients[i].sock < 0)
-            {
+            if (g_clients[i].sock < 0) {
                 slot = i;
                 break;
             }
         }
-        if (slot >= 0)
-        {
+        if (slot >= 0) {
             uint32_t now = k_uptime_get_32();
             g_clients[slot] = WsClient{};
-            g_clients[slot].sock = ws_socket;
+            g_clients[slot].sock = wsSocket;
             g_clients[slot].connectedMs = now;
             g_clients[slot].heardMs = now;
-            peerAddress(setupClient(ws_socket, g_wsRecv[slot]), g_clients[slot].peer, sizeof(g_clients[slot].peer));
+            peerAddress(setupClient(wsSocket, g_wsRecv[slot]), g_clients[slot].peer, sizeof(g_clients[slot].peer));
         }
         k_mutex_unlock(&g_clientsLock);
 
@@ -376,15 +358,18 @@ namespace
             return -1;
         }
 
-        LOG_INF("ws: client %s accepted into slot %d (sock=%d)", g_clients[slot].peer, slot, ws_socket);
+        LOG_INF("ws: client %s accepted into slot %d (sock=%d)", g_clients[slot].peer, slot, wsSocket);
         k_sem_give(&g_wsReady[slot]);
         return 0;
     }
 }
 
-struct http_resource_detail_websocket wsCommandDetail = {
+struct http_resource_detail_websocket g_wsCommandDetail = {
     .common = {.bitmask_of_supported_http_methods = BIT(HTTP_GET), .type = HTTP_RESOURCE_TYPE_WEBSOCKET},
-    .ws_sock = -1, .cb = wsAccept, .data_buffer = g_wsUpgradeBuf, .data_buffer_len = WS_RX_BUF,
+    .ws_sock = -1,
+    .cb = wsAccept,
+    .data_buffer = g_wsUpgradeBuf,
+    .data_buffer_len = WS_RX_BUF,
     .user_data = nullptr,
 };
 
@@ -392,11 +377,10 @@ namespace WsCommand
 {
     void begin()
     {
-        for (int i = 0; i < WS_MAX_CLIENTS; i++)
-        {
+        for (int i = 0; i < WS_MAX_CLIENTS; i++) {
             k_sem_init(&g_wsReady[i], 0, 1);
             k_thread_create(&g_wsThreads[i], g_wsStacks[i], WS_STACK_SIZE, wsWorker,
-                             (void *)(intptr_t)i, nullptr, nullptr, K_PRIO_PREEMPT(8), 0, K_NO_WAIT);
+                            (void *)(intptr_t)i, nullptr, nullptr, K_PRIO_PREEMPT(8), 0, K_NO_WAIT); // NOLINT(performance-no-int-to-ptr): Zephyr thread argument
         }
     }
 
@@ -405,8 +389,7 @@ namespace WsCommand
         uint32_t now = k_uptime_get_32();
         int n = snprintf(out, outMax, "ok");
         k_mutex_lock(&g_clientsLock, K_FOREVER);
-        for (int i = 0; i < WS_MAX_CLIENTS && n >= 0 && (size_t)n < outMax; i++)
-        {
+        for (int i = 0; i < WS_MAX_CLIENTS && n >= 0 && (size_t)n < outMax; i++) {
             const WsClient &c = g_clients[i];
             if (c.sock < 0) {
                 n += snprintf(out + n, outMax - (size_t)n, "\n%d: free", i + 1);

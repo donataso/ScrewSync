@@ -169,22 +169,56 @@ namespace
 
     // BS EN ISO 228 (G).
     const PipeRow BSP[] = {
-        {"1/16", 7722, 2800},    {"1/8", 9728, 2800},     {"1/4", 13157, 1900},    {"3/8", 16662, 1900},
-        {"1/2", 20955, 1400},    {"5/8", 22911, 1400},    {"3/4", 26441, 1400},    {"7/8", 30201, 1400},
-        {"1", 33249, 1100},      {"1-1/8", 37897, 1100},  {"1-1/4", 41910, 1100},  {"1-3/8", 44323, 1100},
-        {"1-1/2", 47803, 1100},  {"1-5/8", 52883, 1100},  {"1-3/4", 53746, 1100},  {"1-7/8", 56998, 1100},
-        {"2", 59614, 1100},      {"2-1/4", 65710, 1100},  {"2-1/2", 75184, 1100},  {"2-3/4", 81534, 1100},
-        {"3", 87884, 1100},      {"3-1/2", 100330, 1100}, {"4", 113030, 1100},     {"4-1/2", 125730, 1100},
-        {"5", 138430, 1100},     {"5-1/2", 151130, 1100}, {"6", 163830, 1100},
+        {"1/16", 7722, 2800},
+        {"1/8", 9728, 2800},
+        {"1/4", 13157, 1900},
+        {"3/8", 16662, 1900},
+        {"1/2", 20955, 1400},
+        {"5/8", 22911, 1400},
+        {"3/4", 26441, 1400},
+        {"7/8", 30201, 1400},
+        {"1", 33249, 1100},
+        {"1-1/8", 37897, 1100},
+        {"1-1/4", 41910, 1100},
+        {"1-3/8", 44323, 1100},
+        {"1-1/2", 47803, 1100},
+        {"1-5/8", 52883, 1100},
+        {"1-3/4", 53746, 1100},
+        {"1-7/8", 56998, 1100},
+        {"2", 59614, 1100},
+        {"2-1/4", 65710, 1100},
+        {"2-1/2", 75184, 1100},
+        {"2-3/4", 81534, 1100},
+        {"3", 87884, 1100},
+        {"3-1/2", 100330, 1100},
+        {"4", 113030, 1100},
+        {"4-1/2", 125730, 1100},
+        {"5", 138430, 1100},
+        {"5-1/2", 151130, 1100},
+        {"6", 163830, 1100},
     };
 
     // ASME B1.20.1.
     const PipeRow NPT[] = {
-        {"1/16", 7895, 2700},    {"1/8", 10242, 2700},    {"1/4", 13616, 1800},    {"3/8", 17055, 1800},
-        {"1/2", 21223, 1400},    {"3/4", 26568, 1400},    {"1", 33228, 1150},      {"1-1/4", 41985, 1150},
-        {"1-1/2", 48054, 1150},  {"2", 60092, 1150},      {"2-1/2", 72699, 800},   {"3", 88608, 800},
-        {"3-1/2", 101316, 800},  {"4", 113973, 800},      {"5", 141300, 800},      {"6", 168275, 800},
-        {"8", 219075, 800},      {"10", 273050, 800},     {"12", 323850, 800},
+        {"1/16", 7895, 2700},
+        {"1/8", 10242, 2700},
+        {"1/4", 13616, 1800},
+        {"3/8", 17055, 1800},
+        {"1/2", 21223, 1400},
+        {"3/4", 26568, 1400},
+        {"1", 33228, 1150},
+        {"1-1/4", 41985, 1150},
+        {"1-1/2", 48054, 1150},
+        {"2", 60092, 1150},
+        {"2-1/2", 72699, 800},
+        {"3", 88608, 800},
+        {"3-1/2", 101316, 800},
+        {"4", 113973, 800},
+        {"5", 141300, 800},
+        {"6", 168275, 800},
+        {"8", 219075, 800},
+        {"10", 273050, 800},
+        {"12", 323850, 800},
     };
 
     int32_t tpiToPitchDu(int16_t tpiX100)
@@ -262,16 +296,14 @@ namespace ThreadTable
         char d[DESIGNATION_MAX];
 
         uint8_t metric = addGroup(t, "metric", ISO_EXTERNAL, ISO_INTERNAL, 0, ANGLE_60);
-        for (const MetricRow &r : METRIC)
-        {
+        for (const MetricRow &r : METRIC) {
             char dia[12];
             formatScaled(r.diameterUm, 1000, dia, sizeof(dia));
             if (r.coarseUm) {
                 snprintf(d, sizeof(d), "M%s", dia);
                 addEntry(t, metric, d, r.diameterUm * DU_PER_UM, r.coarseUm * DU_PER_UM);
             }
-            for (int32_t pitch : r.fineUm)
-            {
+            for (int32_t pitch : r.fineUm) {
                 if (!pitch) {
                     break;
                 }
@@ -287,11 +319,9 @@ namespace ThreadTable
 
         static const char *const UNIFIED_NAMES[] = {"unc", "unf", "unef"};
         static const char *const UNIFIED_SUFFIXES[] = {"UNC", "UNF", "UNEF"};
-        for (size_t i = 0; i < 3; i++)
-        {
+        for (size_t i = 0; i < 3; i++) {
             uint8_t g = addGroup(t, UNIFIED_NAMES[i], ISO_EXTERNAL, ISO_INTERNAL, 0, ANGLE_60);
-            for (const UnifiedRow &r : UNIFIED)
-            {
+            for (const UnifiedRow &r : UNIFIED) {
                 if (!r.tpi[i]) {
                     continue;
                 }
@@ -304,11 +334,9 @@ namespace ThreadTable
 
         static const char *const WHITWORTH_NAMES[] = {"bsw", "bsf"};
         static const char *const WHITWORTH_SUFFIXES[] = {"BSW", "BSF"};
-        for (size_t i = 0; i < 2; i++)
-        {
+        for (size_t i = 0; i < 2; i++) {
             uint8_t g = addGroup(t, WHITWORTH_NAMES[i], WHITWORTH, WHITWORTH, 0, ANGLE_WHITWORTH);
-            for (const WhitworthRow &r : WHITWORTH_ROWS)
-            {
+            for (const WhitworthRow &r : WHITWORTH_ROWS) {
                 if (!r.tpi[i]) {
                     continue;
                 }
@@ -318,15 +346,13 @@ namespace ThreadTable
         }
 
         uint8_t bsp = addGroup(t, "bsp", WHITWORTH, WHITWORTH, 0, ANGLE_WHITWORTH);
-        for (const PipeRow &r : BSP)
-        {
+        for (const PipeRow &r : BSP) {
             snprintf(d, sizeof(d), "G%s", r.size);
             addEntry(t, bsp, d, r.majorUm * DU_PER_UM, tpiToPitchDu(r.tpi));
         }
 
         uint8_t npt = addGroup(t, "npt", NPT_DEPTH, NPT_DEPTH, NPT_TAPER, ANGLE_60);
-        for (const PipeRow &r : NPT)
-        {
+        for (const PipeRow &r : NPT) {
             snprintf(d, sizeof(d), "%sNPT", r.size);
             addEntry(t, npt, d, r.majorUm * DU_PER_UM, tpiToPitchDu(r.tpi));
         }
@@ -337,8 +363,7 @@ namespace ThreadTable
 
     int findGroup(const Table &t, const char *name)
     {
-        for (size_t i = 0; i < t.groupCount; i++)
-        {
+        for (size_t i = 0; i < t.groupCount; i++) {
             if (!strcmp(t.groups[i].name, name)) {
                 return (int)i;
             }
@@ -352,8 +377,7 @@ namespace ThreadTable
         if (g < 0) {
             return nullptr;
         }
-        for (size_t i = 0; i < t.entryCount; i++)
-        {
+        for (size_t i = 0; i < t.entryCount; i++) {
             const Entry &e = t.entries[i];
             if (e.group == g && !strcmp(e.designation, designation)) {
                 return &e;
@@ -389,8 +413,7 @@ namespace ThreadTable
         if (t.groupCount > MAX_GROUPS || t.entryCount > MAX_ENTRIES) {
             return "too many entries";
         }
-        for (size_t i = 0; i < t.groupCount; i++)
-        {
+        for (size_t i = 0; i < t.groupCount; i++) {
             const Group &g = t.groups[i];
             if (!hasNul(g.name, sizeof(g.name)) || !g.name[0] || strpbrk(g.name, " ,")) {
                 return "bad group name";
@@ -415,8 +438,7 @@ namespace ThreadTable
                 return "too many entries in a group";
             }
         }
-        for (size_t i = 0; i < t.entryCount; i++)
-        {
+        for (size_t i = 0; i < t.entryCount; i++) {
             const Entry &e = t.entries[i];
             if (e.group >= t.groupCount) {
                 return "entry without group";

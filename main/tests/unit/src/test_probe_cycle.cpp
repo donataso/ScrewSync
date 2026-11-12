@@ -35,10 +35,10 @@ namespace
     void toReprobe(State &s, const Params &p)
     {
         zassert_is_null(begin(s, p, 0, false));
-        int64_t first = p.dir * 5000;
+        int64_t first = (int64_t)p.dir * 5000;
         tick(s, p, first, true, true, first);
         zassert_equal((int)s.phase, (int)Phase::BackOff1);
-        tick(s, p, first - p.dir * 1000, false, false, 0);
+        tick(s, p, first - (int64_t)p.dir * 1000, false, false, 0);
         zassert_equal((int)s.phase, (int)Phase::Reprobe);
     }
 }
@@ -144,14 +144,13 @@ ZTEST(probe_cycle, test_zero_surface_all_directions)
         int64_t offset;
     };
     const Case cases[] = {{-1, 300}, {1, 300}, {-1, 0}, {1, 0}};
-    for (const Case &c : cases)
-    {
+    for (const Case &c : cases) {
         State s;
         Params p = basicParams(c.dir, c.offset);
         toReprobe(s, p);
-        int64_t second = c.dir * 5010;
+        int64_t second = (int64_t)c.dir * 5010;
         tick(s, p, second, true, true, second);
-        Result r = tick(s, p, second - c.dir * 1000, false, false, 0);
+        Result r = tick(s, p, second - (int64_t)c.dir * 1000, false, false, 0);
         zassert_true(r.done);
         zassert_equal(r.surfaceSteps, second + c.dir * c.offset);
     }

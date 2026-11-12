@@ -42,25 +42,21 @@ namespace
         uint8_t buf[256];
         uint32_t received = 0;
         int64_t lastByteMs = k_uptime_get();
-        while (received < len)
-        {
+        while (received < len) {
             size_t n = 0;
             unsigned char c;
             while (n < sizeof(buf) && received + n < len && uart_poll_in(dev, &c) == 0) {
                 buf[n++] = c;
             }
-            if (n)
-            {
+            if (n) {
                 if (!DisplayImage::storeChunk(buf, n)) {
                     return "flash write failed";
                 }
                 received += n;
                 lastByteMs = k_uptime_get();
-            }
-            else if (k_uptime_get() - lastByteMs > UPLOAD_IDLE_TIMEOUT_MS) {
+            } else if (k_uptime_get() - lastByteMs > UPLOAD_IDLE_TIMEOUT_MS) {
                 return "timed out";
-            }
-            else {
+            } else {
                 k_usleep(100);
             }
         }
@@ -75,12 +71,9 @@ namespace
         DisplayImage::Info stored = DisplayImage::info();
         if (stored.stored && stored.length == len && stored.crc == crc) {
             printf("ok upload skipped, already stored\n");
-        }
-        else
-        {
+        } else {
             const char *reason = DisplayImage::storeBegin(len, crc);
-            if (reason)
-            {
+            if (reason) {
                 printf("err display upload: %s\n", reason);
                 return;
             }
@@ -91,8 +84,7 @@ namespace
             } else {
                 reason = DisplayImage::storeFinish();
             }
-            if (reason)
-            {
+            if (reason) {
                 printf("err display upload: %s\n", reason);
                 return;
             }
@@ -114,13 +106,11 @@ void consolePoll()
     static char out[Command::MAX_REPLY_LEN] EXT_RAM_BSS;
 
     unsigned char c;
-    while (uart_poll_in(dev, &c) == 0)
-    {
+    while (uart_poll_in(dev, &c) == 0) {
         if (c == '\r') {
             continue;
         }
-        if (c != '\n' && len < sizeof(buf) - 1)
-        {
+        if (c != '\n' && len < sizeof(buf) - 1) {
             buf[len++] = (char)c;
             continue;
         }
@@ -130,8 +120,7 @@ void consolePoll()
             continue;
         }
 
-        if (!strncmp(buf, UPLOAD_PREFIX, strlen(UPLOAD_PREFIX)))
-        {
+        if (!strncmp(buf, UPLOAD_PREFIX, strlen(UPLOAD_PREFIX))) {
             handleUpload(dev, buf + strlen(UPLOAD_PREFIX));
             continue;
         }

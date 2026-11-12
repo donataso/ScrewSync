@@ -26,62 +26,59 @@
 #define FW_VERSION "dev"
 #endif
 
-HTTP_SERVER_REGISTER_HEADER_CAPTURE(g_ifNoneMatchCapture, "If-None-Match");
+HTTP_SERVER_REGISTER_HEADER_CAPTURE(IF_NONE_MATCH_CAPTURE, "If-None-Match");
 
 namespace
 {
     constexpr char ETAG[] = "\"" FW_VERSION "\"";
 
     int handleIndex(struct http_client_ctx *, enum http_transaction_status status,
-                     const struct http_request_ctx *request_ctx, struct http_response_ctx *response_ctx, void *)
+                    const struct http_request_ctx *requestCtx, struct http_response_ctx *responseCtx, void *)
     {
         if (status != HTTP_SERVER_REQUEST_DATA_FINAL) {
             return 0;
         }
 
-        if (Machine::blocksTraffic())
-        {
+        if (Machine::blocksTraffic()) {
             static char msg[32];
             snprintf(msg, sizeof(msg), "%s\n", Machine::stateName());
-            response_ctx->status = HTTP_503_SERVICE_UNAVAILABLE;
-            response_ctx->body = (const uint8_t *)msg;
-            response_ctx->body_len = strlen(msg);
-            response_ctx->final_chunk = true;
+            responseCtx->status = HTTP_503_SERVICE_UNAVAILABLE;
+            responseCtx->body = (const uint8_t *)msg;
+            responseCtx->body_len = strlen(msg);
+            responseCtx->final_chunk = true;
             return 0;
         }
 
-        for (size_t i = 0; i < request_ctx->header_count; i++)
-        {
-            if (strcasecmp(request_ctx->headers[i].name, "If-None-Match") == 0 &&
-                strcmp(request_ctx->headers[i].value, ETAG) == 0)
-            {
-                static const struct http_header cacheHeader[] = {{"Cache-Control", "max-age=31536000"}};
-                response_ctx->status = HTTP_304_NOT_MODIFIED;
-                response_ctx->headers = cacheHeader;
-                response_ctx->header_count = 1;
-                response_ctx->body = nullptr;
-                response_ctx->body_len = 0;
-                response_ctx->final_chunk = true;
+        for (size_t i = 0; i < requestCtx->header_count; i++) {
+            if (strcasecmp(requestCtx->headers[i].name, "If-None-Match") == 0 &&
+                strcmp(requestCtx->headers[i].value, ETAG) == 0) {
+                static const struct http_header CACHE_HEADER[] = {{"Cache-Control", "max-age=31536000"}};
+                responseCtx->status = HTTP_304_NOT_MODIFIED;
+                responseCtx->headers = CACHE_HEADER;
+                responseCtx->header_count = 1;
+                responseCtx->body = nullptr;
+                responseCtx->body_len = 0;
+                responseCtx->final_chunk = true;
                 return 0;
             }
         }
 
-        static const struct http_header gzHeader[] = {
+        static const struct http_header GZ_HEADER[] = {
             {"Content-Encoding", "gzip"},
             {"ETag", ETAG},
             {"Cache-Control", "max-age=31536000"},
         };
-        response_ctx->headers = gzHeader;
-        response_ctx->header_count = 3;
-        response_ctx->status = HTTP_200_OK;
-        response_ctx->body = WEB_INDEX_HTML_GZ;
-        response_ctx->body_len = WEB_INDEX_HTML_GZ_LEN;
-        response_ctx->final_chunk = true;
+        responseCtx->headers = GZ_HEADER;
+        responseCtx->header_count = 3;
+        responseCtx->status = HTTP_200_OK;
+        responseCtx->body = WEB_INDEX_HTML_GZ;
+        responseCtx->body_len = WEB_INDEX_HTML_GZ_LEN;
+        responseCtx->final_chunk = true;
         return 0;
     }
 }
 
-struct http_resource_detail_dynamic indexDetail = {
+struct http_resource_detail_dynamic g_indexDetail = {
     .common = {.bitmask_of_supported_http_methods = BIT(HTTP_GET), .type = HTTP_RESOURCE_TYPE_DYNAMIC},
     .cb = handleIndex,
     .user_data = nullptr,

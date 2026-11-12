@@ -87,16 +87,14 @@ namespace Gcode
 
         for (size_t i = 0; i < words.count; i++) {
             const Word &w = words.words[i];
-            switch (w.letter)
-            {
+            switch (w.letter) {
             case 'G':
             {
                 int g;
                 if (!exactInt(w.value, g)) {
                     return "unsupported command";
                 }
-                switch (g)
-                {
+                switch (g) {
                 case 0:
                     motion_ = Motion::Rapid;
                     break;
@@ -133,8 +131,7 @@ namespace Gcode
                 if (!exactInt(w.value, m)) {
                     return "unsupported command";
                 }
-                switch (m)
-                {
+                switch (m) {
                 case 0:
                     mKind = StepKind::Pause;
                     break;

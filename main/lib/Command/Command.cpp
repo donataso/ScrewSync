@@ -21,7 +21,7 @@
 #include "Motion.hpp"
 #include <zephyr/sys/reboot.h>
 
-using namespace Command::detail;
+using namespace Command::Detail;
 
 namespace
 {
@@ -33,7 +33,10 @@ namespace
         Handler handler;
     };
 
-    void ping(const char *, char *out, size_t outMax) { snprintf(out, outMax, "ok pong"); }
+    void ping(const char *, char *out, size_t outMax)
+    {
+        snprintf(out, outMax, "ok pong");
+    }
 
     void reboot(const char *, char *out, size_t outMax)
     {
@@ -43,13 +46,10 @@ namespace
 
     void estop(const char *args, char *out, size_t outMax)
     {
-        if (!strcmp(skipSpaces(args), "ack"))
-        {
+        if (!strcmp(skipSpaces(args), "ack")) {
             snprintf(out, outMax, "ok estop ack, rebooting");
             Machine::ackEstop();
-        }
-        else
-        {
+        } else {
             snprintf(out, outMax, "ok state=%s", Machine::stateName());
         }
     }
@@ -106,8 +106,7 @@ namespace
     void commands(const char *, char *out, size_t outMax)
     {
         int n = snprintf(out, outMax, "ok");
-        for (const CommandDef &c : COMMANDS)
-        {
+        for (const CommandDef &c : COMMANDS) {
             if (n < 0 || (size_t)n >= outMax) {
                 break;
             }
@@ -116,7 +115,7 @@ namespace
     }
 }
 
-namespace Command::detail
+namespace Command::Detail
 {
     bool parseAxis(const char *token, Stepper::Axis &axis)
     {
@@ -136,13 +135,11 @@ namespace Command::detail
         const char *a = skipSpaces(args);
         int consumed = 0;
         axisTok[0] = '\0';
-        if (sscanf(a, "%3s%n", axisTok, &consumed) != 1)
-        {
+        if (sscanf(a, "%3s%n", axisTok, &consumed) != 1) {
             snprintf(out, outMax, "err %s", usage);
             return false;
         }
-        if (!parseAxis(axisTok, axis))
-        {
+        if (!parseAxis(axisTok, axis)) {
             snprintf(out, outMax, "err %s axis must be z or x", verb);
             return false;
         }
@@ -173,21 +170,17 @@ namespace Command
         // "estop ack" is the only way out of a trip, on every transport.
         Machine::State st = Machine::state();
         bool isEstop = tokLen == 5 && !strncmp(a, "estop", 5);
-        if (st == Machine::State::Flashing)
-        {
+        if (st == Machine::State::Flashing) {
             snprintf(out, outMax, "err busy: flashing");
             return;
         }
-        if (st == Machine::State::EStop && !isEstop)
-        {
+        if (st == Machine::State::EStop && !isEstop) {
             snprintf(out, outMax, "err busy: estop");
             return;
         }
 
-        for (const CommandDef &c : COMMANDS)
-        {
-            if (strlen(c.token) == tokLen && !strncmp(a, c.token, tokLen))
-            {
+        for (const CommandDef &c : COMMANDS) {
+            if (strlen(c.token) == tokLen && !strncmp(a, c.token, tokLen)) {
                 c.handler(a + tokLen, out, outMax);
                 return;
             }

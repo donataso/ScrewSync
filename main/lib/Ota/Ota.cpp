@@ -53,8 +53,7 @@ namespace Ota
 
     bool writeChunk(const uint8_t *data, size_t len)
     {
-        if (!g_active)
-        {
+        if (!g_active) {
             // Entering Flashing while the machine is Running trips EStop
             // instead (see Machine::setFlashing) -- this is the per-chunk
             // recheck's backstop in case spinning/sync starts in the same
@@ -92,8 +91,7 @@ namespace Ota
         }
 
         const struct flash_area *fa;
-        if (flash_area_open(flash_img_get_upload_slot(), &fa) == 0)
-        {
+        if (flash_area_open(flash_img_get_upload_slot(), &fa) == 0) {
             uint8_t hdr[32];
             int rc = flash_area_read(fa, 4096, hdr, sizeof(hdr));
             flash_area_close(fa);

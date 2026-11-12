@@ -20,7 +20,7 @@
 
 #include "Nextion.hpp"
 
-namespace Nextion::detail
+namespace Nextion::Detail
 {
     const Config &config();
     void writeBytes(const uint8_t *data, size_t len);

@@ -32,7 +32,7 @@
 // elsewhere. Positions are absolute from the machine zero, no flavor offset.
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     enum class Phase : uint8_t
     {
@@ -80,8 +80,7 @@ namespace
     // stays 0 at end of text (an implicit end, no M2/M30 required).
     const char *fillPending(Job &j)
     {
-        while (j.pendingIndex >= j.pendingCount && j.pos < j.len)
-        {
+        while (j.pendingIndex >= j.pendingCount && j.pos < j.len) {
             j.pendingCount = 0;
             j.pendingIndex = 0;
             size_t lineStart = j.pos;
@@ -195,7 +194,13 @@ namespace
             int32_t feed = overridden(s.feed);
             double timeSec = feed > 0 ? j.vectorDu / (double)feed * 60.0 : 0;
             double raw = timeSec > 0 ? fabs((double)(j.mainTo - j.mainFrom)) / timeSec : cap;
-            speed = raw < 1 ? 1 : (raw > cap ? cap : (int32_t)llround(raw));
+            if (raw < 1) {
+                speed = 1;
+            } else if (raw > cap) {
+                speed = cap;
+            } else {
+                speed = (int32_t)llround(raw);
+            }
         }
         if (Stepper::moveTo(j.mainAxis, j.mainTo, speed) != j.mainTo) {
             finish(Stepper::isDisabled(j.mainAxis) ? "axis disabled" : "travel limit");
@@ -273,8 +278,7 @@ namespace
         }
 
         const Gcode::Step &s = g_job.pending[g_job.pendingIndex];
-        switch (s.kind)
-        {
+        switch (s.kind) {
         case Gcode::StepKind::Rapid:
         case Gcode::StepKind::Feed:
         case Gcode::StepKind::Thread:
@@ -294,13 +298,19 @@ namespace
 
     void progressMode(Mode::Progress &out)
     {
-        out.phase = g_job.phase == Phase::Move ? "move" : g_job.phase == Phase::Paused ? "paused" : "line";
+        if (g_job.phase == Phase::Move) {
+            out.phase = "move";
+        } else if (g_job.phase == Phase::Paused) {
+            out.phase = "paused";
+        } else {
+            out.phase = "line";
+        }
         out.waiting = g_job.phase == Phase::Paused;
         out.step = g_job.executedSteps;
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const Ops GCODE = {true, g_dummyParams, sizeof(g_dummyParams), nullptr, 0, startMode, tickMode,
                        nullptr, nullptr, progressMode, nullptr, nullptr, resumeMode};

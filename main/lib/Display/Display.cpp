@@ -28,8 +28,8 @@
 
 LOG_MODULE_REGISTER(display, LOG_LEVEL_INF);
 
-using namespace Display::detail;
-using namespace Display::theme;
+using namespace Display::Detail;
+using namespace Display::Theme;
 using namespace Nextion;
 
 namespace
@@ -155,8 +155,7 @@ namespace
         if (len == 0) {
             return;
         }
-        switch (data[0])
-        {
+        switch (data[0]) {
         case DISPLAY_CMD_LEAD_BYTE:
             handleCommandLine(data + 1, len - 1);
             break;

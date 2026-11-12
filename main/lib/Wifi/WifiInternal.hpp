@@ -23,7 +23,7 @@
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/wifi_mgmt.h>
 
-namespace Wifi::detail
+namespace Wifi::Detail
 {
     constexpr const char *NVS_NS = "wifi";
 

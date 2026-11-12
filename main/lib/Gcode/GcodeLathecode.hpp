@@ -36,7 +36,7 @@ namespace Gcode
         }
 
     private:
-        enum class Motion
+        enum class Motion : uint8_t
         {
             Rapid,
             Feed,

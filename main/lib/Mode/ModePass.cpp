@@ -21,7 +21,7 @@
 
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     enum class Phase : uint8_t
     {
@@ -113,8 +113,7 @@ namespace
     {
         int64_t end = passEnd(j);
         int64_t start = levelStart(j, j.level);
-        switch (j.feed)
-        {
+        switch (j.feed) {
         case PassFeed::Spindle:
             if (!j.entered) {
                 j.spindleFeed.begin(j.main, start, end, spindlePos);
@@ -168,7 +167,7 @@ namespace
     }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const char *passBegin(PassJob &j, int64_t spindlePos)
     {
@@ -192,8 +191,7 @@ namespace Mode::detail
 
     void passTick(PassJob &j, int64_t spindlePos)
     {
-        switch ((Phase)j.phase)
-        {
+        switch ((Phase)j.phase) {
         case Phase::Return:
             if (moveAndWait(j.main, levelStart(j, nextLevel(j)) - j.cutDirection)) {
                 enter(j, Phase::Settle);
@@ -221,7 +219,7 @@ namespace Mode::detail
         case Phase::Retract:
         {
             if (!j.entered) {
-                int64_t safe = duToSteps(j.aux, Settings::active.safeDistanceDu);
+                int64_t safe = duToSteps(j.aux, Settings::g_active.safeDistanceDu);
                 int64_t from = j.retractToStart ? j.auxStart + taperOffset(j, passEnd(j)) : passAux(j);
                 j.retractAux = from - j.auxSign * safe;
                 j.entered = true;

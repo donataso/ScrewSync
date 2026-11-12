@@ -20,6 +20,6 @@
 
 #include <zephyr/net/http/server.h>
 
-extern struct http_resource_detail_dynamic indexDetail;
+extern struct http_resource_detail_dynamic g_indexDetail;
 
 #endif

@@ -23,14 +23,14 @@
 
 namespace
 {
-    using Command::detail::skipSpaces;
+    using Command::Detail::skipSpaces;
 
     void jogStep(const char *v, char *out, size_t outMax)
     {
         long du;
         if (!*v) {
             snprintf(out, outMax, "ok step=%ld", (long)RunSettings::jogStepDu());
-        } else if (!Command::detail::parseLong(v, du) || !RunSettings::setJogStepDu((int32_t)du)) {
+        } else if (!Command::Detail::parseLong(v, du) || !RunSettings::setJogStepDu((int32_t)du)) {
             snprintf(out, outMax, "err jog step <deci-microns> out of range");
         } else {
             snprintf(out, outMax, "ok step=%ld", du);
@@ -55,13 +55,12 @@ namespace
     }
 }
 
-namespace Command::detail
+namespace Command::Detail
 {
     void jog(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (!strncmp(a, "step", 4) && (a[4] == '\0' || a[4] == ' '))
-        {
+        if (!strncmp(a, "step", 4) && (a[4] == '\0' || a[4] == ' ')) {
             jogStep(skipSpaces(a + 4), out, outMax);
             return;
         }
@@ -76,16 +75,11 @@ namespace Command::detail
         }
 
         char *end;
-        if (!*rest || !strcmp(rest, "status"))
-        {
+        if (!*rest || !strcmp(rest, "status")) {
             snprintf(out, outMax, "ok axis=%s resolution=%g", axisTok, (double)Jog::resolution(axis));
-        }
-        else if (rest[0] == '+' || rest[0] == '-')
-        {
+        } else if (rest[0] == '+' || rest[0] == '-') {
             jogPress(axis, axisTok, rest, out, outMax);
-        }
-        else if (!strncmp(rest, "resolution ", 11))
-        {
+        } else if (!strncmp(rest, "resolution ", 11)) {
             float v = strtof(rest + 11, &end);
             if (end == rest + 11 || *end || v <= 0) {
                 snprintf(out, outMax, "err jog %s resolution <multiplier> (>0)", axisTok);
@@ -93,9 +87,7 @@ namespace Command::detail
                 Jog::setResolution(axis, v);
                 snprintf(out, outMax, "ok %s resolution=%g", axisTok, (double)v);
             }
-        }
-        else if (!strncmp(rest, "speed ", 6))
-        {
+        } else if (!strncmp(rest, "speed ", 6)) {
             long v = strtol(rest + 6, &end, 10);
             if (end == rest + 6 || *end || v < 0) {
                 snprintf(out, outMax, "err jog %s speed <steps/sec|0>", axisTok);
@@ -103,9 +95,7 @@ namespace Command::detail
                 Stepper::setSpeedOverride(axis, (int32_t)v);
                 snprintf(out, outMax, "ok %s speed=%ld", axisTok, v);
             }
-        }
-        else
-        {
+        } else {
             snprintf(out, outMax, "err jog '%s'", rest);
         }
     }
@@ -118,23 +108,20 @@ namespace Command::detail
         if (!takeAxis(args, "move", "move z|x to|by <deci-microns> | stop", axisTok, axis, rest, out, outMax)) {
             return;
         }
-        if (!strcmp(rest, "stop"))
-        {
+        if (!strcmp(rest, "stop")) {
             Motion::stop(axis);
             snprintf(out, outMax, "ok %s stop", axisTok);
             return;
         }
 
         bool relative = !strncmp(rest, "by ", 3);
-        if (!relative && strncmp(rest, "to ", 3))
-        {
+        if (!relative && strncmp(rest, "to ", 3) != 0) {
             snprintf(out, outMax, "err move %s to|by <deci-microns> | stop", axisTok);
             return;
         }
         char *end;
         long long du = strtoll(rest + 3, &end, 10);
-        if (end == rest + 3 || *end)
-        {
+        if (end == rest + 3 || *end) {
             snprintf(out, outMax, "err move %s %s <deci-microns>", axisTok, relative ? "by" : "to");
             return;
         }
@@ -150,8 +137,7 @@ namespace Command::detail
 
     void zero(const char *args, char *out, size_t outMax)
     {
-        if (!strcmp(skipSpaces(args), "spindle"))
-        {
+        if (!strcmp(skipSpaces(args), "spindle")) {
             int64_t pos = Motion::zeroSpindle();
             snprintf(out, outMax, "ok spindle zero pos=%lld origin=%lld", (long long)pos,
                      (long long)Encoder::origin());
@@ -164,8 +150,7 @@ namespace Command::detail
             return;
         }
         long du = 0;
-        if (*rest && !parseLong(rest, du))
-        {
+        if (*rest && !parseLong(rest, du)) {
             snprintf(out, outMax, "err zero %s [<deci-microns>]", axisTok);
             return;
         }
@@ -185,19 +170,14 @@ namespace Command::detail
         if (!takeAxis(args, "enable", "enable z|x on|off|status", axisTok, axis, rest, out, outMax)) {
             return;
         }
-        if (!*rest || !strcmp(rest, "status"))
-        {
+        if (!*rest || !strcmp(rest, "status")) {
             snprintf(out, outMax, "ok %s enabled=%d held=%d", axisTok, (int)!Stepper::isDisabled(axis),
                      (int)Stepper::isHeld(axis));
-        }
-        else if (!strcmp(rest, "on") || !strcmp(rest, "off"))
-        {
+        } else if (!strcmp(rest, "on") || !strcmp(rest, "off")) {
             bool on = rest[1] == 'n';
             Motion::setAxisEnabled(axis, on);
             snprintf(out, outMax, "ok %s %s", axisTok, on ? "enabled" : "disabled");
-        }
-        else
-        {
+        } else {
             snprintf(out, outMax, "err enable %s on|off|status", axisTok);
         }
     }

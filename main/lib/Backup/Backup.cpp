@@ -109,8 +109,7 @@ namespace
         if (!run.mode || !Mode::parse(run.mode, mode)) {
             return "run: bad mode";
         }
-        for (size_t i = 0; i < run.modeCount; i++)
-        {
+        for (size_t i = 0; i < run.modeCount; i++) {
             const ModeJson &m = run.modes[i];
             Mode::Id id;
             if (!m.mode || !m.params || !Mode::parse(m.mode, id)) {
@@ -131,8 +130,7 @@ namespace
         RunSettings::setJogStepDu(run.jogStepDu);
         RunSettings::setAxisDisabled(Stepper::Axis::Z, run.disabledZ);
         RunSettings::setAxisDisabled(Stepper::Axis::X, run.disabledX);
-        for (size_t i = 0; i < run.modeCount; i++)
-        {
+        for (size_t i = 0; i < run.modeCount; i++) {
             Mode::Id id;
             Mode::parse(run.modes[i].mode, id);
             Mode::loadParams(id, run.modes[i].params, true);
@@ -145,10 +143,9 @@ namespace Backup
 {
     int toJson(char *out, size_t outMax)
     {
-        g_doc.settings = Settings::active;
+        g_doc.settings = Settings::g_active;
         currentRun(g_doc.run);
-        for (size_t i = 0; i < Mode::COUNT; i++)
-        {
+        for (size_t i = 0; i < Mode::COUNT; i++) {
             if (Mode::describe((Mode::Id)i, g_params[i], PARAMS_MAX)) {
                 g_doc.run.modes[g_doc.run.modeCount++] = {Mode::name((Mode::Id)i), g_params[i]};
             }
@@ -164,7 +161,7 @@ namespace Backup
         if (Machine::state() != Machine::State::Idle || Mode::running()) {
             return "machine not idle";
         }
-        g_doc.settings = Settings::active;
+        g_doc.settings = Settings::g_active;
         currentRun(g_doc.run);
         memset(&g_doc.threads, 0, sizeof(g_doc.threads));
         int64_t mask = json_obj_parse(json, len, DOC_DESCR, ARRAY_SIZE(DOC_DESCR), &g_doc);
@@ -185,9 +182,12 @@ namespace Backup
         if (refusal) {
             return refusal;
         }
-        if (hasThreads && (refusal = ThreadStore::fromJson(g_doc.threads, g_table))) {
-            snprintf(reason, sizeof(reason), "threads: %s", refusal);
-            return reason;
+        if (hasThreads) {
+            refusal = ThreadStore::fromJson(g_doc.threads, g_table);
+            if (refusal) {
+                snprintf(reason, sizeof(reason), "threads: %s", refusal);
+                return reason;
+            }
         }
 
         if (hasSettings) {

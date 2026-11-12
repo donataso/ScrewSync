@@ -63,19 +63,20 @@ namespace
     }
 
     uint8_t g_outputBuf[LINE_LEN_MAX];
-    LOG_OUTPUT_DEFINE(g_output, appendChunk, g_outputBuf, sizeof(g_outputBuf));
+    LOG_OUTPUT_DEFINE(OUTPUT, appendChunk, g_outputBuf, sizeof(g_outputBuf));
 
     void process(const struct log_backend *const, union log_msg_generic *msg)
     {
         k_spinlock_key_t key = k_spin_lock(&g_lock);
         g_lineLen = 0;
-        log_output_msg_process(&g_output, &msg->log, OUTPUT_FLAGS);
+        log_output_msg_process(&OUTPUT, &msg->log, OUTPUT_FLAGS);
         g_ring[g_written % LINES_MAX][g_lineLen] = '\0';
         g_written++;
         k_spin_unlock(&g_lock, key);
     }
 
-    void panic(const struct log_backend *const) {}
+    void panic(const struct log_backend *const)
+    {}
 
     const struct log_backend_api BACKEND_API = {
         .process = process,
@@ -83,7 +84,7 @@ namespace
     };
 }
 
-LOG_BACKEND_DEFINE(g_logRingBackend, BACKEND_API, true);
+LOG_BACKEND_DEFINE(LOG_RING_BACKEND, BACKEND_API, true);
 
 int LogRing::toJson(char *out, size_t outMax)
 {
@@ -93,8 +94,7 @@ int LogRing::toJson(char *out, size_t outMax)
 
     // One line per lock hold keeps interrupt-off time short.
     g_lines.count = 0;
-    for (uint32_t i = end > LINES_MAX ? end - LINES_MAX : 0; i < end; i++)
-    {
+    for (uint32_t i = end > LINES_MAX ? end - LINES_MAX : 0; i < end; i++) {
         key = k_spin_lock(&g_lock);
         bool stillBuffered = g_written - i <= LINES_MAX;
         if (stillBuffered) {

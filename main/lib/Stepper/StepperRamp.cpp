@@ -20,8 +20,8 @@
 namespace Stepper
 {
     int32_t nextRampSpeed(int32_t currentSpeedStepsPerSec, int64_t distanceRemainingSteps,
-                           int32_t accelerationStepsPerSec2, int32_t speedStartStepsPerSec,
-                           int32_t maxSpeedStepsPerSec)
+                          int32_t accelerationStepsPerSec2, int32_t speedStartStepsPerSec,
+                          int32_t maxSpeedStepsPerSec)
     {
         int32_t lastPeriodUs = 1000000 / currentSpeedStepsPerSec;
         int32_t dv = (int32_t)((int64_t)accelerationStepsPerSec2 * lastPeriodUs / 1000000);
@@ -50,7 +50,7 @@ namespace Stepper
 
     int64_t stoppingDistance(int32_t speedStepsPerSec, int32_t accelerationStepsPerSec2)
     {
-        return ((int64_t)speedStepsPerSec * speedStepsPerSec) / (2 * accelerationStepsPerSec2);
+        return ((int64_t)speedStepsPerSec * speedStepsPerSec) / (2 * (int64_t)accelerationStepsPerSec2);
     }
 
     int64_t runAheadDistance(int32_t speedStepsPerSec, int32_t accelerationStepsPerSec2,

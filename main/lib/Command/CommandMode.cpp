@@ -23,7 +23,7 @@
 
 namespace
 {
-    using Command::detail::skipSpaces;
+    using Command::Detail::skipSpaces;
 
     void replyDescribe(Mode::Id id, char *out, size_t outMax)
     {
@@ -34,16 +34,14 @@ namespace
     void modeParams(Mode::Id id, const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (!*a || !strcmp(a, "status"))
-        {
+        if (!*a || !strcmp(a, "status")) {
             replyDescribe(id, out, outMax);
             return;
         }
         char param[16];
         size_t len = strcspn(a, " ");
         const char *value = skipSpaces(a + len);
-        if (len >= sizeof(param) || !*value)
-        {
+        if (len >= sizeof(param) || !*value) {
             snprintf(out, outMax, "err %s <param> <value>", Mode::name(id));
             return;
         }
@@ -61,8 +59,7 @@ namespace
     {
         char group[ThreadTable::GROUP_NAME_MAX];
         unsigned long offset = 0;
-        if (sscanf(args, "%11s %lu", group, &offset) < 1)
-        {
+        if (sscanf(args, "%11s %lu", group, &offset) < 1) {
             snprintf(out, outMax, "err threads list <group> [<offset>]");
             return;
         }
@@ -77,13 +74,12 @@ namespace
     }
 }
 
-namespace Command::detail
+namespace Command::Detail
 {
     void mode(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (!*a || !strcmp(a, "status"))
-        {
+        if (!*a || !strcmp(a, "status")) {
             Mode::Progress p = Mode::progress();
             const char *error = Mode::lastError();
             int n = snprintf(out, outMax, "ok mode=%s running=%d phase=%s pass=%ld/%ld error=%s modes=",
@@ -105,7 +101,7 @@ namespace Command::detail
     void start(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (*a && strcmp(a, "zero")) {
+        if (*a && strcmp(a, "zero") != 0) {
             snprintf(out, outMax, "err start [zero]");
             return;
         }
@@ -134,7 +130,7 @@ namespace Command::detail
             refusal = Mode::setFeedOverride(pct - Mode::OVERRIDE_STEP_PCT);
         } else if (!strcmp(a, "reset")) {
             refusal = Mode::setFeedOverride(100);
-        } else if (*a && strcmp(a, "status")) {
+        } else if (*a && strcmp(a, "status") != 0) {
             snprintf(out, outMax, "err override [status] | + | - | reset");
             return;
         }
@@ -148,8 +144,7 @@ namespace Command::detail
     void probe(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (!strncmp(a, "go ", 3))
-        {
+        if (!strncmp(a, "go ", 3)) {
             const char *dir = skipSpaces(a + 3);
             Stepper::Axis axis;
             bool reverse;
@@ -172,8 +167,7 @@ namespace Command::detail
             reply(out, outMax, Mode::probeGo(axis, reverse), "ok %s", "probe started");
             return;
         }
-        if (!*a || !strcmp(a, "status"))
-        {
+        if (!*a || !strcmp(a, "status")) {
             int n = snprintf(out, outMax, "ok ");
             Mode::describe(Mode::Id::Probe, out + n, outMax - (size_t)n);
             n = (int)strlen(out);
@@ -183,25 +177,41 @@ namespace Command::detail
         modeParams(Mode::Id::Probe, args, out, outMax);
     }
 
-    void gear(const char *args, char *out, size_t outMax) { modeParams(Mode::Id::Gear, args, out, outMax); }
-    void async(const char *args, char *out, size_t outMax) { modeParams(Mode::Id::Async, args, out, outMax); }
-    void turn(const char *args, char *out, size_t outMax) { modeParams(Mode::Id::Turn, args, out, outMax); }
-    void part(const char *args, char *out, size_t outMax) { modeParams(Mode::Id::Part, args, out, outMax); }
-    void slot(const char *args, char *out, size_t outMax) { modeParams(Mode::Id::Slot, args, out, outMax); }
-    void ellipse(const char *args, char *out, size_t outMax) { modeParams(Mode::Id::Ellipse, args, out, outMax); }
+    void gear(const char *args, char *out, size_t outMax)
+    {
+        modeParams(Mode::Id::Gear, args, out, outMax);
+    }
+    void async(const char *args, char *out, size_t outMax)
+    {
+        modeParams(Mode::Id::Async, args, out, outMax);
+    }
+    void turn(const char *args, char *out, size_t outMax)
+    {
+        modeParams(Mode::Id::Turn, args, out, outMax);
+    }
+    void part(const char *args, char *out, size_t outMax)
+    {
+        modeParams(Mode::Id::Part, args, out, outMax);
+    }
+    void slot(const char *args, char *out, size_t outMax)
+    {
+        modeParams(Mode::Id::Slot, args, out, outMax);
+    }
+    void ellipse(const char *args, char *out, size_t outMax)
+    {
+        modeParams(Mode::Id::Ellipse, args, out, outMax);
+    }
 
     void thread(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (strncmp(a, "preset ", 7))
-        {
+        if (strncmp(a, "preset ", 7) != 0) {
             modeParams(Mode::Id::Thread, args, out, outMax);
             return;
         }
         char group[ThreadTable::GROUP_NAME_MAX];
         char designation[ThreadTable::DESIGNATION_MAX];
-        if (sscanf(a + 7, "%11s %15s", group, designation) != 2)
-        {
+        if (sscanf(a + 7, "%11s %15s", group, designation) != 2) {
             snprintf(out, outMax, "err thread preset <group> <designation>");
             return;
         }
@@ -216,25 +226,18 @@ namespace Command::detail
     void threads(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
-        if (!*a || !strcmp(a, "groups"))
-        {
+        if (!*a || !strcmp(a, "groups")) {
             int n = snprintf(out, outMax, "ok groups=");
             ThreadStore::groups(out + n, outMax - (size_t)n);
-        }
-        else if (!strncmp(a, "list ", 5))
-        {
+        } else if (!strncmp(a, "list ", 5)) {
             threadList(a + 5, out, outMax);
-        }
-        else if (!strcmp(a, "reset"))
-        {
+        } else if (!strcmp(a, "reset")) {
             if (refuseUnlessIdle(out, outMax)) {
                 return;
             }
             ThreadStore::reset();
             snprintf(out, outMax, "ok threads reset");
-        }
-        else
-        {
+        } else {
             snprintf(out, outMax, "err threads groups | list <group> [<offset>] | reset");
         }
     }

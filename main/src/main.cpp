@@ -22,28 +22,27 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_INF); // Wifi declares against this module
 
 int main(void)
 {
-	PersistBlob::preload();
-	Machine::begin();
-	Settings::load();
-	Encoder::begin();
-	Handwheel::begin();
-	Stepper::begin();
-	ProbeInput::begin(Mode::probeEdge);
-	Watchdog::begin();
-	RunSettings::load();
-	ThreadStore::begin();
-	Mode::begin();
-	Jog::begin();
-	Rpm::begin();
-	Display::begin();
-	Wifi::begin();
-	WebUi::begin();
+    PersistBlob::preload();
+    Machine::begin();
+    Settings::load();
+    Encoder::begin();
+    Handwheel::begin();
+    Stepper::begin();
+    ProbeInput::begin(Mode::probeEdge);
+    Watchdog::begin();
+    RunSettings::load();
+    ThreadStore::begin();
+    Mode::begin();
+    Jog::begin();
+    Rpm::begin();
+    Display::begin();
+    Wifi::begin();
+    WebUi::begin();
 
-	while (1)
-	{
-		consolePoll();
-		Wifi::loop();
-		WebUi::poll();
-		k_sleep(K_MSEC(50));
-	}
+    while (1) {
+        consolePoll();
+        Wifi::loop();
+        WebUi::poll();
+        k_sleep(K_MSEC(50));
+    }
 }

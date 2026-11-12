@@ -36,28 +36,28 @@ namespace
     constexpr uint32_t UNIT_X = 2;
     constexpr int32_t POLL_PERIOD_MS = 10;
 
-    const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(pcnt));
-    pcnt_dev_t *hw = PCNT_LL_GET_HW(0);
+    const struct device *g_dev = DEVICE_DT_GET(DT_NODELABEL(pcnt));
+    pcnt_dev_t *g_hw = PCNT_LL_GET_HW(0);
 
-    struct k_mutex mutex;
-    int64_t accZ = 0, accX = 0;
-    int16_t lastZ = 0, lastX = 0;
+    struct k_mutex g_mutex;
+    int64_t g_accZ = 0, g_accX = 0;
+    int16_t g_lastZ = 0, g_lastX = 0;
 
-    K_THREAD_STACK_DEFINE(pollStack, 1024);
-    struct k_thread pollThreadData;
+    K_THREAD_STACK_DEFINE(g_pollStack, 1024);
+    struct k_thread g_pollThreadData;
 
     void pollLoop(void *, void *, void *)
     {
         while (true) {
-            int16_t curZ = (int16_t)pcnt_ll_get_count(hw, UNIT_Z);
-            int16_t curX = (int16_t)pcnt_ll_get_count(hw, UNIT_X);
+            int16_t curZ = (int16_t)pcnt_ll_get_count(g_hw, UNIT_Z);
+            int16_t curX = (int16_t)pcnt_ll_get_count(g_hw, UNIT_X);
 
-            k_mutex_lock(&mutex, K_FOREVER);
-            accZ += (int16_t)(curZ - lastZ);
-            accX += (int16_t)(curX - lastX);
-            lastZ = curZ;
-            lastX = curX;
-            k_mutex_unlock(&mutex);
+            k_mutex_lock(&g_mutex, K_FOREVER);
+            g_accZ += (int16_t)(curZ - g_lastZ);
+            g_accX += (int16_t)(curX - g_lastX);
+            g_lastZ = curZ;
+            g_lastX = curX;
+            k_mutex_unlock(&g_mutex);
 
             k_sleep(K_MSEC(POLL_PERIOD_MS));
         }
@@ -68,30 +68,30 @@ namespace Handwheel
 {
     void begin()
     {
-        if (!device_is_ready(dev)) {
+        if (!device_is_ready(g_dev)) {
             LOG_ERR("pcnt device not ready");
             return;
         }
 
-        k_mutex_init(&mutex);
-        k_thread_create(&pollThreadData, pollStack, K_THREAD_STACK_SIZEOF(pollStack),
-                         pollLoop, nullptr, nullptr, nullptr,
-                         K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
+        k_mutex_init(&g_mutex);
+        k_thread_create(&g_pollThreadData, g_pollStack, K_THREAD_STACK_SIZEOF(g_pollStack),
+                        pollLoop, nullptr, nullptr, nullptr,
+                        K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
     }
 
     int64_t z()
     {
-        k_mutex_lock(&mutex, K_FOREVER);
-        int64_t pos = accZ;
-        k_mutex_unlock(&mutex);
-        return Settings::active.z.invertHandwheel ? -pos : pos;
+        k_mutex_lock(&g_mutex, K_FOREVER);
+        int64_t pos = g_accZ;
+        k_mutex_unlock(&g_mutex);
+        return Settings::g_active.z.invertHandwheel ? -pos : pos;
     }
 
     int64_t x()
     {
-        k_mutex_lock(&mutex, K_FOREVER);
-        int64_t pos = accX;
-        k_mutex_unlock(&mutex);
-        return Settings::active.x.invertHandwheel ? -pos : pos;
+        k_mutex_lock(&g_mutex, K_FOREVER);
+        int64_t pos = g_accX;
+        k_mutex_unlock(&g_mutex);
+        return Settings::g_active.x.invertHandwheel ? -pos : pos;
     }
 }

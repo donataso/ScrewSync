@@ -22,7 +22,8 @@
 
 namespace Stepper
 {
-    enum class Axis
+    // Size is fixed: saved mode parameters hold it.
+    enum class Axis // NOLINT(performance-enum-size)
     {
         Z,
         X,

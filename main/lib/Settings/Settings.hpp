@@ -63,7 +63,7 @@ namespace Settings
         Axis x{20000, 1600, 800, 10000, 6400, false, false, 100, 0, 600, false};
     };
 
-    extern Conf active;
+    extern Conf g_active;
 
     constexpr size_t CONF_JSON_FIELDS = 35;
     extern const struct json_obj_descr CONF_JSON_DESCR[CONF_JSON_FIELDS];

@@ -25,7 +25,7 @@
 
 namespace
 {
-    using namespace Mode::detail;
+    using namespace Mode::Detail;
 
     // Along Z, X steps deeper each pass (deeper first passes).
     struct Thread
@@ -130,12 +130,21 @@ namespace
         return passBegin(g_job, spindlePos);
     }
 
-    void tickMode(int64_t spindlePos) { passTick(g_job, spindlePos); }
-    void progressMode(Mode::Progress &out) { passProgress(g_job, out); }
-    void skipMode() { passSkip(g_job); }
+    void tickMode(int64_t spindlePos)
+    {
+        passTick(g_job, spindlePos);
+    }
+    void progressMode(Mode::Progress &out)
+    {
+        passProgress(g_job, out);
+    }
+    void skipMode()
+    {
+        passSkip(g_job);
+    }
 }
 
-namespace Mode::detail
+namespace Mode::Detail
 {
     const Ops THREAD = {true, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
                         nullptr, onChange, progressMode, skipMode, &g_params.spindleReverse};
@@ -145,8 +154,8 @@ namespace Mode
 {
     const char *threadPreset(const char *group, const char *designation)
     {
-        detail::Guard guard;
-        if (detail::isRunning(Id::Thread)) {
+        Detail::Guard guard;
+        if (Detail::isRunning(Id::Thread)) {
             return "stop first";
         }
         Thread previous = g_params;
@@ -159,7 +168,7 @@ namespace Mode
             g_params = previous;
             return "unknown thread";
         }
-        detail::saveParams(Id::Thread);
+        Detail::saveParams(Id::Thread);
         return nullptr;
     }
 }

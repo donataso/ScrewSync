@@ -22,20 +22,20 @@
 
 namespace WebRoutes
 {
-    extern struct http_resource_detail_dynamic update;
-    extern struct http_resource_detail_dynamic updateDisplay;
-    extern struct http_resource_detail_dynamic preview;
-    extern struct http_resource_detail_dynamic threads;
-    extern struct http_resource_detail_dynamic backup;
-    extern struct http_resource_detail_dynamic logRing;
-    extern struct http_resource_detail_dynamic gcodeList;
-    extern struct http_resource_detail_dynamic gcodeSave;
-    extern struct http_resource_detail_dynamic gcodeUpdate;
-    extern struct http_resource_detail_dynamic gcodeRun;
-    extern struct http_resource_detail_dynamic gcodeActive;
-    extern struct http_resource_detail_dynamic gcodeProgram;
-    extern struct http_resource_detail_dynamic gcodeSelect;
-    extern struct http_resource_detail_dynamic gcodeDelete;
+    extern struct http_resource_detail_dynamic g_update;
+    extern struct http_resource_detail_dynamic g_updateDisplay;
+    extern struct http_resource_detail_dynamic g_preview;
+    extern struct http_resource_detail_dynamic g_threads;
+    extern struct http_resource_detail_dynamic g_backup;
+    extern struct http_resource_detail_dynamic g_logRing;
+    extern struct http_resource_detail_dynamic g_gcodeList;
+    extern struct http_resource_detail_dynamic g_gcodeSave;
+    extern struct http_resource_detail_dynamic g_gcodeUpdate;
+    extern struct http_resource_detail_dynamic g_gcodeRun;
+    extern struct http_resource_detail_dynamic g_gcodeActive;
+    extern struct http_resource_detail_dynamic g_gcodeProgram;
+    extern struct http_resource_detail_dynamic g_gcodeSelect;
+    extern struct http_resource_detail_dynamic g_gcodeDelete;
 }
 
 #endif

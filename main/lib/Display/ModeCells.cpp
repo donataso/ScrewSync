@@ -131,7 +131,8 @@ namespace
         size_t count;
     };
 
-    template <size_t N> constexpr ModeLayout layout(const char *label, const Cell (&cells)[N])
+    template <size_t N>
+    constexpr ModeLayout layout(const char *label, const Cell (&cells)[N])
     {
         static_assert(N <= ModeCells::MAX, "too many cells");
         return {label, cells, N};
@@ -143,8 +144,14 @@ namespace
     };
 
     constexpr ModeLayout LAYOUTS[Mode::COUNT] = {
-        layout("Gear", GEAR),     layout("Async", ASYNC), layout("Turn", TURN),       layout("Thread", THREAD),
-        layout("Part", PART), layout("Slot", SLOT),   layout("Ellipse", ELLIPSE), {"G-code", nullptr, 0},
+        layout("Gear", GEAR),
+        layout("Async", ASYNC),
+        layout("Turn", TURN),
+        layout("Thread", THREAD),
+        layout("Part", PART),
+        layout("Slot", SLOT),
+        layout("Ellipse", ELLIPSE),
+        {"G-code", nullptr, 0},
         layout("Probe", PROBE),
     };
 }

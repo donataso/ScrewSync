@@ -24,8 +24,8 @@ namespace
     using namespace Gcode;
 
     Lathecode g_lathecode;
-    Flavor *const g_flavors[] = {&g_lathecode};
-    constexpr size_t FLAVOR_COUNT = sizeof(g_flavors) / sizeof(g_flavors[0]);
+    Flavor *const FLAVORS[] = {&g_lathecode};
+    constexpr size_t FLAVOR_COUNT = sizeof(FLAVORS) / sizeof(FLAVORS[0]);
 }
 
 namespace Gcode
@@ -33,8 +33,8 @@ namespace Gcode
     Flavor *find(const char *id)
     {
         for (size_t i = 0; i < FLAVOR_COUNT; i++) {
-            if (strcmp(g_flavors[i]->id(), id) == 0) {
-                return g_flavors[i];
+            if (strcmp(FLAVORS[i]->id(), id) == 0) {
+                return FLAVORS[i];
             }
         }
         return nullptr;
@@ -47,6 +47,6 @@ namespace Gcode
 
     Flavor *at(size_t i)
     {
-        return g_flavors[i];
+        return FLAVORS[i];
     }
 }
