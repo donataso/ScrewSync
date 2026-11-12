@@ -1,7 +1,3 @@
-// Runs every tests/gcode/lathecode/*.gcode vector against the TS Lathecode
-// flavor and checks it against the matching .steps file, the same way
-// main/tests/unit/src/test_gcode.cpp checks the C++ flavor.
-
 import { readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"

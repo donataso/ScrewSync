@@ -103,13 +103,10 @@ namespace Mode::detail
     const Ops *ops(Id id);
     bool isRunning(Id id);
 
-    // First required param still 0.
     const Param *firstMissing(const Ops &ops);
 
-    // Persists the mode's params after a change outside setParam().
     void saveParams(Id id);
 
-    // Takes the axis for the running mode; fails if it is disabled.
     const char *claim(Stepper::Axis axis);
 
     // Ends the running mode from its own tick (job done or failed).
@@ -121,7 +118,6 @@ namespace Mode::detail
     int32_t duPerMinToStepsPerSec(Stepper::Axis axis, int32_t duPerMin);
     int32_t countsPerRev();
 
-    // A feed (pitch or speed) scaled by the feed override.
     int32_t overridden(int32_t feed);
     int32_t feedOverridePct();
 

@@ -28,9 +28,9 @@ LOG_MODULE_REGISTER(encoder, LOG_LEVEL_INF);
 // Zephyr's pcnt_esp32 driver already extends unit 0's 16-bit hardware
 // counter past its native +-32767 range: it unconditionally arms high/low
 // limit events at init and accumulates wraps in its own ISR, exposed via
-// SENSOR_CHAN_ENCODER_COUNT. Reading it through the sensor API (rather than
-// re-deriving the same extension by hand via a second, competing interrupt
-// registration, which never actually fired) gets that extension for free.
+// SENSOR_CHAN_ENCODER_COUNT. Reading it through the sensor API gets that
+// extension for free; a second, competing interrupt registration on the
+// unit does not fire.
 
 namespace
 {

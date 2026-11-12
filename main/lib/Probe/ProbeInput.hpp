@@ -31,7 +31,6 @@ namespace ProbeInput
     // Logical contact state (polarity-corrected); safe to poll any time.
     bool contact();
 
-    // Pure polarity logic, exposed for testing.
     constexpr bool fromRaw(bool raw, bool polarityNc) { return polarityNc ? raw : !raw; }
 }
 

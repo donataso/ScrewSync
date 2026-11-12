@@ -1,6 +1,3 @@
-// Toolpath preview rendering, shared by the on-screen canvas and the JPEG
-// posted to /display-preview.
-
 import { DU_PER_MM, type Step } from "./core"
 
 // Must match the "gcodePic" component's w/h in display/pages/page0.page.toml.

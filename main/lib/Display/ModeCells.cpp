@@ -137,8 +137,6 @@ namespace
         return {label, cells, N};
     }
 
-    // Distance/offset only; the direction buttons and contact light
-    // are bespoke page widgets (DisplayView.cpp's pushProbe), not cells.
     constexpr Cell PROBE[] = {
         value(Kind::Length, "probe-dst", "Distance"),
         value(Kind::Length, "offset", "Offset"),

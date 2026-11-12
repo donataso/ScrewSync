@@ -17,7 +17,6 @@ function scaledValueToDu(value: number, unitScaleDu: number): number | null {
   return Math.sign(scaled) * Math.round(Math.abs(scaled))
 }
 
-// Applies the modal unit scale/positioning mode to one axis word.
 function axisTargetDu(value: number, currentDu: number, absolute: boolean, unitScaleDu: number): number | null {
   const rawDu = scaledValueToDu(value, unitScaleDu)
   if (rawDu === null) return null
@@ -219,7 +218,6 @@ export class Lathecode implements Flavor {
   }
 }
 
-// True if text looks like output from the kachurovskiy/lathecode generator.
 export function detectLathecode(text: string): boolean {
   return /axes expected:/i.test(text) || /zero your tool x on centerline/i.test(text)
 }

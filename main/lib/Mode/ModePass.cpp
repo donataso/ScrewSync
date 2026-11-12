@@ -81,7 +81,6 @@ namespace
         return level > totalLevels(j) ? j.mainStart : j.mainStart + flankOffset(j, level);
     }
 
-    // The level advance() moves to.
     int32_t nextLevel(const PassJob &j)
     {
         if (j.level == 0) {

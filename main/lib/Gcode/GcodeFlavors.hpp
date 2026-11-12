@@ -21,8 +21,6 @@
 #include "GcodeCore.hpp"
 #include <stddef.h>
 
-// Flavor registry. Adding a flavor: one new file pair plus one row here.
-// Each flavor's id string lives only in its own id() -- not duplicated here.
 namespace Gcode
 {
     // nullptr if id is not registered.

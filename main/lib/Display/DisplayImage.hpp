@@ -21,8 +21,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// A .tft kept in the "display" flash partition, to reflash the display
-// from. Layout must match scripts/pack_display_image.py.
 namespace DisplayImage
 {
     struct Info

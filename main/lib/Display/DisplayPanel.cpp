@@ -119,7 +119,6 @@ namespace
         return pushCellType(slot, valueType(c.kind));
     }
 
-    // Labels default to arrows along the mode's axis.
     bool pushToggle(size_t slot, const char *mode, const Cell &c, const char *raw, const char *params)
     {
         const char *labels[] = {c.labelA, c.labelB};

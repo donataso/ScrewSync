@@ -92,7 +92,6 @@ export function GcodeScreen() {
   const axesHeader = useMemo(() => parseAxesHeader(text), [text])
   const axesWrong = !!axesHeader && axesMismatched(axesHeader)
 
-  // Shows a saved program in the form, as if it had been pasted.
   function openProgram(programText: string, programName: string, programFlavorId: string, savedId: string | null) {
     setSourceMode("paste")
     setFile(null)

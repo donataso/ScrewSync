@@ -98,8 +98,6 @@ display-serial:
 screenshots:
 	. $(HOME)/apps/nxwright/.venv/bin/activate && python3 scripts/screenshots.py
 
-
-# aliases
 bf: build flash
 db: display-build
 do: display-ota

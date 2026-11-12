@@ -35,7 +35,6 @@ namespace
         return true;
     }
 
-    // Applies the modal unit scale/positioning mode to one axis word.
     bool axisTargetDu(double value, int32_t currentDu, bool absolute, int32_t unitScaleDu, int32_t &outDu)
     {
         int32_t rawDu;

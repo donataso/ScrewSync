@@ -29,7 +29,6 @@
 #define EXT_RAM_BSS
 #endif
 
-// Shared by the WebUi HTTP resources.
 namespace WebHttp
 {
     // Sets a final response; returns 0 for the resource callback.

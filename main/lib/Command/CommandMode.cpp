@@ -31,7 +31,6 @@ namespace
         Mode::describe(id, out + n, outMax - (size_t)n);
     }
 
-    // <mode> [status] | <param> <value>
     void modeParams(Mode::Id id, const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);

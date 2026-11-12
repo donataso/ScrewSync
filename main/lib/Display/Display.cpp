@@ -41,7 +41,6 @@ namespace
     uint32_t g_pageChangeMs = 0;
     bool g_alive = false;
 
-    // Nextion return data per the vendor's fixed codes; a hex dump for anything else.
     const char *describeMessage(const uint8_t *data, size_t len)
     {
         static char out[96];

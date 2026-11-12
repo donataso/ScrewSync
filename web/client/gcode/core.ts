@@ -28,7 +28,6 @@ export interface StepSink {
   emit(step: Step): void
 }
 
-// A flavor owns its units, axis conventions and feed semantics.
 export interface Flavor {
   begin(startZDu: number, startXDu: number): void
   line(words: Word[], lineNo: number, sink: StepSink): string | null
@@ -144,7 +143,6 @@ export function tokenize(text: string): { error: string | null; words: Word[] } 
   return { error: null, words }
 }
 
-// Tokenizes text then interprets it with flavor.
 export function interpretLine(flavor: Flavor, text: string, lineNo: number, sink: StepSink): string | null {
   const { error, words } = tokenize(text)
   if (error) return error

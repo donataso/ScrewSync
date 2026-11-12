@@ -41,7 +41,7 @@ namespace ModeCells
         Toggle, // two buttons, one value each
         Picker, // opens the thread picker page; no param; slot 15 only
         Latch,  // on/off flag, one button lit while on; narrow slots only
-        Gap,    // empty slot
+        Gap,
     };
 
     struct Cell

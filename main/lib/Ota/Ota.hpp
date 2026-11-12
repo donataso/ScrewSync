@@ -36,7 +36,7 @@ namespace Ota
     // reboot (Ota doesn't reboot itself -- the HTTP route needs to answer first).
     bool finish();
 
-    void abort(); // discards an in-progress upload (bad chunk, client gave up)
+    void abort();
 
     void selfTestTick(uint32_t nowMs);
 

@@ -27,7 +27,6 @@ namespace Stepper
     // sanity bound around the zero origin, enforced in moveTo().
     int64_t maxTravelSteps(int32_t maxTravelMm, int32_t motorSteps, int32_t screwPitchDu);
 
-    // Clamps a target into +-maxTravelSteps.
     int64_t clampToTravel(int64_t targetSteps, int64_t maxTravelSteps);
 
     // Settings::Axis.backlashDu converted to motor steps -- how far the

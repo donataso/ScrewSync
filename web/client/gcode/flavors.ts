@@ -1,5 +1,4 @@
 // Flavor registry, mirroring main/lib/Gcode/GcodeFlavors.{hpp,cpp}.
-// Adding a flavor: one new file plus one row here.
 
 import type { Flavor } from "./core"
 import { detectLathecode, Lathecode } from "./lathecode"

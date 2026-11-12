@@ -20,7 +20,6 @@
 
 #include <stddef.h>
 
-// Zephyr log backend keeping the most recent lines in RAM.
 namespace LogRing
 {
     // JSON array of line strings, oldest first. Returns length, or <0.

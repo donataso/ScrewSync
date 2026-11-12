@@ -44,7 +44,6 @@ namespace
         }
     }
 
-    // "add <name> [pass]" saves; "ssid <name> [pass]" saves and connects.
     void add(const char *a, bool connect, char *out, size_t outMax)
     {
         char ssid[33] = {0};

@@ -30,7 +30,6 @@ namespace Encoder
         Reverse,
     };
 
-    // Starts the spindle PCNT unit and arms its overflow-tracking thresholds.
     void begin();
 
     // Signed spindle encoder count since boot, 2x-decoded (Settings::active.encoderPpr * 2 per rev).

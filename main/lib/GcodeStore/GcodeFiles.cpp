@@ -71,7 +71,6 @@ namespace
         return true;
     }
 
-    // False if it can't be opened or the header is malformed.
     bool readHeader(const char *filePath, GcodeMeta::Header &h)
     {
         struct fs_file_t f;

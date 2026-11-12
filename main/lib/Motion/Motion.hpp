@@ -21,7 +21,6 @@
 #include "Stepper.hpp"
 #include <stdint.h>
 
-// Manual axis and spindle operations outside a running mode.
 namespace Motion
 {
     int64_t duToSteps(Stepper::Axis axis, double du);

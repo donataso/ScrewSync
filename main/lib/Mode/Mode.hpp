@@ -89,8 +89,8 @@ namespace Mode
     enum class StartPrompt : uint8_t
     {
         None,
-        OfferZero,      // startsAtZero()
-        ConfirmOffZero, // confirmsOffZero()
+        OfferZero,
+        ConfirmOffZero,
     };
     // What starting the selected mode away from Z/X 0 asks first; None while running or at 0.
     StartPrompt startPrompt();
@@ -103,12 +103,10 @@ namespace Mode
     // them unless commit. Refused while that mode runs.
     const char *loadParams(Id id, const char *line, bool commit);
     bool required(Id id, const char *param);
-    // All required params of the selected mode are set.
     bool ready();
     // "name=value ..." for every parameter; false for an unimplemented mode.
     bool describe(Id id, char *out, size_t outMax);
 
-    // Fills thread pitch, depth and taper from the thread table.
     const char *threadPreset(const char *group, const char *designation);
 
     // Selects probe mode and starts its cycle on the given axis/direction
@@ -123,10 +121,8 @@ namespace Mode
     // Why the last job ended on its own ("" if it finished normally).
     const char *lastError();
 
-    // Controlled stop: disengages the mode and decelerates both axes.
     void stop();
 
-    // Stops the running mode if it drives this axis.
     void onAxisDisabled(Stepper::Axis axis);
 }
 

@@ -3,13 +3,10 @@
 
 #define DEVICE_NAME "ScrewSync"
 
-// feature flags
 #define X_AXIS_ENABLED 1
 #define DRO_Z_ENABLED 0
 #define DRO_X_ENABLED 0
 
-// Settings.hpp default for statusPushIntervalMs (ws status push rate),
-// overridable at runtime via "settings set statusPushIntervalMs <ms>"
 #define DEFAULT_STATUS_PUSH_INTERVAL_MS 500
 
 #define DISPLAY_UPDATE_INTERVAL_MS 100

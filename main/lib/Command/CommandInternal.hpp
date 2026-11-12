@@ -43,7 +43,6 @@ namespace Command::detail
         return end != s && !*end;
     }
 
-    // "err <refusal>", else okFmt with okArg.
     inline void reply(char *out, size_t outMax, const char *refusal, const char *okFmt, const char *okArg)
     {
         if (refusal) {
@@ -60,7 +59,6 @@ namespace Command::detail
     bool takeAxis(const char *args, const char *verb, const char *usage, char (&axisTok)[4], Stepper::Axis &axis,
                   const char *&rest, char *out, size_t outMax);
 
-    // Replies "err machine not idle" and returns true unless idle.
     bool refuseUnlessIdle(char *out, size_t outMax);
 
     void wifi(const char *args, char *out, size_t outMax);

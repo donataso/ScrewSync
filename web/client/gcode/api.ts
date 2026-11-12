@@ -1,5 +1,3 @@
-// HTTP helpers for the /gcode* and /display-preview endpoints
-// (main/lib/WebUi/WebGcode.cpp, main/lib/GcodeStore/GcodeStore.hpp).
 import type { Mapping } from "./preview"
 
 export interface GcodeProgramInfo {

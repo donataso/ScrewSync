@@ -76,9 +76,6 @@ namespace
         return count;
     }
 
-    // One "=== <name>.<ext>" block found in the embedded bundle: the
-    // lines[] range (within the top-level, newline-split array) holding
-    // its body.
     struct Block
     {
         char name[64];
@@ -101,8 +98,6 @@ namespace
         return true;
     }
 
-    // Scans the already newline-split bundle for "=== name.ext" headers
-    // and records each block's body line range.
     size_t findBlocks(char **lines, size_t lineCount, Block *blocks, size_t maxBlocks)
     {
         size_t blockCount = 0;
@@ -145,7 +140,6 @@ namespace
         size_t stepsLineCount;
     };
 
-    // Pairs up .gcode/.steps blocks of the same name into vectors.
     size_t pairVectors(const Block *blocks, size_t blockCount, char **lines, Vector *vectors, size_t maxVectors)
     {
         size_t vectorCount = 0;
@@ -174,7 +168,6 @@ namespace
         return vectorCount;
     }
 
-    // Collects emitted steps for comparison against a vector's .steps file.
     class CollectSink : public StepSink
     {
     public:
@@ -218,8 +211,6 @@ namespace
         return kind == StepKind::Feed || kind == StepKind::Thread;
     }
 
-    // One expectation parsed from a .steps line: either a step, or an
-    // error at a given line number.
     struct Expectation
     {
         uint32_t line;
@@ -259,8 +250,6 @@ namespace
         return false;
     }
 
-    // Parses a vector's already newline-split .steps lines into
-    // expectations, skipping blank/comment lines.
     size_t parseSteps(char **lines, size_t lineCount, Expectation *out, size_t outCap)
     {
         size_t count = 0;
@@ -310,8 +299,6 @@ namespace
         return count;
     }
 
-    // Runs one vector's .gcode lines through the lathecode flavor and
-    // checks the collected steps/error against its .steps expectations.
     void runVector(const Vector &v)
     {
         Expectation expectations[MAX_STEPS_PER_VECTOR];

@@ -28,7 +28,6 @@ namespace Watchdog
     // Call from the watched thread. Returns the channel, or -1.
     int add(const char *name);
 
-    // Cheap to call every loop iteration.
     void feed(int channel);
 }
 

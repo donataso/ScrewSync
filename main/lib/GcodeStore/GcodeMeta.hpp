@@ -43,7 +43,7 @@ namespace GcodeMeta
         size_t flavorLen;
         const char *name;
         size_t nameLen;
-        size_t bodyOffset; // where the program text starts
+        size_t bodyOffset;
     };
 
     // Decodes the first line of text as "<flavor>\t<name>\n". False if

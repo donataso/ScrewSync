@@ -55,7 +55,6 @@ namespace Mode::detail
         double flankTan;              // alternating flank infeed: Z shift per depth, 0 = radial
         int32_t finishLevels;         // spring passes at full depth
 
-        // Run state.
         int cutDirection;
         int64_t mainStart;
         int64_t auxStart;

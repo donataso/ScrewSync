@@ -85,7 +85,6 @@ namespace GcodeStore
     Result uploadEncoded(const char *body, size_t len, bool save, bool activate);
     // An empty flavor, empty name or missing program leaves that field.
     Result updateEncoded(const char *id, const char *body, size_t len);
-    // Largest encoded body.
     constexpr size_t ENCODED_MAX = PROGRAM_MAX + GcodeMeta::NAME_MAX_LEN + FLAVOR_MAX_LEN + 2;
 
     // A saved program's text, without making it active. Valid until the

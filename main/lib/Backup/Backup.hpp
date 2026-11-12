@@ -20,7 +20,6 @@
 
 #include <stddef.h>
 
-// Settings, run settings and the thread table as one JSON document.
 namespace Backup
 {
     // -1 if it doesn't fit.

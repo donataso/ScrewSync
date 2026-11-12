@@ -28,7 +28,6 @@ namespace Stepper
         X,
     };
 
-    // Configures step/dir/ena GPIOs and starts each axis's step-pulse timer.
     void begin();
 
     // Raw ena GPIO write -- used only by reconcile() internally and by
@@ -73,7 +72,6 @@ namespace Stepper
     // calls stop coming.
     void runAhead(Axis axis, int direction, uint32_t horizonUs);
 
-    // Decelerates to rest from the current speed.
     void stop(Axis axis);
 
     // Immediate stop, no decel -- ISR-safe. Returns the halted position,

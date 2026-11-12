@@ -30,11 +30,9 @@ namespace Display::detail
 {
     using Nextion::KEY_MAX;
 
-    // DisplayWidgets.cpp
     void pushSelected(const char *component, bool selected);
     void showToast(const char *msg);
 
-    // DisplayFormat.cpp
     bool inchUnits();
     const char *unitSuffix();
     // mm to 3 decimals, inch to 4, never "-0.000".
@@ -43,17 +41,14 @@ namespace Display::detail
     // Value of name in a "name=value ..." list.
     bool paramValue(const char *params, const char *name, char *out, size_t outMax);
 
-    // DisplayView.cpp: the main page.
     void pushStatus();
     void pushSoon();
     void clearPreview();
 
-    // DisplayPanel.cpp: the mode menu and the selected mode's cells.
     void pushMenu(Mode::Id current);
     // Returns whether any cell's type changed.
     bool pushPanel(Mode::Id id, const char *params);
 
-    // DisplayPicker.cpp: the thread picker page.
     void openPicker();
     void pushPicker();
     void selectPickerGroup(const char *group);

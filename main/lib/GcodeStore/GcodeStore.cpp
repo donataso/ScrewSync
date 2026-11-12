@@ -91,7 +91,6 @@ namespace
         return r;
     }
 
-    // Validated against its flavor; ok carries the step count.
     GcodeStore::Result validate(const char *text, size_t len, const char *flavorId)
     {
         Gcode::Flavor *flavor = Gcode::find(flavorId);

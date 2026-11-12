@@ -20,7 +20,6 @@
 
 #include <zephyr/net/http/server.h>
 
-// HTTP resource details, registered in WebUi.cpp.
 namespace WebRoutes
 {
     extern struct http_resource_detail_dynamic update;

@@ -21,7 +21,6 @@
 #include "Mode.hpp"
 #include <stdint.h>
 
-// One read of everything the display and web clients show.
 namespace Status
 {
     struct Axis
@@ -47,7 +46,7 @@ namespace Status
         const char *state; // Machine::stateName()
         const char *mode;
         bool running;
-        bool ready; // all required params of the mode are set
+        bool ready;
         const char *units;
         int32_t jogStepDu;
         Gear gear;

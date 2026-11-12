@@ -75,7 +75,6 @@ namespace Gcode
         virtual ~StepSink() {}
     };
 
-    // A flavor owns its units, axis conventions and feed semantics.
     struct Flavor
     {
         virtual void begin(int32_t startZDu, int32_t startXDu) = 0;
@@ -84,7 +83,6 @@ namespace Gcode
         virtual ~Flavor() {}
     };
 
-    // Tokenizes text then interprets it with flavor.
     const char *interpretLine(Flavor &flavor, const char *text, uint32_t lineNo, StepSink &sink);
 }
 

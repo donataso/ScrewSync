@@ -195,8 +195,6 @@ namespace
         return changed;
     }
 
-    // Phase/last-error text and the contact light; bespoke page widgets,
-    // shown only on the probe page.
     bool pushProbe(Mode::Id current, const Status::Snapshot &s)
     {
         bool changed = pushNum("probeOn.val", current == Mode::Id::Probe);
@@ -231,7 +229,6 @@ namespace
         }
     }
 
-    // Toasts why a job ended on its own, once per ending.
     void pushJobError(const char *error, bool running)
     {
         static const char *shown = "";
@@ -245,7 +242,6 @@ namespace
         }
     }
 
-    // EStop rides the error toast; it stays up until the state clears.
     void pushEstop()
     {
         bool tripped = Machine::state() == Machine::State::EStop;

@@ -173,7 +173,6 @@ namespace
         return 0;
     }
 
-    // One "name=value" token of a describe() line into params.
     const char *loadToken(const Ops &ops, char *token, uint8_t *params)
     {
         char *eq = strchr(token, '=');

@@ -22,7 +22,6 @@
 
 namespace Handwheel
 {
-    // Starts polling the Z/X handwheel PCNT units (1 and 2).
     void begin();
 
     // Signed handwheel count since boot, 2x-decoded (Settings handwheelPpr * 2 per rev).

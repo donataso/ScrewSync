@@ -23,8 +23,6 @@
 #include <stdint.h>
 #include <zephyr/data/json.h>
 
-// The live thread table: built-in defaults until replaced (web editor),
-// persisted in its own NVS namespace.
 namespace ThreadStore
 {
     struct Preset
@@ -97,7 +95,6 @@ namespace ThreadStore
     void toJson(const ThreadTable::Table &table, JsonTable &json);
     // Builds and validates out; nullptr on success, else the reason.
     const char *fromJson(const JsonTable &json, ThreadTable::Table &out);
-    // Replaces the live table with a validated one and persists it.
     void replace(const ThreadTable::Table &table);
 
     // {"groups":[{name,depthExternal,depthInternal,taper}],

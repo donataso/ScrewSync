@@ -27,7 +27,6 @@ namespace DisplayImage::detail
     // Keeps image unless already stored; returns the outcome line.
     const char *storeImage(const uint8_t *image, size_t len);
 
-    // Verifies the stored image, then hands over its length and sector-sized chunks.
     bool readStored(bool (*onLength)(uint32_t length), bool (*onChunk)(const uint8_t *data, size_t len));
 }
 

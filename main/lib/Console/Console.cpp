@@ -67,7 +67,6 @@ namespace
         return nullptr;
     }
 
-    // "display upload <len> <crc32 hex>": raw image bytes follow "ok upload ready".
     void handleUpload(const struct device *dev, const char *args)
     {
         char *end;

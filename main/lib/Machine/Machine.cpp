@@ -36,7 +36,6 @@ namespace
     bool g_modeEngagedZ = false;
     bool g_modeEngagedX = false;
 
-    // Caller holds mutex.
     Machine::State stateLocked()
     {
         if (g_estop) {
@@ -62,7 +61,6 @@ namespace
         Stepper::setEnabled(Stepper::Axis::X, false);
     }
 
-    // Caller holds mutex.
     void tripEstopLocked()
     {
         g_estop = true;

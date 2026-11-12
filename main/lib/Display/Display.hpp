@@ -21,14 +21,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// The screen app on the Nextion display (docs/screen.md): status pushes,
-// the mode panel and thread picker, and machine commands from its buttons.
 namespace Display
 {
-    // Starts the link thread.
     void begin();
 
-    // The display answers the link's pings.
     bool connected();
 
     // Image px = origin + mm * pxPerMm; Z across, X down. pxPerMm 0 = unknown.

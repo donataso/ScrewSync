@@ -113,7 +113,6 @@ namespace
 
     void armNext(AxisState &s, uint32_t periodUs);
 
-    // Caller holds s.lock.
     int64_t moveToLocked(AxisState &s, int64_t targetSteps, int32_t maxSpeed)
     {
         // The one choke point for every mover (Jog/Sync both drive through
@@ -151,7 +150,6 @@ namespace
         return s.targetPos > s.currentPos ? 1 : -1;
     }
 
-    // Caller holds s.lock.
     void stopLocked(AxisState &s)
     {
         int direction = movingDirection(s);

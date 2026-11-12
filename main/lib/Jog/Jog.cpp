@@ -55,8 +55,8 @@ namespace
     // the handwheel hasn't moved since the last tick, this calls nothing at
     // all -- moveTo() is the one choke point Jog/modes/manual `move` all
     // share, and unconditionally re-asserting a remembered target every
-    // tick (the previous design) fights whichever of those actually owns
-    // the axis right now. Also means an axis with no handwheel wired up is
+    // tick fights whichever of those actually owns the axis right now.
+    // Also means an axis with no handwheel wired up is
     // naturally a no-op forever, not something that needs a separate
     // disable switch.
     void tick(AxisJog &s, Stepper::Axis axis)

@@ -31,7 +31,6 @@ namespace
 
     char g_group[ThreadTable::GROUP_NAME_MAX];
 
-    // Tab label: short standards upper case ("UNC"), others capitalized.
     void groupLabel(const char *name, char *out, size_t outMax)
     {
         size_t len = strlen(name);
@@ -59,7 +58,6 @@ namespace
         out[n] = '\0';
     }
 
-    // Next comma-separated item of list into out; advances list.
     bool nextItem(const char *&list, char *out, size_t outMax)
     {
         if (!*list) {
@@ -156,7 +154,6 @@ namespace
 
 namespace Display::detail
 {
-    // Opens on the selected thread's group, else the first.
     void openPicker()
     {
         char params[256];

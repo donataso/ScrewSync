@@ -43,7 +43,6 @@ namespace Nextion
 
     // The UART and RX; writes are safe before start().
     void begin(const Config &config);
-    // Starts the link thread.
     void start();
 
     // From the link thread, or while holding pause().
@@ -77,7 +76,6 @@ namespace Nextion
     // whmi-wri upload of totalLen bytes. The link stays paused until finish/abort.
     bool flashBegin(uint32_t totalLen);
     bool flashChunk(const uint8_t *data, size_t len);
-    // Waits for the display to restart on the new image.
     bool flashFinish();
     void flashAbort();
 }
