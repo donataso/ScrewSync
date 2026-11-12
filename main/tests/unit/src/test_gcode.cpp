@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "GcodeCore.hpp"
+#include "GcodeFlavors.hpp"
 #include "GcodeLathecode.hpp"
 
 using namespace Gcode;
@@ -444,4 +445,17 @@ ZTEST(gcode, test_tokenize_number_forms)
     zassert_is_null(tokenize("X-.5", words));
     zassert_equal(words.count, 1);
     zassert_within(words.words[0].value, -0.5, 1e-9);
+}
+
+ZTEST(gcode, test_flavor_registry)
+{
+    zassert_true(Gcode::count() > 0);
+    for (size_t i = 0; i < Gcode::count(); i++) {
+        Flavor *flavor = Gcode::at(i);
+        zassert_not_null(flavor);
+        zassert_equal(Gcode::find(flavor->id()), flavor, "flavor ids are not unique");
+    }
+    zassert_not_null(Gcode::find("lathecode"));
+    zassert_is_null(Gcode::find("nope"));
+    zassert_is_null(Gcode::find(""));
 }

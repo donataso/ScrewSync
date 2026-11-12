@@ -136,3 +136,82 @@ ZTEST(thread_table, test_validate_rejects_bad_overrides)
     t.entries[0].taper = 1;
     zassert_not_null(validate(t));
 }
+
+ZTEST(thread_table, test_find_absent)
+{
+    zassert_equal(findGroup(g_table, "nope"), -1);
+    zassert_is_null(find(g_table, "nope", "M10"));
+    zassert_is_null(find(g_table, "metric", "M999"));
+    // A designation of another group.
+    zassert_is_null(find(g_table, "metric", "G1/2"));
+}
+
+ZTEST(thread_table, test_flank_angle_from_group)
+{
+    zassert_within(flankAngle(g_table, *find(g_table, "metric", "M10")), 60.0f, 1e-6f);
+    zassert_within(flankAngle(g_table, *find(g_table, "bsp", "G1/2")), 55.0f, 1e-6f);
+}
+
+ZTEST(thread_table, test_validate_rejects_bad_group_values)
+{
+    static Table t;
+    loadDefaults(t);
+    t.groups[0].name[0] = '\0';
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    snprintf(t.groups[1].name, sizeof(t.groups[1].name), "%s", t.groups[0].name);
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    t.groups[0].depthExternal = 0;
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    t.groups[0].depthInternal = 2;
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    t.groups[0].taper = -1;
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    t.groups[0].flankAngle = 0;
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    t.groups[0].flankAngle = MAX_FLANK_ANGLE;
+    zassert_not_null(validate(t));
+}
+
+ZTEST(thread_table, test_validate_rejects_bad_entry_values)
+{
+    static Table t;
+    loadDefaults(t);
+    t.entries[0].pitchDu = 0;
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    t.entries[0].majorDu = -1;
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    t.entries[0].group = (uint8_t)t.groupCount;
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    t.entries[0].designation[0] = '\0';
+    zassert_not_null(validate(t));
+
+    loadDefaults(t);
+    t.entries[0].depthExternalDu = -1;
+    zassert_not_null(validate(t));
+}
+
+ZTEST(thread_table, test_validate_rejects_too_many_groups)
+{
+    static Table t;
+    loadDefaults(t);
+    t.groupCount = MAX_GROUPS + 1;
+    zassert_not_null(validate(t));
+}

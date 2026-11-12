@@ -15,6 +15,7 @@ target_sources(app PRIVATE
     src/test_gcode.cpp
     src/test_gcode_meta.cpp
     src/test_probe_cycle.cpp
+    src/test_mode_cells.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperRamp.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperLimits.cpp
     ${FIRMWARE_DIR}/lib/Rpm/RpmCalc.cpp
@@ -26,6 +27,7 @@ target_sources(app PRIVATE
     ${FIRMWARE_DIR}/lib/Gcode/GcodeFlavors.cpp
     ${FIRMWARE_DIR}/lib/GcodeStore/GcodeMeta.cpp
     ${FIRMWARE_DIR}/lib/Mode/ProbeCycle.cpp
+    ${FIRMWARE_DIR}/lib/Display/ModeCells.cpp
 )
 
 target_include_directories(app PRIVATE
@@ -38,6 +40,7 @@ target_include_directories(app PRIVATE
     ${FIRMWARE_DIR}/lib/GcodeStore
     ${FIRMWARE_DIR}/lib/Mode
     ${FIRMWARE_DIR}/lib/Probe
+    ${FIRMWARE_DIR}/lib/Display
     ${CMAKE_BINARY_DIR}/include
 )
 
