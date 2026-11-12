@@ -120,7 +120,7 @@ monitor:
 
 # Uploads the .tft over the USB console, the firmware stores then flashes it.
 display-serial:
-	python ./tools/monitor.py --tft $(SCREEN_TFT)
+	python ./tools/monitor.py --tft $(SCREEN_TFT) --exit-after-upload
 
 screenshots:
 	. $(HOME)/apps/nxwright/.venv/bin/activate && python3 scripts/screenshots.py

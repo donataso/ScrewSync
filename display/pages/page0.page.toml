@@ -300,22 +300,6 @@ font = 2
 name = "xPlus"
 type = "button"
 vscope = 1
-x = 8
-y = 380
-w = 144
-h = 92
-style = 0
-bco = 27124
-bco2 = 33432
-pco = 59262
-pco2 = 59262
-txt = "↓ X"
-font = 2
-
-[[component]]
-name = "xMinus"
-type = "button"
-vscope = 1
 x = 160
 y = 380
 w = 144
@@ -325,7 +309,23 @@ bco = 27124
 bco2 = 33432
 pco = 59262
 pco2 = 59262
-txt = "X ↑"
+txt = "X ↓"
+font = 2
+
+[[component]]
+name = "xMinus"
+type = "button"
+vscope = 1
+x = 8
+y = 380
+w = 144
+h = 92
+style = 0
+bco = 27124
+bco2 = 33432
+pco = 59262
+pco2 = 59262
+txt = "↑ X"
 font = 2
 
 [[component]]

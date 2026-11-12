@@ -51,6 +51,8 @@ DEFAULT_TFT = Path(__file__).resolve().parent.parent / "display" / "display.tft"
 UPLOAD_REPLY_TIMEOUT_S = 10
 UPLOAD_CHUNK = 4096
 UPLOAD_REPLIES = ("ok upload", "err display upload")
+FLASH_STARTED = "ok display flash started"
+UPLOAD_ERRORS = ("err display upload", "err display flash")
 
 _start = time.monotonic()
 
@@ -117,6 +119,7 @@ def main():
     ap.add_argument("--port", help="serial port (default: autodetect / $DUT_PORT)")
     ap.add_argument("--baud", type=int, default=BAUD)
     ap.add_argument("--tft", help="upload this display .tft once connected, then keep monitoring")
+    ap.add_argument("--exit-after-upload", action="store_true", help="with --tft, exit once the display flash has started")
     args = ap.parse_args()
 
     print(f"{_stamp()} monitor: waiting for a port @ {args.baud} -- Ctrl-C to stop", file=sys.stderr)
@@ -126,8 +129,10 @@ def main():
     threading.Thread(target=_writer, args=(state,), daemon=True).start()
 
     buf = b""
+    done = False
+    exit_code = 0
     try:
-        while True:
+        while not done:
             if state["ser"] is None:
                 try:
                     port = resolve_port(args.port)
@@ -166,11 +171,20 @@ def main():
                     state["reply"] = text
                     state["reply_event"].set()
                 print(_stamp(), text, flush=True)
+                if args.exit_after_upload and args.tft:
+                    if text == FLASH_STARTED:
+                        done = True
+                        break
+                    if text.startswith(UPLOAD_ERRORS):
+                        exit_code = 1
+                        done = True
+                        break
     except KeyboardInterrupt:
         pass
     finally:
         if state["ser"] is not None:
             state["ser"].close()
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
