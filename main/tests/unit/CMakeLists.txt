@@ -25,6 +25,7 @@ target_sources(app PRIVATE
     src/test_nextion.cpp
     src/test_thread_table_json.cpp
     src/test_settings_fields.cpp
+    src/test_json_span.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperRamp.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperLimits.cpp
     ${FIRMWARE_DIR}/lib/Rpm/RpmCalc.cpp
@@ -47,6 +48,7 @@ target_sources(app PRIVATE
     ${FIRMWARE_DIR}/lib/Nextion/NextionAttrs.cpp
     ${FIRMWARE_DIR}/lib/Thread/ThreadTableJson.cpp
     ${FIRMWARE_DIR}/lib/Settings/SettingsFields.cpp
+    ${FIRMWARE_DIR}/lib/Backup/JsonSpan.cpp
 )
 
 target_include_directories(app PRIVATE
@@ -64,6 +66,7 @@ target_include_directories(app PRIVATE
     ${FIRMWARE_DIR}/lib/WebUi
     ${FIRMWARE_DIR}/lib/Nextion
     ${FIRMWARE_DIR}/lib/Settings
+    ${FIRMWARE_DIR}/lib/Backup
     ${FIRMWARE_DIR}/src
     ${CMAKE_BINARY_DIR}/include
 )

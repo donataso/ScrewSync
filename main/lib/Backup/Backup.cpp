@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Backup.hpp"
+#include "JsonSpan.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
 #include "RunSettings.hpp"
@@ -83,6 +84,13 @@ namespace
 
     const struct json_obj_descr DOC_DESCR[] = {
         JSON_OBJ_DESCR_OBJECT(Doc, settings, Settings::CONF_JSON_DESCR),
+        JSON_OBJ_DESCR_OBJECT(Doc, run, RUN_DESCR),
+        JSON_OBJ_DESCR_OBJECT(Doc, threads, ThreadStore::JSON_TABLE_DESCR),
+    };
+
+    // Zephyr's obj_parse truncates a nested object's field mask to int, so
+    // settings (over 31 fields) fails nested and is parsed on its own.
+    const struct json_obj_descr PARSE_DESCR[] = {
         JSON_OBJ_DESCR_OBJECT(Doc, run, RUN_DESCR),
         JSON_OBJ_DESCR_OBJECT(Doc, threads, ThreadStore::JSON_TABLE_DESCR),
     };
@@ -164,13 +172,19 @@ namespace Backup
         g_doc.settings = Settings::g_active;
         currentRun(g_doc.run);
         memset(&g_doc.threads, 0, sizeof(g_doc.threads));
-        int64_t mask = json_obj_parse(json, len, DOC_DESCR, ARRAY_SIZE(DOC_DESCR), &g_doc);
-        if (mask <= 0) {
+        char *settingsJson;
+        size_t settingsLen;
+        bool hasSettings = JsonSpan::findObject(json, len, "settings", settingsJson, settingsLen);
+        if (hasSettings && json_obj_parse(settingsJson, settingsLen, Settings::CONF_JSON_DESCR,
+                                          Settings::CONF_JSON_FIELDS, &g_doc.settings) < 0) {
             return "bad json";
         }
-        bool hasSettings = mask & BIT(0);
-        bool hasRun = mask & BIT(1);
-        bool hasThreads = mask & BIT(2);
+        int64_t mask = json_obj_parse(json, len, PARSE_DESCR, ARRAY_SIZE(PARSE_DESCR), &g_doc);
+        if (mask < 0 || (mask == 0 && !hasSettings)) {
+            return "bad json";
+        }
+        bool hasRun = mask & BIT(0);
+        bool hasThreads = mask & BIT(1);
 
         static char reason[64];
         if (hasSettings && !Settings::validate(g_doc.settings, reason, sizeof(reason))) {

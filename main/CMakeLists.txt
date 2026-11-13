@@ -47,6 +47,7 @@ target_sources(app PRIVATE
     lib/Thread/ThreadStoreJson.cpp
     lib/Thread/ThreadTableJson.cpp
     lib/Backup/Backup.cpp
+    lib/Backup/JsonSpan.cpp
     lib/Encoder/Encoder.cpp
     lib/Encoder/EncoderFilter.cpp
     lib/Handwheel/Handwheel.cpp
