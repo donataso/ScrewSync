@@ -48,26 +48,10 @@ namespace
         snprintf(out, outMax, "%s/%s.%s", MOUNT_POINT, id, ext);
     }
 
-    bool isHex(const char *s, size_t len)
-    {
-        for (size_t i = 0; i < len; i++) {
-            char c = s[i];
-            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // "<8 hex digits>.gc" only; skips ".tmp" files left by an interrupted save.
+    // Skips ".tmp" files left by an interrupted save.
     bool isProgramFile(const char *name, uint32_t &id)
     {
-        if (strlen(name) != GcodeStore::ID_LEN + 3 || strcmp(name + GcodeStore::ID_LEN, ".gc") != 0 ||
-            !isHex(name, GcodeStore::ID_LEN)) {
-            return false;
-        }
-        id = (uint32_t)strtoul(name, nullptr, 16);
-        return true;
+        return GcodeMeta::programFileId(name, GcodeStore::ID_LEN, id);
     }
 
     bool readHeader(const char *filePath, GcodeMeta::Header &h)
@@ -120,7 +104,7 @@ namespace GcodeFiles
 
     bool validId(const char *id)
     {
-        return strlen(id) == GcodeStore::ID_LEN && isHex(id, GcodeStore::ID_LEN);
+        return GcodeMeta::validId(id, GcodeStore::ID_LEN);
     }
 
     void nextId(char (&out)[GcodeStore::ID_LEN + 1])

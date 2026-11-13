@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ModeInternal.hpp"
+#include "ModeMath.hpp"
 #include "Settings.hpp"
 #include <stddef.h>
 #include <zephyr/sys/util.h>
@@ -65,7 +66,7 @@ namespace
 
     int64_t passEnd(int32_t pass)
     {
-        int64_t du = pass < g_passes ? (int64_t)g_params.peckDu * pass : g_params.depthDu;
+        int64_t du = peckDepthDu(pass, g_passes, g_params.peckDu, g_params.depthDu);
         return g_start + g_direction * duToSteps(Stepper::Axis::X, (double)du);
     }
 
@@ -83,7 +84,7 @@ namespace
         }
         g_direction = g_params.internal ? 1 : -1;
         g_start = Stepper::position(Stepper::Axis::X);
-        g_passes = g_params.peckDu > 0 ? (g_params.depthDu + g_params.peckDu - 1) / g_params.peckDu : 1;
+        g_passes = peckPasses(g_params.depthDu, g_params.peckDu);
         g_pass = 1;
         enter(Phase::Approach);
         return nullptr;

@@ -33,6 +33,11 @@ namespace Stepper
     // motor must travel to take up lead-screw slack before the reported
     // position starts moving, on a direction reversal.
     int64_t backlashSteps(int32_t backlashDu, int32_t motorSteps, int32_t screwPitchDu);
+
+    // One motor step: the motor position always moves, the axis position
+    // only once the backlash of a reversal is taken up. backlash is used
+    // on a negative step only.
+    void trackStep(bool positive, int64_t backlash, int64_t &axisPos, int64_t &motorPos);
 }
 
 #endif

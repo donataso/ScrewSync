@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ModeInternal.hpp"
+#include "ModeMath.hpp"
 #include "GcodeFlavors.hpp"
 #include "GcodeStore.hpp"
 #include "Rpm.hpp"
@@ -187,20 +188,9 @@ namespace
             return false;
         }
         int32_t cap = rapidSpeed(j.mainAxis);
-        int32_t speed;
-        if (s.kind == Gcode::StepKind::Rapid) {
-            speed = cap;
-        } else {
-            int32_t feed = overridden(s.feed);
-            double timeSec = feed > 0 ? j.vectorDu / (double)feed * 60.0 : 0;
-            double raw = timeSec > 0 ? fabs((double)(j.mainTo - j.mainFrom)) / timeSec : cap;
-            if (raw < 1) {
-                speed = 1;
-            } else if (raw > cap) {
-                speed = cap;
-            } else {
-                speed = (int32_t)llround(raw);
-            }
+        int32_t speed = cap;
+        if (s.kind != Gcode::StepKind::Rapid) {
+            speed = vectorFeedStepsPerSec(j.vectorDu, overridden(s.feed), j.mainTo - j.mainFrom, cap);
         }
         if (Stepper::moveTo(j.mainAxis, j.mainTo, speed) != j.mainTo) {
             finish(Stepper::isDisabled(j.mainAxis) ? "axis disabled" : "travel limit");

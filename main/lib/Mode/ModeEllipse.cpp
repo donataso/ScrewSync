@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ModeInternal.hpp"
+#include "ModeMath.hpp"
 #include "Settings.hpp"
 #include <math.h>
 #include <stddef.h>
@@ -86,13 +87,7 @@ namespace
     {
         double a = scale() * g_params.lengthDu;
         double b = scale() * g_params.depthDu;
-        if (g_params.concave) {
-            zDu = a * sin(angle);
-            xDu = -b * cos(angle);
-        } else {
-            zDu = a * (1 - cos(angle));
-            xDu = -b * (1 - sin(angle));
-        }
+        ellipsePoint(a, b, g_params.concave, angle, zDu, xDu);
     }
 
     // Profile length per radian at angle, du.
@@ -100,10 +95,7 @@ namespace
     {
         double a = scale() * g_params.lengthDu;
         double b = scale() * g_params.depthDu;
-        double dz = g_params.concave ? a * cos(angle) : a * sin(angle);
-        double dx = g_params.concave ? b * sin(angle) : b * cos(angle);
-        double v = sqrt(dz * dz + dx * dx);
-        return v < 1 ? 1 : v;
+        return ellipseSpeed(a, b, g_params.concave, angle);
     }
 
     int64_t zAt(double zDu)

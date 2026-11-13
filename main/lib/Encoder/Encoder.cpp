@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Encoder.hpp"
+#include "EncoderFilter.hpp"
 #include "Settings.hpp"
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
@@ -36,16 +37,8 @@ namespace
 {
     const struct device *g_dev = DEVICE_DT_GET(DT_NODELABEL(pcnt));
 
-    constexpr int64_t STALE_MS = 100;
-
     K_MUTEX_DEFINE(g_filterMutex);
-    int64_t g_filtered = 0;
-    bool g_seeded = false;
-    bool g_lastInvert = false;
-    int32_t g_lastBacklash = 0;
-    int64_t g_lastPollMs = 0;
-    int64_t g_lastMoveMs = 0;
-    Encoder::Direction g_lastDirection = Encoder::Direction::Stopped;
+    Encoder::Filter g_filter;
     atomic_t g_originCount = ATOMIC_INIT(0);
 }
 
@@ -84,33 +77,7 @@ namespace Encoder
         int64_t now = k_uptime_get();
 
         k_mutex_lock(&g_filterMutex, K_FOREVER);
-        bool invert = Settings::g_active.invertEncoder;
-        int32_t backlash = Settings::g_active.encoderBacklash;
-        bool polled = now - g_lastPollMs <= STALE_MS;
-        g_lastPollMs = now;
-        int64_t previous = g_filtered;
-        if (!g_seeded || invert != g_lastInvert || backlash != g_lastBacklash) {
-            g_filtered = raw;
-            g_seeded = true;
-            g_lastInvert = invert;
-            g_lastBacklash = backlash;
-            previous = raw;
-        } else if (raw > g_filtered + backlash) {
-            g_filtered = raw - backlash;
-        } else if (raw < g_filtered - backlash) {
-            g_filtered = raw + backlash;
-        }
-        if (g_filtered != previous) {
-            if (!polled) {
-                g_lastDirection = Direction::Stopped;
-            } else if (g_filtered > previous) {
-                g_lastDirection = Direction::Forward;
-            } else {
-                g_lastDirection = Direction::Reverse;
-            }
-            g_lastMoveMs = now;
-        }
-        int64_t out = g_filtered;
+        int64_t out = g_filter.update(raw, now, Settings::g_active.invertEncoder, Settings::g_active.encoderBacklash);
         k_mutex_unlock(&g_filterMutex);
 
         return out;
@@ -120,7 +87,7 @@ namespace Encoder
     {
         filteredPosition();
         k_mutex_lock(&g_filterMutex, K_FOREVER);
-        Direction out = k_uptime_get() - g_lastMoveMs <= STALE_MS ? g_lastDirection : Direction::Stopped;
+        Direction out = g_filter.direction(k_uptime_get());
         k_mutex_unlock(&g_filterMutex);
         return out;
     }

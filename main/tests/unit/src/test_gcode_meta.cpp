@@ -189,3 +189,29 @@ ZTEST(gcode_meta, test_axes_mismatch_case_insensitive)
     const char *text = "; AXES EXPECTED: z+ POINTS RIGHT, x+ POINTS DOWN\nG0 X0 Z0\n";
     zassert_false(axesMismatch(text, strlen(text)));
 }
+
+ZTEST(gcode_meta, test_valid_id)
+{
+    zassert_true(GcodeMeta::validId("0000abcd", 8));
+    zassert_true(GcodeMeta::validId("12345678", 8));
+    zassert_false(GcodeMeta::validId("0000ABCD", 8));
+    zassert_false(GcodeMeta::validId("0000abc", 8));
+    zassert_false(GcodeMeta::validId("0000abcde", 8));
+    zassert_false(GcodeMeta::validId("0000abcg", 8));
+    zassert_false(GcodeMeta::validId("../../ab", 8));
+    zassert_false(GcodeMeta::validId("", 8));
+}
+
+ZTEST(gcode_meta, test_program_file_id)
+{
+    uint32_t id = 0;
+    zassert_true(GcodeMeta::programFileId("0000001f.gc", 8, id));
+    zassert_equal(id, 0x1f);
+    zassert_true(GcodeMeta::programFileId("ffffffff.gc", 8, id));
+    zassert_equal(id, 0xffffffff);
+    zassert_false(GcodeMeta::programFileId("0000001f.tmp", 8, id));
+    zassert_false(GcodeMeta::programFileId("0000001f.gcx", 8, id));
+    zassert_false(GcodeMeta::programFileId("0000001f", 8, id));
+    zassert_false(GcodeMeta::programFileId("000001f.gc", 8, id));
+    zassert_false(GcodeMeta::programFileId("0000001g.gc", 8, id));
+}

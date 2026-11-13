@@ -21,6 +21,7 @@
 using Stepper::backlashSteps;
 using Stepper::clampToTravel;
 using Stepper::maxTravelSteps;
+using Stepper::trackStep;
 
 ZTEST_SUITE(stepper_limits, NULL, NULL, NULL, NULL, NULL);
 
@@ -64,4 +65,55 @@ ZTEST(stepper_limits, test_backlash_steps_zero_is_zero)
 {
     int64_t steps = backlashSteps(0, 800, 40000);
     zassert_equal(steps, 0);
+}
+
+ZTEST(stepper_limits, test_track_step_follows_without_backlash)
+{
+    int64_t axis = 10;
+    int64_t motor = 10;
+    trackStep(true, 0, axis, motor);
+    zassert_equal(axis, 11);
+    zassert_equal(motor, 11);
+    trackStep(false, 0, axis, motor);
+    trackStep(false, 0, axis, motor);
+    zassert_equal(axis, 9);
+    zassert_equal(motor, 9);
+}
+
+ZTEST(stepper_limits, test_track_step_takes_up_backlash_on_reversal)
+{
+    constexpr int64_t BACKLASH = 3;
+    int64_t axis = 10;
+    int64_t motor = 10;
+    for (int i = 0; i < BACKLASH; i++) {
+        trackStep(false, BACKLASH, axis, motor);
+        zassert_equal(axis, 10, "axis moved inside the backlash");
+    }
+    zassert_equal(motor, 7);
+    trackStep(false, BACKLASH, axis, motor);
+    zassert_equal(axis, 9);
+    zassert_equal(motor, 6);
+
+    for (int i = 0; i < BACKLASH; i++) {
+        trackStep(true, BACKLASH, axis, motor);
+        zassert_equal(axis, 9, "axis moved inside the backlash");
+    }
+    trackStep(true, BACKLASH, axis, motor);
+    zassert_equal(axis, 10);
+    zassert_equal(motor, 10);
+}
+
+ZTEST(stepper_limits, test_track_step_partial_reversal)
+{
+    constexpr int64_t BACKLASH = 3;
+    int64_t axis = 0;
+    int64_t motor = 0;
+    trackStep(false, BACKLASH, axis, motor);
+    trackStep(false, BACKLASH, axis, motor);
+    trackStep(true, BACKLASH, axis, motor);
+    trackStep(true, BACKLASH, axis, motor);
+    zassert_equal(axis, 0);
+    trackStep(true, BACKLASH, axis, motor);
+    zassert_equal(axis, 1);
+    zassert_equal(motor, 1);
 }

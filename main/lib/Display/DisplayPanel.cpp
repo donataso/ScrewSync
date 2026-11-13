@@ -30,50 +30,6 @@ namespace
 {
     static_assert(Mode::COUNT <= MENU_SLOTS, "mode menu too small");
 
-    bool cellShown(const Cell &c, const char *params)
-    {
-        if (!c.when) {
-            return true;
-        }
-        const char *eq = strchr(c.when, '=');
-        char name[16];
-        char v[16];
-        snprintf(name, sizeof(name), "%.*s", (int)(eq - c.when), c.when);
-        return paramValue(params, name, v, sizeof(v)) && !strcmp(v, eq + 1);
-    }
-
-    // Value with its unit; false when it is 0.
-    bool formatCellValue(const Cell &c, const char *raw, char *out, size_t outMax)
-    {
-        if (c.kind == Kind::Count) {
-            snprintf(out, outMax, "%s", raw);
-            return true;
-        }
-        if (c.kind == Kind::Angle) {
-            snprintf(out, outMax, "%.2f", strtod(raw, nullptr));
-            trimZeros(out);
-            if (!strcmp(out, "-0")) {
-                strcpy(out, "0");
-            }
-            snprintf(out + strlen(out), outMax - strlen(out), "°");
-            return true;
-        }
-        long du = strtol(raw, nullptr, 10);
-        char length[24];
-        formatLength(du, length, sizeof(length));
-        trimZeros(length);
-        const char *per;
-        if (c.kind == Kind::Speed) {
-            per = "/min";
-        } else if (c.kind == Kind::Feed) {
-            per = "/rev";
-        } else {
-            per = "";
-        }
-        snprintf(out, outMax, "%s %s%s", length, unitSuffix(), per);
-        return du != 0;
-    }
-
     CellType valueType(Kind kind)
     {
         switch (kind) {
@@ -113,7 +69,7 @@ namespace
     bool pushValue(size_t slot, Mode::Id id, const Cell &c, const char *raw)
     {
         char text[32];
-        bool set = formatCellValue(c, raw, text, sizeof(text));
+        bool set = formatCellValue(c, raw, inchUnits(), text, sizeof(text));
         bool required = Mode::required(id, c.param);
         char key[KEY_MAX];
         snprintf(key, sizeof(key), "c%u.txt", (unsigned)slot);

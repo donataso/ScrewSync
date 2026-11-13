@@ -211,18 +211,9 @@ namespace
             gpio_pin_set_dt(&s.step, 1);
             k_busy_wait(STEP_PULSE_US);
             gpio_pin_set_dt(&s.step, 0);
-            if (positive) {
-                if (s.motorPos >= s.currentPos) {
-                    s.currentPos++;
-                }
-                s.motorPos++;
-            } else {
-                int64_t backlash = Stepper::backlashSteps(s.cfg->backlashDu, s.cfg->motorSteps, s.cfg->screwPitchDu);
-                if (s.motorPos <= s.currentPos - backlash) {
-                    s.currentPos--;
-                }
-                s.motorPos--;
-            }
+            int64_t backlash =
+                positive ? 0 : Stepper::backlashSteps(s.cfg->backlashDu, s.cfg->motorSteps, s.cfg->screwPitchDu);
+            Stepper::trackStep(positive, backlash, s.currentPos, s.motorPos);
 
             int64_t distRemaining = positive ? (s.targetPos - s.currentPos) : (s.currentPos - s.targetPos);
             if (distRemaining == 0) {

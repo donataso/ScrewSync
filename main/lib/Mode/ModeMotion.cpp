@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ModeInternal.hpp"
+#include "ModeMath.hpp"
 #include "Encoder.hpp"
 #include "Motion.hpp"
 #include "Settings.hpp"
@@ -57,11 +58,7 @@ namespace Mode::Detail
     int32_t duPerMinToStepsPerSec(Stepper::Axis axis, int32_t duPerMin)
     {
         const Settings::Axis &cfg = cfgOf(axis);
-        int64_t speed = llround(fabs((double)duPerMin) * cfg.motorSteps / cfg.screwPitchDu / 60.0);
-        if (speed < 1) {
-            return 1;
-        }
-        return speed > cfg.speedManualMove ? cfg.speedManualMove : (int32_t)speed;
+        return feedStepsPerSec(duPerMin, cfg.motorSteps, cfg.screwPitchDu, cfg.speedManualMove);
     }
 
     int32_t countsPerRev()
@@ -101,7 +98,7 @@ namespace Mode::Detail
     bool SpindleFeed::tick(int64_t spindlePos, int32_t pitchDu)
     {
         const Settings::Axis &cfg = cfgOf(axis);
-        double stepsPerCount = (double)cfg.motorSteps * abs(pitchDu) / ((double)cfg.screwPitchDu * countsPerRev());
+        double stepsPerCount = spindleFeedStepsPerCount(cfg.motorSteps, pitchDu, cfg.screwPitchDu, countsPerRev());
         int direction = to >= from ? 1 : -1;
         pos += (double)spindleTravel(lastSpindle, spindlePos) * stepsPerCount * direction;
         lastSpindle = spindlePos;

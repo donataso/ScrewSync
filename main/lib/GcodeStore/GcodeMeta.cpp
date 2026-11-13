@@ -17,6 +17,7 @@
  */
 #include "GcodeMeta.hpp"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 namespace
@@ -204,5 +205,38 @@ namespace GcodeMeta
         bool zRight = findCI(text, zPos, zEnd, "right") != (size_t)-1;
         bool xDown = findCI(text, xPos, lineEnd, "down") != (size_t)-1;
         return !(zRight && xDown);
+    }
+
+    bool validId(const char *id, size_t idLen)
+    {
+        if (strlen(id) != idLen) {
+            return false;
+        }
+        for (size_t i = 0; i < idLen; i++) {
+            char ch = id[i];
+            if (!((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f'))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool programFileId(const char *name, size_t idLen, uint32_t &id)
+    {
+        static const char EXT[] = ".gc";
+        if (strlen(name) != idLen + sizeof(EXT) - 1 || strcmp(name + idLen, EXT) != 0) {
+            return false;
+        }
+        char hex[17];
+        if (idLen >= sizeof(hex)) {
+            return false;
+        }
+        memcpy(hex, name, idLen);
+        hex[idLen] = '\0';
+        if (!validId(hex, idLen)) {
+            return false;
+        }
+        id = (uint32_t)strtoul(hex, nullptr, 16);
+        return true;
     }
 }

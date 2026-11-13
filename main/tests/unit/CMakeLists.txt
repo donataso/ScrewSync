@@ -16,6 +16,15 @@ target_sources(app PRIVATE
     src/test_gcode_meta.cpp
     src/test_probe_cycle.cpp
     src/test_mode_cells.cpp
+    src/test_mode_pass_plan.cpp
+    src/test_mode_param_codec.cpp
+    src/test_mode_math.cpp
+    src/test_encoder_filter.cpp
+    src/test_display_text.cpp
+    src/test_web_text.cpp
+    src/test_nextion.cpp
+    src/test_thread_table_json.cpp
+    src/test_settings_fields.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperRamp.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperLimits.cpp
     ${FIRMWARE_DIR}/lib/Rpm/RpmCalc.cpp
@@ -28,6 +37,16 @@ target_sources(app PRIVATE
     ${FIRMWARE_DIR}/lib/GcodeStore/GcodeMeta.cpp
     ${FIRMWARE_DIR}/lib/Mode/ProbeCycle.cpp
     ${FIRMWARE_DIR}/lib/Display/ModeCells.cpp
+    ${FIRMWARE_DIR}/lib/Display/DisplayText.cpp
+    ${FIRMWARE_DIR}/lib/Mode/ModePassPlan.cpp
+    ${FIRMWARE_DIR}/lib/Mode/ModeParamCodec.cpp
+    ${FIRMWARE_DIR}/lib/Mode/ModeMath.cpp
+    ${FIRMWARE_DIR}/lib/Encoder/EncoderFilter.cpp
+    ${FIRMWARE_DIR}/lib/WebUi/WebText.cpp
+    ${FIRMWARE_DIR}/lib/Nextion/NextionFrame.cpp
+    ${FIRMWARE_DIR}/lib/Nextion/NextionAttrs.cpp
+    ${FIRMWARE_DIR}/lib/Thread/ThreadTableJson.cpp
+    ${FIRMWARE_DIR}/lib/Settings/SettingsFields.cpp
 )
 
 target_include_directories(app PRIVATE
@@ -41,6 +60,11 @@ target_include_directories(app PRIVATE
     ${FIRMWARE_DIR}/lib/Mode
     ${FIRMWARE_DIR}/lib/Probe
     ${FIRMWARE_DIR}/lib/Display
+    ${FIRMWARE_DIR}/lib/Encoder
+    ${FIRMWARE_DIR}/lib/WebUi
+    ${FIRMWARE_DIR}/lib/Nextion
+    ${FIRMWARE_DIR}/lib/Settings
+    ${FIRMWARE_DIR}/src
     ${CMAKE_BINARY_DIR}/include
 )
 

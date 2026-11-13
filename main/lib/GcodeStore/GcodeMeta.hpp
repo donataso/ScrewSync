@@ -71,6 +71,11 @@ namespace GcodeMeta
     // our axes (-Z toward the chuck, -X toward the centerline). False
     // (no mismatch) when there's no such header.
     bool axesMismatch(const char *text, size_t len);
+
+    // Lower-case hex of exactly idLen digits.
+    bool validId(const char *id, size_t idLen);
+    // "<id>.gc" only; the id's value into id.
+    bool programFileId(const char *name, size_t idLen, uint32_t &id);
 }
 
 #endif

@@ -41,4 +41,19 @@ namespace Stepper
         }
         return targetSteps;
     }
+
+    void trackStep(bool positive, int64_t backlash, int64_t &axisPos, int64_t &motorPos)
+    {
+        if (positive) {
+            if (motorPos >= axisPos) {
+                axisPos++;
+            }
+            motorPos++;
+        } else {
+            if (motorPos <= axisPos - backlash) {
+                axisPos--;
+            }
+            motorPos--;
+        }
+    }
 }

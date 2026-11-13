@@ -31,55 +31,6 @@ namespace
 
     char g_group[ThreadTable::GROUP_NAME_MAX];
 
-    void groupLabel(const char *name, char *out, size_t outMax)
-    {
-        size_t len = strlen(name);
-        size_t i = 0;
-        for (; i < len && i + 1 < outMax; i++) {
-            out[i] = len <= 4 || i == 0 ? (char)toupper((unsigned char)name[i]) : name[i];
-        }
-        out[i] = '\0';
-    }
-
-    // "M10x1.25" -> "M10×1.25".
-    void designationLabel(const char *designation, char *out, size_t outMax)
-    {
-        size_t n = 0;
-        for (const char *p = designation; *p && n + 3 < outMax; p++) {
-            bool times = *p == 'x' && p > designation && isdigit((unsigned char)p[-1]) && isdigit((unsigned char)p[1]);
-            if (times) {
-                out[n++] = '\xC3';
-                out[n++] = '\x97';
-            } else {
-                out[n++] = *p;
-            }
-        }
-        out[n] = '\0';
-    }
-
-    bool nextItem(const char *&list, char *out, size_t outMax)
-    {
-        if (!*list) {
-            out[0] = '\0';
-            return false;
-        }
-        size_t len = strcspn(list, ",");
-        snprintf(out, outMax, "%.*s", (int)len, list);
-        list += len + (list[len] == ',');
-        return true;
-    }
-
-    bool hasItem(const char *list, const char *name)
-    {
-        char item[ThreadTable::DESIGNATION_MAX];
-        while (nextItem(list, item, sizeof(item))) {
-            if (!strcmp(item, name)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     void firstGroup(const char *groups, char (&out)[ThreadTable::GROUP_NAME_MAX])
     {
         nextItem(groups, out, sizeof(out));

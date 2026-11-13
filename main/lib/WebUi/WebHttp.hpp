@@ -18,6 +18,8 @@
 #ifndef WebHttp_h
 #define WebHttp_h
 
+#include "WebText.hpp"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <zephyr/net/http/server.h>
@@ -50,22 +52,6 @@ namespace WebHttp
     // A query parameter's raw value into out; false if absent or too long.
     bool query(const struct http_client_ctx *client, const char *name, char *out, size_t outMax);
     float queryFloat(const struct http_client_ctx *client, const char *name, float fallback);
-
-    // Appends JSON into a fixed buffer; ok turns false once it doesn't fit.
-    struct JsonWriter
-    {
-        char *buf;
-        size_t max;
-        size_t pos = 0;
-        bool ok = true;
-
-        JsonWriter(char *b, size_t m) : buf(b), max(m)
-        {}
-        JsonWriter &raw(const char *s);
-        JsonWriter &str(const char *s); // quoted and escaped
-        JsonWriter &strOrNull(const char *s); // null when empty
-        __attribute__((format(printf, 2, 3))) JsonWriter &fmt(const char *format, ...);
-    };
 
     int replyJson(struct http_response_ctx *response, enum http_status status, const JsonWriter &json);
 }

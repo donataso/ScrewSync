@@ -65,7 +65,7 @@ return
 // Pushes also fire unsolicited (periodic telemetry, on connect) -- so the
 // next message isn't necessarily this command's reply. Only resolve pending
 // on the push type this command's domain actually changes.
-function expectedReplyType(line: string): string {
+export function expectedReplyType(line: string): string {
   const verb = line.split(" ", 1)[0]
   if (verb === "settings") {
 return "settings"

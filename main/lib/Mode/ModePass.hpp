@@ -19,6 +19,7 @@
 #define ModePass_h
 
 #include "ModeInternal.hpp"
+#include "ModePassPlan.hpp"
 #include "Sync.hpp"
 
 // Multi-pass engine shared by turn, thread and slot. Geometry is relative
@@ -60,9 +61,7 @@ namespace Mode::Detail
         int64_t auxStart;
         uint8_t phase;
         bool entered;
-        int32_t level;
-        int32_t startIndex;
-        int32_t skipLevels; // applied when the next depth level starts
+        PassCursor cursor;
         int32_t offsetLevel; // flankOffset() memo
         int64_t offsetSteps;
         int64_t retractAux;

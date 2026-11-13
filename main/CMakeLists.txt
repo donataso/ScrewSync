@@ -20,15 +20,19 @@ target_sources(app PRIVATE
     lib/StaticAssets/StaticAssets.cpp
     lib/PersistBlob/PersistBlob.cpp
     lib/Settings/Settings.cpp
+    lib/Settings/SettingsFields.cpp
     lib/RunSettings/RunSettings.cpp
     lib/Machine/Machine.cpp
     lib/Watchdog/Watchdog.cpp
     lib/Mode/Mode.cpp
     lib/Mode/ModeParams.cpp
+    lib/Mode/ModeParamCodec.cpp
+    lib/Mode/ModeMath.cpp
     lib/Mode/ModeMotion.cpp
     lib/Mode/ModeGear.cpp
     lib/Mode/ModeAsync.cpp
     lib/Mode/ModePass.cpp
+    lib/Mode/ModePassPlan.cpp
     lib/Mode/ModeTurn.cpp
     lib/Mode/ModeThread.cpp
     lib/Mode/ModePart.cpp
@@ -41,8 +45,10 @@ target_sources(app PRIVATE
     lib/Thread/ThreadTable.cpp
     lib/Thread/ThreadStore.cpp
     lib/Thread/ThreadStoreJson.cpp
+    lib/Thread/ThreadTableJson.cpp
     lib/Backup/Backup.cpp
     lib/Encoder/Encoder.cpp
+    lib/Encoder/EncoderFilter.cpp
     lib/Handwheel/Handwheel.cpp
     lib/Stepper/Stepper.cpp
     lib/Stepper/StepperRamp.cpp
@@ -61,6 +67,7 @@ target_sources(app PRIVATE
     lib/GcodeStore/GcodeStore.cpp
     lib/WebUi/WebUi.cpp
     lib/WebUi/WebHttp.cpp
+    lib/WebUi/WebText.cpp
     lib/WebUi/WebUpdate.cpp
     lib/WebUi/WebDocs.cpp
     lib/WebUi/WebGcode.cpp
@@ -70,10 +77,12 @@ target_sources(app PRIVATE
     lib/Display/Display.cpp
     lib/Display/DisplayWidgets.cpp
     lib/Display/DisplayFormat.cpp
+    lib/Display/DisplayText.cpp
     lib/Display/DisplayView.cpp
     lib/Display/DisplayPanel.cpp
     lib/Display/DisplayPicker.cpp
     lib/Nextion/NextionLink.cpp
+    lib/Nextion/NextionFrame.cpp
     lib/Nextion/NextionAttrs.cpp
     lib/Nextion/NextionUpload.cpp
     lib/Display/DisplayImage.cpp

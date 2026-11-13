@@ -19,6 +19,7 @@
 #define DisplayInternal_h
 
 #include "Display.hpp"
+#include "DisplayText.hpp"
 #include "DisplayTheme.hpp"
 #include "ModeCells.hpp"
 #include "Nextion.hpp"
@@ -35,11 +36,8 @@ namespace Display::Detail
 
     bool inchUnits();
     const char *unitSuffix();
-    // mm to 3 decimals, inch to 4, never "-0.000".
+    // In the selected units.
     void formatLength(double du, char *out, size_t outMax);
-    void trimZeros(char *s);
-    // Value of name in a "name=value ..." list.
-    bool paramValue(const char *params, const char *name, char *out, size_t outMax);
 
     void pushStatus();
     void pushSoon();

@@ -16,9 +16,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Settings.hpp"
+#include "SettingsFields.hpp"
 #include "PersistBlob.hpp"
+
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <zephyr/data/json.h>
 #include <zephyr/sys/util.h>
@@ -27,149 +28,56 @@ namespace
 {
     constexpr const char *NVS_NS = "settings";
 
-    enum class Type : uint8_t
-    {
-        I32,
-        Bool,
-        Float,
-    };
-
-    struct FieldDef
-    {
-        const char *name;
-        Type type;
-        void *ptr;
-        double min, max; // unused for Bool
-    };
-
+    using Settings::Field;
+    using Settings::FieldType;
     using Settings::g_active;
 
-    const FieldDef FIELDS[] = {
-        {"encoderPpr", Type::I32, &g_active.encoderPpr, 1, 15000},
-        {"encoderBacklash", Type::I32, &g_active.encoderBacklash, 0, 30000},
-        {"invertEncoder", Type::Bool, &g_active.invertEncoder, 0, 0},
-        {"axisEncoderBacklash", Type::I32, &g_active.axisEncoderBacklash, 0, 30000},
-        {"stepTimeMs", Type::I32, &g_active.stepTimeMs, 1, 10000},
-        {"delayBetweenStepsMs", Type::I32, &g_active.delayBetweenStepsMs, 0, 10000},
-        {"safeDistanceDu", Type::I32, &g_active.safeDistanceDu, 0, 10000000},
-        {"slotLeftReductionDu", Type::I32, &g_active.slotLeftReductionDu, 0, 10000000},
-        {"statusPushIntervalMs", Type::I32, &g_active.statusPushIntervalMs, 50, 10000},
-
-        {"probePolarityNc", Type::Bool, &g_active.probePolarityNc, 0, 0},
-        {"probeFeedDuPerMin", Type::I32, &g_active.probeFeedDuPerMin, 1, 60000000},
-        {"reprobeFeedDuPerMin", Type::I32, &g_active.reprobeFeedDuPerMin, 1, 60000000},
-        {"probeBackOffDu", Type::I32, &g_active.probeBackOffDu, 1, 10000000},
-
-        {"screwPitchDuZ", Type::I32, &g_active.z.screwPitchDu, 1, 10000000},
-        {"motorStepsZ", Type::I32, &g_active.z.motorSteps, 1, 1000000},
-        {"speedStartZ", Type::I32, &g_active.z.speedStart, 1, 1000000},
-        {"accelerationZ", Type::I32, &g_active.z.acceleration, 1, 100000000},
-        {"decelerationZ", Type::I32, &g_active.z.deceleration, 1, 100000000},
-        {"speedManualMoveZ", Type::I32, &g_active.z.speedManualMove, 1, 1000000},
-        {"invertDirectionZ", Type::Bool, &g_active.z.invertDirection, 0, 0},
-        {"invertEnableZ", Type::Bool, &g_active.z.invertEnable, 0, 0},
-        {"maxTravelMmZ", Type::I32, &g_active.z.maxTravelMm, 1, 10000},
-        {"backlashDuZ", Type::I32, &g_active.z.backlashDu, 0, 10000000},
-        {"handwheelPprZ", Type::Float, &g_active.z.handwheelPpr, 1, 100000},
-        {"invertHandwheelZ", Type::Bool, &g_active.z.invertHandwheel, 0, 0},
-
-        {"screwPitchDuX", Type::I32, &g_active.x.screwPitchDu, 1, 10000000},
-        {"motorStepsX", Type::I32, &g_active.x.motorSteps, 1, 1000000},
-        {"speedStartX", Type::I32, &g_active.x.speedStart, 1, 1000000},
-        {"accelerationX", Type::I32, &g_active.x.acceleration, 1, 100000000},
-        {"decelerationX", Type::I32, &g_active.x.deceleration, 1, 100000000},
-        {"speedManualMoveX", Type::I32, &g_active.x.speedManualMove, 1, 1000000},
-        {"invertDirectionX", Type::Bool, &g_active.x.invertDirection, 0, 0},
-        {"invertEnableX", Type::Bool, &g_active.x.invertEnable, 0, 0},
-        {"maxTravelMmX", Type::I32, &g_active.x.maxTravelMm, 1, 10000},
-        {"backlashDuX", Type::I32, &g_active.x.backlashDu, 0, 10000000},
-        {"handwheelPprX", Type::Float, &g_active.x.handwheelPpr, 1, 100000},
-        {"invertHandwheelX", Type::Bool, &g_active.x.invertHandwheel, 0, 0},
-    };
-    constexpr size_t FIELD_COUNT = sizeof(FIELDS) / sizeof(FIELDS[0]);
-
-    bool parseBool(const char *s, bool &out)
+    void loadField(const Field &f)
     {
-        if (!strcmp(s, "1") || !strcmp(s, "true") || !strcmp(s, "on")) {
-            out = true;
-            return true;
-        }
-        if (!strcmp(s, "0") || !strcmp(s, "false") || !strcmp(s, "off")) {
-            out = false;
-            return true;
-        }
-        return false;
-    }
-
-    void loadField(const FieldDef &f)
-    {
+        void *ptr = Settings::fieldPtr(f, g_active);
         switch (f.type) {
-        case Type::I32:
+        case FieldType::I32:
         {
             int32_t v;
             if (PersistBlob::load(NVS_NS, f.name, &v, sizeof(v)) == sizeof(v)) {
-                *(int32_t *)f.ptr = v;
+                *(int32_t *)ptr = v;
             }
             break;
         }
-        case Type::Bool:
+        case FieldType::Bool:
         {
             uint8_t v;
             if (PersistBlob::load(NVS_NS, f.name, &v, sizeof(v)) == sizeof(v)) {
-                *(bool *)f.ptr = v != 0;
+                *(bool *)ptr = v != 0;
             }
             break;
         }
-        case Type::Float:
+        case FieldType::Float:
         {
             float v;
             if (PersistBlob::load(NVS_NS, f.name, &v, sizeof(v)) == sizeof(v)) {
-                *(float *)f.ptr = v;
+                *(float *)ptr = v;
             }
             break;
         }
         }
     }
 
-    bool saveField(const FieldDef &f)
+    bool saveField(const Field &f)
     {
+        void *ptr = Settings::fieldPtr(f, g_active);
         switch (f.type) {
-        case Type::I32:
-            return PersistBlob::save(NVS_NS, f.name, f.ptr, sizeof(int32_t));
-        case Type::Bool:
+        case FieldType::I32:
+            return PersistBlob::save(NVS_NS, f.name, ptr, sizeof(int32_t));
+        case FieldType::Bool:
         {
-            uint8_t v = *(bool *)f.ptr ? 1 : 0;
+            uint8_t v = *(bool *)ptr ? 1 : 0;
             return PersistBlob::save(NVS_NS, f.name, &v, sizeof(v));
         }
-        case Type::Float:
-            return PersistBlob::save(NVS_NS, f.name, f.ptr, sizeof(float));
+        case FieldType::Float:
+            return PersistBlob::save(NVS_NS, f.name, ptr, sizeof(float));
         }
         return false;
-    }
-
-    const void *fieldIn(const FieldDef &f, const Settings::Conf &conf)
-    {
-        return (const uint8_t *)&conf + ((const uint8_t *)f.ptr - (const uint8_t *)&g_active);
-    }
-
-    size_t fieldSize(const FieldDef &f)
-    {
-        return f.type == Type::Bool ? sizeof(bool) : sizeof(int32_t);
-    }
-
-    void formatField(const FieldDef &f, char *out, size_t outMax)
-    {
-        switch (f.type) {
-        case Type::I32:
-            snprintf(out, outMax, "%ld", (long)*(int32_t *)f.ptr);
-            break;
-        case Type::Bool:
-            snprintf(out, outMax, "%s", *(bool *)f.ptr ? "true" : "false");
-            break;
-        case Type::Float:
-            snprintf(out, outMax, "%g", (double)*(float *)f.ptr);
-            break;
-        }
     }
 }
 
@@ -177,52 +85,9 @@ namespace Settings
 {
     Conf g_active;
 
-    const struct json_obj_descr CONF_JSON_DESCR[] = {
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, encoderPpr, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, encoderBacklash, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, invertEncoder, JSON_TOK_TRUE),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, axisEncoderBacklash, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, stepTimeMs, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, delayBetweenStepsMs, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, safeDistanceDu, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, slotLeftReductionDu, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, statusPushIntervalMs, JSON_TOK_NUMBER),
-
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, probePolarityNc, JSON_TOK_TRUE),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, probeFeedDuPerMin, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, reprobeFeedDuPerMin, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, probeBackOffDu, JSON_TOK_NUMBER),
-
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "screwPitchDuZ", z.screwPitchDu, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "motorStepsZ", z.motorSteps, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedStartZ", z.speedStart, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "accelerationZ", z.acceleration, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "decelerationZ", z.deceleration, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedManualMoveZ", z.speedManualMove, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertDirectionZ", z.invertDirection, JSON_TOK_TRUE),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertEnableZ", z.invertEnable, JSON_TOK_TRUE),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "maxTravelMmZ", z.maxTravelMm, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "backlashDuZ", z.backlashDu, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelPprZ", z.handwheelPpr, JSON_TOK_FLOAT_FP),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertHandwheelZ", z.invertHandwheel, JSON_TOK_TRUE),
-
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "screwPitchDuX", x.screwPitchDu, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "motorStepsX", x.motorSteps, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedStartX", x.speedStart, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "accelerationX", x.acceleration, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "decelerationX", x.deceleration, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedManualMoveX", x.speedManualMove, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertDirectionX", x.invertDirection, JSON_TOK_TRUE),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertEnableX", x.invertEnable, JSON_TOK_TRUE),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "maxTravelMmX", x.maxTravelMm, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "backlashDuX", x.backlashDu, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelPprX", x.handwheelPpr, JSON_TOK_FLOAT_FP),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertHandwheelX", x.invertHandwheel, JSON_TOK_TRUE),
-    };
-
     void load()
     {
-        for (const FieldDef &f : FIELDS) {
+        for (const Field &f : FIELDS) {
             loadField(f);
         }
     }
@@ -230,7 +95,7 @@ namespace Settings
     bool save()
     {
         bool ok = true;
-        for (const FieldDef &f : FIELDS) {
+        for (const Field &f : FIELDS) {
             ok = saveField(f) && ok;
         }
         return ok;
@@ -238,88 +103,17 @@ namespace Settings
 
     bool setByName(const char *name, const char *value, char *out, size_t outMax)
     {
-        for (const FieldDef &f : FIELDS) {
-            if (strcmp(f.name, name) != 0) {
-                continue;
-            }
-
-            switch (f.type) {
-            case Type::I32:
-            {
-                char *end;
-                long v = strtol(value, &end, 10);
-                if (end == value || *end || (double)v < f.min || (double)v > f.max) {
-                    snprintf(out, outMax, "range [%ld, %ld]", (long)f.min, (long)f.max);
-                    return false;
-                }
-                *(int32_t *)f.ptr = (int32_t)v;
-                break;
-            }
-            case Type::Bool:
-            {
-                bool v;
-                if (!parseBool(value, v)) {
-                    snprintf(out, outMax, "expected 0|1|true|false|on|off");
-                    return false;
-                }
-                *(bool *)f.ptr = v;
-                break;
-            }
-            case Type::Float:
-            {
-                char *end;
-                float v = strtof(value, &end);
-                if (end == value || *end || (double)v < f.min || (double)v > f.max) {
-                    snprintf(out, outMax, "range [%g, %g]", (double)f.min, (double)f.max);
-                    return false;
-                }
-                *(float *)f.ptr = v;
-                break;
-            }
-            }
-            return saveField(f);
+        const Field *f = findField(name);
+        if (!f) {
+            snprintf(out, outMax, "unknown field '%s'", name);
+            return false;
         }
-        snprintf(out, outMax, "unknown field '%s'", name);
-        return false;
+        return parseField(*f, value, g_active, out, outMax) && saveField(*f);
     }
 
     void formatAll(char *out, size_t outMax)
     {
-        int n = snprintf(out, outMax, "{");
-        char val[32];
-        bool first = true;
-        for (const FieldDef &f : FIELDS) {
-            if (n < 0 || (size_t)n >= outMax) {
-                break;
-            }
-            formatField(f, val, sizeof(val));
-            n += snprintf(out + n, outMax - (size_t)n, "%s\"%s\":%s", first ? "" : ",", f.name, val);
-            first = false;
-        }
-        if (n >= 0 && (size_t)n < outMax) {
-            snprintf(out + n, outMax - (size_t)n, "}");
-        }
-    }
-
-    bool validate(const Conf &conf, char *out, size_t outMax)
-    {
-        for (const FieldDef &f : FIELDS) {
-            const void *src = fieldIn(f, conf);
-            if (f.type == Type::I32) {
-                int32_t v = *(const int32_t *)src;
-                if ((double)v < f.min || (double)v > f.max) {
-                    snprintf(out, outMax, "%s: range [%ld, %ld]", f.name, (long)f.min, (long)f.max);
-                    return false;
-                }
-            } else if (f.type == Type::Float) {
-                float v = *(const float *)src;
-                if (!((double)v >= f.min && (double)v <= f.max)) {
-                    snprintf(out, outMax, "%s: range [%g, %g]", f.name, (double)f.min, (double)f.max);
-                    return false;
-                }
-            }
-        }
-        return true;
+        formatAll(g_active, out, outMax);
     }
 
     bool replace(const Conf &conf)
@@ -348,11 +142,10 @@ namespace Settings
         if (!validate(temp, out, outMax)) {
             return false;
         }
-
-        for (size_t i = 0; i < FIELD_COUNT; i++) {
+        for (size_t i = 0; i < CONF_JSON_FIELDS; i++) {
             if (mask & BIT(i)) {
-                const FieldDef &f = FIELDS[i];
-                memcpy(f.ptr, fieldIn(f, temp), fieldSize(f));
+                const Field &f = FIELDS[i];
+                memcpy(fieldPtr(f, g_active), fieldPtr(f, temp), fieldSize(f));
                 saveField(f);
             }
         }

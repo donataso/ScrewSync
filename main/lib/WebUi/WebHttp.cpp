@@ -29,41 +29,9 @@ HTTP_SERVER_REGISTER_HEADER_CAPTURE(DISPLAY_STORE_CAPTURE, "X-Display-Store");
 
 namespace
 {
-    // Value of name in the URL's query string, or nullptr; ends at '&' or NUL.
     const char *queryValue(const struct http_client_ctx *client, const char *name)
     {
-        size_t nameLen = strlen(name);
-        const char *q = strchr((const char *)client->url_buffer, '?');
-        while (q) {
-            q++;
-            if (!strncmp(q, name, nameLen) && q[nameLen] == '=') {
-                return q + nameLen + 1;
-            }
-            q = strchr(q, '&');
-        }
-        return nullptr;
-    }
-
-    const char *escape(char c, char (&buf)[8])
-    {
-        switch (c) {
-        case '"':
-            return "\\\"";
-        case '\\':
-            return "\\\\";
-        case '\n':
-            return "\\n";
-        case '\r':
-            return "\\r";
-        case '\t':
-            return "\\t";
-        default:
-            if ((unsigned char)c < 0x20) {
-                snprintf(buf, sizeof(buf), "\\u%04x", (unsigned char)c);
-                return buf;
-            }
-            return nullptr;
-        }
+        return WebHttp::urlQueryValue((const char *)client->url_buffer, name);
     }
 }
 
@@ -127,71 +95,12 @@ namespace WebHttp
 
     bool query(const struct http_client_ctx *client, const char *name, char *out, size_t outMax)
     {
-        out[0] = '\0';
-        const char *v = queryValue(client, name);
-        if (!v) {
-            return false;
-        }
-        size_t n = strcspn(v, "&");
-        if (n >= outMax) {
-            return false;
-        }
-        memcpy(out, v, n);
-        out[n] = '\0';
-        return true;
+        return urlQuery((const char *)client->url_buffer, name, out, outMax);
     }
 
     float queryFloat(const struct http_client_ctx *client, const char *name, float fallback)
     {
         const char *v = queryValue(client, name);
         return v ? strtof(v, nullptr) : fallback;
-    }
-
-    JsonWriter &JsonWriter::raw(const char *s)
-    {
-        size_t n = strlen(s);
-        if (!ok || pos + n >= max) {
-            ok = false;
-            return *this;
-        }
-        memcpy(buf + pos, s, n);
-        pos += n;
-        return *this;
-    }
-
-    JsonWriter &JsonWriter::str(const char *s)
-    {
-        raw("\"");
-        for (; *s && ok; s++) {
-            char esc[8];
-            const char *e = escape(*s, esc);
-            if (e) {
-                raw(e);
-            } else if (pos + 1 < max) {
-                buf[pos++] = *s;
-            } else {
-                ok = false;
-            }
-        }
-        return raw("\"");
-    }
-
-    JsonWriter &JsonWriter::strOrNull(const char *s)
-    {
-        return *s ? str(s) : raw("null");
-    }
-
-    JsonWriter &JsonWriter::fmt(const char *format, ...)
-    {
-        char tmp[64];
-        va_list args;
-        va_start(args, format);
-        int n = vsnprintf(tmp, sizeof(tmp), format, args);
-        va_end(args);
-        if (n < 0 || (size_t)n >= sizeof(tmp)) {
-            ok = false;
-            return *this;
-        }
-        return raw(tmp);
     }
 }

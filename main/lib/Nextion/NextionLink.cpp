@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include "NextionFrame.hpp"
 #include "NextionInternal.hpp"
 #include <string.h>
 #include <zephyr/drivers/uart.h>
@@ -31,7 +32,6 @@ namespace
     const struct device *g_dev;
 
     constexpr size_t RX_RING_SIZE = 512;
-    constexpr size_t FRAME_MAX = 128;
     constexpr uint32_t LINK_LOOP_MS = 20;
     constexpr size_t HEARTBEAT_EVERY_BYTES = 256;
 
@@ -46,46 +46,21 @@ namespace
     K_THREAD_STACK_DEFINE(g_linkStack, 4096);
     struct k_thread g_linkThread;
 
-    uint8_t g_frame[FRAME_MAX];
-    size_t g_frameLen = 0;
-    bool g_frameOverflow = false;
-    int g_ffRun = 0;
+    Nextion::FrameParser g_parser;
     size_t g_bytesSinceHeartbeat = 0;
 
-    void appendFrameByte(uint8_t b)
-    {
-        if (g_frameLen < sizeof(g_frame)) {
-            g_frame[g_frameLen++] = b;
-        } else {
-            g_frameOverflow = true;
-        }
-    }
-
-    void resetFrame()
-    {
-        g_frameLen = 0;
-        g_frameOverflow = false;
-        g_ffRun = 0;
-    }
-
-    // Frames end with 0xFF 0xFF 0xFF; fewer 0xFF are data.
     void feedByte(uint8_t b)
     {
-        if (b == 0xFF) {
-            if (++g_ffRun == 3) {
-                if (g_frameOverflow) {
-                    LOG_WRN("oversized frame dropped");
-                } else {
-                    g_config.onFrame(g_frame, g_frameLen);
-                }
-                resetFrame();
-            }
-            return;
+        switch (g_parser.feed(b)) {
+        case Nextion::FrameParser::Event::Frame:
+            g_config.onFrame(g_parser.data, g_parser.len);
+            break;
+        case Nextion::FrameParser::Event::Oversized:
+            LOG_WRN("oversized frame dropped");
+            break;
+        case Nextion::FrameParser::Event::None:
+            break;
         }
-        for (; g_ffRun > 0; g_ffRun--) {
-            appendFrameByte(0xFF);
-        }
-        appendFrameByte(b);
     }
 
     void uartIsr(const struct device *dev, void *)
@@ -141,7 +116,7 @@ namespace
         k_spinlock_key_t key = k_spin_lock(&g_rxLock);
         ring_buf_reset(&g_rxRing);
         k_spin_unlock(&g_rxLock, key);
-        resetFrame();
+        g_parser.reset();
         uart_irq_rx_enable(g_dev);
     }
 

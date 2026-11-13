@@ -17,7 +17,6 @@
  */
 #include "ModePass.hpp"
 #include "Settings.hpp"
-#include <zephyr/sys/util.h>
 
 namespace
 {
@@ -39,38 +38,21 @@ namespace
         j.entered = false;
     }
 
-    int32_t totalLevels(const PassJob &j)
+    PassPlan plan(const PassJob &j)
     {
-        return j.levels + j.finishLevels;
-    }
-
-    double depthFraction(const PassJob &j, int32_t level)
-    {
-        double fraction = (double)MIN(level, j.levels) / j.levels;
-        if (j.squaredDepth) {
-            fraction = 1 - (1 - fraction) * (1 - fraction);
-        }
-        return fraction;
+        return {j.levels, j.finishLevels, j.starts, j.squaredDepth,
+                j.depthDu, j.lengthDu, j.endReductionDu, j.flankTan};
     }
 
     int64_t passAux(const PassJob &j)
     {
-        return j.auxStart + j.auxSign * duToSteps(j.aux, j.depthDu * depthFraction(j, j.level));
+        return j.auxStart + j.auxSign * duToSteps(j.aux, passDepthDu(plan(j), j.cursor.level));
     }
 
-    // Main-axis shift of a level's start: each level slides along the flank
-    // the previous one cut, alternating sides, so one edge cuts at a time.
     int64_t flankOffset(PassJob &j, int32_t level)
     {
-        if (j.flankTan == 0 || level <= 1) {
-            return 0;
-        }
         if (j.offsetLevel != level) {
-            double du = 0;
-            for (int32_t i = 2; i <= MIN(level, j.levels); i++) {
-                du += (i % 2 ? -1 : 1) * (depthFraction(j, i) - depthFraction(j, i - 1)) * j.depthDu * j.flankTan;
-            }
-            j.offsetSteps = j.cutDirection * duToSteps(j.main, du);
+            j.offsetSteps = j.cutDirection * duToSteps(j.main, passFlankOffsetDu(plan(j), level));
             j.offsetLevel = level;
         }
         return j.offsetSteps;
@@ -78,24 +60,17 @@ namespace
 
     int64_t levelStart(PassJob &j, int32_t level)
     {
-        return level > totalLevels(j) ? j.mainStart : j.mainStart + flankOffset(j, level);
+        return level > passTotalLevels(plan(j)) ? j.mainStart : j.mainStart + flankOffset(j, level);
     }
 
     int32_t nextLevel(const PassJob &j)
     {
-        if (j.level == 0) {
-            return 1;
-        }
-        return j.startIndex + 1 < j.starts ? j.level : j.level + 1 + j.skipLevels;
+        return passNextLevel(plan(j), j.cursor);
     }
 
     int64_t passEnd(const PassJob &j)
     {
-        double length = j.lengthDu - j.endReductionDu * (MIN(j.level, j.levels) - 1);
-        if (length < 0) {
-            length = 0;
-        }
-        return j.mainStart + j.cutDirection * duToSteps(j.main, length);
+        return j.mainStart + j.cutDirection * duToSteps(j.main, passLengthDu(plan(j), j.cursor.level));
     }
 
     // Aux (X) offset from the taper at a main (Z) position; a growing diameter is +X.
@@ -112,7 +87,7 @@ namespace
     bool cut(PassJob &j, int64_t spindlePos)
     {
         int64_t end = passEnd(j);
-        int64_t start = levelStart(j, j.level);
+        int64_t start = levelStart(j, j.cursor.level);
         switch (j.feed) {
         case PassFeed::Spindle:
             if (!j.entered) {
@@ -124,7 +99,7 @@ namespace
             if (!j.entered) {
                 int32_t dupr = spindleSign() * signedDu(*j.pitchDu, j.reverse);
                 j.link = {j.main, dupr, j.starts, 0, start};
-                int64_t startOffset = (int64_t)j.startIndex * countsPerRev() / j.starts;
+                int64_t startOffset = (int64_t)j.cursor.startIndex * countsPerRev() / j.starts;
                 j.link.originSpindlePos = helixOrigin(j.link, j.mainStart, startOffset, spindlePos);
             }
             int64_t target = j.link.target(spindlePos);
@@ -150,20 +125,9 @@ namespace
         return false;
     }
 
-    // After a pass: next start, else next depth level. False when done.
     bool advance(PassJob &j)
     {
-        if (j.level == 0) {
-            j.level = 1;
-            return true;
-        }
-        if (++j.startIndex < j.starts) {
-            return true;
-        }
-        j.startIndex = 0;
-        j.level += 1 + j.skipLevels;
-        j.skipLevels = 0;
-        return j.level <= totalLevels(j);
+        return passAdvance(plan(j), j.cursor);
     }
 }
 
@@ -181,9 +145,7 @@ namespace Mode::Detail
         j.cutDirection = feedDirection(signedDu(1, j.reverse));
         j.mainStart = Stepper::position(j.main);
         j.auxStart = Stepper::position(j.aux);
-        j.level = 0;
-        j.startIndex = 0;
-        j.skipLevels = 0;
+        j.cursor = {0, 0, 0};
         j.offsetLevel = -1;
         enter(j, Phase::Return);
         return nullptr;
@@ -239,17 +201,14 @@ namespace Mode::Detail
 
     void passSkip(PassJob &j)
     {
-        if (j.level > 0 && j.level + j.skipLevels + 1 < totalLevels(j)) {
-            j.skipLevels++;
-        }
+        passSkipLevel(plan(j), j.cursor);
     }
 
     void passProgress(const PassJob &j, Progress &out)
     {
         static const char *const NAMES[] = {"return", "return", "plunge", "cut", "retract", "home"};
-        out.phase = j.level == 0 ? "position" : NAMES[j.phase];
-        out.passes = totalLevels(j) * j.starts;
-        int32_t pass = j.level == 0 ? 0 : (j.level - 1) * j.starts + j.startIndex + 1;
-        out.pass = pass > out.passes ? out.passes : pass;
+        out.phase = j.cursor.level == 0 ? "position" : NAMES[j.phase];
+        out.passes = passCount(plan(j));
+        out.pass = passNumber(plan(j), j.cursor);
     }
 }
