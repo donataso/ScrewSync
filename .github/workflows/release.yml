@@ -75,14 +75,14 @@ jobs:
       - name: Build display
         run: |
           pipx install git+https://github.com/nixiewright/nxwright
-          make display-build NXWRIGHT=nxwright NXWRIGHT_COMPILE_ARGS=--download
+          make nextion-5in-build NXWRIGHT=nxwright NXWRIGHT_COMPILE_ARGS=--download
 
       - name: Build firmware
         env:
           MCUBOOT_SIGNING_KEY: ${{ secrets.MCUBOOT_SIGNING_KEY }}
         run: |
           printf '%s\n' "$MCUBOOT_SIGNING_KEY" > "$RUNNER_TEMP/signing_key.pem"
-          make firmware SIGNING_KEY="$RUNNER_TEMP/signing_key.pem"
+          make nanoels-h5-nextion-5in-firmware SIGNING_KEY="$RUNNER_TEMP/signing_key.pem"
           rm "$RUNNER_TEMP/signing_key.pem"
 
       # tidy reads the compile databases of the firmware and test builds.
@@ -101,4 +101,4 @@ jobs:
             --title "$GITHUB_REF_NAME" \
             --notes-file "$RUNNER_TEMP/notes.md" \
             $([[ "$GITHUB_REF_NAME" == *-* ]] && echo --prerelease) \
-            .build/release/*
+            .build/release/*/*

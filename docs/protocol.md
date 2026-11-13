@@ -139,13 +139,13 @@ right after any command changes that domain:
 - A `commands` query lists the live command set (syntax/description) --
   clients pull the grammar from the device rather than hardcoding it.
 
-## Display UI upload (uart1)
+## Display UI upload (display UART)
 
 Separate from the line-oriented command set above -- binary, and not a
 protocol of our own design. The display stays on its stock, closed Nextion
 firmware (see `docs/screen.md`); `main/lib/Nextion` just replays
 Nextion's own documented TTL serial upload protocol (`whmi-wri`) to push a
-`.tft` compiled from the `nxwright`/Nextion Editor source in `display/`:
+`.tft` compiled from the `nxwright`/Nextion Editor source in `displays/nextion-5in/`:
 
 - Try `connect` at each of `CONNECT_BAUD_CANDIDATES` (preceded by an empty
   command) until a `comok` reply.
@@ -154,7 +154,7 @@ Nextion's own documented TTL serial upload protocol (`whmi-wri`) to push a
 - Wait for ACK byte `0x05` -- display accepted the upload.
 - Stream the `.tft` in `PACKET_SIZE` packets, waiting for `0x05` after each
   one (including the final, possibly partial, packet).
-- Switch to `LINK_BAUD`, the UI's operating baud (`display/program.nx`),
+- Switch to `LINK_BAUD`, the UI's operating baud (`displays/nextion-5in/program.nx`),
   and wait for byte `0x88` (display flashed and restarted).
 
 `main/lib/WebUi`'s `POST /update-display` drives this from the uploaded

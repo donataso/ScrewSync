@@ -68,8 +68,9 @@ either way:
 Later updates go through the web client's Device page: "Firmware update"
 takes `firmware.bin`, and "Display firmware" takes a `.tft`.
 
-Building from source needs a Zephyr workspace and nxwright; the targets are
-in the `Makefile`.
+Building from source needs a Zephyr workspace and nxwright. Each target
+(`targets/<target>/`) has its own make rules, such as `<target>-build`
+and `<target>-flash`. See [design.md](design.md).
 
 ## First setup
 

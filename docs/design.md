@@ -18,7 +18,7 @@
   `main/lib/`, one subdirectory each.
 - Display: the panel's own closed Nextion firmware, not custom code. Its UI
   is authored with [nxwright](https://github.com/nixiewright/nxwright)
-  (`nxlang` source in `display/`, builds to a Nextion `.HMI` project),
+  (`nxlang` source in `displays/nextion-5in/`, builds to a Nextion `.HMI` project),
   compiled to `.tft` with the official Nextion Editor and pushed to the
   display over UART by the main firmware. See `docs/screen.md`.
 - Web client: in `web/`, served by the main firmware, talking to it over a
@@ -30,6 +30,35 @@
   runtime rather than hardcoding it.
 - Build tooling: `west` builds and flashes the Zephyr side; the top-level
   `Makefile` drives it, the display build and the release images.
+
+## Boards, displays, targets
+
+- Board (`boards/<board>/`): the controller hardware. `board.overlay` holds
+  pins and flash partitions, `board.conf` its Kconfig, `board.mk` its Zephyr
+  board and flash addresses.
+- Display (`displays/<display>/`): the UI and its firmware code.
+  `display.cmake` adds its sources to the build, `display.conf` its Kconfig,
+  `display.mk` its build rules. Shared Nextion rules are in
+  `displays/nextion.mk`.
+- Target (`targets/<target>/`): one board plus one display, and how they
+  connect. `target.overlay` sets the display UART (chosen node
+  `screwsync,display-uart`) and the display partition. `target.mk` names the
+  board and display and calls the templates.
+- `targets/template.mk` gives each target `<t>-build`, `-flash`, `-firmware`,
+  `-backup`, `-restore`, `-smoke`, `-smoke-interactive`, `-tidy` and the
+  region erase rules. A target overrides one by setting `<t>_OWN_<RULE>`.
+- The firmware build fails if a target leaves out something the display
+  code needs (chosen UART, partition, Kconfig).
+- `Makefile.local` (not in git) is optional and holds personal shortcuts.
+
+## Smoke tests
+
+- `tests/smoke/`, run on real hardware with `<t>-smoke` (automatic) and
+  `<t>-smoke-interactive` (operator steps, each can be skipped).
+- `run.sh` backs up the settings, display and G-code partitions first and
+  always restores them at the end. The backup is skipped when the flash
+  still matches the latest one.
+- The tests do not build. Build the firmware and the display first.
 
 ## Machine state
 
