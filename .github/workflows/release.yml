@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-26.04
+    env:
+      SDK_VERSION: 1.0.1
+      ZEPHYR_SDK_INSTALL_DIR: /home/runner/zephyr-sdk-1.0.1
+    steps:
+      # Full history, so git describe gives the tag as FW_VERSION.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Same clang-format version as in lint.yml.
+      - name: Format and web checks
+        run: |
+          pipx install clang-format==21.1.8
+          make format-check web-lint web-test
+
+      - name: Install host packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build gperf device-tree-compiler gcc-multilib g++-multilib clang-tidy
+
+      - name: Cache Zephyr workspace
+        id: zephyr
+        uses: actions/cache@v6
+        with:
+          path: ~/zephyrproject
+          key: zephyr-${{ runner.os }}-${{ hashFiles('west.yml') }}
+
+      - name: Set up Zephyr workspace
+        if: steps.zephyr.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/zephyrproject/manifest
+          cp west.yml ~/zephyrproject/manifest/
+          python3 -m venv ~/zephyrproject/.venv
+          . ~/zephyrproject/.venv/bin/activate
+          pip install west
+          cd ~/zephyrproject
+          west init -l manifest
+          west update --narrow -o=--depth=1
+          west packages pip --install
+          west blobs fetch hal_espressif
+
+      - name: Cache Zephyr SDK
+        id: sdk
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.ZEPHYR_SDK_INSTALL_DIR }}
+          key: zephyr-sdk-${{ runner.os }}-${{ env.SDK_VERSION }}-xtensa-esp32s3
+
+      - name: Install Zephyr SDK
+        if: steps.sdk.outputs.cache-hit != 'true'
+        run: |
+          . ~/zephyrproject/.venv/bin/activate
+          cd ~/zephyrproject
+          west sdk install --version $SDK_VERSION --install-dir $ZEPHYR_SDK_INSTALL_DIR -t xtensa-espressif_esp32s3_zephyr-elf
+
+      # Keeps the Nextion firmware that nxwright downloads.
+      - name: Cache nxwright
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/nxwright
+          key: nxwright-${{ runner.os }}-nextion-1.68.2
+
+      - name: Build display
+        run: |
+          pipx install git+https://github.com/nixiewright/nxwright
+          make display-build NXWRIGHT=nxwright NXWRIGHT_COMPILE_ARGS=--download
+
+      - name: Build firmware
+        env:
+          MCUBOOT_SIGNING_KEY: ${{ secrets.MCUBOOT_SIGNING_KEY }}
+        run: |
+          printf '%s\n' "$MCUBOOT_SIGNING_KEY" > "$RUNNER_TEMP/signing_key.pem"
+          make firmware SIGNING_KEY="$RUNNER_TEMP/signing_key.pem"
+          rm "$RUNNER_TEMP/signing_key.pem"
+
+      # tidy reads the compile databases of the firmware and test builds.
+      - run: make test tidy
+
+      - name: Collect commits
+        run: |
+          prev=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          git log --no-merges --format='- %s' "${prev:+$prev..}HEAD" > "$RUNNER_TEMP/notes.md"
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            $([[ "$GITHUB_REF_NAME" == *-* ]] && echo --prerelease) \
+            .build/release/*

@@ -29,10 +29,10 @@ to catch its earliest boot output.
     pip install pyserial
     python tools/monitor.py                 # autodetect a lone serial port
     python tools/monitor.py --port /dev/ttyACM0
-    python tools/monitor.py --tft display/display.tft   # upload, flash, keep monitoring
+    python tools/monitor.py --tft .build/release/display.tft   # upload, flash, keep monitoring
 
 Typing `!tft [path]` uploads a display .tft the same way (default
-display/display.tft): the firmware stores it, then flashes the display.
+.build/release/display.tft): the firmware stores it, then flashes the display.
 """
 
 import argparse
@@ -47,7 +47,7 @@ import serial
 from dut import BAUD, _open, resolve_port
 
 RECONNECT_POLL_S = 0.2
-DEFAULT_TFT = Path(__file__).resolve().parent.parent / "display" / "display.tft"
+DEFAULT_TFT = Path(__file__).resolve().parent.parent / ".build" / "release" / "display.tft"
 UPLOAD_REPLY_TIMEOUT_S = 10
 UPLOAD_CHUNK = 4096
 UPLOAD_REPLIES = ("ok upload", "err display upload")

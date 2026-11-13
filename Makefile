@@ -1,7 +1,8 @@
 .PHONY: all firmware
 
-KEYS_DIR := $(CURDIR)/assets
-SIGN_CMAKE_ARGS := -DSB_CONFIG_BOOT_SIGNATURE_KEY_FILE=\"$(KEYS_DIR)/mcuboot_signing_key.pem\"
+# Without a key file, MCUboot's default dev key signs the image.
+SIGNING_KEY ?= $(wildcard $(CURDIR)/private/key.pem)
+SIGN_CMAKE_ARGS := $(if $(SIGNING_KEY),-DSB_CONFIG_BOOT_SIGNATURE_KEY_FILE=\"$(abspath $(SIGNING_KEY))\")
 
 MAIN_ZEPHYR_APP := $(CURDIR)/main
 MAIN_ZEPHYR_BUILD := $(CURDIR)/.build/firmware
@@ -12,19 +13,20 @@ TEST_ZEPHYR_APP := $(CURDIR)/main/tests/unit
 TEST_ZEPHYR_BUILD := $(CURDIR)/.build/test-unit
 
 SCREEN_DIR := $(CURDIR)/display
-SCREEN_HMI := $(SCREEN_DIR)/display.HMI
-SCREEN_TFT := $(SCREEN_DIR)/display.tft
+RELEASE_DIR := $(CURDIR)/.build/release
+SCREEN_HMI := $(RELEASE_DIR)/display.HMI
+SCREEN_TFT := $(RELEASE_DIR)/display.tft
 SCREEN_180_SRC := $(CURDIR)/.build/display_180
-SCREEN_180_HMI := $(CURDIR)/.build/display_180.HMI
-SCREEN_180_TFT := $(SCREEN_DIR)/display_180.tft
-NXWRIGHT := $(HOME)/apps/nxwright/.venv/bin/nxwright
+SCREEN_180_HMI := $(RELEASE_DIR)/display_180.HMI
+SCREEN_180_TFT := $(RELEASE_DIR)/display_180.tft
+NXWRIGHT ?= $(HOME)/apps/nxwright/.venv/bin/nxwright
+NXWRIGHT_COMPILE_ARGS ?=
 OTA_HOST ?= 192.168.4.187
 # Must match display_partition in main/app.overlay
 DISPLAY_PARTITION := 0x400000
 DISPLAY_IMAGE := $(MAIN_ZEPHYR_BUILD)/display.bin
 # Must match slot0_partition of the board's flash layout
 APP_PARTITION := 0x20000
-RELEASE_DIR := $(CURDIR)/firmware
 ESPTOOL_PORT := $(if $(ESP_DEVICE),--port $(ESP_DEVICE))
 
 web-build:
@@ -70,14 +72,15 @@ ota:
 
 display-build:
 	$(NXWRIGHT) check $(SCREEN_DIR)
+	mkdir -p $(RELEASE_DIR)
 	$(NXWRIGHT) build $(SCREEN_DIR) $(SCREEN_HMI) --overwrite --no-backup
-	$(NXWRIGHT) compile $(SCREEN_HMI) $(SCREEN_TFT) --overwrite --no-backup
+	$(NXWRIGHT) compile $(SCREEN_HMI) $(SCREEN_TFT) --overwrite --no-backup $(NXWRIGHT_COMPILE_ARGS)
 	rm -rf $(SCREEN_180_SRC)
 	mkdir -p $(SCREEN_180_SRC)
 	cp -r $(SCREEN_DIR)/app.toml $(SCREEN_DIR)/defaults.toml $(SCREEN_DIR)/program.nx $(SCREEN_DIR)/pages $(SCREEN_DIR)/fonts $(SCREEN_180_SRC)
 	sed -i 's/^rotation = .*/rotation = 180/' $(SCREEN_180_SRC)/app.toml
 	$(NXWRIGHT) build $(SCREEN_180_SRC) $(SCREEN_180_HMI) --overwrite --no-backup
-	$(NXWRIGHT) compile $(SCREEN_180_HMI) $(SCREEN_180_TFT) --overwrite --no-backup
+	$(NXWRIGHT) compile $(SCREEN_180_HMI) $(SCREEN_180_TFT) --overwrite --no-backup $(NXWRIGHT_COMPILE_ARGS)
 
 display-ota:
 	curl -if --data-binary "@$(SCREEN_TFT)" "http://$(OTA_HOST)/update-display"

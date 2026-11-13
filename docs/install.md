@@ -33,22 +33,26 @@ them, sit one connector to the right, and there is no Y axis.
 Other hardware notes:
 
 - **Flip the display 180 degrees** so its viewing angles are correct.
-  Alternatively, flash `display/display_180.tft` on the web client.
+  Alternatively, flash `display_180.tft` from the release on the web client.
 - Probe wiring and probe types: [probe.md](probe.md).
 
 ## Firmware
 
-Prebuilt images are in `firmware/`:
+Download the prebuilt images from the
+[latest release](https://github.com/donataso/ScrewSync/releases/latest):
 
 | File                | Use                                      |
 |---------------------|------------------------------------------|
 | `firmware.full.bin` | blank board, written at address 0 by USB |
 | `firmware.bin`      | update of an installed ScrewSync         |
+| `display.tft`       | display UI                               |
+| `display_180.tft`   | display UI, turned 180 degrees           |
+| `*.HMI`             | Nextion Editor projects of the display   |
 
 Blank board, over USB:
 
 ```bash
-esptool.py --chip esp32s3 write-flash 0x0 firmware/firmware.full.bin
+esptool.py --chip esp32s3 write-flash 0x0 firmware.full.bin
 ```
 
 Or without installing anything, from a browser with a web flasher such as
