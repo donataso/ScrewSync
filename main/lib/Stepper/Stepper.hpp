@@ -67,6 +67,13 @@ namespace Stepper
     // moving (queued taps add up), else from the current position.
     void moveBy(Axis axis, int64_t deltaSteps);
 
+    // Handwheel: like moveBy, so steps still owed from earlier calls are
+    // kept, but the target stays within lagUs of travel at the manual max
+    // speed of the axis. Input beyond that is dropped rather than run on
+    // after the wheel stops. If the target comes back to a fast axis, the
+    // axis brakes past it and returns instead of stopping dead.
+    void followBy(Axis axis, int64_t deltaSteps, uint32_t lagUs);
+
     // Hold-to-move: keeps the target far enough ahead in direction (+1/-1)
     // to keep accelerating for horizonUs; never pulls it back. Stops
     // instead while moving the other way. The axis stops by itself once

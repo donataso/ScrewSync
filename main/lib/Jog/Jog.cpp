@@ -31,6 +31,9 @@ namespace
     constexpr int32_t POLL_PERIOD_MS = 2;
     // Tolerates one late repeat before the run-ahead target runs out.
     constexpr uint32_t HOLD_HORIZON_US = 2 * JOG_REPEAT_INTERVAL_MS * 1000;
+    // How far the handwheel target may lead the axis, as travel time at the
+    // manual max speed. Bounds the run-on after the wheel stops.
+    constexpr uint32_t HANDWHEEL_LAG_US = 100000;
 
     struct AxisJog
     {
@@ -41,10 +44,19 @@ namespace
         float resolutionMultiplier;
         int64_t lastHandwheelCount;
         bool lastHandwheelCountValid; // false right after boot/resolution change
+        double stepRemainder;         // poll thread only
+        bool holding;                 // a jog-button hold moves the axis
     };
 
-    AxisJog g_jogZ = {&Settings::g_active.z, Handwheel::z, {}, 1.0f, 0, false};
-    AxisJog g_jogX = {&Settings::g_active.x, Handwheel::x, {}, 1.0f, 0, false};
+    AxisJog g_jogZ = {&Settings::g_active.z, Handwheel::z, {}, 1.0f, 0, false, 0.0, false};
+    AxisJog g_jogX = {&Settings::g_active.x, Handwheel::x, {}, 1.0f, 0, false, 0.0, false};
+
+    void setHolding(AxisJog &s, bool holding)
+    {
+        k_mutex_lock(&s.mutex, K_FOREVER);
+        s.holding = holding;
+        k_mutex_unlock(&s.mutex);
+    }
 
     AxisJog &stateOf(Stepper::Axis axis)
     {
@@ -71,16 +83,22 @@ namespace
         s.lastHandwheelCountValid = true;
         k_mutex_unlock(&s.mutex);
 
-        if (!hadLast || handwheelCount == lastCount) {
+        if (!hadLast) {
+            s.stepRemainder = 0;
+            return;
+        }
+        if (handwheelCount == lastCount) {
             return;
         }
         if (Mode::owns(axis)) {
             Mode::stop();
         }
 
-        int64_t target = Jog::jogTarget(Stepper::position(axis), lastCount, handwheelCount, s.cfg->motorSteps,
-                                        s.cfg->handwheelPpr, resolutionMultiplier);
-        Stepper::moveTo(axis, target);
+        int64_t steps = Jog::jogSteps(handwheelCount - lastCount, s.cfg->motorSteps, s.cfg->handwheelPpr,
+                                      resolutionMultiplier, s.stepRemainder);
+        if (steps != 0) {
+            Stepper::followBy(axis, steps, HANDWHEEL_LAG_US);
+        }
     }
 
     void pollLoop(void *, void *, void *)
@@ -142,6 +160,7 @@ namespace Jog
         if (steps < 1) {
             steps = 1;
         }
+        setHolding(stateOf(axis), false);
         Stepper::moveBy(axis, direction * steps);
         return nullptr;
     }
@@ -155,7 +174,20 @@ namespace Jog
         if (Mode::owns(axis)) {
             Mode::stop();
         }
+        setHolding(stateOf(axis), true);
         Stepper::runAhead(axis, direction, HOLD_HORIZON_US);
         return nullptr;
+    }
+
+    void release(Stepper::Axis axis)
+    {
+        AxisJog &s = stateOf(axis);
+        k_mutex_lock(&s.mutex, K_FOREVER);
+        bool wasHolding = s.holding;
+        s.holding = false;
+        k_mutex_unlock(&s.mutex);
+        if (wasHolding && !Mode::owns(axis)) {
+            Stepper::stop(axis);
+        }
     }
 }

@@ -70,9 +70,10 @@
 - The tap is sent on release. A press longer than the hold delay sends
   only hold commands, so the axis does not stop between tap and hold.
 - Hold is sent as repeated jog command lines from a page timer, each
-  extending the target just past the stopping distance -- motion ends by
-  itself if repeats stop (lost frame, display reset, cable), so no separate
-  keepalive is needed for jog.
+  extending the target 200 ms of travel past the stopping distance. Letting
+  go sends a release line and the axis decelerates to rest. Motion also
+  ends by itself if repeats stop (lost frame, display reset, cable), so no
+  separate keepalive is needed for jog.
 - Step: presets plus a custom typed value.
 - A jog or handwheel turn on an axis a running mode drives stops the mode,
   then moves.

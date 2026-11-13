@@ -18,32 +18,64 @@
 #include <zephyr/ztest.h>
 #include "JogRatio.hpp"
 
-using Jog::jogTarget;
+using Jog::jogSteps;
 
-// Settings.hpp defaults: 800 motor steps/rev, 600 handwheel pulses/rev.
+// 800 motor steps/rev and 600 handwheel counts/rev throughout.
 
 ZTEST_SUITE(jog_ratio, NULL, NULL, NULL, NULL, NULL);
 
-ZTEST(jog_ratio, test_target_unchanged_at_origin)
+ZTEST(jog_ratio, test_no_count_change_no_steps)
 {
-    int64_t target = jogTarget(1000, 500, 500, 800, 600.0f, 1.0f);
-    zassert_equal(target, 1000);
+    double remainder = 0;
+    zassert_equal(jogSteps(0, 800, 600.0f, 1.0f, remainder), 0);
+    zassert_equal(remainder, 0.0);
 }
 
 ZTEST(jog_ratio, test_one_handwheel_turn_moves_one_motor_revolution)
 {
-    int64_t target = jogTarget(0, 0, 600, 800, 600.0f, 1.0f);
-    zassert_equal(target, 800);
+    double remainder = 0;
+    zassert_equal(jogSteps(600, 800, 600.0f, 1.0f, remainder), 800);
 }
 
 ZTEST(jog_ratio, test_coarse_multiplier_scales_up)
 {
-    int64_t target = jogTarget(0, 0, 600, 800, 600.0f, 10.0f);
-    zassert_equal(target, 8000);
+    double remainder = 0;
+    zassert_equal(jogSteps(600, 800, 600.0f, 10.0f, remainder), 8000);
 }
 
 ZTEST(jog_ratio, test_fine_multiplier_scales_down)
 {
-    int64_t target = jogTarget(0, 0, 600, 800, 600.0f, 0.1f);
-    zassert_equal(target, 80);
+    double remainder = 0;
+    zassert_equal(jogSteps(600, 800, 600.0f, 0.1f, remainder), 80);
+}
+
+ZTEST(jog_ratio, test_negative_turn_moves_back)
+{
+    double remainder = 0;
+    zassert_equal(jogSteps(-600, 800, 600.0f, 1.0f, remainder), -800);
+}
+
+ZTEST(jog_ratio, test_single_counts_at_fine_resolution_add_up)
+{
+    // One count is 0.133 steps at 0.1x. Read one count at a time, a full
+    // turn must still give its 80 steps, not round to nothing each time.
+    double remainder = 0;
+    int64_t total = 0;
+    for (int i = 0; i < 600; i++) {
+        total += jogSteps(1, 800, 600.0f, 0.1f, remainder);
+    }
+    zassert_within(total, 80, 1, "got %lld", (long long)total);
+}
+
+ZTEST(jog_ratio, test_there_and_back_returns_to_start)
+{
+    double remainder = 0;
+    int64_t total = 0;
+    for (int i = 0; i < 250; i++) {
+        total += jogSteps(1, 800, 600.0f, 1.0f, remainder);
+    }
+    for (int i = 0; i < 250; i++) {
+        total += jogSteps(-1, 800, 600.0f, 1.0f, remainder);
+    }
+    zassert_equal(total, 0, "got %lld", (long long)total);
 }

@@ -11,6 +11,18 @@ function jogRelease():
     tmJog.en = 0
     if (jogTicks.val < HOLD_DELAY_TICKS) {
       send("jog " + jogDir.txt)
+    } else {
+      send("jog " + jogDir.txt + " release")
+    }
+  }
+
+// The press ended some other way than lifting off the button: no tap, but a
+// running hold still stops.
+function jogCancel():
+  if (tmJog.en) {
+    tmJog.en = 0
+    if (jogTicks.val >= HOLD_DELAY_TICKS) {
+      send("jog " + jogDir.txt + " release")
     }
   }
 

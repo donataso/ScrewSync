@@ -38,6 +38,10 @@ namespace Jog
     // Return nullptr on success, else the reason it was refused.
     const char *tap(Stepper::Axis axis, int direction);
     const char *hold(Stepper::Axis axis, int direction);
+
+    // Button released after a hold: decelerates to rest instead of running
+    // on to the hold's target. Does nothing if no hold moved the axis.
+    void release(Stepper::Axis axis);
 }
 
 #endif

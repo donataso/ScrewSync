@@ -64,6 +64,7 @@ namespace
         bool holdRequested;
         bool disabled;
         int32_t speedRemainderMicro = 0;
+        bool followMove = false; // handwheel move: brakes through a target it cannot stop at
     };
 
     AxisState g_axisZ = {
@@ -138,7 +139,7 @@ namespace
 
     void armNext(AxisState &s, uint32_t periodUs);
 
-    int64_t moveToLocked(AxisState &s, int64_t targetSteps, int32_t maxSpeed)
+    int64_t moveToLocked(AxisState &s, int64_t targetSteps, int32_t maxSpeed, bool follow = false)
     {
         // The one choke point for every mover (Jog/Sync both drive through
         // here, same as the travel clamp below) -- while flashing/estopped
@@ -148,9 +149,11 @@ namespace
         Machine::State ms = Machine::state();
         if (ms == Machine::State::Flashing || ms == Machine::State::EStop || s.disabled) {
             s.targetPos = s.currentPos;
+            s.followMove = false;
             return s.targetPos;
         }
 
+        s.followMove = follow;
         s.moveMaxSpeed = maxSpeed < 0 ? 0 : maxSpeed;
         int64_t maxSteps = Stepper::maxTravelSteps(s.cfg->maxTravelMm, s.cfg->motorSteps, s.cfg->screwPitchDu);
         targetSteps = Stepper::clampToTravel(targetSteps, maxSteps);
@@ -168,7 +171,14 @@ namespace
     // Caller holds s.lock. 0 when idle.
     int movingDirection(const AxisState &s)
     {
-        if (!s.running || s.targetPos == s.currentPos) {
+        if (!s.running) {
+            return 0;
+        }
+        // A handwheel move can be travelling away from its target while it brakes.
+        if (s.followMove && s.dirValid && s.currentSpeed > startSpeedOf(s)) {
+            return s.dirLevel ? 1 : -1;
+        }
+        if (s.targetPos == s.currentPos) {
             return 0;
         }
         return s.targetPos > s.currentPos ? 1 : -1;
@@ -192,7 +202,10 @@ namespace
             k_spinlock_key_t key = k_spin_lock(&s.lock);
 
             int64_t delta = s.targetPos - s.currentPos;
-            if (delta == 0) {
+            // A handwheel move that is still fast when its target is reached
+            // or falls behind keeps its direction and slows down first.
+            bool fast = s.followMove && s.dirValid && s.currentSpeed > startSpeedOf(s);
+            if (delta == 0 && !fast) {
                 s.running = false;
                 reconcile(s);
                 k_spin_unlock(&s.lock, key);
@@ -200,7 +213,10 @@ namespace
             }
 
             bool positive = delta > 0;
-            if (!s.dirValid || positive != s.dirLevel) {
+            bool braking = fast && (delta == 0 || positive != s.dirLevel);
+            if (braking) {
+                positive = s.dirLevel;
+            } else if (!s.dirValid || positive != s.dirLevel) {
                 gpio_pin_set_dt(&s.dir, positive != s.cfg->invertDirection);
                 s.dirLevel = positive;
                 s.dirValid = true;
@@ -215,17 +231,35 @@ namespace
                 positive ? 0 : Stepper::backlashSteps(s.cfg->backlashDu, s.cfg->motorSteps, s.cfg->screwPitchDu);
             Stepper::trackStep(positive, backlash, s.currentPos, s.motorPos);
 
-            int64_t distRemaining = positive ? (s.targetPos - s.currentPos) : (s.currentPos - s.targetPos);
-            if (distRemaining == 0) {
-                s.running = false;
-                reconcile(s);
-                k_spin_unlock(&s.lock, key);
-                return;
-            }
+            if (braking) {
+                s.currentSpeed = Stepper::brakeSpeed(s.currentSpeed, s.cfg->deceleration, startSpeedOf(s),
+                                                     s.speedRemainderMicro);
+            } else {
+                int64_t distRemaining = positive ? (s.targetPos - s.currentPos) : (s.currentPos - s.targetPos);
+                bool flying = s.followMove && s.currentSpeed > startSpeedOf(s);
+                if (distRemaining == 0 && !flying) {
+                    s.running = false;
+                    reconcile(s);
+                    k_spin_unlock(&s.lock, key);
+                    return;
+                }
 
-            s.currentSpeed = Stepper::nextRampSpeed(s.currentSpeed, distRemaining, s.cfg->acceleration,
-                                                    s.cfg->deceleration, s.cfg->speedStart, maxSpeedOf(s),
-                                                    s.speedRemainderMicro);
+                int32_t speed = Stepper::nextRampSpeed(s.currentSpeed, distRemaining, s.cfg->acceleration,
+                                                       s.cfg->deceleration, s.cfg->speedStart, maxSpeedOf(s),
+                                                       s.speedRemainderMicro);
+                if (s.followMove && speed < s.currentSpeed) {
+                    // The wheel can pull the target closer than the axis can
+                    // stop in. Slow down no harder than the deceleration
+                    // rate; what is left carries the axis past the target and
+                    // it comes back.
+                    int32_t gentlest = Stepper::brakeSpeed(s.currentSpeed, s.cfg->deceleration, startSpeedOf(s),
+                                                           s.speedRemainderMicro);
+                    if (speed < gentlest) {
+                        speed = gentlest;
+                    }
+                }
+                s.currentSpeed = speed;
+            }
 
             armNext(s, 1000000 / s.currentSpeed);
             k_spin_unlock(&s.lock, key);
@@ -337,6 +371,19 @@ namespace Stepper
         k_spin_unlock(&s.lock, key);
     }
 
+    void followBy(Axis axis, int64_t deltaSteps, uint32_t lagUs)
+    {
+        AxisState &s = stateOf(axis);
+        k_spinlock_key_t key = k_spin_lock(&s.lock);
+        int64_t base = s.running ? s.targetPos : s.currentPos;
+        int64_t maxLag = (int64_t)maxSpeedOf(s) * lagUs / 1000000;
+        if (maxLag < 1) {
+            maxLag = 1;
+        }
+        moveToLocked(s, clampToLag(base + deltaSteps, s.currentPos, maxLag), 0, true);
+        k_spin_unlock(&s.lock, key);
+    }
+
     void runAhead(Axis axis, int direction, uint32_t horizonUs)
     {
         AxisState &s = stateOf(axis);
@@ -370,6 +417,7 @@ namespace Stepper
         AxisState &s = stateOf(axis);
         k_spinlock_key_t key = k_spin_lock(&s.lock);
         s.targetPos = s.currentPos;
+        s.followMove = false;
         int64_t pos = s.currentPos;
         k_spin_unlock(&s.lock, key);
         return pos;

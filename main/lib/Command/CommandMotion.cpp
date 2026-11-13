@@ -42,8 +42,13 @@ namespace
         int direction = rest[0] == '+' ? 1 : -1;
         const char *modifier = skipSpaces(rest + 1);
         bool isHold = !strcmp(modifier, "hold");
+        if (!strcmp(modifier, "release")) {
+            Jog::release(axis);
+            snprintf(out, outMax, "ok %s %c release", axisTok, rest[0]);
+            return;
+        }
         if (*modifier && !isHold) {
-            snprintf(out, outMax, "err jog %s +|- [hold]", axisTok);
+            snprintf(out, outMax, "err jog %s +|- [hold|release]", axisTok);
             return;
         }
         const char *refusal = isHold ? Jog::hold(axis, direction) : Jog::tap(axis, direction);
@@ -68,7 +73,7 @@ namespace Command::Detail
         Stepper::Axis axis;
         const char *rest;
         if (!takeAxis(a, "jog",
-                      "jog step [<deci-microns>] | z|x +|- [hold] | resolution <multiplier> | "
+                      "jog step [<deci-microns>] | z|x +|- [hold|release] | resolution <multiplier> | "
                       "speed <steps/sec|0> | status",
                       axisTok, axis, rest, out, outMax)) {
             return;
