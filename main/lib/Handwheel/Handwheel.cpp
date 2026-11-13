@@ -46,17 +46,24 @@ namespace
     K_THREAD_STACK_DEFINE(g_pollStack, 1024);
     struct k_thread g_pollThreadData;
 
+    // Caller holds g_mutex. Folds the hardware counters into the totals.
+    void sampleLocked()
+    {
+        int16_t curZ = (int16_t)pcnt_ll_get_count(g_hw, UNIT_Z);
+        int16_t curX = (int16_t)pcnt_ll_get_count(g_hw, UNIT_X);
+        g_accZ += (int16_t)(curZ - g_lastZ);
+        g_accX += (int16_t)(curX - g_lastX);
+        g_lastZ = curZ;
+        g_lastX = curX;
+    }
+
+    // Readers sample for themselves; this only keeps the 16-bit counters
+    // from wrapping unseen if nobody reads for a while.
     void pollLoop(void *, void *, void *)
     {
         while (true) {
-            int16_t curZ = (int16_t)pcnt_ll_get_count(g_hw, UNIT_Z);
-            int16_t curX = (int16_t)pcnt_ll_get_count(g_hw, UNIT_X);
-
             k_mutex_lock(&g_mutex, K_FOREVER);
-            g_accZ += (int16_t)(curZ - g_lastZ);
-            g_accX += (int16_t)(curX - g_lastX);
-            g_lastZ = curZ;
-            g_lastX = curX;
+            sampleLocked();
             k_mutex_unlock(&g_mutex);
 
             k_sleep(K_MSEC(POLL_PERIOD_MS));
@@ -82,6 +89,7 @@ namespace Handwheel
     int64_t z()
     {
         k_mutex_lock(&g_mutex, K_FOREVER);
+        sampleLocked();
         int64_t pos = g_accZ;
         k_mutex_unlock(&g_mutex);
         return Settings::g_active.z.invertHandwheel ? -pos : pos;
@@ -90,6 +98,7 @@ namespace Handwheel
     int64_t x()
     {
         k_mutex_lock(&g_mutex, K_FOREVER);
+        sampleLocked();
         int64_t pos = g_accX;
         k_mutex_unlock(&g_mutex);
         return Settings::g_active.x.invertHandwheel ? -pos : pos;

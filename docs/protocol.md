@@ -41,6 +41,20 @@ replies; see `docs/screen.md`.
   is the one command let through while tripped -- it clears the EStop and
   reboots.
 
+## Jog
+
+- `jog z|x +|-`: tap, moves one jog step (`jog step [<deci-microns>]`).
+- `jog z|x +|- hold`: sent every 100 ms while a button is held. Each one
+  keeps the target 200 ms of travel plus the stopping distance ahead, so
+  the axis stops by itself if the repeats stop.
+- `jog z|x +|- release`: sent when the button is let go after a hold. The
+  axis decelerates to rest at once. Ignored if no hold moved the axis.
+- `jog z|x resolution <multiplier>`, `jog z|x speed <steps/sec|0>`:
+  handwheel ratio and manual speed limit, not saved.
+- Handwheels: the axis follows the wheel count for count, at up to the
+  manual speed and acceleration. Its target leads it by at most 100 ms of
+  travel at the manual speed; counts beyond that are dropped.
+
 ## Modes
 
 - `mode [<name>]` selects (refused while running) or reports mode, run

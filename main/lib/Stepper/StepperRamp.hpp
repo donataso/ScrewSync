@@ -35,6 +35,12 @@ namespace Stepper
                           int32_t speedStartStepsPerSec, int32_t maxSpeedStepsPerSec,
                           int32_t &speedRemainderMicro);
 
+    // One step of slowing down at the deceleration rate with no target in
+    // reach, never below floorSpeed. For an axis that must lose speed before
+    // it can stop or turn round.
+    int32_t brakeSpeed(int32_t currentSpeedStepsPerSec, int32_t decelerationStepsPerSec2,
+                       int32_t floorSpeedStepsPerSec, int32_t &speedRemainderMicro);
+
     int64_t stoppingDistance(int32_t speedStepsPerSec, int32_t decelerationStepsPerSec2);
 
     // Distance to keep ahead of the axis so it can keep accelerating for

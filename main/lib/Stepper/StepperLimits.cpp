@@ -42,6 +42,17 @@ namespace Stepper
         return targetSteps;
     }
 
+    int64_t clampToLag(int64_t targetSteps, int64_t positionSteps, int64_t maxLagSteps)
+    {
+        if (targetSteps > positionSteps + maxLagSteps) {
+            return positionSteps + maxLagSteps;
+        }
+        if (targetSteps < positionSteps - maxLagSteps) {
+            return positionSteps - maxLagSteps;
+        }
+        return targetSteps;
+    }
+
     void trackStep(bool positive, int64_t backlash, int64_t &axisPos, int64_t &motorPos)
     {
         if (positive) {

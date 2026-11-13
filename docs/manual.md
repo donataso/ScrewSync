@@ -43,7 +43,9 @@ How to operate ScrewSync. For connectors and flashing, see
 
 ## Axes and jog
 
-- Tap a jog button to move one step. Hold it to move continuously.
+- Tap a jog button to move one step. Hold it to move continuously. When
+  you let go, the axis slows to a stop; how far that takes depends on the
+  axis's `deceleration` setting.
 - The step buttons set the jog step. "..." types a custom step.
 - The handwheels move the axes too.
 - →0 opens a choice: "Go to zero" moves the axis to 0, "Set zero" makes
