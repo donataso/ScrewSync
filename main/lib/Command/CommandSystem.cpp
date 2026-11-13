@@ -16,7 +16,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "CommandInternal.hpp"
+#include "Display.hpp"
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
 #include "DisplayImage.hpp"
+#endif
+#include "Ota.hpp"
+#include <zephyr/drivers/hwinfo.h>
+#include <zephyr/kernel.h>
+
+#ifndef FW_VERSION
+#error "FW_VERSION is not set"
+#endif
+#ifndef SCREWSYNC_TARGET
+#error "SCREWSYNC_TARGET is not set"
+#endif
 #include "RunSettings.hpp"
 #include "Settings.hpp"
 #include "WsCommand.hpp"
@@ -62,9 +75,55 @@ namespace Command::Detail
         }
     }
 
+    void info(const char *, char *out, size_t outMax)
+    {
+        static constexpr struct
+        {
+            uint32_t bit;
+            const char *name;
+        } CAUSES[] = {
+            {RESET_PIN, "pin"},
+            {RESET_SOFTWARE, "software"},
+            {RESET_BROWNOUT, "brownout"},
+            {RESET_POR, "power-on"},
+            {RESET_WATCHDOG, "watchdog"},
+            {RESET_DEBUG, "debug"},
+            {RESET_SECURITY, "security"},
+            {RESET_LOW_POWER_WAKE, "wake"},
+            {RESET_CPU_LOCKUP, "lockup"},
+            {RESET_PARITY, "parity"},
+            {RESET_PLL, "pll"},
+            {RESET_CLOCK, "clock"},
+            {RESET_HARDWARE, "hardware"},
+            {RESET_USER, "user"},
+            {RESET_TEMPERATURE, "temperature"},
+        };
+        uint32_t cause = 0;
+        char causes[96] = "unknown";
+        if (hwinfo_get_reset_cause(&cause) == 0) {
+            size_t n = 0;
+            causes[0] = '\0';
+            for (const auto &c : CAUSES) {
+                if ((cause & c.bit) && n < sizeof(causes)) {
+                    n += (size_t)snprintf(causes + n, sizeof(causes) - n, "%s%s", n ? "," : "", c.name);
+                }
+            }
+            if (!n) {
+                snprintf(causes, sizeof(causes), "none");
+            }
+        }
+        snprintf(out, outMax, "ok version=%s target=%s reset=%s uptime=%lld confirmed=%d", FW_VERSION, SCREWSYNC_TARGET,
+                 causes, k_uptime_get() / 1000, (int)Ota::isConfirmed());
+    }
+
     void display(const char *args, char *out, size_t outMax)
     {
         const char *a = skipSpaces(args);
+        if (!strcmp(a, "status")) {
+            snprintf(out, outMax, "ok connected=%d", (int)Display::connected());
+            return;
+        }
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
         if (!*a || !strcmp(a, "info")) {
             DisplayImage::Info i = DisplayImage::info();
             if (i.stored) {
@@ -83,8 +142,11 @@ namespace Command::Detail
                 snprintf(out, outMax, "ok display flash started");
             }
         } else {
-            snprintf(out, outMax, "err display info | flash");
+            snprintf(out, outMax, "err display status | info | flash");
         }
+#else
+        snprintf(out, outMax, "err display status");
+#endif
     }
 
     void units(const char *args, char *out, size_t outMax)

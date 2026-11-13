@@ -120,6 +120,11 @@ namespace Ota
         Machine::setFlashing(false);
     }
 
+    bool isConfirmed()
+    {
+        return g_confirmed;
+    }
+
     bool isActive()
     {
         return g_active;

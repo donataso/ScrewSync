@@ -1,6 +1,6 @@
 import { DU_PER_MM, type Step } from "./core"
 
-// Must match the "gcodePic" component's w/h in display/pages/page0.page.toml.
+// Must match the "gcodePic" component's w/h in displays/nextion-5in/pages/page0.page.toml.
 export const CANVAS_W = 464
 export const CANVAS_H = 288
 

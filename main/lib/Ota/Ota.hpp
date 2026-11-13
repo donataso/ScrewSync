@@ -40,6 +40,8 @@ namespace Ota
 
     void selfTestTick(uint32_t nowMs);
 
+    bool isConfirmed();
+
     bool isActive(); // diagnostic -- true between the first writeChunk() and finish()/abort()
 }
 

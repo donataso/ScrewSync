@@ -18,7 +18,7 @@
 #ifndef ProbeInput_h
 #define ProbeInput_h
 
-// The probe's digital input (app.overlay's probe-gpios): interrupt-driven,
+// The probe's digital input (the board overlay's probe-gpios): interrupt-driven,
 // NO/NC polarity from Settings::active.probePolarityNc. onEdge runs
 // synchronously from the GPIO ISR, so it must be ISR-safe (see
 // Stepper::haltNow).

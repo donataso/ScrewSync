@@ -22,7 +22,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/reboot.h>
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
 #include "DisplayImage.hpp"
+#endif
 #include "Ota.hpp"
 #include "WsCommand.hpp"
 
@@ -32,7 +34,9 @@ using WebHttp::reply;
 
 namespace
 {
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
     constexpr size_t DISPLAY_IMAGE_MAX = 2 * 1024 * 1024;
+#endif
 
     void rebootWork(struct k_work *)
     {
@@ -111,6 +115,7 @@ namespace
         return reply(response, HTTP_200_OK, "ok, rebooting\n");
     }
 
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
     uint8_t g_displayImage[DISPLAY_IMAGE_MAX] EXT_RAM_BSS;
 
     struct DisplayUpload
@@ -212,6 +217,7 @@ namespace
         snprintf(msg, sizeof(msg), "%s\n", outcome);
         return reply(response, ok ? HTTP_200_OK : HTTP_500_INTERNAL_SERVER_ERROR, msg);
     }
+#endif
 }
 
 namespace WebRoutes
@@ -222,9 +228,11 @@ namespace WebRoutes
         .user_data = nullptr,
     };
 
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
     struct http_resource_detail_dynamic g_updateDisplay = {
         .common = {.bitmask_of_supported_http_methods = BIT(HTTP_POST), .type = HTTP_RESOURCE_TYPE_DYNAMIC},
         .cb = handleUpdateDisplay,
         .user_data = nullptr,
     };
+#endif
 }

@@ -23,7 +23,9 @@
 namespace WebRoutes
 {
     extern struct http_resource_detail_dynamic g_update;
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
     extern struct http_resource_detail_dynamic g_updateDisplay;
+#endif
     extern struct http_resource_detail_dynamic g_preview;
     extern struct http_resource_detail_dynamic g_threads;
     extern struct http_resource_detail_dynamic g_backup;

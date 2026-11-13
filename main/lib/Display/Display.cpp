@@ -19,12 +19,16 @@
 #include "Command.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
-#include "config.hpp"
+#include "display_config.hpp"
 #include <stdio.h>
 #include <string.h>
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+
+#if !DT_HAS_CHOSEN(screwsync_display_uart)
+#error "Nextion display needs chosen screwsync,display-uart in the target overlay"
+#endif
 
 LOG_MODULE_REGISTER(display, LOG_LEVEL_INF);
 
@@ -109,7 +113,7 @@ namespace
         g_pageChangeMs = g_lastPongMs;
     }
 
-    // Globals of display/program.nx, outside the page attributes resync clears.
+    // Globals of displays/nextion-5in/program.nx, outside the page attributes resync clears.
     void pushLink(bool heartbeat)
     {
         static int sentFlashing = -1;
@@ -205,7 +209,7 @@ namespace Display
 {
     void begin()
     {
-        Nextion::begin({DEVICE_DT_GET(DT_NODELABEL(uart1)), DISPLAY_LINK_BAUD, DISPLAY_UPLOAD_BAUD, handleFrame, service,
+        Nextion::begin({DEVICE_DT_GET(DT_CHOSEN(screwsync_display_uart)), DISPLAY_LINK_BAUD, DISPLAY_UPLOAD_BAUD, handleFrame, service,
                         resumed});
         // No per-command return codes from the display.
         writeCommand("bkcmd=2");

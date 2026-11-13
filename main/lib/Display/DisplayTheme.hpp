@@ -22,10 +22,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// Values shared with display/ and scripts/screenshots.py.
+// Values shared with displays/nextion-5in/ and scripts/screenshots.py.
 namespace Display::Theme
 {
-    // RGB565, matching display/pages/page0.page.toml.
+    // RGB565, matching displays/nextion-5in/pages/page0.page.toml.
     constexpr int COLOR_SELECTED = 7037;
     constexpr int COLOR_BUTTON = 8485;
     constexpr int COLOR_BUTTON_PRESSED = 12711;
@@ -43,11 +43,11 @@ namespace Display::Theme
     constexpr int COLOR_NOT_SET = 64138;
     constexpr int COLOR_SETTINGS = 10829; // matches menuSettings's bco
 
-    // display/app.toml font order; arrows exist only in the symbols font.
+    // displays/nextion-5in/app.toml font order; arrows exist only in the symbols font.
     constexpr int FONT_LABEL = 0;
     constexpr int FONT_SYMBOLS = 2;
 
-    // Mode panel cell types (cKindN.val), matching display/pages/page0.nx.
+    // Mode panel cell types (cKindN.val), matching displays/nextion-5in/pages/page0.nx.
     // Value types pick the keypad's conversion; the cell's command gets the
     // typed value appended. Toggle cells hold two commands, "a|b".
     enum class CellType : uint8_t
@@ -62,7 +62,7 @@ namespace Display::Theme
         Latch = 7,
     };
 
-    // Page ids, display/app.toml order.
+    // Page ids, displays/nextion-5in/app.toml order.
     constexpr uint8_t PAGE_MAIN = 0;
     constexpr uint8_t PAGE_THREADS = 1;
 
@@ -72,7 +72,7 @@ namespace Display::Theme
     constexpr size_t PICKER_CELLS = ThreadTable::MAX_GROUP_ENTRIES;
     constexpr size_t TOAST_MAX_CHARS = 60; // page0 toast.txt_maxl
 
-    // Must match gcodePic and gcodeTool in display/pages/page0.page.toml.
+    // Must match gcodePic and gcodeTool in displays/nextion-5in/pages/page0.page.toml.
     constexpr char PREVIEW_PATH[] = "ram/preview.jpg";
     constexpr int PREVIEW_X = 320;
     constexpr int PREVIEW_Y = 80;

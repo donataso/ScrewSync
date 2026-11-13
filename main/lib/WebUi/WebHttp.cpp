@@ -25,7 +25,9 @@
 
 // Needed so request headers carry them: only registered headers are captured.
 HTTP_SERVER_REGISTER_HEADER_CAPTURE(CONTENT_LENGTH_CAPTURE, "Content-Length");
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
 HTTP_SERVER_REGISTER_HEADER_CAPTURE(DISPLAY_STORE_CAPTURE, "X-Display-Store");
+#endif
 
 namespace
 {
