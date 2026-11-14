@@ -18,8 +18,8 @@ import { Badge } from "./ui/primitives"
 import { ToastProvider } from "./ui/toast"
 
 const NAV = [
-  { path: "/gcode", label: "Gcode" },
   { path: "/mdi", label: "MDI" },
+  { path: "/gcode", label: "Gcode" },
   { path: "/threads", label: "Threads" },
   { path: "/settings", label: "Settings" },
   { path: "/calibration", label: "Calibration" },
@@ -30,8 +30,8 @@ const NAV = [
 ]
 
 function screenFor(path: string) {
-  if (path.startsWith("/mdi")) {
-return <MdiScreen />
+  if (path.startsWith("/gcode")) {
+return <GcodeScreen />
 }
   if (path.startsWith("/calibration")) {
 return <CalibrationScreen />
@@ -54,7 +54,7 @@ return <DeviceScreen />
   if (path.startsWith("/appearance")) {
 return <AppearanceScreen />
 }
-  return <GcodeScreen />
+  return <MdiScreen />
 }
 
 function availableWhenOffline(path: string) {
@@ -91,7 +91,7 @@ function AppShell() {
           <nav className="flex flex-wrap gap-1">
             {NAV.map((n) => {
               const active =
-                n.path === "/gcode"
+                n.path === "/mdi"
                   ? path === "/" || path === n.path || path.startsWith(n.path + "/")
                   : path === n.path || path.startsWith(n.path + "/")
               return (
