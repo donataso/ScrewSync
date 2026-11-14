@@ -143,6 +143,11 @@ User side: [pins.md](pins.md).
   axis's rapid speed).
 - A running mode owns the axes it drives. Any jog on an owned axis
   (handwheel, display button, `jog` command) stops the mode, then moves.
+- MDI lines run on the G-code step runner when no mode runs, and own both
+  axes while they move.
+- Positions are in du. `Machine::position()` is the machine coordinate,
+  from the stepper count. `Wcs` holds the work offset (G54, RAM only);
+  zeroing and the probe set it. The travel clamp is in machine coordinates.
 - Geometry is relative to the engage point; there are no global stops.
   Directions follow the display jog arrows: -X toward the centerline, -Z
   toward the chuck. Spindle counts increase in forward rotation. Pitches

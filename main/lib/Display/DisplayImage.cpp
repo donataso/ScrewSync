@@ -127,7 +127,7 @@ namespace DisplayImage
 
     const char *flashStored()
     {
-        if (Machine::state() != Machine::State::Idle || Mode::running()) {
+        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
             return "machine not idle";
         }
         if (!info().stored) {

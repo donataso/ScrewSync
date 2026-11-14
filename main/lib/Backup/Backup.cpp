@@ -187,7 +187,7 @@ namespace Backup
 
     const char *fromJson(char *json, size_t len)
     {
-        if (Machine::state() != Machine::State::Idle || Mode::running()) {
+        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
             return "machine not idle";
         }
         g_doc.settings = Settings::g_active;

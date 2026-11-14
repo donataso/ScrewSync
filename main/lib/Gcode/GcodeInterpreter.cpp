@@ -96,14 +96,23 @@ namespace Gcode
                 }
                 switch (code) {
                 case 0:
+                    if (hasMotionG) {
+                        return "two motion commands";
+                    }
                     motion_ = Motion::Rapid;
                     hasMotionG = true;
                     break;
                 case 10:
+                    if (hasMotionG) {
+                        return "two motion commands";
+                    }
                     motion_ = Motion::Feed;
                     hasMotionG = true;
                     break;
                 case 330:
+                    if (hasMotionG) {
+                        return "two motion commands";
+                    }
                     motion_ = Motion::Thread;
                     hasMotionG = true;
                     hasG33 = true;
@@ -208,10 +217,13 @@ namespace Gcode
         if ((hasG10 || hasM100) && (hasMotionG || (hasG10 && hasM100))) {
             return "axis words conflict";
         }
+        if (hasM110 && (hasZ || hasX) && !hasG10 && !hasM100) {
+            return "axis words conflict";
+        }
         if (hasG33 && !hasZ && !hasX) {
             return "G33 requires axis move";
         }
-        if (hasK && motion_ != Motion::Thread) {
+        if (hasK && (motion_ != Motion::Thread || hasG10 || hasM100)) {
             return "K requires G33";
         }
 

@@ -85,14 +85,23 @@ export class Interpreter {
           const code = exactTenths(w.value)
           switch (code) {
             case 0:
+              if (hasMotionG) {
+                return "two motion commands"
+              }
               this.motion = Motion.Rapid
               hasMotionG = true
               break
             case 10:
+              if (hasMotionG) {
+                return "two motion commands"
+              }
               this.motion = Motion.Feed
               hasMotionG = true
               break
             case 330:
+              if (hasMotionG) {
+                return "two motion commands"
+              }
               this.motion = Motion.Thread
               hasMotionG = true
               hasG33 = true
@@ -187,7 +196,7 @@ export class Interpreter {
     if (hasG33 && !hasZ && !hasX) {
       return "G33 requires axis move"
     }
-    if (hasK && this.motion !== Motion.Thread) {
+    if (hasK && (this.motion !== Motion.Thread || hasG10)) {
       return "K requires G33"
     }
 

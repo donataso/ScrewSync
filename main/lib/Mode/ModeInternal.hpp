@@ -116,6 +116,7 @@ namespace Mode::Detail
     const char *claim(Stepper::Axis axis);
     void releaseAxes();
     void setLastError(const char *reason);
+    void resetFeedOverride();
 
     // MDI runs its queued steps when no mode runs. mdiClear() drops the
     // queue and leaves the axes to the caller.

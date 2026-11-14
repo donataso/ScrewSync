@@ -185,7 +185,7 @@ namespace DisplayImage
 
     const char *storeBegin(uint32_t len, uint32_t crc)
     {
-        if (Machine::state() != Machine::State::Idle || Mode::running()) {
+        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
             return "machine not idle";
         }
         if (!claim()) {

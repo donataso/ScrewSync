@@ -50,11 +50,38 @@ namespace
         }
     };
 
-    // Claims each axis the steps move, starting from z/x.
-    const char *claimMoved(const LineSteps &line, int32_t z, int32_t x)
+    constexpr Stepper::Axis AXES[] = {Stepper::Axis::Z, Stepper::Axis::X};
+
+    uint8_t bit(Stepper::Axis axis)
+    {
+        return axis == Stepper::Axis::Z ? Gcode::AXIS_Z : Gcode::AXIS_X;
+    }
+
+    int32_t &target(Gcode::Step &s, Stepper::Axis axis)
+    {
+        return axis == Stepper::Axis::Z ? s.zDu : s.xDu;
+    }
+
+    // The last queued M100 for the axis turns it on.
+    bool enableQueued(Stepper::Axis axis)
+    {
+        bool on = false;
+        for (size_t i = 0; i < g_count; i++) {
+            const Gcode::Step &s = g_queue[(g_head + i) % QUEUE_LEN];
+            if (s.kind == Gcode::StepKind::Motors && (s.axes & bit(axis))) {
+                on = (axis == Stepper::Axis::Z ? s.zDu : s.xDu) != 0;
+            }
+        }
+        return on;
+    }
+
+    // Marks the axes each motion step moves, starting from z/x, and claims
+    // both axes. A disabled axis is not claimed; it is refused if it moves
+    // and no queued M100 turns it on.
+    const char *claimMoved(LineSteps &line, int32_t z, int32_t x)
     {
         for (size_t i = 0; i < line.count; i++) {
-            const Gcode::Step &s = line.steps[i];
+            Gcode::Step &s = line.steps[i];
             if (s.kind == Gcode::StepKind::SetPosition) {
                 z = s.zDu;
                 x = s.xDu;
@@ -62,19 +89,35 @@ namespace
             if (!isMotion(s.kind)) {
                 continue;
             }
-            const char *refusal = nullptr;
-            if (s.zDu != z) {
-                refusal = claim(Stepper::Axis::Z);
-            }
-            if (!refusal && s.xDu != x) {
-                refusal = claim(Stepper::Axis::X);
-            }
-            if (refusal) {
-                return refusal;
+            s.axes = (s.zDu != z ? Gcode::AXIS_Z : 0) | (s.xDu != x ? Gcode::AXIS_X : 0);
+            for (Stepper::Axis axis : AXES) {
+                if (!Stepper::isDisabled(axis)) {
+                    claim(axis);
+                } else if ((s.axes & bit(axis)) && !enableQueued(axis)) {
+                    return "axis disabled";
+                }
             }
             z = s.zDu;
             x = s.xDu;
         }
+        return nullptr;
+    }
+
+    // An axis the step does not move stays where it is now.
+    const char *beginMotion(const Gcode::Step &queued, int64_t spindlePos)
+    {
+        Gcode::Step s = queued;
+        for (Stepper::Axis axis : AXES) {
+            bool moves = s.axes & bit(axis);
+            if (!moves) {
+                target(s, axis) = (int32_t)Wcs::position(axis);
+            }
+            const char *refusal = moves || !Stepper::isDisabled(axis) ? claim(axis) : nullptr;
+            if (refusal) {
+                return refusal;
+            }
+        }
+        g_motion.begin(s, spindlePos);
         return nullptr;
     }
 
@@ -122,11 +165,15 @@ namespace Mode::Detail
             }
             return;
         }
+        const char *error = nullptr;
         if (!g_moving) {
-            g_motion.begin(s, spindlePos);
+            error = beginMotion(s, spindlePos);
+            if (error) {
+                fail(error);
+                return;
+            }
             g_moving = true;
         }
-        const char *error;
         bool done = g_motion.drive(s, spindlePos, false, error);
         if (error) {
             fail(error);
@@ -174,6 +221,9 @@ namespace Mode
                 Detail::releaseAxes();
             }
             return err;
+        }
+        if (!g_count && steps.count) {
+            Detail::resetFeedOverride();
         }
         for (size_t i = 0; i < steps.count; i++) {
             g_queue[(g_head + g_count) % QUEUE_LEN] = steps.steps[i];

@@ -21,3 +21,4 @@
   confirmation.
 - Printable connector label with the user's connector names.
 - Optional: live view of each input's level, to help identify wiring.
+- G-code: G92, G38.x, more WCS slots.

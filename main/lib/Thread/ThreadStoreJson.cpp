@@ -83,7 +83,7 @@ namespace ThreadStore
 
     const char *fromJson(char *json, size_t len)
     {
-        if (Machine::state() != Machine::State::Idle || Mode::running()) {
+        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
             return "machine not idle";
         }
         memset(&g_json, 0, sizeof(g_json));

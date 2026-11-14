@@ -102,15 +102,20 @@ namespace
         }
     }
 
+    int64_t workZeroSteps(Stepper::Axis axis)
+    {
+        return Mode::Detail::duToSteps(axis, (double)Wcs::toMachine(axis, 0));
+    }
+
     void tickHoming(int64_t spindlePos)
     {
         if (g_homing == Homing::Z) {
-            if (Mode::Detail::moveAndWait(Stepper::Axis::Z, 0)) {
+            if (Mode::Detail::moveAndWait(Stepper::Axis::Z, workZeroSteps(Stepper::Axis::Z))) {
                 g_homing = Homing::X;
             }
             return;
         }
-        if (!Mode::Detail::moveAndWait(Stepper::Axis::X, 0)) {
+        if (!Mode::Detail::moveAndWait(Stepper::Axis::X, workZeroSteps(Stepper::Axis::X))) {
             return;
         }
         g_homing = Homing::None;
@@ -207,6 +212,11 @@ namespace Mode::Detail
     void setLastError(const char *reason)
     {
         g_lastError = reason;
+    }
+
+    void resetFeedOverride()
+    {
+        g_overridePct = 100;
     }
 
     const char *claim(Stepper::Axis axis)

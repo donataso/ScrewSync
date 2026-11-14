@@ -7,15 +7,15 @@ The controller does not start, or does not talk to the display. A
 controller that runs with no saved network always opens a `ScrewSync-xxxx`
 access point.
 
-1. Read the boot log. Install pyserial and start the monitor:
+1. Read the boot log. Install pyserial and start the console:
 
    ```bash
    pip install pyserial
    python tools/console.py
    ```
 
-   The monitor reconnects automatically, so it also gets the first boot
-   messages. Power on the board and connect USB. When the monitor is
+   The console reconnects automatically, so it also gets the first boot
+   messages. Power on the board and connect USB. When the console is
    connected, type `reboot`.
 
 2. Get the flash chip data:
@@ -41,5 +41,5 @@ access point.
 3. If there is none, open a new issue. Write it in English. Include:
    - the board version
    - how you flashed the controller and the display (tool, file, address)
-   - the full monitor output after `reboot`
+   - the full console output after `reboot`
    - the `flash-id` output

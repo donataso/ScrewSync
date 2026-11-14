@@ -139,6 +139,8 @@ ZTEST(gcode_mdi, test_motors)
     zassert_not_null(mdi.line("M100", false, 4, sink));
     zassert_not_null(mdi.line("M100 Z2", false, 4, sink));
     zassert_not_null(mdi.line("G0 M100 Z1", false, 4, sink));
+    zassert_is_null(mdi.line("G33 Z-1 K1", false, 4, sink));
+    zassert_not_null(mdi.line("M100 Z1 K1", false, 4, sink));
 }
 
 ZTEST(gcode_mdi, test_spindle_angle)
@@ -152,6 +154,8 @@ ZTEST(gcode_mdi, test_spindle_angle)
     zassert_equal(sink.steps[0].feed, 90500);
     zassert_equal(sink.steps[1].feed, 0);
     zassert_not_null(mdi.line("G0 Z1 R5", false, 4, sink));
+    zassert_not_null(mdi.line("G0 Z1 M110", false, 4, sink));
+    zassert_is_null(mdi.line("M100 Z1 M110", false, 4, sink));
 }
 
 ZTEST(gcode_mdi, test_set_position_moves_session)

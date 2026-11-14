@@ -150,7 +150,8 @@ How to operate ScrewSync. For connectors and flashing, see
 
 ### MDI
 
-- On the serial console, type G-code lines (LinuxCNC), e.g. `G91 G0 Z-1`.
+- On the web client MDI tab or the serial console, type G-code lines
+  (LinuxCNC), e.g. `G91 G0 Z-1`.
   The modes (G90/G91, G20/G21, F) stay between lines. STOP or `stop`
   stops the move and drops the queued lines.
 - `G10 L20 P1 Z0` sets Z zero at the tool. `M100 X0` turns the X motor
@@ -166,5 +167,5 @@ How to operate ScrewSync. For connectors and flashing, see
 
 - A job also stops if you disable one of its axes, or if the display link
   is lost.
-- Each axis has a travel clamp around zero (`maxTravelMm`). The axis does
-  not move past it.
+- Each axis has a travel clamp around its power-on position
+  (`maxTravelMm`). The axis does not move past it.

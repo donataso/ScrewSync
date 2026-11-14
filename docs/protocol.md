@@ -56,6 +56,7 @@ replies; see `docs/screen.md`.
   gives every mode it needs, e.g. `@G21 G91 G0 Z1`.
 - Lines queue while a move runs; a full queue gives `err queue full`.
   Refused while a mode runs. `stop` stops both axes and clears the queue.
+- MDI owns both axes while it moves; a jog stops it.
 - G0 runs at `speedRapid`. G0/G1 move with the spindle stopped. The feed
   override applies to G1.
 - `G10 L20 P1 Z… X…`: the current position reads the given values (X is
@@ -72,7 +73,8 @@ replies; see `docs/screen.md`.
   depth pass of a multi-pass mode).
 - `override [status] | + | - | reset`: feed override of the running job
   or MDI move, percent of the set feed, clamped to `Mode::OVERRIDE_*_PCT`.
-  Refused when nothing runs or in thread; back to 100 on each `start`.
+  Refused when nothing runs or in thread; back to 100 on each `start` and
+  when MDI starts from an empty queue.
 - Parameters, one verb per mode: `<mode> [status]` lists `name=value ...`;
   `<mode> <param> <value>` sets one. Lengths/pitches in deci-microns,
   speeds in deci-microns per minute, tapers as half-angle degrees (+ =

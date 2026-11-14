@@ -319,7 +319,7 @@ namespace Pins
 
     const char *fromJson(char *json, size_t len)
     {
-        if (Machine::state() != Machine::State::Idle || Mode::running()) {
+        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
             return "machine not idle";
         }
         static Map map;
