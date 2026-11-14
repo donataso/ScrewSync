@@ -47,7 +47,7 @@ on page0.load:
   updateBlock()
 
 on page0.up:
-  tmJog.en = 0
+  jogCancel()
 
 function setToast(shown: number):
   vis toastShade,shown
@@ -64,7 +64,7 @@ function hideToast():
 // full-screen hotspot takes the next tap so it only dismisses. While
 // tripped (estop.val) it stays up and the tap acknowledges.
 on toastShow.down:
-  tmJog.en = 0
+  jogCancel()
   toastHint.txt = estop.val ? "tap to acknowledge" : "tap to dismiss"
   setToast(1)
   tmToast.en = 0

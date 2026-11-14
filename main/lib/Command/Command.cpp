@@ -19,6 +19,7 @@
 #include "CommandInternal.hpp"
 #include "Machine.hpp"
 #include "Motion.hpp"
+#include "Pins.hpp"
 #include <zephyr/sys/reboot.h>
 
 using namespace Command::Detail;
@@ -65,9 +66,9 @@ namespace
          "del <name|idx> | use <name|idx> | ap on|off | fallback on|off",
          "WiFi AP+STA control", wifi},
         {"settings", "settings get | set <field> <value> | set-all <json> | reset", "machine config storage", settings},
-        {"jog", "jog step [<deci-microns>] | z|x +|- [hold] | resolution <multiplier> | speed <steps/sec|0> | status",
-         "jog buttons (tap = one step, repeated hold = continuous), handwheel resolution/speed", jog},
-        {"move", "move z|x to|by <deci-microns> | stop", "manual positioning", move},
+        {"jog", "jog step [<deci-microns>|next] | z|x +|- [hold|release] | resolution <multiplier> | speed <steps/sec|0> | status",
+         "jog buttons (tap = one step, repeated hold = continuous, release = stop), handwheel resolution/speed", jog},
+        {"move", "move z|x to|by <deci-microns> | stop | zero", "manual positioning; zero = rapid Z then X to 0", move},
         {"mode", "mode [<name>|status]", "selects the operating mode (refused while running)", mode},
         {"start", "start [zero]", "starts the selected mode; zero = rapid Z then X to 0 first", start},
         {"stop", "stop", "stops the mode and decelerates both axes", stop},
@@ -101,6 +102,8 @@ namespace
 #else
         {"display", "display status", "display link", display},
 #endif
+        {"pins", "pins [reset]", "pin map in use (saved or board defaults) / saves the board defaults, applies after reboot",
+         pins},
         {"units", "units [mm|inch]", "display units", units},
         {"ws", "ws list | kill <n>", "web UI WebSocket clients: numbered list / closes one", ws},
         {"zero", "zero z|x [<deci-microns>] | spindle",
@@ -153,6 +156,21 @@ namespace Command::Detail
         return true;
     }
 
+    bool startsMotion(const char *token, size_t tokLen, const char *args)
+    {
+        args = skipSpaces(args);
+        if (tokLen == 5 && !strncmp(token, "start", 5)) {
+            return true;
+        }
+        if (tokLen == 4 && !strncmp(token, "move", 4)) {
+            return strcmp(args, "stop") != 0;
+        }
+        if (tokLen == 3 && !strncmp(token, "jog", 3)) {
+            return (args[0] == 'z' || args[0] == 'x') && args[1] == ' ';
+        }
+        return false;
+    }
+
     bool refuseUnlessIdle(char *out, size_t outMax)
     {
         if (Motion::idle()) {
@@ -182,6 +200,12 @@ namespace Command
         }
         if (st == Machine::State::EStop && !isEstop) {
             snprintf(out, outMax, "err busy: estop");
+            return;
+        }
+
+        const char *pinsFault = Pins::fault();
+        if (pinsFault && startsMotion(a, tokLen, a + tokLen)) {
+            snprintf(out, outMax, "err pins: %s", pinsFault);
             return;
         }
 

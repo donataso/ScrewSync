@@ -17,6 +17,8 @@
  */
 #include "DisplayInternal.hpp"
 #include "Command.hpp"
+#include "Events.hpp"
+#include "Pins.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
 #include "display_config.hpp"
@@ -44,6 +46,47 @@ namespace
     uint32_t g_lastPongMs = 0;
     uint32_t g_pageChangeMs = 0;
     bool g_alive = false;
+
+    struct k_spinlock g_toastLock;
+    char g_toast[Events::REFUSAL_MAX];
+    atomic_t g_toastPending = ATOMIC_INIT(0);
+
+    void onRefusal(const struct zbus_channel *chan)
+    {
+        const auto *msg = static_cast<const Events::Refusal *>(zbus_chan_const_msg(chan));
+        k_spinlock_key_t key = k_spin_lock(&g_toastLock);
+        strncpy(g_toast, msg->text, sizeof(g_toast) - 1);
+        k_spin_unlock(&g_toastLock, key);
+        atomic_set(&g_toastPending, 1);
+    }
+
+    void onRunning(const struct zbus_channel *)
+    {
+        pushSoon();
+    }
+
+    void showPendingToast()
+    {
+        if (!atomic_cas(&g_toastPending, 1, 0)) {
+            return;
+        }
+        char text[Events::REFUSAL_MAX];
+        k_spinlock_key_t key = k_spin_lock(&g_toastLock);
+        memcpy(text, g_toast, sizeof(text));
+        k_spin_unlock(&g_toastLock, key);
+        showToast(text);
+    }
+
+    void resyncAndWarn()
+    {
+        resync();
+        const char *pinsFault = Pins::fault();
+        if (pinsFault) {
+            char text[Events::REFUSAL_MAX];
+            snprintf(text, sizeof(text), "pins: %s", pinsFault);
+            showToast(text);
+        }
+    }
 
     const char *describeMessage(const uint8_t *data, size_t len)
     {
@@ -94,7 +137,7 @@ namespace
         Command::apply(line, reply, sizeof(reply));
         if (!strncmp(reply, "err", 3)) {
             LOG_WRN("'%s' -> %s", line, reply);
-            showToast(reply[3] == ' ' ? reply + 4 : reply);
+            Events::publishRefusal(reply);
         }
     }
 
@@ -168,7 +211,7 @@ namespace
             if (!g_alive) {
                 g_alive = true;
                 LOG_INF("display connected");
-                resync();
+                resyncAndWarn();
             }
             if (len >= 2) {
                 pageShown(data[1]);
@@ -179,7 +222,7 @@ namespace
             clearPreview();
             writeCommand("bkcmd=2");
             setPage(PAGE_MAIN);
-            resync();
+            resyncAndWarn();
             break;
         case 0x24:
             LOG_WRN("display serial buffer overflow");
@@ -194,6 +237,7 @@ namespace
     {
         updateLiveness();
         pushStatus();
+        showPendingToast();
     }
 
     void resumed(bool restarted)
@@ -204,6 +248,11 @@ namespace
         }
     }
 }
+
+ZBUS_LISTENER_DEFINE(DISPLAY_REFUSAL_LIS, onRefusal);
+ZBUS_CHAN_ADD_OBS(REFUSAL_CHAN, DISPLAY_REFUSAL_LIS, 3);
+ZBUS_LISTENER_DEFINE(DISPLAY_RUNNING_LIS, onRunning);
+ZBUS_CHAN_ADD_OBS(RUNNING_CHAN, DISPLAY_RUNNING_LIS, 3);
 
 namespace Display
 {

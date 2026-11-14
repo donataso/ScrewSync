@@ -3,6 +3,7 @@
 #include "Console.hpp"
 #include "PersistBlob.hpp"
 #include "Settings.hpp"
+#include "Pins.hpp"
 #include "Encoder.hpp"
 #include "Handwheel.hpp"
 #include "Stepper.hpp"
@@ -17,6 +18,8 @@
 #include "Wifi.hpp"
 #include "WebUi.hpp"
 #include "Display.hpp"
+#include "Switches.hpp"
+#include "Outputs.hpp"
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF); // Wifi declares against this module
 
@@ -25,6 +28,8 @@ int main(void)
     PersistBlob::preload();
     Machine::begin();
     Settings::load();
+    Pins::begin();
+    Outputs::begin();
     Encoder::begin();
     Handwheel::begin();
     Stepper::begin();
@@ -34,6 +39,7 @@ int main(void)
     ThreadStore::begin();
     Mode::begin();
     Jog::begin();
+    Switches::begin();
     Rpm::begin();
     Display::begin();
     Wifi::begin();

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  axisFields,
   MACHINE_CONFIG_FIELDS,
   MACHINE_CONFIG_SECTIONS,
   parseMachineConfig,
@@ -22,14 +23,18 @@ describe("machine config fields", () => {
     expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it("cover every section", () => {
-    expect(MACHINE_CONFIG_FIELDS).toHaveLength(MACHINE_CONFIG_SECTIONS.reduce((n, s) => n + s.fields.length, 0))
+  it("pair Z and X fields of the same setting", () => {
+    for (const p of MACHINE_CONFIG_SECTIONS.flatMap((s) => s.pairs ?? [])) {
+      expect(p.z.key.endsWith("Z"), p.z.key).toBe(true)
+      expect(p.x.key).toBe(`${p.z.key.slice(0, -1)}X`)
+    }
   })
 
-  it("give both axes the same fields", () => {
-    const keysOf = (axis: string) =>
-      MACHINE_CONFIG_SECTIONS.find((s) => s.title === `${axis} axis`)!.fields.map((f) => f.key.slice(0, -1))
-    expect(keysOf("X")).toEqual(keysOf("Z"))
+  it("show every axis field", () => {
+    const keys = MACHINE_CONFIG_FIELDS.map((f) => f.key)
+    for (const f of [...axisFields("Z"), ...axisFields("X")]) {
+      expect(keys).toContain(f.key)
+    }
   })
 
   it("have a valid range unless a checkbox", () => {

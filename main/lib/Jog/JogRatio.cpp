@@ -20,10 +20,13 @@
 
 namespace Jog
 {
-    int64_t jogTarget(int64_t originAxisPosSteps, int64_t originHandwheelCount, int64_t handwheelCount,
-                      int32_t motorSteps, float handwheelPpr, float resolutionMultiplier)
+    int64_t jogSteps(int64_t countDelta, int32_t motorSteps, float handwheelPpr, float resolutionMultiplier,
+                     double &remainder)
     {
         double stepsPerPulse = (double)motorSteps / (double)handwheelPpr * (double)resolutionMultiplier;
-        return originAxisPosSteps + (int64_t)llround((double)(handwheelCount - originHandwheelCount) * stepsPerPulse);
+        double exact = (double)countDelta * stepsPerPulse + remainder;
+        double whole = round(exact);
+        remainder = exact - whole;
+        return (int64_t)whole;
     }
 }

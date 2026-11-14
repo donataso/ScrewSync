@@ -6,13 +6,20 @@ function jogPress(dir: text):
   jogTicks.val = 0
   tmJog.en = 1
 
-function jogRelease():
+// Ends a press without a tap; a running hold stops.
+function jogCancel():
   if (tmJog.en) {
     tmJog.en = 0
-    if (jogTicks.val < HOLD_DELAY_TICKS) {
-      send("jog " + jogDir.txt)
+    if (jogTicks.val >= HOLD_DELAY_TICKS) {
+      send("jog " + jogDir.txt + " release")
     }
   }
+
+function jogRelease():
+  if (tmJog.en && jogTicks.val < HOLD_DELAY_TICKS) {
+    send("jog " + jogDir.txt)
+  }
+  jogCancel()
 
 on zPlus.down:
   if (zOn.val) {

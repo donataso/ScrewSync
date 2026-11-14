@@ -113,8 +113,8 @@ return
     try {
       const result = await uploadBackup(deviceBackupFile)
       if (result.ok) {
-        toast.push("Imported.", "good")
-        await sendCommand("settings get")
+        toast.push("Imported. Rebooting.", "good")
+        await sendCommand(cmd.reboot())
       } else {
 toast.push(`Import rejected: ${result.message}`, "bad")
 }
@@ -209,7 +209,7 @@ toast.push("Reboot requested.", "info")
           />
           {deviceBackupFile && <span className="text-sm text-muted-foreground">{deviceBackupFile.name}</span>}
           <Button variant="primary" disabled={busy || !configureOk || !deviceBackupFile} onClick={importDeviceBackup}>
-            Import
+            Import and reboot
           </Button>
         </div>
       </Panel>

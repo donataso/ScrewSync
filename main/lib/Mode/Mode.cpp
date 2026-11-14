@@ -18,6 +18,7 @@
 #include "ModeInternal.hpp"
 #include "RunSettings.hpp"
 #include "Encoder.hpp"
+#include "Events.hpp"
 #include "Machine.hpp"
 #include "Watchdog.hpp"
 #include <stdio.h>
@@ -92,11 +93,21 @@ namespace
         }
     }
 
+    void publishRunning(bool running)
+    {
+        Events::Running msg = {running};
+        Events::publish(&RUNNING_CHAN, &msg);
+    }
+
     void releaseAll()
     {
         releaseAxes();
+        bool wasRunning = g_active != nullptr;
         g_active = nullptr;
         g_homing = Homing::None;
+        if (wasRunning) {
+            publishRunning(false);
+        }
     }
 
     void tickHoming(int64_t spindlePos)
@@ -307,6 +318,7 @@ namespace Mode
         }
         g_active = ops;
         g_lastError = "";
+        publishRunning(true);
         return nullptr;
     }
 

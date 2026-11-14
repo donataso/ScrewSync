@@ -21,6 +21,7 @@
 #include "DisplayImage.hpp"
 #endif
 #include "Ota.hpp"
+#include "Pins.hpp"
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/kernel.h>
 
@@ -147,6 +148,26 @@ namespace Command::Detail
 #else
         snprintf(out, outMax, "err display status");
 #endif
+    }
+
+    void pins(const char *args, char *out, size_t outMax)
+    {
+        const char *a = skipSpaces(args);
+        if (!*a) {
+            snprintf(out, outMax, "ok source=%s", Pins::usingDefaults() ? "defaults" : "saved");
+        } else if (!strcmp(a, "reset")) {
+            if (refuseUnlessIdle(out, outMax)) {
+                return;
+            }
+            const char *refusal = Pins::reset();
+            if (refusal) {
+                snprintf(out, outMax, "err pins reset: %s", refusal);
+            } else {
+                snprintf(out, outMax, "ok pins reset, reboot to apply");
+            }
+        } else {
+            snprintf(out, outMax, "err pins [reset]");
+        }
     }
 
     void units(const char *args, char *out, size_t outMax)

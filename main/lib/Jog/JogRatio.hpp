@@ -23,9 +23,9 @@
 namespace Jog
 {
     // One handwheel turn = one leadscrew turn, scaled by resolutionMultiplier.
-    // Relative to the engagement origin; unused while Sync drives the axis.
-    int64_t jogTarget(int64_t originAxisPosSteps, int64_t originHandwheelCount, int64_t handwheelCount,
-                      int32_t motorSteps, float handwheelPpr, float resolutionMultiplier);
+    // Whole steps for a count change; the fraction stays in remainder.
+    int64_t jogSteps(int64_t countDelta, int32_t motorSteps, float handwheelPpr, float resolutionMultiplier,
+                     double &remainder);
 }
 
 #endif

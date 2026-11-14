@@ -33,6 +33,8 @@ namespace Motion
     // Each returns nullptr on success, else the reason.
     const char *moveTo(Stepper::Axis axis, int64_t du, int64_t &targetSteps);
     const char *moveBy(Stepper::Axis axis, int64_t du, int64_t &targetSteps);
+    // Rapid Z to 0, then X to 0.
+    const char *moveToZero();
     const char *zero(Stepper::Axis axis, int64_t du);
 
     void stop(Stepper::Axis axis);

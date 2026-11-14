@@ -27,6 +27,10 @@ namespace Handwheel
     // Signed handwheel count since boot, 2x-decoded (Settings handwheelPpr * 2 per rev).
     int64_t z();
     int64_t x();
+    // Jog step encoder count since boot, one per pulse.
+    int64_t jogStep();
+    // Feed override encoder count since boot, one per pulse.
+    int64_t feedOverride();
 }
 
 #endif

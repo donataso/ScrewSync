@@ -42,6 +42,9 @@ target_sources(app PRIVATE
     lib/Mode/ModeProbe.cpp
     lib/Mode/ProbeCycle.cpp
     lib/Probe/ProbeInput.cpp
+    lib/Pins/Pins.cpp
+    lib/Pins/PinMap.cpp
+    lib/Pins/PinMapJson.cpp
     lib/Thread/ThreadTable.cpp
     lib/Thread/ThreadStore.cpp
     lib/Thread/ThreadStoreJson.cpp
@@ -58,6 +61,9 @@ target_sources(app PRIVATE
     lib/Sync/SyncRatio.cpp
     lib/Jog/Jog.cpp
     lib/Jog/JogRatio.cpp
+    lib/Jog/JogStep.cpp
+    lib/Jog/JogStepDial.cpp
+    lib/Switches/Switches.cpp
     lib/Rpm/Rpm.cpp
     lib/Rpm/RpmCalc.cpp
     lib/Gcode/GcodeCore.cpp
@@ -76,6 +82,8 @@ target_sources(app PRIVATE
     lib/WebUi/WsMessages.cpp
     lib/Ota/Ota.cpp
     lib/LogRing/LogRing.cpp
+    lib/Events/Events.cpp
+    lib/Outputs/Outputs.cpp
 )
 
 target_include_directories(app PRIVATE
@@ -91,6 +99,8 @@ target_include_directories(app PRIVATE
     lib/Watchdog
     lib/Mode
     lib/Probe
+    lib/Pins
+    include
     lib/Thread
     lib/Backup
     lib/Encoder
@@ -98,6 +108,7 @@ target_include_directories(app PRIVATE
     lib/Stepper
     lib/Sync
     lib/Jog
+    lib/Switches
     lib/Rpm
     lib/Gcode
     lib/GcodeStore
@@ -107,6 +118,8 @@ target_include_directories(app PRIVATE
     lib/Wifi
     lib/WifiPortal
     lib/LogRing
+    lib/Events
+    lib/Outputs
     ${CMAKE_BINARY_DIR}/include
     # WsCommand reads a client's peer address from Zephyr's internal websocket context.
     ${ZEPHYR_BASE}/subsys/net/lib/websocket

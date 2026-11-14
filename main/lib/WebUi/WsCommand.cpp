@@ -24,6 +24,7 @@
 #include <zephyr/net/websocket.h>
 #include <zephyr/sys/util.h>
 #include "Command.hpp"
+#include "Events.hpp"
 #include "Settings.hpp"
 #include "Wifi.hpp"
 #include "Machine.hpp"
@@ -129,6 +130,22 @@ namespace
     char g_json[WS_MAX_CLIENTS][JSON_REPLY_BUF] EXT_RAM_BSS;
     char g_bigJson[WS_MAX_CLIENTS][JSON_BIG_BUF] EXT_RAM_BSS;
 
+    // One bit per slot: pushes that an event asked for.
+    constexpr atomic_val_t ALL_SLOTS = BIT_MASK(WS_MAX_CLIENTS);
+    static_assert(WS_MAX_CLIENTS <= ATOMIC_BITS, "one dirty bit per slot");
+    atomic_t g_settingsDirty = ATOMIC_INIT(0);
+    atomic_t g_statusDirty = ATOMIC_INIT(0);
+
+    void onSettings(const struct zbus_channel *)
+    {
+        atomic_set(&g_settingsDirty, ALL_SLOTS);
+    }
+
+    void onRunning(const struct zbus_channel *)
+    {
+        atomic_set(&g_statusDirty, ALL_SLOTS);
+    }
+
     void sendTo(int sock, const char *json, int len)
     {
         if (len <= 0) {
@@ -182,6 +199,16 @@ namespace
         return false;
     }
 
+    // A change is pushed to every client by the settings event.
+    bool isSettingsQuery(const char *line)
+    {
+        const char *args = strstr(line, "settings") + strlen("settings");
+        while (*args == ' ') {
+            args++;
+        }
+        return !*args || !strcmp(args, "get");
+    }
+
     int currentSock(int slot)
     {
         k_mutex_lock(&g_clientsLock, K_FOREVER);
@@ -207,6 +234,8 @@ namespace
 
         void greet()
         {
+            atomic_clear_bit(&g_settingsDirty, slot);
+            atomic_clear_bit(&g_statusDirty, slot);
             sendTo(sock, json, WsMessages::status(json, JSON_REPLY_BUF));
             sendTo(sock, bigJson, WsMessages::settings(bigJson, JSON_BIG_BUF));
             sendTo(sock, json, WsMessages::wifi(json, JSON_REPLY_BUF));
@@ -228,7 +257,10 @@ namespace
                 websocket_send_msg(sock, nullptr, 0, WEBSOCKET_OPCODE_PING, false, true, 1000);
                 lastPingMs = now;
             }
-            if (statusDue(now)) {
+            if (atomic_test_and_clear_bit(&g_settingsDirty, slot)) {
+                sendTo(sock, bigJson, WsMessages::settings(bigJson, JSON_BIG_BUF));
+            }
+            if (atomic_test_and_clear_bit(&g_statusDirty, slot) || statusDue(now)) {
                 sendTo(sock, json, WsMessages::status(json, JSON_REPLY_BUF));
                 bool scanBusy = Wifi::scanBusy();
                 if (wasScanBusy && !scanBusy) {
@@ -252,8 +284,8 @@ namespace
                 sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, verb, sp ? sp + 1 : ""));
             } else if (!strcmp(verb, "wifi")) {
                 broadcast(json, WsMessages::wifi(json, JSON_REPLY_BUF));
-            } else if (!strcmp(verb, "settings")) {
-                broadcast(bigJson, WsMessages::settings(bigJson, JSON_BIG_BUF));
+            } else if (!strcmp(verb, "settings") && isSettingsQuery(line)) {
+                sendTo(sock, bigJson, WsMessages::settings(bigJson, JSON_BIG_BUF));
             } else if (isStatusVerb(verb)) {
                 // Same throttle as idle(): a burst of commands must not raise the status rate.
                 uint32_t now = k_uptime_get_32();
@@ -363,6 +395,11 @@ namespace
         return 0;
     }
 }
+
+ZBUS_LISTENER_DEFINE(WS_SETTINGS_LIS, onSettings);
+ZBUS_CHAN_ADD_OBS(SETTINGS_CHAN, WS_SETTINGS_LIS, 3);
+ZBUS_LISTENER_DEFINE(WS_RUNNING_LIS, onRunning);
+ZBUS_CHAN_ADD_OBS(RUNNING_CHAN, WS_RUNNING_LIS, 3);
 
 struct http_resource_detail_websocket g_wsCommandDetail = {
     .common = {.bitmask_of_supported_http_methods = BIT(HTTP_GET), .type = HTTP_RESOURCE_TYPE_WEBSOCKET},

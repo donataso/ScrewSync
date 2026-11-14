@@ -28,7 +28,10 @@ namespace
     void jogStep(const char *v, char *out, size_t outMax)
     {
         long du;
-        if (!*v) {
+        if (!strcmp(v, "next")) {
+            RunSettings::nextJogStep();
+            snprintf(out, outMax, "ok step=%ld", (long)RunSettings::jogStepDu());
+        } else if (!*v) {
             snprintf(out, outMax, "ok step=%ld", (long)RunSettings::jogStepDu());
         } else if (!Command::Detail::parseLong(v, du) || !RunSettings::setJogStepDu((int32_t)du)) {
             snprintf(out, outMax, "err jog step <deci-microns> out of range");
@@ -42,8 +45,13 @@ namespace
         int direction = rest[0] == '+' ? 1 : -1;
         const char *modifier = skipSpaces(rest + 1);
         bool isHold = !strcmp(modifier, "hold");
+        if (!strcmp(modifier, "release")) {
+            Jog::release(axis);
+            snprintf(out, outMax, "ok %s %c release", axisTok, rest[0]);
+            return;
+        }
         if (*modifier && !isHold) {
-            snprintf(out, outMax, "err jog %s +|- [hold]", axisTok);
+            snprintf(out, outMax, "err jog %s +|- [hold|release]", axisTok);
             return;
         }
         const char *refusal = isHold ? Jog::hold(axis, direction) : Jog::tap(axis, direction);
@@ -68,7 +76,7 @@ namespace Command::Detail
         Stepper::Axis axis;
         const char *rest;
         if (!takeAxis(a, "jog",
-                      "jog step [<deci-microns>] | z|x +|- [hold] | resolution <multiplier> | "
+                      "jog step [<deci-microns>|next] | z|x +|- [hold|release] | resolution <multiplier> | "
                       "speed <steps/sec|0> | status",
                       axisTok, axis, rest, out, outMax)) {
             return;
@@ -102,10 +110,19 @@ namespace Command::Detail
 
     void move(const char *args, char *out, size_t outMax)
     {
+        if (!strcmp(skipSpaces(args), "zero")) {
+            const char *refusal = Motion::moveToZero();
+            if (refusal) {
+                snprintf(out, outMax, "err move zero: %s", refusal);
+            } else {
+                snprintf(out, outMax, "ok zero");
+            }
+            return;
+        }
         char axisTok[4];
         Stepper::Axis axis;
         const char *rest;
-        if (!takeAxis(args, "move", "move z|x to|by <deci-microns> | stop", axisTok, axis, rest, out, outMax)) {
+        if (!takeAxis(args, "move", "move zero | z|x to|by <deci-microns> | stop", axisTok, axis, rest, out, outMax)) {
             return;
         }
         if (!strcmp(rest, "stop")) {

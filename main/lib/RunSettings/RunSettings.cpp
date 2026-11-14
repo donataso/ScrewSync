@@ -17,6 +17,7 @@
  */
 #include "RunSettings.hpp"
 #include "PersistBlob.hpp"
+#include "JogStep.hpp"
 #include "config.hpp"
 #include <string.h>
 #include <zephyr/kernel.h>
@@ -25,12 +26,12 @@
 namespace
 {
     constexpr const char *NVS_NS = "state";
-    constexpr int32_t MAX_JOG_STEP_DU = 1000000;
     constexpr size_t MAX_MODE_PARAMS_SIZE = 128;
 
     K_MUTEX_DEFINE(g_lock);
     RunSettings::Units g_units = RunSettings::Units::Mm;
     int32_t g_jogStepDu = DEFAULT_JOG_STEP_DU;
+    int32_t g_customJogStepDu = 0;
     Mode::Id g_mode = Mode::Id::Gear;
 
     const char *disabledKey(Stepper::Axis axis)
@@ -81,6 +82,10 @@ namespace RunSettings
         if (!jogStepValid(g_jogStepDu)) {
             g_jogStepDu = DEFAULT_JOG_STEP_DU;
         }
+        loadValue("jogCustom", g_customJogStepDu);
+        if (!jogStepValid(g_customJogStepDu)) {
+            g_customJogStepDu = 0;
+        }
         loadValue("mode", g_mode);
         if ((size_t)g_mode >= Mode::COUNT) {
             g_mode = Mode::Id::Gear;
@@ -124,16 +129,38 @@ namespace RunSettings
     }
     bool jogStepValid(int32_t du)
     {
-        return du > 0 && du <= MAX_JOG_STEP_DU;
+        return du > 0 && du <= Jog::MAX_STEP_DU;
     }
 
-    bool setJogStepDu(int32_t du)
+    bool setJogStepDu(int32_t du, bool persist)
     {
         if (!jogStepValid(du)) {
             return false;
         }
-        store("jogStep", g_jogStepDu, du);
+        bool custom = !Jog::isStepPreset(du, units() == Units::Inch);
+        k_mutex_lock(&g_lock, K_FOREVER);
+        g_jogStepDu = du;
+        if (custom) {
+            g_customJogStepDu = du;
+        }
+        k_mutex_unlock(&g_lock);
+        if (persist) {
+            persistJogStep();
+        }
         return true;
+    }
+
+    void persistJogStep()
+    {
+        int32_t du = read(g_jogStepDu);
+        int32_t custom = read(g_customJogStepDu);
+        PersistBlob::save(NVS_NS, "jogStep", &du, sizeof(du));
+        PersistBlob::save(NVS_NS, "jogCustom", &custom, sizeof(custom));
+    }
+
+    void nextJogStep()
+    {
+        setJogStepDu(Jog::nextStep(jogStepDu(), read(g_customJogStepDu), units() == Units::Inch));
     }
 
     Mode::Id mode()

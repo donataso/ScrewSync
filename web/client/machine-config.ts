@@ -10,12 +10,19 @@ export interface MachineConfigField {
   type?: "checkbox"
 }
 
+export interface MachineConfigPair {
+  z: MachineConfigField
+  x: MachineConfigField
+  copy: boolean
+}
+
 export interface MachineConfigSection {
   title: string
   fields: MachineConfigField[]
+  pairs?: MachineConfigPair[]
 }
 
-function axisFields(axis: "Z" | "X"): MachineConfigField[] {
+export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
   const a = axis === "Z" ? "the carriage" : "the cross-slide"
   return [
     {
@@ -108,6 +115,15 @@ function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       help: `Physical pulses per revolution of the optional ${axis} handwheel encoder. Use the handwheel specification.`,
     },
     {
+      key: `handwheelLagMs${axis}`,
+      label: "Handwheel lag",
+      unit: "ms",
+      min: 1,
+      max: 1000,
+      step: 1,
+      help: `How far ${axis} may fall behind a fast handwheel, as time at the manual move speed. Turning beyond that is dropped, so ${axis} stops soon after the handwheel stops.`,
+    },
+    {
       key: `invertHandwheel${axis}`,
       label: "Invert handwheel direction",
       type: "checkbox",
@@ -122,13 +138,27 @@ function axisFields(axis: "Z" | "X"): MachineConfigField[] {
   ]
 }
 
+const Z_FIELDS = axisFields("Z")
+const X_FIELDS = axisFields("X")
+
+function pair(name: string, copy: boolean): MachineConfigPair {
+  const find = (fields: MachineConfigField[], key: string) => {
+    const f = fields.find((x) => x.key === key)
+    if (!f) {
+      throw new Error(`no field ${key}`)
+    }
+    return f
+  }
+  return { z: find(Z_FIELDS, `${name}Z`), x: find(X_FIELDS, `${name}X`), copy }
+}
+
 export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
   {
-    title: "Spindle encoder",
+    title: "Encoders",
     fields: [
       {
         key: "encoderPpr",
-        label: "Encoder PPR",
+        label: "Spindle encoder PPR",
         unit: "pulses/rev",
         min: 1,
         max: 15000,
@@ -137,7 +167,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
       },
       {
         key: "encoderBacklash",
-        label: "Encoder backlash",
+        label: "Spindle encoder backlash",
         unit: "pulses",
         min: 0,
         max: 30000,
@@ -146,14 +176,39 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
       },
       {
         key: "invertEncoder",
-        label: "Invert direction",
+        label: "Invert spindle encoder",
         type: "checkbox",
         help: "Toggle if the spindle position/RPM sign is reversed from the actual spindle rotation direction.",
       },
+      {
+        key: "axisEncoderBacklash",
+        label: "Handwheel backlash",
+        unit: "pulses",
+        min: 0,
+        max: 30000,
+        step: 1,
+        help: "Handwheel encoder pulses ignored after direction reverses. Set to 0 for direct encoders without mechanical play.",
+      },
+    ],
+    pairs: [pair("handwheelPpr", true), pair("handwheelLagMs", true), pair("invertHandwheel", true)],
+  },
+  {
+    title: "Drive",
+    fields: [],
+    pairs: [
+      pair("screwPitchDu", false),
+      pair("motorSteps", true),
+      pair("backlashDu", false),
+      pair("maxTravelMm", false),
+      pair("invertDirection", false),
+      pair("invertEnable", true),
     ],
   },
-  { title: "Z axis", fields: axisFields("Z") },
-  { title: "X axis", fields: axisFields("X") },
+  {
+    title: "Motion",
+    fields: [],
+    pairs: [pair("speedStart", true), pair("speedManualMove", true), pair("acceleration", true), pair("deceleration", true)],
+  },
   {
     title: "Manual movement",
     fields: [
@@ -174,15 +229,6 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
         max: 10000,
         step: 1,
         help: "Pause between repeated precision steps while a manual move button is held.",
-      },
-      {
-        key: "axisEncoderBacklash",
-        label: "Handwheel backlash",
-        unit: "pulses",
-        min: 0,
-        max: 30000,
-        step: 1,
-        help: "Handwheel encoder pulses ignored after direction reverses. Set to 0 for direct encoders without mechanical play.",
       },
     ],
   },
@@ -254,7 +300,10 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
   },
 ]
 
-export const MACHINE_CONFIG_FIELDS: MachineConfigField[] = MACHINE_CONFIG_SECTIONS.flatMap((s) => s.fields)
+export const MACHINE_CONFIG_FIELDS: MachineConfigField[] = MACHINE_CONFIG_SECTIONS.flatMap((s) => [
+  ...s.fields,
+  ...(s.pairs ?? []).flatMap((p) => [p.z, p.x]),
+])
 
 export function parseMachineConfig(data: unknown): Record<string, string> {
   const out: Record<string, string> = {}

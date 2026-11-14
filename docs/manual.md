@@ -11,6 +11,9 @@ How to operate ScrewSync. For connectors and flashing, see
   `invertDirectionZ` or `invertDirectionX`.
 - Encoder: the spindle angle must increase when the spindle turns
   forward. If it decreases, toggle `invertEncoder`.
+- Pins: to move a function to another connector pin, or to add switches
+  and outputs, use the Pins page on the web client. See
+  [pins.md](pins.md).
 
 ## Wi-Fi
 
@@ -46,6 +49,8 @@ How to operate ScrewSync. For connectors and flashing, see
 - Tap a jog button to move one step. Hold it to move continuously.
 - The step buttons set the jog step. "..." types a custom step.
 - The handwheels move the axes too.
+- Physical jog buttons, a step cycle button and a step encoder can be
+  added. See [pins.md](pins.md#jog).
 - →0 opens a choice: "Go to zero" moves the axis to 0, "Set zero" makes
   the current position 0.
 - Tap a position to type its value.

@@ -25,7 +25,8 @@
 
 // Runtime/operational state -- its own NVS namespace, separate from
 // Settings' machine config -- for things that change during normal use
-// rather than one-time calibration. Every setter persists immediately.
+// rather than one-time calibration. Every setter persists immediately,
+// except setJogStepDu with persist false.
 namespace RunSettings
 {
     enum class Units : uint8_t
@@ -49,8 +50,12 @@ namespace RunSettings
 
     int32_t jogStepDu();
     bool jogStepValid(int32_t du);
-    // False if out of range.
-    bool setJogStepDu(int32_t du);
+    // False if out of range. A step that is not a preset is also the custom step.
+    bool setJogStepDu(int32_t du, bool persist = true);
+    // Saves a step set with persist false.
+    void persistJogStep();
+    // The next preset, or the custom step after the last preset.
+    void nextJogStep();
 
     Mode::Id mode();
     void setMode(Mode::Id mode);

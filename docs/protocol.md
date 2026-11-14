@@ -37,6 +37,8 @@ replies; see `docs/screen.md`.
 - Serial/UART replies stay `ok [data]` / `err <reason>` (unchanged).
 - Any command on any transport gets `err busy: flashing`/`err busy: estop`
   instead of running while machine state is `flashing` or `estop`.
+- `jog step [<deci-microns>|next]`: shows or sets the jog step. `next`
+  selects the next preset, then the custom step, then the first preset.
 - `estop` / `estop ack`: `estop` alone replies `ok state=<name>`. `estop ack`
   is the one command let through while tripped -- it clears the EStop and
   reboots.
@@ -82,15 +84,24 @@ replies; see `docs/screen.md`.
   optional). Validated as a whole, then stored in full; replies `ok` or the
   reason. Names and designations may not contain spaces or commas.
 
+## Pin map (HTTP)
+
+- `GET /pins`: the board and the saved map.
+- `GET /pins/functions`: the function table.
+- `POST /pins`: validates and saves a map. Refused unless idle. Applies
+  after a reboot.
+
 ## Backup (HTTP)
 
 - `GET /backup`: one JSON file, `{"settings":{...}, "run":{units,
   jogStepDu, mode, disabledZ, disabledX, "modes":[{mode, params}]},
-  "threads":{...}}`. `settings` is the `settings` push's fields, `threads`
-  the `/threads` shape, `params` the `<mode> status` line.
+  "threads":{...}, "pins":{...}}`. `settings` is the `settings` push's
+  fields, `threads` the `/threads` shape, `params` the `<mode> status`
+  line, `pins` the `GET /pins` shape.
 - `POST /backup`: refused unless idle. Every section present is validated
   first, then all are applied; absent sections and fields keep their current
-  values. Replies `ok` or the reason.
+  values. `pins` is saved only if it differs from the saved map, and applies
+  after a reboot. Replies `ok` or the reason.
 
 ## G-code (HTTP)
 

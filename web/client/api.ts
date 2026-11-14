@@ -1,4 +1,5 @@
 import type { CmdOutcome } from "./types"
+import type { PinFunctionsJson, PinsJson, PinsUpdateJson } from "./pins"
 import type { ThreadTableJson } from "./threads"
 import { wsSend, wsNotifyFlashing, wsNotifyFlashed } from "./ws"
 
@@ -109,6 +110,28 @@ throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}
 
 export async function saveThreads(table: ThreadTableJson): Promise<{ ok: boolean; message: string }> {
   const res = await fetch("/threads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(table) })
+  const message = (await res.text().catch(() => "")).trim()
+  return { ok: res.ok, message }
+}
+
+export async function fetchPins(): Promise<PinsJson> {
+  const res = await fetch("/pins")
+  if (!res.ok) {
+    throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function fetchPinFunctions(): Promise<PinFunctionsJson> {
+  const res = await fetch("/pins/functions")
+  if (!res.ok) {
+    throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function savePins(update: PinsUpdateJson): Promise<{ ok: boolean; message: string }> {
+  const res = await fetch("/pins", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(update) })
   const message = (await res.text().catch(() => "")).trim()
   return { ok: res.ok, message }
 }

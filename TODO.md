@@ -10,8 +10,14 @@
   the missing input/UI
 - DRO from glass scales, per axis: a present scale is the source of truth
   for position, otherwise motor steps. Needs a DRO panel; fixed stops in
-  machine coordinates can be revisited then.
+  machine coordinates can be revisited then. Scale functions need their
+  own default encoder filter, short enough for their fastest edges.
 - Hide an absent X motor or DRO everywhere in the UI (display and web),
   with no greyed-out placeholders, including the modes that need X.
 - add joystick support
-
+- Pin map: test on the lathe (motors, spindle, probe, switches, output, a
+  moved function).
+- Pin map: reset to board defaults from the display menu, with a
+  confirmation.
+- Printable connector label with the user's connector names.
+- Optional: live view of each input's level, to help identify wiring.

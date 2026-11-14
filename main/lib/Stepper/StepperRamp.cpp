@@ -74,6 +74,15 @@ namespace Stepper
         return speed;
     }
 
+    int32_t brakeSpeed(int32_t currentSpeedStepsPerSec, int32_t decelerationStepsPerSec2,
+                       int32_t floorSpeedStepsPerSec, int32_t &speedRemainderMicro)
+    {
+        int32_t lastPeriodUs = 1000000 / currentSpeedStepsPerSec;
+        int32_t speed =
+            currentSpeedStepsPerSec - speedChange(decelerationStepsPerSec2, lastPeriodUs, speedRemainderMicro);
+        return speed < floorSpeedStepsPerSec ? floorSpeedStepsPerSec : speed;
+    }
+
     int64_t stoppingDistance(int32_t speedStepsPerSec, int32_t decelerationStepsPerSec2)
     {
         return ((int64_t)speedStepsPerSec * speedStepsPerSec) / (2 * (int64_t)decelerationStepsPerSec2);

@@ -19,6 +19,7 @@
 #include "StepperLimits.hpp"
 
 using Stepper::backlashSteps;
+using Stepper::clampToLag;
 using Stepper::clampToTravel;
 using Stepper::maxTravelSteps;
 using Stepper::trackStep;
@@ -116,4 +117,16 @@ ZTEST(stepper_limits, test_track_step_partial_reversal)
     trackStep(true, BACKLASH, axis, motor);
     zassert_equal(axis, 1);
     zassert_equal(motor, 1);
+}
+
+ZTEST(stepper_limits, test_lag_within_limit_unchanged)
+{
+    zassert_equal(clampToLag(1500, 1000, 1280), 1500);
+    zassert_equal(clampToLag(-200, 1000, 1280), -200);
+}
+
+ZTEST(stepper_limits, test_lag_clamped_around_position)
+{
+    zassert_equal(clampToLag(9000, 1000, 1280), 2280);
+    zassert_equal(clampToLag(-9000, 1000, 1280), -280);
 }

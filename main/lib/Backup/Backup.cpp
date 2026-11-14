@@ -19,6 +19,7 @@
 #include "JsonSpan.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
+#include "Pins.hpp"
 #include "RunSettings.hpp"
 #include "Settings.hpp"
 #include "Stepper.hpp"
@@ -67,6 +68,7 @@ namespace
     Doc &g_doc = *reinterpret_cast<Doc *>(g_docStorage);
     ThreadTable::Table g_table EXT_RAM_BSS;
     char g_params[Mode::COUNT][PARAMS_MAX] EXT_RAM_BSS;
+    PinMap::Map g_pins EXT_RAM_BSS;
 
     const struct json_obj_descr MODE_DESCR[] = {
         JSON_OBJ_DESCR_PRIM(ModeJson, mode, JSON_TOK_STRING),
@@ -161,7 +163,25 @@ namespace Backup
         ThreadStore::snapshot(g_table);
         ThreadStore::toJson(g_table, g_doc.threads);
         int rc = json_obj_encode_buf(DOC_DESCR, ARRAY_SIZE(DOC_DESCR), &g_doc, out, outMax);
-        return rc == 0 ? (int)strlen(out) : -1;
+        if (rc != 0) {
+            return -1;
+        }
+        // Spliced in: the pins document is encoded by PinMapJson.
+        static const char PINS_KEY[] = ",\"pins\":";
+        size_t len = strlen(out) - 1;
+        if (len + sizeof(PINS_KEY) + 1 >= outMax) {
+            return -1;
+        }
+        memcpy(out + len, PINS_KEY, sizeof(PINS_KEY));
+        len += sizeof(PINS_KEY) - 1;
+        int pinsLen = Pins::toJson(out + len, outMax - len - 1);
+        if (pinsLen < 0) {
+            return -1;
+        }
+        len += (size_t)pinsLen;
+        out[len++] = '}';
+        out[len] = '\0';
+        return (int)len;
     }
 
     const char *fromJson(char *json, size_t len)
@@ -172,6 +192,9 @@ namespace Backup
         g_doc.settings = Settings::g_active;
         currentRun(g_doc.run);
         memset(&g_doc.threads, 0, sizeof(g_doc.threads));
+        char *pinsJson;
+        size_t pinsLen;
+        bool hasPins = JsonSpan::findObject(json, len, "pins", pinsJson, pinsLen);
         char *settingsJson;
         size_t settingsLen;
         bool hasSettings = JsonSpan::findObject(json, len, "settings", settingsJson, settingsLen);
@@ -180,7 +203,7 @@ namespace Backup
             return "bad json";
         }
         int64_t mask = json_obj_parse(json, len, PARSE_DESCR, ARRAY_SIZE(PARSE_DESCR), &g_doc);
-        if (mask < 0 || (mask == 0 && !hasSettings)) {
+        if (mask < 0 || (mask == 0 && !hasSettings && !hasPins)) {
             return "bad json";
         }
         bool hasRun = mask & BIT(0);
@@ -203,7 +226,22 @@ namespace Backup
                 return reason;
             }
         }
+        if (hasPins) {
+            refusal = Pins::parse(pinsJson, pinsLen, g_pins);
+            if (refusal) {
+                snprintf(reason, sizeof(reason), "pins: %s", refusal);
+                return reason;
+            }
+        }
 
+        // First, so that a failed save leaves everything unchanged.
+        if (hasPins) {
+            refusal = Pins::saveIfChanged(g_pins);
+            if (refusal) {
+                snprintf(reason, sizeof(reason), "pins: %s", refusal);
+                return reason;
+            }
+        }
         if (hasSettings) {
             Settings::replace(g_doc.settings);
         }
