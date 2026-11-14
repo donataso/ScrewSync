@@ -55,7 +55,7 @@ namespace Stepper
 
     // Requests the axis move to targetSteps (motor steps from power-on
     // zero), ramped per Settings::active.{z,x} acceleration/speedStart.
-    // maxSpeed caps this move, 0 = speedManualMove (or the override).
+    // maxSpeed caps this move, 0 = speedRapid (or the override).
     // Safe to call again mid-move to redirect the target. Returns the
     // accepted target: differs when travel-clamped or refused.
     int64_t moveTo(Axis axis, int64_t targetSteps, int32_t maxSpeed = 0);
@@ -68,7 +68,7 @@ namespace Stepper
     void moveBy(Axis axis, int64_t deltaSteps);
 
     // Handwheel: like moveBy, but the target stays within lagUs of travel
-    // at the manual speed. A fast axis whose target is reached or reversed
+    // at the rapid speed. A fast axis whose target is reached or reversed
     // slows at the deceleration rate and stops there; steps sent while it
     // slows are dropped.
     void followBy(Axis axis, int64_t deltaSteps, uint32_t lagUs);
@@ -96,7 +96,7 @@ namespace Stepper
 
     // Runtime max-speed override for moveTo() (e.g. a touchscreen jog-speed
     // slider): 0 clears it, falling back to Settings::active.{z,x}'s
-    // configured speedManualMove. Not persisted -- deliberately separate
+    // configured speedRapid. Not persisted -- deliberately separate
     // from that configured default rather than overwriting it.
     void setSpeedOverride(Axis axis, int32_t speedStepsPerSec);
 }

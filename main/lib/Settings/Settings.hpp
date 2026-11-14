@@ -32,14 +32,14 @@ namespace Settings
         int32_t speedStart;
         int32_t acceleration;
         int32_t deceleration;
-        int32_t speedManualMove;
+        int32_t speedRapid;
         bool invertDirection;
         bool invertEnable;
         int32_t maxTravelMm;
         int32_t backlashDu;
         float handwheelPpr;
         bool invertHandwheel;
-        // How far the handwheel target may lead the axis, as travel time at the manual speed.
+        // How far the handwheel target may lead the axis, as travel time at the rapid speed.
         int32_t handwheelLagMs;
     };
 

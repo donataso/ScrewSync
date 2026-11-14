@@ -41,7 +41,13 @@ namespace Settings
 
     extern const Field FIELDS[CONF_JSON_FIELDS];
 
+    // By current or old name.
     const Field *findField(const char *name);
+    // The old name of a renamed field, else nullptr.
+    const char *oldName(const Field &field);
+    // Parses a JSON object into conf. Old names are accepted; the current
+    // name wins if both are present. Mask bits are FIELDS indices.
+    int64_t parseJson(char *json, size_t len, Conf &conf);
     void *fieldPtr(const Field &field, Conf &conf);
     const void *fieldPtr(const Field &field, const Conf &conf);
     size_t fieldSize(const Field &field);

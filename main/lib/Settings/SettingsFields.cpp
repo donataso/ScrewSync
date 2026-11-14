@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <zephyr/sys/util.h>
 
 namespace
 {
@@ -77,7 +78,7 @@ namespace Settings
         {"speedStartZ", FieldType::I32, offsetof(Conf, z.speedStart), 1, 1000000},
         {"accelerationZ", FieldType::I32, offsetof(Conf, z.acceleration), 1, 100000000},
         {"decelerationZ", FieldType::I32, offsetof(Conf, z.deceleration), 1, 100000000},
-        {"speedManualMoveZ", FieldType::I32, offsetof(Conf, z.speedManualMove), 1, 1000000},
+        {"speedRapidZ", FieldType::I32, offsetof(Conf, z.speedRapid), 1, 1000000},
         {"invertDirectionZ", FieldType::Bool, offsetof(Conf, z.invertDirection), 0, 0},
         {"invertEnableZ", FieldType::Bool, offsetof(Conf, z.invertEnable), 0, 0},
         {"maxTravelMmZ", FieldType::I32, offsetof(Conf, z.maxTravelMm), 1, 10000},
@@ -90,7 +91,7 @@ namespace Settings
         {"speedStartX", FieldType::I32, offsetof(Conf, x.speedStart), 1, 1000000},
         {"accelerationX", FieldType::I32, offsetof(Conf, x.acceleration), 1, 100000000},
         {"decelerationX", FieldType::I32, offsetof(Conf, x.deceleration), 1, 100000000},
-        {"speedManualMoveX", FieldType::I32, offsetof(Conf, x.speedManualMove), 1, 1000000},
+        {"speedRapidX", FieldType::I32, offsetof(Conf, x.speedRapid), 1, 1000000},
         {"invertDirectionX", FieldType::Bool, offsetof(Conf, x.invertDirection), 0, 0},
         {"invertEnableX", FieldType::Bool, offsetof(Conf, x.invertEnable), 0, 0},
         {"maxTravelMmX", FieldType::I32, offsetof(Conf, x.maxTravelMm), 1, 10000},
@@ -121,7 +122,7 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedStartZ", z.speedStart, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "accelerationZ", z.acceleration, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "decelerationZ", z.deceleration, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedManualMoveZ", z.speedManualMove, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedRapidZ", z.speedRapid, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertDirectionZ", z.invertDirection, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertEnableZ", z.invertEnable, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "maxTravelMmZ", z.maxTravelMm, JSON_TOK_NUMBER),
@@ -135,7 +136,7 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedStartX", x.speedStart, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "accelerationX", x.acceleration, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "decelerationX", x.deceleration, JSON_TOK_NUMBER),
-        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedManualMoveX", x.speedManualMove, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedRapidX", x.speedRapid, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertDirectionX", x.invertDirection, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertEnableX", x.invertEnable, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "maxTravelMmX", x.maxTravelMm, JSON_TOK_NUMBER),
@@ -145,6 +146,21 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelLagMsX", x.handwheelLagMs, JSON_TOK_NUMBER),
     };
 
+    const struct json_obj_descr RENAMED_JSON_DESCR[] = {
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedManualMoveZ", z.speedRapid, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "speedManualMoveX", x.speedRapid, JSON_TOK_NUMBER),
+    };
+
+    size_t fieldIndexAt(size_t offset)
+    {
+        for (size_t i = 0; i < CONF_JSON_FIELDS; i++) {
+            if (FIELDS[i].offset == offset) {
+                return i;
+            }
+        }
+        return CONF_JSON_FIELDS;
+    }
+
     const Field *findField(const char *name)
     {
         for (const Field &f : FIELDS) {
@@ -152,7 +168,41 @@ namespace Settings
                 return &f;
             }
         }
+        for (const auto &d : RENAMED_JSON_DESCR) {
+            if (!strcmp(d.field_name, name)) {
+                return &FIELDS[fieldIndexAt(d.offset)];
+            }
+        }
         return nullptr;
+    }
+
+    const char *oldName(const Field &field)
+    {
+        for (const auto &d : RENAMED_JSON_DESCR) {
+            if (d.offset == field.offset) {
+                return d.field_name;
+            }
+        }
+        return nullptr;
+    }
+
+    int64_t parseJson(char *json, size_t len, Conf &conf)
+    {
+        // Old names first, so the current names overwrite them.
+        int64_t renamed = json_obj_parse(json, len, RENAMED_JSON_DESCR, ARRAY_SIZE(RENAMED_JSON_DESCR), &conf);
+        if (renamed < 0) {
+            return renamed;
+        }
+        int64_t mask = json_obj_parse(json, len, CONF_JSON_DESCR, CONF_JSON_FIELDS, &conf);
+        if (mask < 0) {
+            return mask;
+        }
+        for (size_t i = 0; i < ARRAY_SIZE(RENAMED_JSON_DESCR); i++) {
+            if (renamed & BIT64(i)) {
+                mask |= (int64_t)BIT64(fieldIndexAt(RENAMED_JSON_DESCR[i].offset));
+            }
+        }
+        return mask;
     }
 
     void *fieldPtr(const Field &f, Conf &conf)

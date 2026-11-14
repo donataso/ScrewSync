@@ -69,13 +69,13 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       help: "Initial step pulse rate when motion starts. Use a value the motor can start from reliably without missing steps.",
     },
     {
-      key: `speedManualMove${axis}`,
-      label: "Manual speed",
+      key: `speedRapid${axis}`,
+      label: "Rapid speed",
       unit: "steps/s",
       min: 1,
       max: 1000000,
       step: 1,
-      help: `Top speed for jogs and manual moves on ${axis}. Axis speed depends on both this value and steps per mm.`,
+      help: `Top speed for rapids, jogs and manual moves on ${axis}. Axis speed depends on both this value and steps per mm.`,
     },
     {
       key: `maxTravelMm${axis}`,
@@ -126,7 +126,7 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       min: 1,
       max: 1000,
       step: 1,
-      help: `How far ${axis} may fall behind a fast handwheel, as time at the manual move speed. Turning beyond that is dropped, so ${axis} stops soon after the handwheel stops.`,
+      help: `How far ${axis} may fall behind a fast handwheel, as time at the rapid speed. Turning beyond that is dropped, so ${axis} stops soon after the handwheel stops.`,
     },
     {
       key: `invertHandwheel${axis}`,
@@ -217,7 +217,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
   {
     title: "Motion",
     fields: [],
-    pairs: [pair("speedStart", true), pair("speedManualMove", true), pair("acceleration", true), pair("deceleration", true)],
+    pairs: [pair("speedStart", true), pair("speedRapid", true), pair("acceleration", true), pair("deceleration", true)],
   },
   {
     title: "Manual movement",

@@ -1,4 +1,4 @@
-.PHONY: all test format format-check tidy lint clean monitor
+.PHONY: all test format format-check tidy lint clean console monitor
 
 # Without a key file, MCUboot's default dev key signs the image.
 SIGNING_KEY ?= $(wildcard $(CURDIR)/private/key.pem)
@@ -44,7 +44,9 @@ lint: format-check web-lint tidy
 clean:
 	rm -rf $(addprefix $(CURDIR)/.build/,$(TARGETS)) $(TEST_ZEPHYR_BUILD)
 
-monitor:
-	python ./tools/monitor.py
+console:
+	python ./tools/console.py
+
+monitor: console
 
 -include Makefile.local

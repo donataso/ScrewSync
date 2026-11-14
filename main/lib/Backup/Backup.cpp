@@ -22,6 +22,7 @@
 #include "Pins.hpp"
 #include "RunSettings.hpp"
 #include "Settings.hpp"
+#include "SettingsFields.hpp"
 #include "Stepper.hpp"
 #include "ThreadStore.hpp"
 #include <stdio.h>
@@ -198,8 +199,7 @@ namespace Backup
         char *settingsJson;
         size_t settingsLen;
         bool hasSettings = JsonSpan::findObject(json, len, "settings", settingsJson, settingsLen);
-        if (hasSettings && json_obj_parse(settingsJson, settingsLen, Settings::CONF_JSON_DESCR,
-                                          Settings::CONF_JSON_FIELDS, &g_doc.settings) < 0) {
+        if (hasSettings && Settings::parseJson(settingsJson, settingsLen, g_doc.settings) < 0) {
             return "bad json";
         }
         int64_t mask = json_obj_parse(json, len, PARSE_DESCR, ARRAY_SIZE(PARSE_DESCR), &g_doc);

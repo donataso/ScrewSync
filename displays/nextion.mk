@@ -25,7 +25,7 @@ $(1)-build:
 
 # Uploads the .tft over the USB console, the firmware stores then flashes it.
 $(1)-serial:
-	python ./tools/monitor.py --tft $$($(1)_TFT) --exit-after-upload
+	python ./tools/console.py --tft $$($(1)_TFT) --exit-after-upload
 
 $(1)-screenshots:
 	. $(HOME)/apps/nxwright/.venv/bin/activate && python3 scripts/screenshots.py

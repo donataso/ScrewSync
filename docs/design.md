@@ -140,7 +140,7 @@ User side: [pins.md](pins.md).
 - One runner thread reads the spindle once per tick and ticks the running
   mode under the mode lock; every mode-driven move goes through
   `Stepper::moveTo()` with a speed cap (synced and rapid moves use the
-  axis's manual move speed).
+  axis's rapid speed).
 - A running mode owns the axes it drives. Any jog on an owned axis
   (handwheel, display button, `jog` command) stops the mode, then moves.
 - Geometry is relative to the engage point; there are no global stops.

@@ -41,7 +41,7 @@ replies; see `docs/screen.md`.
   selects the next preset, then the custom step, then the first preset.
 - `move z|x to|by <deci-microns> [<du/min>]`: absolute or relative move.
   The optional speed is in deci-microns per minute, capped at
-  `speedManualMove`; without it the move runs at `speedManualMove`.
+  `speedRapid`; without it the move runs at `speedRapid`.
 - `estop` / `estop ack`: `estop` alone replies `ok state=<name>`. `estop ack`
   is the one command let through while tripped -- it clears the EStop and
   reboots.

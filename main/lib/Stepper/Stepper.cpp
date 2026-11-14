@@ -59,8 +59,8 @@ namespace
         int64_t motorPos; // actual stepper shaft position; trails currentPos by
                            // up to backlashSteps right after a direction reversal
         int32_t currentSpeed;  // steps/sec
-        int32_t speedOverride; // steps/sec, 0 = use cfg->speedManualMove
-        int32_t moveMaxSpeed;  // steps/sec, 0 = speedOverride/speedManualMove
+        int32_t speedOverride; // steps/sec, 0 = use cfg->speedRapid
+        int32_t moveMaxSpeed;  // steps/sec, 0 = speedOverride/speedRapid
         bool dirLevel; // last direction written (true = positive)
         bool dirValid;
         bool running;
@@ -135,14 +135,14 @@ namespace
         }
     }
 
-    int32_t manualSpeedOf(const AxisState &s)
+    int32_t rapidSpeedOf(const AxisState &s)
     {
-        return s.speedOverride != 0 ? s.speedOverride : s.cfg->speedManualMove;
+        return s.speedOverride != 0 ? s.speedOverride : s.cfg->speedRapid;
     }
 
     int32_t maxSpeedOf(const AxisState &s)
     {
-        return s.moveMaxSpeed != 0 ? s.moveMaxSpeed : manualSpeedOf(s);
+        return s.moveMaxSpeed != 0 ? s.moveMaxSpeed : rapidSpeedOf(s);
     }
 
     int32_t startSpeedOf(const AxisState &s)
@@ -430,7 +430,7 @@ namespace Stepper
         k_spinlock_key_t key = k_spin_lock(&s.lock);
         if (!s.braking) {
             int64_t base = s.running ? s.targetPos : s.currentPos;
-            int64_t maxLag = (int64_t)manualSpeedOf(s) * lagUs / 1000000;
+            int64_t maxLag = (int64_t)rapidSpeedOf(s) * lagUs / 1000000;
             moveToLocked(s, clampToLag(base + deltaSteps, s.currentPos, maxLag > 0 ? maxLag : 1), 0, true);
         }
         k_spin_unlock(&s.lock, key);

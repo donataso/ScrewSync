@@ -42,13 +42,13 @@ namespace
         return nullptr;
     }
 
-    int32_t manualSpeed(Stepper::Axis axis, int32_t duPerMin)
+    int32_t rapidSpeed(Stepper::Axis axis, int32_t duPerMin)
     {
         if (duPerMin <= 0) {
             return 0;
         }
         const Settings::Axis &cfg = cfgOf(axis);
-        return Mode::Detail::feedStepsPerSec(duPerMin, cfg.motorSteps, cfg.screwPitchDu, cfg.speedManualMove);
+        return Mode::Detail::feedStepsPerSec(duPerMin, cfg.motorSteps, cfg.screwPitchDu, cfg.speedRapid);
     }
 
     atomic_t g_zeroThenX = ATOMIC_INIT(0);
@@ -103,13 +103,13 @@ namespace Motion
     const char *moveTo(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin)
     {
         targetSteps = duToSteps(axis, (double)du);
-        return moveToSteps(axis, targetSteps, manualSpeed(axis, duPerMin));
+        return moveToSteps(axis, targetSteps, rapidSpeed(axis, duPerMin));
     }
 
     const char *moveBy(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin)
     {
         targetSteps = Stepper::position(axis) + duToSteps(axis, (double)du);
-        return moveToSteps(axis, targetSteps, manualSpeed(axis, duPerMin));
+        return moveToSteps(axis, targetSteps, rapidSpeed(axis, duPerMin));
     }
 
     const char *moveToZero()

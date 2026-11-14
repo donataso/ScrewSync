@@ -33,34 +33,46 @@ namespace
     using Settings::FieldType;
     using Settings::g_active;
 
-    void loadField(const Field &f)
+    bool loadKey(const char *key, const Field &f)
     {
         void *ptr = Settings::fieldPtr(f, g_active);
         switch (f.type) {
         case FieldType::I32:
         {
             int32_t v;
-            if (PersistBlob::load(NVS_NS, f.name, &v, sizeof(v)) == sizeof(v)) {
+            if (PersistBlob::load(NVS_NS, key, &v, sizeof(v)) == sizeof(v)) {
                 *(int32_t *)ptr = v;
+                return true;
             }
             break;
         }
         case FieldType::Bool:
         {
             uint8_t v;
-            if (PersistBlob::load(NVS_NS, f.name, &v, sizeof(v)) == sizeof(v)) {
+            if (PersistBlob::load(NVS_NS, key, &v, sizeof(v)) == sizeof(v)) {
                 *(bool *)ptr = v != 0;
+                return true;
             }
             break;
         }
         case FieldType::Float:
         {
             float v;
-            if (PersistBlob::load(NVS_NS, f.name, &v, sizeof(v)) == sizeof(v)) {
+            if (PersistBlob::load(NVS_NS, key, &v, sizeof(v)) == sizeof(v)) {
                 *(float *)ptr = v;
+                return true;
             }
             break;
         }
+        }
+        return false;
+    }
+
+    void loadField(const Field &f)
+    {
+        const char *old = Settings::oldName(f);
+        if (!loadKey(f.name, f) && old) {
+            loadKey(old, f);
         }
     }
 
@@ -147,7 +159,7 @@ namespace Settings
         buf[len] = '\0';
 
         Conf temp = g_active;
-        int64_t mask = json_obj_parse(buf, len, CONF_JSON_DESCR, ARRAY_SIZE(CONF_JSON_DESCR), &temp);
+        int64_t mask = parseJson(buf, len, temp);
         if (mask < 0) {
             snprintf(out, outMax, "invalid json");
             return false;
@@ -156,7 +168,7 @@ namespace Settings
             return false;
         }
         for (size_t i = 0; i < CONF_JSON_FIELDS; i++) {
-            if (mask & BIT(i)) {
+            if (mask & BIT64(i)) {
                 const Field &f = FIELDS[i];
                 memcpy(fieldPtr(f, g_active), fieldPtr(f, temp), fieldSize(f));
                 saveField(f);

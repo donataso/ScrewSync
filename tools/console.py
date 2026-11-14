@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-"""monitor -- a plain passive serial monitor for screwsync.
+"""console -- a plain passive serial monitor for screwsync.
 
 Everything the device prints, printed; anything typed here, sent as a
 console line (e.g. `ping`). Unlike `west espressif monitor`/`pio device
@@ -27,9 +27,9 @@ cycle) instead of crashing -- start this first, then power-cycle the board,
 to catch its earliest boot output.
 
     pip install pyserial
-    python tools/monitor.py                 # autodetect a lone serial port
-    python tools/monitor.py --port /dev/ttyACM0
-    python tools/monitor.py --tft .build/release/nextion-5in/display.tft   # upload, flash, keep monitoring
+    python tools/console.py                 # autodetect a lone serial port
+    python tools/console.py --port /dev/ttyACM0
+    python tools/console.py --tft .build/release/nextion-5in/display.tft   # upload, flash, keep monitoring
 
 Typing `!tft [path]` uploads a display .tft the same way (default
 .build/release/nextion-5in/display.tft): the firmware stores it, then flashes the display.
@@ -65,12 +65,12 @@ def _stamp():
 def _upload_tft(state, path):
     ser = state["ser"]
     if ser is None:
-        print(f"{_stamp()} monitor: not connected", file=sys.stderr)
+        print(f"{_stamp()} console: not connected", file=sys.stderr)
         return
     try:
         image = Path(path).read_bytes()
     except OSError as e:
-        print(f"{_stamp()} monitor: {e}", file=sys.stderr)
+        print(f"{_stamp()} console: {e}", file=sys.stderr)
         return
     state["reply"] = None
     state["reply_event"].clear()
@@ -79,11 +79,11 @@ def _upload_tft(state, path):
     got = state["reply_event"].wait(UPLOAD_REPLY_TIMEOUT_S)
     state["await_reply"] = False
     if not got:
-        print(f"{_stamp()} monitor: no reply to display upload", file=sys.stderr)
+        print(f"{_stamp()} console: no reply to display upload", file=sys.stderr)
         return
     if state["reply"] != "ok upload ready":
         return
-    print(f"{_stamp()} monitor: uploading {path} ({len(image)} B)", file=sys.stderr)
+    print(f"{_stamp()} console: uploading {path} ({len(image)} B)", file=sys.stderr)
     last_pct = -1
     try:
         for off in range(0, len(image), UPLOAD_CHUNK):
@@ -91,10 +91,10 @@ def _upload_tft(state, path):
             pct = (off + UPLOAD_CHUNK) * 100 // len(image)
             if pct // 10 != last_pct // 10:
                 last_pct = pct
-                print(f"{_stamp()} monitor: {min(pct, 100)}%", file=sys.stderr)
+                print(f"{_stamp()} console: {min(pct, 100)}%", file=sys.stderr)
         ser.flush()
     except (serial.SerialException, OSError) as e:
-        print(f"{_stamp()} monitor: upload failed: {e}", file=sys.stderr)
+        print(f"{_stamp()} console: upload failed: {e}", file=sys.stderr)
 
 
 def _writer(state):
@@ -122,7 +122,7 @@ def main():
     ap.add_argument("--exit-after-upload", action="store_true", help="with --tft, exit once the display flash has started")
     args = ap.parse_args()
 
-    print(f"{_stamp()} monitor: waiting for a port @ {args.baud} -- Ctrl-C to stop", file=sys.stderr)
+    print(f"{_stamp()} console: waiting for a port @ {args.baud} -- Ctrl-C to stop", file=sys.stderr)
 
     state = {"ser": None, "reply": None, "reply_event": threading.Event(), "await_reply": False}
     pending_tft = args.tft
@@ -143,7 +143,7 @@ def main():
                 time.sleep(0.3)
                 ser.reset_input_buffer()  # drop whatever piled up before we started reading
                 buf = b""
-                print(f"{_stamp()} monitor: connected to {port}", file=sys.stderr)
+                print(f"{_stamp()} console: connected to {port}", file=sys.stderr)
                 state["ser"] = ser
                 if pending_tft:
                     threading.Thread(target=_upload_tft, args=(state, pending_tft), daemon=True).start()
@@ -152,7 +152,7 @@ def main():
             try:
                 chunk = state["ser"].read(256)
             except (serial.SerialException, OSError):
-                print(f"{_stamp()} monitor: disconnected, waiting to reconnect...", file=sys.stderr)
+                print(f"{_stamp()} console: disconnected, waiting to reconnect...", file=sys.stderr)
                 try:
                     state["ser"].close()
                 except Exception:

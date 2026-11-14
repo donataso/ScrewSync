@@ -11,7 +11,7 @@ access point.
 
    ```bash
    pip install pyserial
-   python tools/monitor.py
+   python tools/console.py
    ```
 
    The monitor reconnects automatically, so it also gets the first boot

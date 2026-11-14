@@ -30,7 +30,7 @@ namespace Motion
     // No mode running and the machine is Idle.
     bool idle();
 
-    // Each returns nullptr on success, else the reason. duPerMin 0 = speedManualMove.
+    // Each returns nullptr on success, else the reason. duPerMin 0 = speedRapid.
     const char *moveTo(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin = 0);
     const char *moveBy(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin = 0);
     // Rapid Z to 0, then X to 0.
