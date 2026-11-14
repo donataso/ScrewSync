@@ -153,7 +153,7 @@ User side: [pins.md](pins.md).
 - Turn, thread and slot share a pass engine (`ModePass`): plunge, cut,
   retract, return to start approaching in the cut direction (backlash taken
   up before the cut).
-- Thread mode, G32 and Gear share one helix per pitch: through axis 0 at
+- Thread mode, G-code threading (G33) and Gear share one helix per pitch: through axis 0 at
   spindle angle 0, offset per start. Passes and reruns land in the same
   groove; Gear holds the axis until the spindle reaches that phase.
 - A target the travel clamp cuts short, or a disabled axis, ends the job

@@ -36,7 +36,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - Spring pass at full depth.
 - Multiple starts, left/right hand, external/internal, tapered threads.
 - Reverse threading with an inverted tool, feeding away from the chuck.
-- Thread mode, G-code G32 and Gear follow one helix, so a rerun lands in
+- Thread mode, G-code threading and Gear follow one helix, so a rerun lands in
   the same groove. See [manual.md](manual.md), "Thread alignment".
 
 ## Probing
@@ -49,10 +49,13 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 ## G-code
 
 - Paste or upload programs on the web client, with a toolpath preview.
-  Made for [LatheCode](https://kachurovskiy.com/lathecode/).
+  [LatheCode](https://kachurovskiy.com/lathecode/) and standard LinuxCNC
+  G-code.
 - Programs are stored on the device and started from the display, which
   shows the preview, the tool position and step progress.
-- Linear moves, spindle-synchronized threading (G32), and M0/M1 pauses.
+- Linear moves, spindle-synchronized threading (G33; LatheCode G32),
+  G10 L20 position setting, and M0/M1 pauses.
+- MDI: G-code lines on the serial console, with modes kept between lines.
 - Programs with the wrong axis directions are refused; the web client
   offers to flip them.
 

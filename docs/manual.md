@@ -116,8 +116,9 @@ How to operate ScrewSync. For connectors and flashing, see
 
 ### Thread alignment
 
-- Thread mode, G32 and Gear follow the spindle angle zero and the axis
-  zero. Thus a rerun cuts in the same groove: stop, measure, run again.
+- Thread mode, G-code threading and Gear follow the spindle angle zero
+  and the axis zero. Thus a rerun cuts in the same groove: stop, measure,
+  run again.
 - If you re-zero the angle or the axis, or reboot, the next cut starts a
   new helix.
 - At start, Gear holds the axis for up to one spindle turn, until the
@@ -132,14 +133,18 @@ How to operate ScrewSync. For connectors and flashing, see
 ## G-code
 
 - Load programs on the web client. Start them on the display.
+- Two dialects: LatheCode and LinuxCNC. The web client finds LatheCode by
+  its header and takes any other text as LinuxCNC. You can change it.
 - Program zero is the tool zero: X0 on the centerline (X is radius), Z0
   where the program expects it (LatheCode: the right edge of the stock).
 - If the tool is not at zero, START asks you to confirm. The first move
   starts from the current tool position.
 - Generate LatheCode programs with `AXES RIGHT DOWN`. The web client
   refuses other directions and offers to flip the axes.
-- G1 feed is per minute along the path. G32 is synchronized to the
-  spindle. The feed override applies to G1 and G32, not to G0.
+- G1 feed is per minute along the path. G33 (LatheCode: G32) is
+  synchronized to the spindle; K is the lead. The feed override applies to
+  G1 only.
+- `G10 L20 P1 Z… X…` makes the current position read the given values.
 - Motion pauses while the spindle is stopped and continues when it turns.
 - M0/M1 pause until START. M2/M30 or STOP end the program.
 
