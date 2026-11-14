@@ -102,10 +102,19 @@ namespace Command::Detail
 
     void move(const char *args, char *out, size_t outMax)
     {
+        if (!strcmp(skipSpaces(args), "zero")) {
+            const char *refusal = Motion::moveToZero();
+            if (refusal) {
+                snprintf(out, outMax, "err move zero: %s", refusal);
+            } else {
+                snprintf(out, outMax, "ok zero");
+            }
+            return;
+        }
         char axisTok[4];
         Stepper::Axis axis;
         const char *rest;
-        if (!takeAxis(args, "move", "move z|x to|by <deci-microns> | stop", axisTok, axis, rest, out, outMax)) {
+        if (!takeAxis(args, "move", "move zero | z|x to|by <deci-microns> | stop", axisTok, axis, rest, out, outMax)) {
             return;
         }
         if (!strcmp(rest, "stop")) {

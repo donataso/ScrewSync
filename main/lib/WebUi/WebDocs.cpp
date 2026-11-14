@@ -24,6 +24,7 @@
 #include "LogRing.hpp"
 #include "Machine.hpp"
 #include "Pins.hpp"
+#include "PinMapJson.hpp"
 #include "ThreadStore.hpp"
 
 using WebHttp::reply;
@@ -164,6 +165,7 @@ namespace
     const JsonDocument BACKUP_DOC = {Backup::toJson, Backup::fromJson};
     const JsonDocument LOG_DOC = {LogRing::toJson, nullptr};
     const JsonDocument PINS_DOC = {Pins::toJson, Pins::fromJson};
+    const JsonDocument PIN_FUNCTIONS_DOC = {PinMapJson::encodeFunctions, nullptr};
 }
 
 namespace WebRoutes
@@ -186,6 +188,12 @@ namespace WebRoutes
                    .type = HTTP_RESOURCE_TYPE_DYNAMIC},
         .cb = handleJsonDoc,
         .user_data = (void *)&PINS_DOC,
+    };
+
+    struct http_resource_detail_dynamic g_pinFunctions = {
+        .common = {.bitmask_of_supported_http_methods = BIT(HTTP_GET), .type = HTTP_RESOURCE_TYPE_DYNAMIC},
+        .cb = handleJsonDoc,
+        .user_data = (void *)&PIN_FUNCTIONS_DOC,
     };
 
     struct http_resource_detail_dynamic g_backup = {

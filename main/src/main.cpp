@@ -18,6 +18,7 @@
 #include "Wifi.hpp"
 #include "WebUi.hpp"
 #include "Display.hpp"
+#include "Switches.hpp"
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF); // Wifi declares against this module
 
@@ -36,6 +37,7 @@ int main(void)
     ThreadStore::begin();
     Mode::begin();
     Jog::begin();
+    Switches::begin();
     Rpm::begin();
     Display::begin();
     Wifi::begin();

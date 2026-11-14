@@ -46,16 +46,8 @@ namespace
 {
     constexpr const char *NVS_NS = "pins";
     constexpr const char *NVS_KEY = "map";
-    constexpr uint32_t MAGIC = 0x50494e31; // "PIN1"
     // GPIO matrix input signals of PCNT unit n are 4 apart.
     constexpr uint32_t PCNT_SIGNAL_STRIDE = PCNT_SIG_CH0_IN1_IDX - PCNT_SIG_CH0_IN0_IDX;
-
-    struct Stored
-    {
-        uint32_t magic;
-        uint32_t connectorCount;
-        Map map;
-    };
 
     constexpr int16_t pinCode(uint32_t v)
     {
@@ -129,6 +121,11 @@ namespace
         for (size_t i = 0; i < g_board.reservedCount; i++) {
             g_board.reservedNotes[i] = RESERVED_NOTES[i];
         }
+        for (size_t i = 0; i < g_board.connectorCount; i++) {
+            if (strlen(g_board.connectors[i].id) > ID_MAX) {
+                LOG_ERR("connector id %s is too long to save", g_board.connectors[i].id);
+            }
+        }
         g_board.pcntUnits = DT_CHILD_NUM_STATUS_OKAY(DT_NODELABEL(pcnt));
     }
 
@@ -136,54 +133,76 @@ namespace
     {
         memset(&out, 0, sizeof(out));
         for (const DefaultPins &d : DEFAULTS) {
-            if (d.count && !fromGpios(g_board, d.fn, d.gpios, d.count, out.fn[(size_t)d.fn])) {
+            Assignment a;
+            if (!d.count) {
+                continue;
+            }
+            if (fromGpios(g_board, d.fn, d.gpios, d.count, a)) {
+                add(out, a);
+            } else {
                 LOG_ERR("default pins of %s are not next to each other in one connector", def(d.fn).id);
             }
         }
     }
 
+    void warnIgnored(const char *msg)
+    {
+        LOG_WRN("pin map: %s, ignored", msg);
+    }
+
+    // The saved assignments that are known to this firmware and board, not validated.
     bool loadSaved(Map &out)
     {
+        memset(&out, 0, sizeof(out));
         size_t n = PersistBlob::load(NVS_NS, NVS_KEY, &g_stored, sizeof(g_stored));
         if (n == 0) {
             return false;
         }
-        if (n != sizeof(g_stored) || g_stored.magic != MAGIC || g_stored.connectorCount != g_board.connectorCount) {
+        if (n != sizeof(g_stored) || !fromStored(g_board, g_stored, out, warnIgnored)) {
             LOG_ERR("saved pin map does not fit this firmware, using the board defaults");
             return false;
         }
-        if (validate(g_board, g_stored.map, g_err, sizeof(g_err))) {
-            LOG_ERR("saved pin map is not valid (%s), using the board defaults", g_err);
-            return false;
-        }
-        out = g_stored.map;
         return true;
     }
 
     bool save(const Map &map)
     {
-        g_stored = {MAGIC, (uint32_t)g_board.connectorCount, map};
+        toStored(g_board, map, g_stored);
         return PersistBlob::save(NVS_NS, NVS_KEY, &g_stored, sizeof(g_stored));
+    }
+
+    gpio_dt_spec specOf(const Assignment &a, size_t signal)
+    {
+        int gpio = gpioOf(g_board, a, signal);
+        if (gpio < 0 || gpio > 48 || isReserved(g_board, gpio)) {
+            return {};
+        }
+        const SignalOptions &o = a.options[signal];
+        gpio_dt_flags_t flags = o.invert ? GPIO_ACTIVE_LOW : GPIO_ACTIVE_HIGH;
+        if (def(a.fn).dir == Dir::In) {
+            flags |= o.pull == Pull::Up ? GPIO_PULL_UP : (o.pull == Pull::Down ? GPIO_PULL_DOWN : 0);
+        }
+        return {gpio < 32 ? GPIO0 : GPIO1, (gpio_pin_t)(gpio % 32), flags};
     }
 
     void routePcnt()
     {
         bool used[8] = {};
-        for (size_t i = 0; i < FN_COUNT; i++) {
-            Fn fn = (Fn)i;
-            int unit = pcntUnit(g_active, fn);
-            gpio_dt_spec a, b;
-            if (unit < 0 || unit >= (int)ARRAY_SIZE(used) || !Pins::spec(fn, 0, a) || !Pins::spec(fn, 1, b)) {
+        for (size_t i = 0; i < g_active.count; i++) {
+            const Assignment &as = g_active.list[i];
+            int unit = pcntUnit(g_active, as.fn);
+            gpio_dt_spec a = specOf(as, 0);
+            gpio_dt_spec b = specOf(as, 1);
+            if (unit < 0 || unit >= (int)ARRAY_SIZE(used) || !a.port || !b.port) {
                 continue;
             }
             used[unit] = true;
             gpio_pin_configure_dt(&a, GPIO_INPUT);
             gpio_pin_configure_dt(&b, GPIO_INPUT);
-            const Assignment &as = g_active.fn[i];
-            esp_rom_gpio_connect_in_signal(gpioOf(g_board, g_active, fn, 0),
-                                           PCNT_SIG_CH0_IN0_IDX + unit * PCNT_SIGNAL_STRIDE, as.options[0].invert);
-            esp_rom_gpio_connect_in_signal(gpioOf(g_board, g_active, fn, 1),
-                                           PCNT_CTRL_CH0_IN0_IDX + unit * PCNT_SIGNAL_STRIDE, as.options[1].invert);
+            esp_rom_gpio_connect_in_signal(gpioOf(g_board, as, 0), PCNT_SIG_CH0_IN0_IDX + unit * PCNT_SIGNAL_STRIDE,
+                                           as.options[0].invert);
+            esp_rom_gpio_connect_in_signal(gpioOf(g_board, as, 1), PCNT_CTRL_CH0_IN0_IDX + unit * PCNT_SIGNAL_STRIDE,
+                                           as.options[1].invert);
         }
         for (int unit = 0; unit < g_board.pcntUnits && unit < (int)ARRAY_SIZE(used); unit++) {
             if (!used[unit]) {
@@ -200,36 +219,40 @@ namespace Pins
 {
     void begin()
     {
+        static Map saved;
         buildBoard();
-        g_defaults = !loadSaved(g_active);
+        g_defaults = !loadSaved(saved);
         if (g_defaults) {
-            defaults(g_active);
+            defaults(saved);
         }
-        if (validate(g_board, g_active, g_err, sizeof(g_err))) {
+        keepValid(g_board, saved, g_active, warnIgnored);
+        if (missingRequired(g_active, g_err, sizeof(g_err))) {
             LOG_ERR("pin map: %s", g_err);
         }
         routePcnt();
     }
 
+    size_t count(Fn fn)
+    {
+        return countOf(g_active, fn);
+    }
+
+    bool spec(Fn fn, size_t nth, size_t signal, gpio_dt_spec &out)
+    {
+        const Assignment *a = find(g_active, fn, nth);
+        out = a ? specOf(*a, signal) : gpio_dt_spec{};
+        return out.port != nullptr;
+    }
+
     bool spec(Fn fn, size_t signal, gpio_dt_spec &out)
     {
-        int gpio = gpioOf(g_board, g_active, fn, signal);
-        if (gpio < 0 || gpio > 48 || isReserved(g_board, gpio)) {
-            return false;
-        }
-        const SignalOptions &o = g_active.fn[(size_t)fn].options[signal];
-        gpio_dt_flags_t flags = o.invert ? GPIO_ACTIVE_LOW : GPIO_ACTIVE_HIGH;
-        if (def(fn).dir == Dir::In) {
-            flags |= o.pull == Pull::Up ? GPIO_PULL_UP : (o.pull == Pull::Down ? GPIO_PULL_DOWN : 0);
-        }
-        out = {gpio < 32 ? GPIO0 : GPIO1, (gpio_pin_t)(gpio % 32), flags};
-        return true;
+        return spec(fn, 0, signal, out);
     }
 
     Encoder encoder(Fn fn)
     {
-        const Assignment &a = g_active.fn[(size_t)fn];
-        return a.used ? a.encoder : Encoder::None;
+        const Assignment *a = find(g_active, fn);
+        return a ? a->encoder : Encoder::None;
     }
 
     int pcntUnit(Fn fn)
@@ -250,6 +273,7 @@ namespace Pins
         }
         return PinMapJson::encode(g_board, saved, out, outMax);
     }
+
 
     const char *fromJson(char *json, size_t len)
     {

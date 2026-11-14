@@ -22,14 +22,17 @@
 #include <stddef.h>
 #include <zephyr/drivers/gpio.h>
 
-// The active pin map: the saved one if it is valid, else the board defaults.
+// The active pin map: the valid assignments of the saved map, else the board defaults.
 // A saved change applies after a reboot.
 namespace Pins
 {
     // Call before the modules that use pins. Also routes the PCNT inputs.
     void begin();
 
-    // False if the function has no pins.
+    // Number of assignments of fn.
+    size_t count(PinMap::Fn fn);
+    // False if the nth assignment of fn does not exist or has no pins.
+    bool spec(PinMap::Fn fn, size_t nth, size_t signal, gpio_dt_spec &out);
     bool spec(PinMap::Fn fn, size_t signal, gpio_dt_spec &out);
     PinMap::Encoder encoder(PinMap::Fn fn);
     int pcntUnit(PinMap::Fn fn);

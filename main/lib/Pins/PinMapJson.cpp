@@ -78,7 +78,7 @@ namespace
 
     struct JUpdate
     {
-        JFunction functions[FN_COUNT];
+        JFunction functions[MAX_ASSIGNMENTS];
         size_t functionCount;
         JName names[MAX_CONNECTORS];
         size_t nameCount;
@@ -87,7 +87,7 @@ namespace
     struct JDoc
     {
         JBoard board;
-        JFunction functions[FN_COUNT];
+        JFunction functions[MAX_ASSIGNMENTS];
         size_t functionCount;
         JName names[MAX_CONNECTORS];
         size_t nameCount;
@@ -137,20 +137,58 @@ namespace
 
     const struct json_obj_descr DOC_DESCR[] = {
         JSON_OBJ_DESCR_OBJECT(JDoc, board, BOARD_DESCR),
-        JSON_OBJ_DESCR_OBJ_ARRAY(JDoc, functions, FN_COUNT, functionCount, FUNCTION_DESCR, ARRAY_SIZE(FUNCTION_DESCR)),
+        JSON_OBJ_DESCR_OBJ_ARRAY(JDoc, functions, MAX_ASSIGNMENTS, functionCount, FUNCTION_DESCR, ARRAY_SIZE(FUNCTION_DESCR)),
         JSON_OBJ_DESCR_OBJ_ARRAY(JDoc, names, MAX_CONNECTORS, nameCount, NAME_DESCR, ARRAY_SIZE(NAME_DESCR)),
     };
 
     const struct json_obj_descr UPDATE_DESCR[] = {
-        JSON_OBJ_DESCR_OBJ_ARRAY(JUpdate, functions, FN_COUNT, functionCount, FUNCTION_DESCR,
+        JSON_OBJ_DESCR_OBJ_ARRAY(JUpdate, functions, MAX_ASSIGNMENTS, functionCount, FUNCTION_DESCR,
                                  ARRAY_SIZE(FUNCTION_DESCR)),
         JSON_OBJ_DESCR_OBJ_ARRAY(JUpdate, names, MAX_CONNECTORS, nameCount, NAME_DESCR, ARRAY_SIZE(NAME_DESCR)),
+    };
+
+    struct JFnDef
+    {
+        const char *id;
+        const char *label;
+        const char *group;
+        const char *signals[MAX_SIGNALS];
+        size_t signalCount;
+        const char *dir;
+        bool required;
+        bool exclusive;
+        bool activeLow;
+        const char *encoders[2];
+        size_t encoderCount;
+    };
+
+    struct JFnDoc
+    {
+        JFnDef functions[FN_COUNT];
+        size_t functionCount;
+    };
+
+    const struct json_obj_descr FN_DEF_DESCR[] = {
+        JSON_OBJ_DESCR_PRIM(JFnDef, id, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_PRIM(JFnDef, label, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_PRIM(JFnDef, group, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_ARRAY(JFnDef, signals, MAX_SIGNALS, signalCount, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_PRIM(JFnDef, dir, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_PRIM(JFnDef, required, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM(JFnDef, exclusive, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM(JFnDef, activeLow, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_ARRAY(JFnDef, encoders, 2, encoderCount, JSON_TOK_STRING),
+    };
+
+    const struct json_obj_descr FN_DOC_DESCR[] = {
+        JSON_OBJ_DESCR_OBJ_ARRAY(JFnDoc, functions, FN_COUNT, functionCount, FN_DEF_DESCR, ARRAY_SIZE(FN_DEF_DESCR)),
     };
 
     const char *const PULLS[] = {"none", "up", "down"};
     const char *const ENCODERS[] = {"", "hw", "sw"};
 
     JDoc g_doc;
+    JFnDoc g_fnDoc;
     JUpdate g_update;
 
     int indexOf(const char *const *list, size_t count, const char *value)
@@ -199,17 +237,18 @@ namespace PinMapJson
                 j.pins[p] = c.pins[p];
             }
         }
-        for (size_t i = 0; i < FN_COUNT; i++) {
-            const Assignment &a = map.fn[i];
-            if (!a.used || a.connector >= board.connectorCount) {
+        for (size_t i = 0; i < map.count && i < MAX_ASSIGNMENTS; i++) {
+            const Assignment &a = map.list[i];
+            if ((size_t)a.fn >= FN_COUNT || a.connector >= board.connectorCount) {
                 continue;
             }
+            const FnDef &d = def(a.fn);
             JFunction &f = g_doc.functions[g_doc.functionCount++];
-            f.id = FUNCTIONS[i].id;
+            f.id = d.id;
             f.connector = board.connectors[a.connector].id;
             f.start = a.start;
             f.encoder = ENCODERS[(size_t)a.encoder <= 2 ? (size_t)a.encoder : 0];
-            f.signalCount = FUNCTIONS[i].signalCount;
+            f.signalCount = d.signalCount;
             for (size_t s = 0; s < f.signalCount; s++) {
                 f.signals[s] = {a.options[s].invert, PULLS[(size_t)a.options[s].pull <= 2 ? (size_t)a.options[s].pull : 0]};
             }
@@ -237,10 +276,6 @@ namespace PinMapJson
             if (fn < 0) {
                 return fail(err, errMax, "unknown function", f.id);
             }
-            Assignment &a = out.fn[fn];
-            if (a.used) {
-                return fail(err, errMax, "function given twice", f.id);
-            }
             int c = findConnector(board, f.connector);
             if (c < 0) {
                 return fail(err, errMax, "unknown connector", f.connector);
@@ -255,7 +290,8 @@ namespace PinMapJson
             if (enc < 0) {
                 return fail(err, errMax, "bad encoder type", f.id);
             }
-            a.used = true;
+            Assignment a = {};
+            a.fn = (Fn)fn;
             a.connector = (uint8_t)c;
             a.start = (uint8_t)f.start;
             a.encoder = (Encoder)enc;
@@ -266,6 +302,7 @@ namespace PinMapJson
                 }
                 a.options[s] = {f.signals[s].invert, (Pull)pull};
             }
+            add(out, a);
         }
         for (size_t i = 0; i < g_update.nameCount; i++) {
             const JName &n = g_update.names[i];
@@ -279,5 +316,34 @@ namespace PinMapJson
             strcpy(out.names[c], n.name);
         }
         return validate(board, out, err, errMax);
+    }
+
+    int encodeFunctions(char *out, size_t outMax)
+    {
+        memset(&g_fnDoc, 0, sizeof(g_fnDoc));
+        g_fnDoc.functionCount = FN_COUNT;
+        for (size_t i = 0; i < FN_COUNT; i++) {
+            const FnDef &d = FUNCTIONS[i];
+            JFnDef &j = g_fnDoc.functions[i];
+            j.id = d.id;
+            j.label = d.label;
+            j.group = d.group;
+            j.signalCount = d.signalCount;
+            for (size_t s = 0; s < d.signalCount; s++) {
+                j.signals[s] = d.signals[s];
+            }
+            j.dir = d.dir == Dir::In ? "in" : "out";
+            j.required = d.required;
+            j.exclusive = d.exclusive;
+            j.activeLow = d.activeLow;
+            if (d.hwEncoder) {
+                j.encoders[j.encoderCount++] = "hw";
+            }
+            if (d.swEncoder) {
+                j.encoders[j.encoderCount++] = "sw";
+            }
+        }
+        int rc = json_obj_encode_buf(FN_DOC_DESCR, ARRAY_SIZE(FN_DOC_DESCR), &g_fnDoc, out, outMax);
+        return rc == 0 ? (int)strlen(out) : -1;
     }
 }

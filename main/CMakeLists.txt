@@ -61,6 +61,7 @@ target_sources(app PRIVATE
     lib/Sync/SyncRatio.cpp
     lib/Jog/Jog.cpp
     lib/Jog/JogRatio.cpp
+    lib/Switches/Switches.cpp
     lib/Rpm/Rpm.cpp
     lib/Rpm/RpmCalc.cpp
     lib/Gcode/GcodeCore.cpp
@@ -103,6 +104,7 @@ target_include_directories(app PRIVATE
     lib/Stepper
     lib/Sync
     lib/Jog
+    lib/Switches
     lib/Rpm
     lib/Gcode
     lib/GcodeStore

@@ -1,17 +1,19 @@
 "use client"
 
 import { createContext, useContext, useEffect, useMemo, useState, type KeyboardEvent } from "react"
-import { fetchPins, savePins, sendCommand } from "../api"
+import { fetchPinFunctions, fetchPins, savePins, sendCommand } from "../api"
 import { useFooterBar } from "../footer-bar"
 import {
-  FUNCTIONS,
   CONNECTOR_NAME_MAX,
   STRAPPING_NOTE,
+  assignmentLabel,
+  canAdd,
   canStartAt,
   connectorLabel,
   connectorOf,
   defaultAssignment,
   fromPinsJson,
+  functionDef,
   functionsAt,
   nameIssues,
   pinsOf,
@@ -26,6 +28,7 @@ import {
   type EncoderType,
   type FunctionDef,
   type PinMap,
+  type PinUse,
   type Pull,
 } from "../pins"
 import { Badge, Button, LockNotice, Panel, Select, TextInput, Toggle } from "../ui/primitives"
@@ -53,8 +56,8 @@ const COLORS = [
 ]
 const DOTS = ["bg-sky-500", "bg-violet-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500", "bg-teal-500"]
 
-function colorIndex(fnId: string) {
-  return FUNCTIONS.findIndex((f) => f.id === fnId) % COLORS.length
+function colorIndex(board: Board, fnId: string) {
+  return Math.max(0, board.functions.findIndex((f) => f.id === fnId)) % COLORS.length
 }
 
 // Must match the gap-2, min-w-8, gap-1, p-2 and border classes below.
@@ -65,8 +68,16 @@ const CONNECTOR_PAD_PX = 18
 
 interface Focus {
   fn?: string
+  /** Assignment index. */
+  index?: number
   connector?: string
   gpio?: number
+}
+
+interface Placing {
+  fn: string
+  /** Index of the assignment being moved; none = a new one. */
+  moving?: number
 }
 
 interface Span {
@@ -84,11 +95,16 @@ interface Loaded {
 export function PinsScreen() {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [version, setVersion] = useState(0)
+
+  async function load() {
+    const [doc, fns] = await Promise.all([fetchPins(), fetchPinFunctions()])
+    setLoaded(fromPinsJson(doc, fns))
+    setVersion((v) => v + 1)
+  }
 
   useEffect(() => {
-    fetchPins()
-      .then((doc) => setLoaded(fromPinsJson(doc)))
-      .catch((e: Error) => setError(e.message))
+    load().catch((e: Error) => setError(e.message))
   }, [])
 
   if (!loaded) {
@@ -103,12 +119,20 @@ export function PinsScreen() {
   }
   return (
     <BoardContext.Provider value={loaded.board}>
-      <PinsEditor initialMap={loaded.map} initialNames={loaded.names} />
+      <PinsEditor key={version} initialMap={loaded.map} initialNames={loaded.names} reload={load} />
     </BoardContext.Provider>
   )
 }
 
-function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialNames: ConnectorNames }) {
+function PinsEditor({
+  initialMap,
+  initialNames,
+  reload,
+}: {
+  initialMap: PinMap
+  initialNames: ConnectorNames
+  reload: () => Promise<void>
+}) {
   const board = useBoard()
   const [saved, setSaved] = useState<PinMap>(initialMap)
   const [map, setMap] = useState<PinMap>(initialMap)
@@ -119,7 +143,7 @@ function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialN
   const [renaming, setRenaming] = useState<string | null>(null)
   const [hover, setHover] = useState<Focus | null>(null)
   const [selected, setSelected] = useState<Focus | null>(null)
-  const [placing, setPlacing] = useState<string | null>(null)
+  const [placing, setPlacing] = useState<Placing | null>(null)
   const [preview, setPreview] = useState<Span | null>(null)
   const [menu, setMenu] = useState<{ connector: string; start: number } | null>(null)
   const toast = useToast()
@@ -150,6 +174,9 @@ function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialN
       <Button disabled={busy || !dirty} onClick={discard}>
         Discard changes
       </Button>
+      <Button variant="ghost" disabled={busy || !canConfigure} onClick={resetDefaults}>
+        Reset to defaults
+      </Button>
       {dirty && <span className="text-sm text-muted-foreground">Changes are not saved.</span>}
     </div>,
   )
@@ -168,6 +195,25 @@ function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialN
       setSaved(map)
       setSavedNames(names)
       toast.push("Saved. Rebooting.", "good")
+      await sendCommand("reboot")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function resetDefaults() {
+    if (!window.confirm("Replace the saved pin map and connector names with the board defaults and reboot the controller?")) {
+      return
+    }
+    setBusy(true)
+    try {
+      const r = await sendCommand("pins reset")
+      if (r.status !== "ok") {
+        toast.push(`Not reset: ${r.status === "denied" ? r.msg : "no reply"}`, "bad")
+        return
+      }
+      toast.push("Reset to defaults. Rebooting.", "good")
+      await reload().catch((e: Error) => toast.push(`Could not load the pin map: ${e.message}`, "bad"))
       await sendCommand("reboot")
     } finally {
       setBusy(false)
@@ -196,41 +242,34 @@ function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialN
     setRenaming(null)
   }
 
-  function update(fnId: string, change: (a: Assignment) => Assignment) {
-    setMap((m) => (m[fnId] ? { ...m, [fnId]: change(m[fnId]) } : m))
+  function update(index: number, change: (a: Assignment) => Assignment) {
+    setMap((m) => m.map((a, i) => (i === index ? change(a) : a)))
   }
 
-  function place(fnId: string, connectorId: string, start: number) {
-    const fn = FUNCTIONS.find((f) => f.id === fnId)
+  function place(fnId: string, connectorId: string, start: number, moving?: number) {
+    const fn = functionDef(board, fnId)
     if (!fn) {
       return
     }
-    setMap((m) => {
-      const old = m[fnId]
-      const a = old ? { ...old, connector: connectorId, start } : defaultAssignment(fn, connectorId, start)
-      return { ...m, [fnId]: a }
-    })
+    setMap((m) =>
+      moving !== undefined ? m.map((a, i) => (i === moving ? { ...a, connector: connectorId, start } : a)) : [...m, defaultAssignment(fn, connectorId, start)],
+    )
     setPlacing(null)
     setPreview(null)
     setMenu(null)
-    setSelected({ fn: fnId })
+    setSelected({ index: moving ?? map.length })
   }
 
-  function clear(fnId: string) {
-    setMap((m) => {
-      const next = { ...m }
-      delete next[fnId]
-      return next
-    })
-    if (placing === fnId) {
-      setPlacing(null)
-    }
+  function remove(index: number) {
+    setMap((m) => m.filter((_, i) => i !== index))
+    setPlacing(null)
+    setSelected(null)
   }
 
   function onPinClick(c: Connector, index: number, pin: BoardPin) {
     if (placing) {
-      if (canStartAt(board, map, placing, c.id, index)) {
-        place(placing, c.id, index)
+      if (canStartAt(board, map, placing.fn, c.id, index, placing.moving)) {
+        place(placing.fn, c.id, index, placing.moving)
       }
       return
     }
@@ -242,7 +281,7 @@ function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialN
     const uses = used.get(pin.gpio)
     if (uses?.length) {
       setMenu(null)
-      setSelected({ fn: uses[0].fn, gpio: pin.gpio })
+      setSelected({ index: uses[0].index, gpio: pin.gpio })
       return
     }
     setSelected({ gpio: pin.gpio })
@@ -256,31 +295,45 @@ function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialN
     if (active.gpio === pin.gpio) {
       return true
     }
-    return !!active.fn && !!used.get(pin.gpio)?.some((u) => u.fn === active.fn)
+    const uses = used.get(pin.gpio) ?? []
+    if (active.index !== undefined) {
+      return uses.some((u) => u.index === active.index)
+    }
+    return !!active.fn && uses.some((u) => u.fn === active.fn)
   }
 
-  function fnHighlighted(fn: FunctionDef) {
+  function rowHighlighted(fn: FunctionDef, index?: number) {
     if (!active) {
       return false
     }
-    if (active.fn === fn.id) {
+    if (index === undefined) {
+      return active.fn === fn.id
+    }
+    if (active.index === index) {
       return true
     }
-    const a = map[fn.id]
-    if (!a) {
-      return false
-    }
+    const a = map[index]
     if (active.connector && a.connector === active.connector) {
       return true
     }
     return active.gpio !== undefined && pinsOf(board, fn, a).includes(active.gpio)
   }
 
+  const fnRows = board.functions.flatMap((fn): { fn: FunctionDef; index?: number }[] => {
+    const indexes = map.flatMap((a, i) => (a.fn === fn.id ? [i] : []))
+    if (indexes.length) {
+      return indexes.map((index) => ({ fn, index }))
+    }
+    return fn.required ? [{ fn }] : []
+  })
+  const addable = board.functions.filter((fn) => canAdd(board, map, fn.id))
+  const groups = [...new Set(addable.map((fn) => fn.group))]
+
   const maxPins = Math.max(...board.connectors.map((c) => c.pins.length))
   const connectorMinWidth = maxPins * PIN_MIN_PX + (maxPins - 1) * PIN_GAP_PX + CONNECTOR_PAD_PX
   const rows = Math.max(...board.connectors.map((c) => c.row))
   const cols = Math.max(...board.connectors.map((c) => c.col))
-  const placingFn = placing ? FUNCTIONS.find((f) => f.id === placing) : undefined
+  const placingFn = placing ? functionDef(board, placing.fn) : undefined
 
   return (
     <div className="flex flex-col gap-4">
@@ -337,42 +390,77 @@ function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialN
             ))}
           </div>
         </div>
-        <PinInfo gpio={active?.gpio} used={used} label={label} />
+        <PinInfo gpio={active?.gpio} used={used} label={label} useLabel={(u) => assignmentLabel(board, map, u.index)} />
         {menu && (
           <PinMenu
             title={pinTitle(board, menu.connector, menu.start, label)}
             functions={functionsAt(board, map, menu.connector, menu.start)}
-            map={map}
             onPick={(fnId) => place(fnId, menu.connector, menu.start)}
             onClose={() => setMenu(null)}
           />
         )}
       </Panel>
 
-      <Panel title="Functions">
+      <Panel
+        title="Functions"
+        action={
+          <Select
+            value=""
+            disabled={addable.length === 0}
+            title="Add a function, then select its first pin."
+            onChange={(e) => {
+              setMenu(null)
+              setPlacing({ fn: e.target.value })
+            }}
+          >
+            <option value="" disabled>
+              Add function...
+            </option>
+            {groups.map((g) => (
+              <optgroup key={g} label={g}>
+                {addable
+                  .filter((fn) => fn.group === g)
+                  .map((fn) => (
+                    <option key={fn.id} value={fn.id}>
+                      {fn.label}
+                    </option>
+                  ))}
+              </optgroup>
+            ))}
+          </Select>
+        }
+      >
         <div className="flex flex-col gap-2">
-          {FUNCTIONS.map((fn) => (
-            <FunctionRow
-              key={fn.id}
-              fn={fn}
-              assignment={map[fn.id]}
-              connectorLabel={map[fn.id] ? label(map[fn.id].connector) : ""}
-              highlighted={fnHighlighted(fn)}
-              placing={placing === fn.id}
-              hasErrors={errors.some((e) => e.fn === fn.id)}
-              onHover={setHover}
-              onSelect={() => setSelected(selected?.fn === fn.id ? null : { fn: fn.id })}
-              onPlace={() => {
-                setMenu(null)
-                setPlacing(placing === fn.id ? null : fn.id)
-              }}
-              onClear={() => clear(fn.id)}
-              onEncoderType={(t) => update(fn.id, (a) => ({ ...a, encoderType: t }))}
-              onOption={(i, o) =>
-                update(fn.id, (a) => ({ ...a, options: a.options.map((x, j) => (j === i ? { ...x, ...o } : x)) }))
-              }
-            />
-          ))}
+          {fnRows.map(({ fn, index }) => {
+            const a = index === undefined ? undefined : map[index]
+            const isPlacing = placing?.fn === fn.id && placing.moving === index
+            return (
+              <FunctionRow
+                key={index ?? fn.id}
+                fn={fn}
+                label={index === undefined ? fn.label : assignmentLabel(board, map, index)}
+                assignment={a}
+                connectorLabel={a ? label(a.connector) : ""}
+                highlighted={rowHighlighted(fn, index)}
+                placing={isPlacing}
+                hasErrors={errors.some((e) => (index === undefined ? e.fn === fn.id : e.index === index))}
+                onHover={(f) => setHover(f && (index === undefined ? { fn: fn.id } : { index }))}
+                onSelect={() => {
+                  const focus = index === undefined ? { fn: fn.id } : { index }
+                  setSelected(selected?.fn === focus.fn && selected?.index === focus.index ? null : focus)
+                }}
+                onPlace={() => {
+                  setMenu(null)
+                  setPlacing(isPlacing ? null : { fn: fn.id, moving: index })
+                }}
+                onRemove={index === undefined || fn.required ? undefined : () => remove(index)}
+                onEncoderType={(t) => index !== undefined && update(index, (x) => ({ ...x, encoderType: t }))}
+                onOption={(i, o) =>
+                  index !== undefined && update(index, (x) => ({ ...x, options: x.options.map((y, j) => (j === i ? { ...y, ...o } : y)) }))
+                }
+              />
+            )
+          })}
         </div>
       </Panel>
 
@@ -383,7 +471,7 @@ function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialN
               <li
                 key={n}
                 className="flex items-center gap-2"
-                onMouseEnter={() => setHover({ fn: i.fn, gpio: i.gpio, connector: i.connector })}
+                onMouseEnter={() => setHover({ fn: i.fn, index: i.index, gpio: i.gpio, connector: i.connector })}
                 onMouseLeave={() => setHover(null)}
               >
                 <Badge tone={i.level === "error" ? "bad" : "warn"}>{i.level === "error" ? "error" : "warning"}</Badge>
@@ -421,8 +509,8 @@ function ConnectorView({
   onCancelRename: () => void
   highlighted: boolean
   pinHighlighted: (p: BoardPin) => boolean
-  used: Map<number, { fn: string; signal: string }[]>
-  placing: string | null
+  used: Map<number, PinUse[]>
+  placing: Placing | null
   map: PinMap
   preview: Span | null
   onHover: (f: Focus | null) => void
@@ -431,7 +519,7 @@ function ConnectorView({
   onConnectorClick: () => void
 }) {
   const board = useBoard()
-  const placingLength = placing ? (FUNCTIONS.find((f) => f.id === placing)?.signals.length ?? 0) : 0
+  const placingLength = placing ? (functionDef(board, placing.fn)?.signals.length ?? 0) : 0
   return (
     <div
       data-keep-selection
@@ -474,14 +562,14 @@ function ConnectorView({
           const uses = isGpio ? (used.get(p.gpio) ?? []) : []
           const reserved = isGpio && p.gpio in board.reserved
           const strapping = isGpio && board.strapping.includes(p.gpio)
-          const validStart = !!placing && canStartAt(board, map, placing, c.id, i)
+          const validStart = !!placing && canStartAt(board, map, placing.fn, c.id, i, placing.moving)
           const inPreview = !!preview && i >= preview.start && i < preview.start + preview.length
           const conflict = uses.length > 1
-          const fill = uses.length ? COLORS[colorIndex(uses[0].fn)] : ""
+          const fill = uses.length ? COLORS[colorIndex(board, uses[0].fn)] : ""
           const title = isGpio
             ? [
                 `GPIO ${p.gpio}`,
-                ...uses.map((u) => `${FUNCTIONS.find((f) => f.id === u.fn)?.label} ${u.signal}`),
+                ...uses.map((u) => `${assignmentLabel(board, map, u.index)} ${u.signal}`),
                 reserved ? `Reserved: ${board.reserved[p.gpio]}` : "",
                 strapping ? `Strapping pin: ${STRAPPING_NOTE}` : "",
               ]
@@ -529,10 +617,12 @@ function PinInfo({
   gpio,
   used,
   label,
+  useLabel,
 }: {
   gpio?: number
-  used: Map<number, { fn: string; signal: string }[]>
+  used: Map<number, PinUse[]>
   label: (id: string) => string
+  useLabel: (u: PinUse) => string
 }) {
   const board = useBoard()
   const c = gpio === undefined ? undefined : board.connectors.find((x) => x.pins.some((p) => "gpio" in p && p.gpio === gpio))
@@ -546,9 +636,9 @@ function PinInfo({
             GPIO {gpio} ({label(c.id)})
           </span>
           {(used.get(gpio) ?? []).map((u) => (
-            <span key={u.fn}>
+            <span key={u.index}>
               {" · "}
-              {FUNCTIONS.find((f) => f.id === u.fn)?.label} {u.signal}
+              {useLabel(u)} {u.signal}
             </span>
           ))}
           {gpio in board.reserved && <span className="block">Reserved: {board.reserved[gpio]}.</span>}
@@ -569,23 +659,21 @@ function pinTitle(board: Board, connectorId: string, start: number, label: (id: 
 function PinMenu({
   title,
   functions,
-  map,
   onPick,
   onClose,
 }: {
   title: string
   functions: FunctionDef[]
-  map: PinMap
   onPick: (fnId: string) => void
   onClose: () => void
 }) {
   return (
     <div data-keep-selection className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-sm">
       <span className="text-muted-foreground">{title}:</span>
-      {functions.length === 0 && <span className="text-muted-foreground">no function starts here.</span>}
+      {functions.length === 0 && <span className="text-muted-foreground">no function can be added here.</span>}
       {functions.map((fn) => (
         <Button key={fn.id} onClick={() => onPick(fn.id)}>
-          {map[fn.id] ? `Move ${fn.label} here` : fn.label}
+          {fn.label}
         </Button>
       ))}
       <Button variant="ghost" onClick={onClose}>
@@ -597,6 +685,7 @@ function PinMenu({
 
 function FunctionRow({
   fn,
+  label,
   assignment: a,
   connectorLabel: cLabel,
   highlighted,
@@ -605,11 +694,12 @@ function FunctionRow({
   onHover,
   onSelect,
   onPlace,
-  onClear,
+  onRemove,
   onEncoderType,
   onOption,
 }: {
   fn: FunctionDef
+  label: string
   assignment: Assignment | undefined
   connectorLabel: string
   highlighted: boolean
@@ -618,7 +708,7 @@ function FunctionRow({
   onHover: (f: Focus | null) => void
   onSelect: () => void
   onPlace: () => void
-  onClear: () => void
+  onRemove?: () => void
   onEncoderType: (t: EncoderType) => void
   onOption: (index: number, o: { invert?: boolean; pull?: Pull }) => void
 }) {
@@ -634,10 +724,10 @@ function FunctionRow({
     >
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="flex min-w-40 items-center gap-2 text-left text-sm font-medium" onClick={onSelect}>
-          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${DOTS[colorIndex(fn.id)]}`} />
-          {fn.label}
+          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${DOTS[colorIndex(board, fn.id)]}`} />
+          {label}
         </button>
-        {!a && <Badge tone={fn.required ? "bad" : "neutral"}>{fn.required ? "required, no pins" : "not used"}</Badge>}
+        {!a && <Badge tone="bad">required, no pins</Badge>}
         {a && hasErrors && <Badge tone="bad">error</Badge>}
         {a && (
           <span className="text-sm text-muted-foreground">
@@ -663,9 +753,9 @@ function FunctionRow({
             {placing ? "Cancel" : a ? "Move" : "Place"}
           </Button>
           {a && <Button onClick={() => setOpen(!open)}>{open ? "Hide options" : "Options"}</Button>}
-          {a && (
-            <Button variant="ghost" onClick={onClear}>
-              Clear
+          {onRemove && (
+            <Button variant="ghost" onClick={onRemove}>
+              Remove
             </Button>
           )}
         </div>

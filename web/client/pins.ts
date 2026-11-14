@@ -15,6 +15,8 @@ export interface Board {
   reserved: Record<number, string>
   strapping: number[]
   pcntUnits: number
+  /** The firmware's function table. */
+  functions: FunctionDef[]
 }
 
 export type Direction = "in" | "out"
@@ -24,9 +26,14 @@ export type EncoderType = "hw" | "sw"
 export interface FunctionDef {
   id: string
   label: string
+  group: string
   signals: string[]
   dir: Direction
   required: boolean
+  /** At most one assignment. */
+  exclusive: boolean
+  /** Default invert of new assignments. */
+  activeLow: boolean
   encoderTypes?: EncoderType[]
 }
 
@@ -36,13 +43,15 @@ export interface SignalOptions {
 }
 
 export interface Assignment {
+  fn: string
   connector: string
   start: number
   encoderType?: EncoderType
   options: SignalOptions[]
 }
 
-export type PinMap = Record<string, Assignment>
+/** In saved order. A non-exclusive function can be in it more than once. */
+export type PinMap = Assignment[]
 
 /** User names of connectors, by connector id. A missing name means the board's label. */
 export type ConnectorNames = Record<string, string>
@@ -53,22 +62,30 @@ export interface Issue {
   level: "error" | "warn"
   msg: string
   fn?: string
+  /** Assignment index. */
+  index?: number
   gpio?: number
   connector?: string
 }
 
 export interface PinUse {
+  index: number
   fn: string
   signal: string
 }
 
-export const FUNCTIONS: FunctionDef[] = [
-  { id: "zMotor", label: "Z motor", signals: ["ENA", "DIR", "STEP"], dir: "out", required: true },
-  { id: "xMotor", label: "X motor", signals: ["ENA", "DIR", "STEP"], dir: "out", required: false },
-  { id: "spindle", label: "Spindle encoder", signals: ["A", "B"], dir: "in", required: true, encoderTypes: ["hw"] },
-  { id: "zHandwheel", label: "Z handwheel", signals: ["A", "B"], dir: "in", required: false, encoderTypes: ["hw", "sw"] },
-  { id: "xHandwheel", label: "X handwheel", signals: ["A", "B"], dir: "in", required: false, encoderTypes: ["hw", "sw"] },
-  { id: "probe", label: "Probe", signals: ["SIG"], dir: "in", required: false },
+const MOTOR = ["ENA", "DIR", "STEP"]
+const QUAD = ["A", "B"]
+
+// The firmware's function table, for tests.
+export const MOCK_FUNCTIONS: FunctionDef[] = [
+  { id: "zMotor", label: "Z motor", group: "Motors", signals: MOTOR, dir: "out", required: true, exclusive: true, activeLow: false },
+  { id: "xMotor", label: "X motor", group: "Motors", signals: MOTOR, dir: "out", required: false, exclusive: true, activeLow: false },
+  { id: "spindle", label: "Spindle encoder", group: "Encoders", signals: QUAD, dir: "in", required: true, exclusive: true, activeLow: false, encoderTypes: ["hw"] },
+  { id: "zHandwheel", label: "Z handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"] },
+  { id: "xHandwheel", label: "X handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"] },
+  { id: "probe", label: "Probe", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: false },
+  { id: "stop", label: "Stop", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: true },
 ]
 
 const g = (gpio: number): BoardPin => ({ gpio })
@@ -110,19 +127,20 @@ export const MOCK_BOARD: Board = {
   },
   strapping: [0, 3, 45, 46],
   pcntUnits: 4,
+  functions: MOCK_FUNCTIONS,
 }
 
 const OUT: SignalOptions = { invert: false, pull: "none" }
 const UP: SignalOptions = { invert: false, pull: "up" }
 
-export const MOCK_MAP: PinMap = {
-  zMotor: { connector: "r1c2", start: 1, options: [OUT, OUT, OUT] },
-  xMotor: { connector: "r1c3", start: 1, options: [OUT, OUT, OUT] },
-  spindle: { connector: "r3c5", start: 2, encoderType: "hw", options: [UP, UP] },
-  zHandwheel: { connector: "r2c2", start: 2, encoderType: "hw", options: [UP, UP] },
-  xHandwheel: { connector: "r2c3", start: 2, encoderType: "hw", options: [UP, UP] },
-  probe: { connector: "r2c1", start: 2, options: [UP] },
-}
+export const MOCK_MAP: PinMap = [
+  { fn: "zMotor", connector: "r1c2", start: 1, options: [OUT, OUT, OUT] },
+  { fn: "xMotor", connector: "r1c3", start: 1, options: [OUT, OUT, OUT] },
+  { fn: "spindle", connector: "r3c5", start: 2, encoderType: "hw", options: [UP, UP] },
+  { fn: "zHandwheel", connector: "r2c2", start: 2, encoderType: "hw", options: [UP, UP] },
+  { fn: "xHandwheel", connector: "r2c3", start: 2, encoderType: "hw", options: [UP, UP] },
+  { fn: "probe", connector: "r2c1", start: 2, options: [UP] },
+]
 
 export function connectorLabel(board: Board, names: ConnectorNames, id: string): string {
   return names[id] ?? connectorOf(board, id)?.label ?? id
@@ -144,8 +162,22 @@ export function nameIssues(board: Board, names: ConnectorNames): Issue[] {
   return issues
 }
 
-export function functionDef(id: string): FunctionDef | undefined {
-  return FUNCTIONS.find((f) => f.id === id)
+export function functionDef(board: Board, id: string): FunctionDef | undefined {
+  return board.functions.find((f) => f.id === id)
+}
+
+/** The function's label, with a number when it has more than one assignment. */
+export function assignmentLabel(board: Board, map: PinMap, index: number): string {
+  const a = map[index]
+  const label = functionDef(board, a.fn)?.label ?? a.fn
+  const same = map.filter((x) => x.fn === a.fn)
+  return same.length > 1 ? `${label} ${same.indexOf(a) + 1}` : label
+}
+
+/** True if one more assignment of the function is allowed. */
+export function canAdd(board: Board, map: PinMap, fnId: string): boolean {
+  const fn = functionDef(board, fnId)
+  return !!fn && (!fn.exclusive || !map.some((a) => a.fn === fnId))
 }
 
 export function connectorOf(board: Board, id: string): Connector | undefined {
@@ -163,45 +195,49 @@ export function pinsOf(board: Board, fn: FunctionDef, a: Assignment): (number | 
 
 export function usage(board: Board, map: PinMap): Map<number, PinUse[]> {
   const used = new Map<number, PinUse[]>()
-  for (const fn of FUNCTIONS) {
-    const a = map[fn.id]
-    if (!a) {
-      continue
+  map.forEach((a, index) => {
+    const fn = functionDef(board, a.fn)
+    if (!fn) {
+      return
     }
     pinsOf(board, fn, a).forEach((gpio, i) => {
       if (gpio !== null) {
-        used.set(gpio, [...(used.get(gpio) ?? []), { fn: fn.id, signal: fn.signals[i] }])
+        used.set(gpio, [...(used.get(gpio) ?? []), { index, fn: fn.id, signal: fn.signals[i] }])
       }
     })
-  }
+  })
   return used
 }
 
-export function canStartAt(board: Board, map: PinMap, fnId: string, connectorId: string, start: number): boolean {
-  const fn = functionDef(fnId)
+/** True if fnId fits at start; the assignment at moving (if given) does not count as using its pins. */
+export function canStartAt(board: Board, map: PinMap, fnId: string, connectorId: string, start: number, moving?: number): boolean {
+  const fn = functionDef(board, fnId)
   const c = connectorOf(board, connectorId)
   if (!fn || !c || start < 0 || start + fn.signals.length > c.pins.length) {
     return false
   }
-  const others = { ...map }
-  delete others[fnId]
-  const used = usage(board, others)
+  const used = usage(
+    board,
+    map.filter((_, i) => i !== moving),
+  )
   return c.pins.slice(start, start + fn.signals.length).every((p) => "gpio" in p && !(p.gpio in board.reserved) && !used.has(p.gpio))
 }
 
-export function placements(board: Board, map: PinMap, fnId: string): { connector: string; start: number }[] {
+export function placements(board: Board, map: PinMap, fnId: string, moving?: number): { connector: string; start: number }[] {
   return board.connectors.flatMap((c) =>
-    c.pins.map((_, start) => ({ connector: c.id, start })).filter((p) => canStartAt(board, map, fnId, p.connector, p.start)),
+    c.pins.map((_, start) => ({ connector: c.id, start })).filter((p) => canStartAt(board, map, fnId, p.connector, p.start, moving)),
   )
 }
 
+/** Functions that can be added at a pin. */
 export function functionsAt(board: Board, map: PinMap, connectorId: string, start: number): FunctionDef[] {
-  return FUNCTIONS.filter((fn) => canStartAt(board, map, fn.id, connectorId, start))
+  return board.functions.filter((fn) => canAdd(board, map, fn.id) && canStartAt(board, map, fn.id, connectorId, start))
 }
 
 export function defaultAssignment(fn: FunctionDef, connectorId: string, start: number): Assignment {
-  const opt = fn.dir === "in" ? UP : OUT
+  const opt = { ...(fn.dir === "in" ? UP : OUT), invert: fn.activeLow }
   return {
+    fn: fn.id,
     connector: connectorId,
     start,
     encoderType: fn.encoderTypes?.[0],
@@ -211,47 +247,54 @@ export function defaultAssignment(fn: FunctionDef, connectorId: string, start: n
 
 export function validate(board: Board, map: PinMap): Issue[] {
   const issues: Issue[] = []
-  for (const fn of FUNCTIONS) {
-    const a = map[fn.id]
-    if (!a) {
-      if (fn.required) {
-        issues.push({ level: "error", fn: fn.id, msg: `${fn.label} has no pins` })
-      }
-      continue
+  for (const fn of board.functions) {
+    if (fn.required && !map.some((a) => a.fn === fn.id)) {
+      issues.push({ level: "error", fn: fn.id, msg: `${fn.label} has no pins` })
+    }
+  }
+  map.forEach((a, index) => {
+    const fn = functionDef(board, a.fn)
+    if (!fn) {
+      issues.push({ level: "error", index, msg: `Unknown function ${a.fn}` })
+      return
+    }
+    const label = assignmentLabel(board, map, index)
+    if (fn.exclusive && map.findIndex((x) => x.fn === a.fn) !== index) {
+      issues.push({ level: "error", fn: fn.id, index, msg: `${fn.label} is given more than once` })
     }
     if (!connectorOf(board, a.connector)) {
-      issues.push({ level: "error", fn: fn.id, msg: `${fn.label}: unknown connector` })
-      continue
+      issues.push({ level: "error", fn: fn.id, index, msg: `${label}: unknown connector` })
+      return
     }
     const pins = pinsOf(board, fn, a)
     if (pins.some((p) => p === null)) {
-      issues.push({ level: "error", fn: fn.id, msg: `${fn.label}: not all signals are on GPIO pins` })
+      issues.push({ level: "error", fn: fn.id, index, msg: `${label}: not all signals are on GPIO pins` })
     }
     for (const gpio of pins) {
       if (gpio === null) {
         continue
       }
       if (gpio in board.reserved) {
-        issues.push({ level: "error", fn: fn.id, gpio, msg: `${fn.label}: GPIO ${gpio} is reserved (${board.reserved[gpio]})` })
+        issues.push({ level: "error", fn: fn.id, index, gpio, msg: `${label}: GPIO ${gpio} is reserved (${board.reserved[gpio]})` })
       }
       if (board.strapping.includes(gpio)) {
-        issues.push({ level: "warn", fn: fn.id, gpio, msg: `${fn.label}: GPIO ${gpio} is a strapping pin` })
+        issues.push({ level: "warn", fn: fn.id, index, gpio, msg: `${label}: GPIO ${gpio} is a strapping pin` })
       }
     }
     if (a.options.length !== fn.signals.length) {
-      issues.push({ level: "error", fn: fn.id, msg: `${fn.label}: options do not match its signals` })
+      issues.push({ level: "error", fn: fn.id, index, msg: `${label}: options do not match its signals` })
     }
     if (fn.encoderTypes && (!a.encoderType || !fn.encoderTypes.includes(a.encoderType))) {
-      issues.push({ level: "error", fn: fn.id, msg: `${fn.label}: encoder type must be ${fn.encoderTypes.join(" or ")}` })
+      issues.push({ level: "error", fn: fn.id, index, msg: `${label}: encoder type must be ${fn.encoderTypes.join(" or ")}` })
     }
-  }
+  })
   for (const [gpio, uses] of usage(board, map)) {
     if (uses.length > 1) {
-      const names = uses.map((u) => `${functionDef(u.fn)?.label} ${u.signal}`).join(", ")
+      const names = uses.map((u) => `${assignmentLabel(board, map, u.index)} ${u.signal}`).join(", ")
       issues.push({ level: "error", gpio, msg: `GPIO ${gpio} is used more than once: ${names}` })
     }
   }
-  const hw = FUNCTIONS.filter((fn) => map[fn.id]?.encoderType === "hw").length
+  const hw = map.filter((a) => a.encoderType === "hw").length
   if (hw > board.pcntUnits) {
     issues.push({ level: "error", msg: `${hw} hardware encoders, but the board has ${board.pcntUnits} PCNT units` })
   }
@@ -281,6 +324,21 @@ export interface PinsUpdateJson {
   names: PinsJsonName[]
 }
 
+/** GET /pins/functions. */
+export interface PinFunctionsJson {
+  functions: {
+    id: string
+    label: string
+    group: string
+    signals: string[]
+    dir: Direction
+    required: boolean
+    exclusive: boolean
+    activeLow: boolean
+    encoders: EncoderType[]
+  }[]
+}
+
 /** GET /pins. Pins: GPIO number, -1 = 5V, -2 = GND. */
 export interface PinsJson extends PinsUpdateJson {
   board: {
@@ -292,8 +350,19 @@ export interface PinsJson extends PinsUpdateJson {
   }
 }
 
-export function fromPinsJson(doc: PinsJson): { board: Board; map: PinMap; names: ConnectorNames } {
+export function fromPinsJson(doc: PinsJson, fns: PinFunctionsJson): { board: Board; map: PinMap; names: ConnectorNames } {
   const board: Board = {
+    functions: fns.functions.map((f) => ({
+      id: f.id,
+      label: f.label,
+      group: f.group,
+      signals: f.signals,
+      dir: f.dir,
+      required: f.required,
+      exclusive: f.exclusive,
+      activeLow: f.activeLow,
+      encoderTypes: f.encoders.length ? f.encoders : undefined,
+    })),
     name: doc.board.name,
     pcntUnits: doc.board.pcntUnits,
     strapping: doc.board.strapping,
@@ -306,31 +375,26 @@ export function fromPinsJson(doc: PinsJson): { board: Board; map: PinMap; names:
       pins: c.pins.map((p): BoardPin => (p === -1 ? { power: "5V" } : p === -2 ? { power: "GND" } : { gpio: p })),
     })),
   }
-  const map: PinMap = {}
-  for (const f of doc.functions ?? []) {
-    map[f.id] = {
-      connector: f.connector,
-      start: f.start,
-      encoderType: f.encoder || undefined,
-      options: f.signals.map((s) => ({ invert: s.invert, pull: s.pull })),
-    }
-  }
+  const map: PinMap = (doc.functions ?? []).map((f) => ({
+    fn: f.id,
+    connector: f.connector,
+    start: f.start,
+    encoderType: f.encoder || undefined,
+    options: f.signals.map((s) => ({ invert: s.invert, pull: s.pull })),
+  }))
   const names: ConnectorNames = Object.fromEntries((doc.names ?? []).map((n) => [n.connector, n.name]))
   return { board, map, names }
 }
 
 export function toPinsJson(map: PinMap, names: ConnectorNames): PinsUpdateJson {
   return {
-    functions: FUNCTIONS.filter((fn) => map[fn.id]).map((fn) => {
-      const a = map[fn.id]
-      return {
-        id: fn.id,
-        connector: a.connector,
-        start: a.start,
-        encoder: a.encoderType ?? "",
-        signals: a.options.map((o) => ({ invert: o.invert, pull: o.pull })),
-      }
-    }),
+    functions: map.map((a) => ({
+      id: a.fn,
+      connector: a.connector,
+      start: a.start,
+      encoder: a.encoderType ?? "",
+      signals: a.options.map((o) => ({ invert: o.invert, pull: o.pull })),
+    })),
     names: Object.entries(names).map(([connector, name]) => ({ connector, name })),
   }
 }

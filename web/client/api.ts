@@ -1,5 +1,5 @@
 import type { CmdOutcome } from "./types"
-import type { PinsJson, PinsUpdateJson } from "./pins"
+import type { PinFunctionsJson, PinsJson, PinsUpdateJson } from "./pins"
 import type { ThreadTableJson } from "./threads"
 import { wsSend, wsNotifyFlashing, wsNotifyFlashed } from "./ws"
 
@@ -116,6 +116,14 @@ export async function saveThreads(table: ThreadTableJson): Promise<{ ok: boolean
 
 export async function fetchPins(): Promise<PinsJson> {
   const res = await fetch("/pins")
+  if (!res.ok) {
+    throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function fetchPinFunctions(): Promise<PinFunctionsJson> {
+  const res = await fetch("/pins/functions")
   if (!res.ok) {
     throw new Error((await res.text().catch(() => "")).trim() || `HTTP ${res.status}`)
   }

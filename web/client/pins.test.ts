@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
 import {
   CONNECTOR_NAME_MAX,
-  FUNCTIONS,
   MOCK_BOARD,
+  MOCK_FUNCTIONS,
   MOCK_MAP,
+  assignmentLabel,
+  canAdd,
   canStartAt,
   connectorLabel,
   defaultAssignment,
@@ -16,18 +18,22 @@ import {
   toPinsJson,
   validate,
   type PinMap,
+  type PinFunctionsJson,
   type PinsJson,
 } from "./pins"
 
-const fn = (id: string) => functionDef(id)!
+const fn = (id: string) => functionDef(MOCK_BOARD, id)!
+const at = (map: PinMap, id: string) => map.findIndex((a) => a.fn === id)
+const without = (id: string): PinMap => MOCK_MAP.filter((a) => a.fn !== id)
+const replace = (id: string, change: Partial<PinMap[number]>): PinMap => MOCK_MAP.map((a) => (a.fn === id ? { ...a, ...change } : a))
 
 describe("pinsOf", () => {
   it("gives the GPIOs in signal order", () => {
-    expect(pinsOf(MOCK_BOARD, fn("zMotor"), MOCK_MAP.zMotor)).toEqual([16, 15, 7])
+    expect(pinsOf(MOCK_BOARD, fn("zMotor"), MOCK_MAP[at(MOCK_MAP, "zMotor")])).toEqual([16, 15, 7])
   })
 
   it("gives null for power pins", () => {
-    expect(pinsOf(MOCK_BOARD, fn("probe"), { ...MOCK_MAP.probe, start: 0 })).toEqual([null])
+    expect(pinsOf(MOCK_BOARD, fn("probe"), { ...MOCK_MAP[at(MOCK_MAP, "probe")], start: 0 })).toEqual([null])
   })
 })
 
@@ -39,29 +45,27 @@ describe("validate", () => {
   })
 
   it("rejects a missing required function", () => {
-    const map: PinMap = { ...MOCK_MAP }
-    delete map.zMotor
+    const map = without("zMotor")
     expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.fn === "zMotor")).toBe(true)
   })
 
   it("accepts a missing optional function", () => {
-    const map: PinMap = { ...MOCK_MAP }
-    delete map.xMotor
+    const map = without("xMotor")
     expect(validate(MOCK_BOARD, map).filter((i) => i.level === "error")).toEqual([])
   })
 
   it("rejects a GPIO used twice", () => {
-    const map: PinMap = { ...MOCK_MAP, probe: { ...MOCK_MAP.probe, connector: "r3c5", start: 2 } }
+    const map = replace("probe", { connector: "r3c5", start: 2 })
     expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.gpio === 10)).toBe(true)
   })
 
   it("rejects a reserved pin", () => {
-    const map: PinMap = { ...MOCK_MAP, probe: { ...MOCK_MAP.probe, connector: "r1c1", start: 3 } }
+    const map = replace("probe", { connector: "r1c1", start: 3 })
     expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.gpio === 35)).toBe(true)
   })
 
   it("rejects a group that runs onto a power pin", () => {
-    const map: PinMap = { ...MOCK_MAP, xMotor: { ...MOCK_MAP.xMotor, connector: "r2c5", start: 1 } }
+    const map = replace("xMotor", { connector: "r2c5", start: 1 })
     expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.fn === "xMotor")).toBe(true)
   })
 
@@ -71,8 +75,20 @@ describe("validate", () => {
   })
 
   it("rejects an encoder type the function does not allow", () => {
-    const map: PinMap = { ...MOCK_MAP, spindle: { ...MOCK_MAP.spindle, encoderType: "sw" } }
+    const map = replace("spindle", { encoderType: "sw" })
     expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.fn === "spindle")).toBe(true)
+  })
+
+  it("rejects an exclusive function given twice", () => {
+    const map: PinMap = [...MOCK_MAP, defaultAssignment(fn("xMotor"), "r1c4", 0)]
+    expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.index === map.length - 1)).toBe(true)
+  })
+
+  it("accepts a non-exclusive function more than once", () => {
+    const map: PinMap = [...MOCK_MAP, defaultAssignment(fn("probe"), "r2c1", 3)]
+    expect(validate(MOCK_BOARD, map).filter((i) => i.level === "error")).toEqual([])
+    expect(assignmentLabel(MOCK_BOARD, map, map.length - 1)).toBe("Probe 2")
+    expect(assignmentLabel(MOCK_BOARD, MOCK_MAP, at(MOCK_MAP, "probe"))).toBe("Probe")
   })
 })
 
@@ -84,13 +100,19 @@ describe("placement", () => {
     expect(canStartAt(MOCK_BOARD, MOCK_MAP, "xMotor", "r1c1", 1)).toBe(false)
   })
 
-  it("allows a function on its own pins", () => {
-    expect(canStartAt(MOCK_BOARD, MOCK_MAP, "zMotor", "r1c2", 1)).toBe(true)
+  it("allows a moved function on its own pins", () => {
+    expect(canStartAt(MOCK_BOARD, MOCK_MAP, "zMotor", "r1c2", 1, at(MOCK_MAP, "zMotor"))).toBe(true)
+    expect(canStartAt(MOCK_BOARD, MOCK_MAP, "zMotor", "r1c2", 1)).toBe(false)
+  })
+
+  it("adds only non-exclusive or unused functions", () => {
+    expect(canAdd(MOCK_BOARD, MOCK_MAP, "probe")).toBe(true)
+    expect(canAdd(MOCK_BOARD, MOCK_MAP, "xMotor")).toBe(false)
+    expect(canAdd(MOCK_BOARD, without("xMotor"), "xMotor")).toBe(true)
   })
 
   it("lists every place a group fits", () => {
-    const map: PinMap = { ...MOCK_MAP }
-    delete map.xMotor
+    const map = without("xMotor")
     expect(placements(MOCK_BOARD, map, "xMotor")).toEqual([
       { connector: "r1c3", start: 1 },
       { connector: "r1c4", start: 0 },
@@ -98,13 +120,15 @@ describe("placement", () => {
     ])
   })
 
-  it("lists the functions that can start at a pin", () => {
-    expect(functionsAt(MOCK_BOARD, MOCK_MAP, "r3c2", 2).map((f) => f.id)).toEqual(["spindle", "zHandwheel", "xHandwheel", "probe"])
+  it("lists the functions that can be added at a pin", () => {
+    expect(functionsAt(MOCK_BOARD, MOCK_MAP, "r3c2", 2).map((f) => f.id)).toEqual(["probe", "stop"])
+    expect(functionsAt(MOCK_BOARD, without("zHandwheel"), "r3c2", 2).map((f) => f.id)).toEqual(["zHandwheel", "probe", "stop"])
   })
 
   it("gives inputs a pull-up by default", () => {
     expect(defaultAssignment(fn("probe"), "r3c2", 2).options).toEqual([{ invert: false, pull: "up" }])
-    expect(FUNCTIONS.every((f) => !f.encoderTypes || defaultAssignment(f, "r3c2", 2).encoderType === f.encoderTypes[0])).toBe(true)
+    expect(defaultAssignment(fn("stop"), "r3c2", 2).options).toEqual([{ invert: true, pull: "up" }])
+    expect(MOCK_FUNCTIONS.every((f) => !f.encoderTypes || defaultAssignment(f, "r3c2", 2).encoderType === f.encoderTypes[0])).toBe(true)
   })
 })
 
@@ -141,9 +165,13 @@ describe("pins JSON", () => {
       { id: "r2c1", title: "PROBE", row: 2, col: 1, pins: [-1, -2, 8, 18] },
     ],
   }
+  const fns: PinFunctionsJson = {
+    functions: MOCK_FUNCTIONS.map((f) => ({ ...f, encoders: f.encoderTypes ?? [] })),
+  }
 
   it("reads the board", () => {
-    const { board: b } = fromPinsJson({ board, functions: [], names: [] })
+    const { board: b } = fromPinsJson({ board, functions: [], names: [] }, fns)
+    expect(b.functions).toEqual(MOCK_FUNCTIONS)
     expect(b.connectors[0].pins).toEqual([{ power: "5V" }, { gpio: 41 }, { gpio: 42 }, { gpio: 35 }])
     expect(b.connectors[1].pins[1]).toEqual({ power: "GND" })
     expect(b.reserved).toEqual({ 35: "PSRAM" })
@@ -153,7 +181,7 @@ describe("pins JSON", () => {
   it("gives back the same map and names", () => {
     const names = { r1c1: "Coolant" }
     const doc = { board, ...toPinsJson(MOCK_MAP, names) }
-    const back = fromPinsJson(doc)
+    const back = fromPinsJson(doc, fns)
     expect(back.map).toEqual(MOCK_MAP)
     expect(back.names).toEqual(names)
   })

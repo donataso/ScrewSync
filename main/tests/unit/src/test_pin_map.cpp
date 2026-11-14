@@ -43,9 +43,41 @@ namespace
         }
     }
 
-    void place(Fn fn, std::initializer_list<int32_t> gpios)
+    Assignment &place(Fn fn, std::initializer_list<int32_t> gpios)
     {
-        zassert_true(fromGpios(g_board, fn, gpios.begin(), gpios.size(), g_map.fn[(size_t)fn]));
+        Assignment a;
+        zassert_true(fromGpios(g_board, fn, gpios.begin(), gpios.size(), a));
+        zassert_true(add(g_map, a));
+        return g_map.list[g_map.count - 1];
+    }
+
+    Assignment &at(Fn fn)
+    {
+        for (size_t i = 0; i < g_map.count; i++) {
+            if (g_map.list[i].fn == fn) {
+                return g_map.list[i];
+            }
+        }
+        zassert_unreachable("no %s", def(fn).id);
+        return g_map.list[0];
+    }
+
+    void remove(Fn fn)
+    {
+        Map kept = {};
+        memcpy(kept.names, g_map.names, sizeof(kept.names));
+        for (size_t i = 0; i < g_map.count; i++) {
+            if (g_map.list[i].fn != fn) {
+                add(kept, g_map.list[i]);
+            }
+        }
+        g_map = kept;
+    }
+
+    size_t g_warnings;
+    void countWarning(const char *)
+    {
+        g_warnings++;
     }
 
     void setUp(void *)
@@ -78,19 +110,18 @@ namespace
 
     void expectSameFunctions(const Map &a, const Map &b)
     {
-        for (size_t i = 0; i < FN_COUNT; i++) {
-            const Assignment &x = a.fn[i];
-            const Assignment &y = b.fn[i];
-            zassert_equal(x.used, y.used, "%s", FUNCTIONS[i].id);
-            if (!x.used) {
-                continue;
-            }
-            zassert_equal(x.connector, y.connector, "%s", FUNCTIONS[i].id);
-            zassert_equal(x.start, y.start, "%s", FUNCTIONS[i].id);
-            zassert_equal(x.encoder, y.encoder, "%s", FUNCTIONS[i].id);
-            for (size_t s = 0; s < FUNCTIONS[i].signalCount; s++) {
-                zassert_equal(x.options[s].invert, y.options[s].invert, "%s", FUNCTIONS[i].id);
-                zassert_equal(x.options[s].pull, y.options[s].pull, "%s", FUNCTIONS[i].id);
+        zassert_equal(a.count, b.count);
+        for (size_t i = 0; i < a.count; i++) {
+            const Assignment &x = a.list[i];
+            const Assignment &y = b.list[i];
+            const char *id = def(x.fn).id;
+            zassert_equal(x.fn, y.fn, "%s", id);
+            zassert_equal(x.connector, y.connector, "%s", id);
+            zassert_equal(x.start, y.start, "%s", id);
+            zassert_equal(x.encoder, y.encoder, "%s", id);
+            for (size_t s = 0; s < def(x.fn).signalCount; s++) {
+                zassert_equal(x.options[s].invert, y.options[s].invert, "%s", id);
+                zassert_equal(x.options[s].pull, y.options[s].pull, "%s", id);
             }
         }
     }
@@ -106,10 +137,19 @@ ZTEST_SUITE(pin_map, nullptr, nullptr, setUp, nullptr, nullptr);
 ZTEST(pin_map, test_defaults_are_valid)
 {
     zassert_is_null(check(), "%s", g_err);
-    zassert_equal(gpioOf(g_board, g_map, Fn::ZMotor, 2), 7);
-    zassert_equal(gpioOf(g_board, g_map, Fn::ZHandwheel, 0), 21);
-    zassert_equal(g_map.fn[(size_t)Fn::Probe].options[0].pull, Pull::Up);
-    zassert_equal(g_map.fn[(size_t)Fn::ZMotor].options[0].pull, Pull::None);
+    zassert_equal(gpioOf(g_board, at(Fn::ZMotor), 2), 7);
+    zassert_equal(gpioOf(g_board, at(Fn::ZHandwheel), 0), 21);
+    zassert_equal(at(Fn::Probe).options[0].pull, Pull::Up);
+    zassert_equal(at(Fn::ZMotor).options[0].pull, Pull::None);
+}
+
+ZTEST(pin_map, test_ids_fit_storage)
+{
+    for (const FnDef &d : FUNCTIONS) {
+        zassert_true(strlen(d.id) <= ID_MAX, "%s", d.id);
+        zassert_true(!d.required || d.exclusive, "%s", d.id);
+        zassert_true(!d.action || (d.dir == Dir::In && d.signalCount == 1 && !d.exclusive), "%s", d.id);
+    }
 }
 
 ZTEST(pin_map, test_from_gpios_needs_adjacent_pins)
@@ -126,7 +166,7 @@ ZTEST(pin_map, test_pcnt_units)
     zassert_equal(pcntUnit(g_map, Fn::Spindle), 0);
     zassert_equal(pcntUnit(g_map, Fn::ZHandwheel), 1);
     zassert_equal(pcntUnit(g_map, Fn::XHandwheel), 2);
-    g_map.fn[(size_t)Fn::ZHandwheel].encoder = Encoder::Sw;
+    at(Fn::ZHandwheel).encoder = Encoder::Sw;
     zassert_equal(pcntUnit(g_map, Fn::ZHandwheel), -1);
     zassert_equal(pcntUnit(g_map, Fn::XHandwheel), 1);
     zassert_equal(pcntUnit(g_map, Fn::ZMotor), -1);
@@ -134,46 +174,116 @@ ZTEST(pin_map, test_pcnt_units)
 
 ZTEST(pin_map, test_rejects_missing_required)
 {
-    g_map.fn[(size_t)Fn::ZMotor].used = false;
+    remove(Fn::ZMotor);
     zassert_not_null(check());
     setUp(nullptr);
-    g_map.fn[(size_t)Fn::XMotor].used = false;
+    remove(Fn::XMotor);
     zassert_is_null(check(), "%s", g_err);
+}
+
+ZTEST(pin_map, test_exclusive_and_multiple)
+{
+    place(Fn::ZMotor, {38, 6, 5});
+    zassert_not_null(check());
+    zassert_not_null(strstr(g_err, "twice"), "%s", g_err);
+
+    setUp(nullptr);
+    place(Fn::Probe, {18});
+    zassert_is_null(check(), "%s", g_err);
+    zassert_equal(countOf(g_map, Fn::Probe), 2);
+    zassert_equal(gpioOf(g_board, *find(g_map, Fn::Probe, 1), 0), 18);
+    zassert_is_null(find(g_map, Fn::Probe, 2));
 }
 
 ZTEST(pin_map, test_rejects_conflict_reserved_power)
 {
-    g_map.fn[(size_t)Fn::Probe] = g_map.fn[(size_t)Fn::Spindle];
-    g_map.fn[(size_t)Fn::Probe].encoder = Encoder::None;
+    Assignment &probe = at(Fn::Probe);
+    probe = at(Fn::Spindle);
+    probe.fn = Fn::Probe;
+    probe.encoder = Encoder::None;
     zassert_not_null(check());
 
     setUp(nullptr);
-    g_map.fn[(size_t)Fn::Probe].connector = 0;
-    g_map.fn[(size_t)Fn::Probe].start = 3;
+    at(Fn::Probe).connector = 0;
+    at(Fn::Probe).start = 3;
     zassert_not_null(check());
 
     setUp(nullptr);
-    g_map.fn[(size_t)Fn::Probe].start = 0;
+    at(Fn::Probe).start = 0;
     zassert_not_null(check());
 
     setUp(nullptr);
-    g_map.fn[(size_t)Fn::XMotor].connector = 3;
-    g_map.fn[(size_t)Fn::XMotor].start = 2;
+    at(Fn::XMotor).connector = 3;
+    at(Fn::XMotor).start = 2;
     zassert_not_null(check());
 }
 
 ZTEST(pin_map, test_rejects_bad_encoder_and_pull)
 {
-    g_map.fn[(size_t)Fn::Spindle].encoder = Encoder::Sw;
+    at(Fn::Spindle).encoder = Encoder::Sw;
     zassert_not_null(check());
 
     setUp(nullptr);
-    g_map.fn[(size_t)Fn::ZMotor].options[0].pull = Pull::Up;
+    at(Fn::ZMotor).options[0].pull = Pull::Up;
     zassert_not_null(check());
 
     setUp(nullptr);
     g_board.pcntUnits = 2;
     zassert_not_null(check());
+}
+
+ZTEST(pin_map, test_keep_valid_first_wins)
+{
+    place(Fn::Probe, {21});
+    place(Fn::ZMotor, {38, 6, 5});
+    place(Fn::Probe, {18});
+    Map out;
+    g_warnings = 0;
+    keepValid(g_board, g_map, out, countWarning);
+    zassert_equal(g_warnings, 2);
+    zassert_equal(countOf(out, Fn::Probe), 2);
+    zassert_equal(gpioOf(g_board, *find(out, Fn::ZHandwheel), 0), 21);
+    zassert_equal(gpioOf(g_board, *find(out, Fn::ZMotor), 0), 16);
+    zassert_is_null(validate(g_board, out, g_err, sizeof(g_err)), "%s", g_err);
+}
+
+ZTEST(pin_map, test_stored_round_trip)
+{
+    strcpy(g_map.names[1], "Coolant");
+    at(Fn::Probe).options[0] = {true, Pull::Down};
+    place(Fn::Probe, {18});
+    static Stored stored;
+    toStored(g_board, g_map, stored);
+    Map out;
+    g_warnings = 0;
+    zassert_true(fromStored(g_board, stored, out, countWarning));
+    zassert_equal(g_warnings, 0);
+    expectSameFunctions(out, g_map);
+    zassert_str_equal(out.names[1], "Coolant");
+
+    // A board with the connectors in another order still finds them by id.
+    Board other = g_board;
+    other.connectors[0] = g_board.connectors[1];
+    other.connectors[1] = g_board.connectors[0];
+    zassert_true(fromStored(other, stored, out, countWarning));
+    zassert_equal(gpioOf(other, *find(out, Fn::ZMotor), 0), 16);
+    zassert_str_equal(out.names[0], "Coolant");
+}
+
+ZTEST(pin_map, test_stored_skips_unknown)
+{
+    static Stored stored;
+    toStored(g_board, g_map, stored);
+    strcpy(stored.assignments[0].fn, "laser");
+    strcpy(stored.assignments[1].connector, "r9c9");
+    Map out;
+    g_warnings = 0;
+    zassert_true(fromStored(g_board, stored, out, countWarning));
+    zassert_equal(g_warnings, 2);
+    zassert_equal(out.count, g_map.count - 2);
+
+    stored.magic = 0;
+    zassert_false(fromStored(g_board, stored, out, countWarning));
 }
 
 ZTEST(pin_map, test_names)
@@ -193,8 +303,9 @@ ZTEST(pin_map, test_names)
 ZTEST(pin_map, test_json_round_trip)
 {
     strcpy(g_map.names[0], "Coolant");
-    g_map.fn[(size_t)Fn::ZHandwheel].encoder = Encoder::Sw;
-    g_map.fn[(size_t)Fn::Probe].options[0] = {true, Pull::Down};
+    at(Fn::ZHandwheel).encoder = Encoder::Sw;
+    at(Fn::Probe).options[0] = {true, Pull::Down};
+    place(Fn::Probe, {18});
     int len = PinMapJson::encode(g_board, g_map, g_json, sizeof(g_json));
     zassert_true(len > 0);
     zassert_not_null(strstr(g_json, "\"pins\":[-1,41,42,35]"), "%s", g_json);
@@ -219,4 +330,16 @@ ZTEST(pin_map, test_json_rejects)
     char badPull[] = R"({"functions":[{"id":"probe","connector":"r2c1","start":2,"encoder":"",)"
                      R"("signals":[{"invert":false,"pull":"sideways"}]}]})";
     zassert_not_null(PinMapJson::decode(g_board, badPull, strlen(badPull), out, g_err, sizeof(g_err)));
+}
+
+ZTEST(pin_map, test_functions_json)
+{
+    int len = PinMapJson::encodeFunctions(g_json, sizeof(g_json));
+    zassert_true(len > 0);
+    zassert_not_null(strstr(g_json, R"("id":"zHandwheel")"), "%s", g_json);
+    zassert_not_null(strstr(g_json, R"("encoders":["hw","sw"])"), "%s", g_json);
+    zassert_not_null(strstr(g_json, R"("signals":["ENA","DIR","STEP"])"), "%s", g_json);
+    zassert_not_null(strstr(g_json, R"("id":"stop","label":"Stop","group":"Inputs","signals":["SIG"],"dir":"in",)"
+                                    R"("required":false,"exclusive":false,"activeLow":true)"),
+                     "%s", g_json);
 }

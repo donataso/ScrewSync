@@ -25,6 +25,8 @@
 // POST /pins: {"functions":[{id,connector,start,encoder,signals:[{invert,pull}]}],
 //   "names":[{connector,name}]}
 // Pins: GPIO number, -1 = 5V, -2 = GND. encoder: "hw", "sw" or "".
+// A non-exclusive function can be in "functions" more than once.
+// GET /pins/functions: {"functions":[{id,label,group,signals,dir,required,exclusive,activeLow,encoders}]}
 namespace PinMapJson
 {
     int encode(const PinMap::Board &board, const PinMap::Map &map, char *out, size_t outMax);
@@ -32,6 +34,8 @@ namespace PinMapJson
     // Builds and validates out; nullptr on success, else the reason (in err).
     const char *decode(const PinMap::Board &board, char *json, size_t len, PinMap::Map &out, char *err,
                        size_t errMax);
+
+    int encodeFunctions(char *out, size_t outMax);
 }
 
 #endif

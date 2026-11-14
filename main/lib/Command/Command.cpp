@@ -67,7 +67,7 @@ namespace
         {"settings", "settings get | set <field> <value> | set-all <json> | reset", "machine config storage", settings},
         {"jog", "jog step [<deci-microns>] | z|x +|- [hold] | resolution <multiplier> | speed <steps/sec|0> | status",
          "jog buttons (tap = one step, repeated hold = continuous), handwheel resolution/speed", jog},
-        {"move", "move z|x to|by <deci-microns> | stop", "manual positioning", move},
+        {"move", "move z|x to|by <deci-microns> | stop | zero", "manual positioning; zero = rapid Z then X to 0", move},
         {"mode", "mode [<name>|status]", "selects the operating mode (refused while running)", mode},
         {"start", "start [zero]", "starts the selected mode; zero = rapid Z then X to 0 first", start},
         {"stop", "stop", "stops the mode and decelerates both axes", stop},

@@ -22,6 +22,7 @@
 #include "RunSettings.hpp"
 #include "Settings.hpp"
 #include <math.h>
+#include <zephyr/kernel.h>
 
 namespace
 {
@@ -37,6 +38,26 @@ namespace
         }
         Stepper::moveTo(axis, target);
         return nullptr;
+    }
+
+    constexpr int32_t ZERO_POLL_MS = 10;
+
+    void zeroThenX(struct k_work *);
+    K_WORK_DELAYABLE_DEFINE(g_zeroThenX, zeroThenX);
+
+    // Starts X once Z is at 0. Gives up if Z was sent elsewhere or the machine is not idle.
+    void zeroThenX(struct k_work *)
+    {
+        if (!Motion::idle()) {
+            return;
+        }
+        if (!Stepper::arrived(Stepper::Axis::Z)) {
+            k_work_reschedule(&g_zeroThenX, K_MSEC(ZERO_POLL_MS));
+            return;
+        }
+        if (Stepper::position(Stepper::Axis::Z) == 0) {
+            moveToSteps(Stepper::Axis::X, 0);
+        }
     }
 }
 
@@ -76,6 +97,15 @@ namespace Motion
         return moveToSteps(axis, targetSteps);
     }
 
+    const char *moveToZero()
+    {
+        const char *refusal = moveToSteps(Stepper::Axis::Z, 0);
+        if (!refusal) {
+            k_work_reschedule(&g_zeroThenX, K_MSEC(ZERO_POLL_MS));
+        }
+        return refusal;
+    }
+
     const char *zero(Stepper::Axis axis, int64_t du)
     {
         if (Mode::owns(axis)) {
@@ -87,6 +117,7 @@ namespace Motion
 
     void stop(Stepper::Axis axis)
     {
+        k_work_cancel_delayable(&g_zeroThenX);
         Stepper::moveTo(axis, Stepper::position(axis));
     }
 

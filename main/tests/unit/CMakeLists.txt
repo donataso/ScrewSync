@@ -27,6 +27,7 @@ target_sources(app PRIVATE
     src/test_settings_fields.cpp
     src/test_json_span.cpp
     src/test_pin_map.cpp
+    src/test_switch_debounce.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperRamp.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperLimits.cpp
     ${FIRMWARE_DIR}/lib/Rpm/RpmCalc.cpp
@@ -56,6 +57,7 @@ target_sources(app PRIVATE
 
 target_include_directories(app PRIVATE
     ${FIRMWARE_DIR}/lib/Pins
+    ${FIRMWARE_DIR}/lib/Switches
     ${FIRMWARE_DIR}/lib/Stepper
     ${FIRMWARE_DIR}/lib/Sync
     ${FIRMWARE_DIR}/lib/Jog
