@@ -20,6 +20,7 @@
 #include "Events.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
+#include "ModeMath.hpp"
 #include "RunSettings.hpp"
 #include "Settings.hpp"
 #include <math.h>
@@ -32,13 +33,22 @@ namespace
         return axis == Stepper::Axis::Z ? Settings::g_active.z : Settings::g_active.x;
     }
 
-    const char *moveToSteps(Stepper::Axis axis, int64_t target)
+    const char *moveToSteps(Stepper::Axis axis, int64_t target, int32_t maxSpeed = 0)
     {
         if (Mode::owns(axis)) {
             return "mode running, stop first";
         }
-        Stepper::moveTo(axis, target);
+        Stepper::moveTo(axis, target, maxSpeed);
         return nullptr;
+    }
+
+    int32_t manualSpeed(Stepper::Axis axis, int32_t duPerMin)
+    {
+        if (duPerMin <= 0) {
+            return 0;
+        }
+        const Settings::Axis &cfg = cfgOf(axis);
+        return Mode::Detail::feedStepsPerSec(duPerMin, cfg.motorSteps, cfg.screwPitchDu, cfg.speedManualMove);
     }
 
     atomic_t g_zeroThenX = ATOMIC_INIT(0);
@@ -90,16 +100,16 @@ namespace Motion
         return Machine::state() == Machine::State::Idle && !Mode::running();
     }
 
-    const char *moveTo(Stepper::Axis axis, int64_t du, int64_t &targetSteps)
+    const char *moveTo(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin)
     {
         targetSteps = duToSteps(axis, (double)du);
-        return moveToSteps(axis, targetSteps);
+        return moveToSteps(axis, targetSteps, manualSpeed(axis, duPerMin));
     }
 
-    const char *moveBy(Stepper::Axis axis, int64_t du, int64_t &targetSteps)
+    const char *moveBy(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin)
     {
         targetSteps = Stepper::position(axis) + duToSteps(axis, (double)du);
-        return moveToSteps(axis, targetSteps);
+        return moveToSteps(axis, targetSteps, manualSpeed(axis, duPerMin));
     }
 
     const char *moveToZero()

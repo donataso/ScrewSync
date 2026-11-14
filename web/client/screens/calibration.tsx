@@ -11,6 +11,7 @@ import { useToast } from "../ui/toast"
 const DU_PER_MM = 10000
 const DIRECTION_MOVE_DU = DU_PER_MM
 const PRELOAD_MOVE_DU = DU_PER_MM
+const STEPS_PER_MM_DU_PER_MIN = 100 * DU_PER_MM
 const BACKLASH_RUNS = 5
 const BACKLASH_SIDE_TOLERANCE = 0.2
 
@@ -233,8 +234,8 @@ function EncoderPpr({ raw, apply, canConfigure }: CheckProps) {
 const PLUS_LABEL: Record<Axis, string> = { Z: "toward the tailstock", X: "away from the centerline" }
 const MINUS_LABEL: Record<Axis, string> = { Z: "toward the chuck", X: "toward the centerline" }
 
-async function move(axis: Axis, du: number): Promise<CmdOutcome> {
-  return sendCommand(`move ${axis.toLowerCase()} by ${du}`)
+async function move(axis: Axis, du: number, duPerMin?: number): Promise<CmdOutcome> {
+  return sendCommand(`move ${axis.toLowerCase()} by ${du}${duPerMin ? ` ${duPerMin}` : ""}`)
 }
 
 function AxisDirectionRow({ axis, raw, apply, canConfigure }: CheckProps & { axis: Axis }) {
@@ -305,7 +306,7 @@ function StepsPerMmRow({ axis, raw, apply, canConfigure }: CheckProps & { axis: 
     measuredMm && commandedMm > 0 && pitch > 0 ? String(Math.round((pitch * measuredMm) / commandedMm)) : null
 
   async function run(du: number) {
-    const outcome = await move(axis, du)
+    const outcome = await move(axis, -du, STEPS_PER_MM_DU_PER_MIN)
     if (outcome.status === "denied") {
       toast.push(outcome.msg, "bad")
     }
@@ -327,7 +328,7 @@ function StepsPerMmRow({ axis, raw, apply, canConfigure }: CheckProps & { axis: 
           />
         </Field>
         <Button disabled={!canConfigure || commandedMm <= 0} onClick={() => run(Math.round(commandedMm * DU_PER_MM))}>
-          Move {axis}+
+          Move {axis}-
         </Button>
         <Field label="Measured (mm)">
           <TextInput

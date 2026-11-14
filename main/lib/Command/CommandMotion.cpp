@@ -122,7 +122,7 @@ namespace Command::Detail
         char axisTok[4];
         Stepper::Axis axis;
         const char *rest;
-        if (!takeAxis(args, "move", "move zero | z|x to|by <deci-microns> | stop", axisTok, axis, rest, out, outMax)) {
+        if (!takeAxis(args, "move", "move zero | z|x to|by <deci-microns> [<du/min>] | stop", axisTok, axis, rest, out, outMax)) {
             return;
         }
         if (!strcmp(rest, "stop")) {
@@ -133,18 +133,26 @@ namespace Command::Detail
 
         bool relative = !strncmp(rest, "by ", 3);
         if (!relative && strncmp(rest, "to ", 3) != 0) {
-            snprintf(out, outMax, "err move %s to|by <deci-microns> | stop", axisTok);
+            snprintf(out, outMax, "err move %s to|by <deci-microns> [<du/min>] | stop", axisTok);
             return;
         }
         char *end;
         long long du = strtoll(rest + 3, &end, 10);
-        if (end == rest + 3 || *end) {
-            snprintf(out, outMax, "err move %s %s <deci-microns>", axisTok, relative ? "by" : "to");
+        long duPerMin = 0;
+        bool bad = end == rest + 3;
+        if (!bad && *end) {
+            const char *speedTok = skipSpaces(end);
+            duPerMin = strtol(speedTok, &end, 10);
+            bad = end == speedTok || *end || duPerMin <= 0 || duPerMin > INT32_MAX;
+        }
+        if (bad) {
+            snprintf(out, outMax, "err move %s %s <deci-microns> [<du/min>]", axisTok, relative ? "by" : "to");
             return;
         }
 
         int64_t target;
-        const char *refusal = relative ? Motion::moveBy(axis, du, target) : Motion::moveTo(axis, du, target);
+        const char *refusal = relative ? Motion::moveBy(axis, du, target, (int32_t)duPerMin)
+                                       : Motion::moveTo(axis, du, target, (int32_t)duPerMin);
         if (refusal) {
             snprintf(out, outMax, "err move %s: %s", axisTok, refusal);
         } else {
