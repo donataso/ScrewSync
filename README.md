@@ -52,6 +52,18 @@ encoders, handwheels, a probe, physical buttons for start, stop, zero and
 modes, and a "running" output. Rename the connectors to match your wiring.
 No rebuild, no soldering of adapters. See [docs/pins.md](docs/pins.md).
 
+<p float="left">
+  <img src="docs/images/web-pins.png" width="400" />
+  <img src="docs/images/web-pins-select.png" width="400" />
+</p>
+
+### Calibration
+
+Guided checks in the web client for machine setup: probe polarity, spindle
+direction, encoder PPR, axis direction, steps/mm and backlash. Each check
+shows the measured value next to the current setting. One click applies it.
+See [docs/calibration.md](docs/calibration.md).
+
 ### And more
 
 - **Spindle direction check**: the job stops if the spindle turns the wrong
@@ -84,6 +96,7 @@ connectors. See [docs/install.md](docs/install.md).
 | [Manual](docs/manual.md)                   | how to operate it                       |
 | [Probe](docs/probe.md)                     | probe hardware, settings and cycle      |
 | [Pins](docs/pins.md)                       | pin mapping, encoders, switches         |
+| [Calibration](docs/calibration.md)         | machine setup checks in the web client  |
 | [Design](docs/design.md)                   | architecture and machine state          |
 | [Protocol](docs/protocol.md)               | command set for serial, display and web |
 | [Display](docs/screen.md)                  | display UI design and tooling           |
