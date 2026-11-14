@@ -280,7 +280,7 @@ namespace Wifi::Detail
             return;
         }
         net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, g_iface, NULL, 0);
-        net_dhcpv4_stop(g_iface);
+        net_dhcpv4_server_stop(g_iface);
         net_if_ipv4_addr_rm(g_iface, &g_apAddr);
         g_apUp = false;
     }
