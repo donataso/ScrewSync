@@ -19,6 +19,7 @@
 #include "CommandInternal.hpp"
 #include "Machine.hpp"
 #include "Motion.hpp"
+#include "Pins.hpp"
 #include <zephyr/sys/reboot.h>
 
 using namespace Command::Detail;
@@ -155,6 +156,21 @@ namespace Command::Detail
         return true;
     }
 
+    bool startsMotion(const char *token, size_t tokLen, const char *args)
+    {
+        args = skipSpaces(args);
+        if (tokLen == 5 && !strncmp(token, "start", 5)) {
+            return true;
+        }
+        if (tokLen == 4 && !strncmp(token, "move", 4)) {
+            return strcmp(args, "stop") != 0;
+        }
+        if (tokLen == 3 && !strncmp(token, "jog", 3)) {
+            return (args[0] == 'z' || args[0] == 'x') && args[1] == ' ';
+        }
+        return false;
+    }
+
     bool refuseUnlessIdle(char *out, size_t outMax)
     {
         if (Motion::idle()) {
@@ -184,6 +200,12 @@ namespace Command
         }
         if (st == Machine::State::EStop && !isEstop) {
             snprintf(out, outMax, "err busy: estop");
+            return;
+        }
+
+        const char *pinsFault = Pins::fault();
+        if (pinsFault && startsMotion(a, tokLen, a + tokLen)) {
+            snprintf(out, outMax, "err pins: %s", pinsFault);
             return;
         }
 

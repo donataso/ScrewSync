@@ -24,16 +24,15 @@ namespace PinMap
 {
     constexpr uint32_t ONE_APB_CYCLE_NS = 13;
 
-#define SWITCH(id, label, action) {id, label, "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, true, action, 0}
+#define SWITCH_IN(group, id, label, action) {id, label, group, 1, {"SIG"}, Dir::In, false, false, false, false, true, action, 0}
+#define SWITCH(id, label, action) SWITCH_IN("Inputs", id, label, action)
+#define MODE_SWITCH(id, label, action) SWITCH_IN("Modes", id, label, action)
     const FnDef FUNCTIONS[FN_COUNT] = {
         {"zMotor", "Z motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, true, true, false, false, false, nullptr, 0},
         {"xMotor", "X motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, false, true, false, false, false, nullptr, 0},
-        {"spindle", "Spindle encoder", "Encoders", 2, {"A", "B"}, Dir::In, true, true, true, false, false, nullptr,
-         ONE_APB_CYCLE_NS},
-        {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr,
-         MAX_HW_FILTER_NS},
-        {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr,
-         MAX_HW_FILTER_NS},
+        {"spindle", "Spindle encoder", "Encoders", 2, {"A", "B"}, Dir::In, true, true, true, false, false, nullptr, ONE_APB_CYCLE_NS},
+        {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr, MAX_HW_FILTER_NS},
+        {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr, MAX_HW_FILTER_NS},
         {"probe", "Probe", "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, false, nullptr, 0},
         SWITCH("startHere", "Start here", "start"),
         SWITCH("stop", "Stop", "stop"),
@@ -43,17 +42,23 @@ namespace PinMap
         SWITCH("goToZero", "Go to zero", "move zero"),
         SWITCH("goToZeroZ", "Go to zero Z", "move z to 0"),
         SWITCH("goToZeroX", "Go to zero X", "move x to 0"),
-        SWITCH("modeGear", "Mode gear", "mode gear"),
-        SWITCH("modeAsync", "Mode async", "mode async"),
-        SWITCH("modeTurn", "Mode turn", "mode turn"),
-        SWITCH("modeThread", "Mode thread", "mode thread"),
-        SWITCH("modePart", "Mode part", "mode part"),
-        SWITCH("modeSlot", "Mode slot", "mode slot"),
-        SWITCH("modeEllipse", "Mode ellipse", "mode ellipse"),
-        SWITCH("modeGcode", "Mode G-code", "mode gcode"),
-        SWITCH("modeProbe", "Mode probe", "mode probe"),
+        SWITCH("feedReset", "Feed override reset", "override reset"),
+        SWITCH("feedUp", "Feed +", "override +"),
+        SWITCH("feedDown", "Feed -", "override -"),
+        MODE_SWITCH("modeGear", "Mode gear", "mode gear"),
+        MODE_SWITCH("modeAsync", "Mode async", "mode async"),
+        MODE_SWITCH("modeTurn", "Mode turn", "mode turn"),
+        MODE_SWITCH("modeThread", "Mode thread", "mode thread"),
+        MODE_SWITCH("modePart", "Mode part", "mode part"),
+        MODE_SWITCH("modeSlot", "Mode slot", "mode slot"),
+        MODE_SWITCH("modeEllipse", "Mode ellipse", "mode ellipse"),
+        MODE_SWITCH("modeGcode", "Mode G-code", "mode gcode"),
+        MODE_SWITCH("modeProbe", "Mode probe", "mode probe"),
+        {"running", "Running", "Outputs", 1, {"SIG"}, Dir::Out, false, false, false, false, false, nullptr, 0},
     };
+#undef MODE_SWITCH
 #undef SWITCH
+#undef SWITCH_IN
 
     const FnDef &def(Fn fn)
     {

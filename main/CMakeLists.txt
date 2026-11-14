@@ -80,6 +80,8 @@ target_sources(app PRIVATE
     lib/WebUi/WsMessages.cpp
     lib/Ota/Ota.cpp
     lib/LogRing/LogRing.cpp
+    lib/Events/Events.cpp
+    lib/Outputs/Outputs.cpp
 )
 
 target_include_directories(app PRIVATE
@@ -114,6 +116,8 @@ target_include_directories(app PRIVATE
     lib/Wifi
     lib/WifiPortal
     lib/LogRing
+    lib/Events
+    lib/Outputs
     ${CMAKE_BINARY_DIR}/include
     # WsCommand reads a client's peer address from Zephyr's internal websocket context.
     ${ZEPHYR_BASE}/subsys/net/lib/websocket

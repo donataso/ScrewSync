@@ -21,6 +21,7 @@
 #include "Settings.hpp"
 #include "Machine.hpp"
 #include "Pins.hpp"
+#include "Events.hpp"
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/counter.h>
@@ -152,11 +153,32 @@ namespace
 
     void armNext(AxisState &s, uint32_t periodUs);
 
+    void publishArrived(Stepper::Axis axis)
+    {
+        Events::AxisArrived msg = {(uint8_t)axis};
+        Events::publish(&AXIS_ARRIVED_CHAN, &msg);
+    }
+
+    void arrivedZ(struct k_work *)
+    {
+        publishArrived(Stepper::Axis::Z);
+    }
+
+    void arrivedX(struct k_work *)
+    {
+        publishArrived(Stepper::Axis::X);
+    }
+
+    K_WORK_DEFINE(g_arrivedZ, arrivedZ);
+    K_WORK_DEFINE(g_arrivedX, arrivedX);
+
+    // Runs in the step ISR: the event goes out from the system workqueue.
     void endMove(AxisState &s)
     {
         s.running = false;
         s.braking = false;
         reconcile(s);
+        k_work_submit(&s == &g_axisZ ? &g_arrivedZ : &g_arrivedX);
     }
 
     int64_t moveToLocked(AxisState &s, int64_t targetSteps, int32_t maxSpeed, bool follow = false)

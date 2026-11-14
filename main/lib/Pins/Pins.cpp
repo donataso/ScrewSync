@@ -107,6 +107,7 @@ namespace
     Stored g_stored;
     bool g_defaults = false;
     char g_err[ERROR_MAX];
+    char g_fault[ERROR_MAX];
 
     void buildBoard()
     {
@@ -238,8 +239,10 @@ namespace Pins
             defaults(saved);
         }
         keepValid(g_board, saved, g_active, warnIgnored);
-        if (missingRequired(g_active, g_err, sizeof(g_err))) {
-            LOG_ERR("pin map: %s", g_err);
+        if (missingRequired(g_active, g_fault, sizeof(g_fault))) {
+            LOG_ERR("pin map: %s", g_fault);
+        } else {
+            g_fault[0] = '\0';
         }
         routePcnt();
     }
@@ -283,6 +286,11 @@ namespace Pins
         return g_defaults;
     }
 
+    const char *fault()
+    {
+        return g_fault[0] ? g_fault : nullptr;
+    }
+
     int toJson(char *out, size_t outMax)
     {
         static Map saved;
@@ -291,7 +299,6 @@ namespace Pins
         }
         return PinMapJson::encode(g_board, saved, out, outMax);
     }
-
 
     const char *fromJson(char *json, size_t len)
     {

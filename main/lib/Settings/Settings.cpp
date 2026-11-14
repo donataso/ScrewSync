@@ -18,6 +18,7 @@
 #include "Settings.hpp"
 #include "SettingsFields.hpp"
 #include "PersistBlob.hpp"
+#include "Events.hpp"
 
 #include <stdio.h>
 #include <string.h>
@@ -79,6 +80,12 @@ namespace
         }
         return false;
     }
+
+    void publishChanged()
+    {
+        Events::SettingsChanged msg = {};
+        Events::publish(&SETTINGS_CHAN, &msg);
+    }
 }
 
 namespace Settings
@@ -98,6 +105,7 @@ namespace Settings
         for (const Field &f : FIELDS) {
             ok = saveField(f) && ok;
         }
+        publishChanged();
         return ok;
     }
 
@@ -108,7 +116,12 @@ namespace Settings
             snprintf(out, outMax, "unknown field '%s'", name);
             return false;
         }
-        return parseField(*f, value, g_active, out, outMax) && saveField(*f);
+        if (!parseField(*f, value, g_active, out, outMax)) {
+            return false;
+        }
+        bool ok = saveField(*f);
+        publishChanged();
+        return ok;
     }
 
     void formatAll(char *out, size_t outMax)
@@ -149,6 +162,7 @@ namespace Settings
                 saveField(f);
             }
         }
+        publishChanged();
         return true;
     }
 }

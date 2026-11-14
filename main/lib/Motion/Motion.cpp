@@ -17,6 +17,7 @@
  */
 #include "Motion.hpp"
 #include "Encoder.hpp"
+#include "Events.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
 #include "RunSettings.hpp"
@@ -40,26 +41,30 @@ namespace
         return nullptr;
     }
 
-    constexpr int32_t ZERO_POLL_MS = 10;
+    atomic_t g_zeroThenX = ATOMIC_INIT(0);
 
-    void zeroThenX(struct k_work *);
-    K_WORK_DELAYABLE_DEFINE(g_zeroThenX, zeroThenX);
-
-    // Starts X once Z is at 0. Gives up if Z was sent elsewhere or the machine is not idle.
-    void zeroThenX(struct k_work *)
+    // Starts X once Z is at 0. Gives up if Z stopped elsewhere or the machine is not idle.
+    void startXIfZAtZero()
     {
-        if (!Motion::idle()) {
+        if (!Stepper::arrived(Stepper::Axis::Z) || !atomic_cas(&g_zeroThenX, 1, 0)) {
             return;
         }
-        if (!Stepper::arrived(Stepper::Axis::Z)) {
-            k_work_reschedule(&g_zeroThenX, K_MSEC(ZERO_POLL_MS));
-            return;
-        }
-        if (Stepper::position(Stepper::Axis::Z) == 0) {
+        if (Motion::idle() && Stepper::position(Stepper::Axis::Z) == 0) {
             moveToSteps(Stepper::Axis::X, 0);
         }
     }
+
+    void onAxisArrived(const struct zbus_channel *chan)
+    {
+        const auto *msg = static_cast<const Events::AxisArrived *>(zbus_chan_const_msg(chan));
+        if (msg->axis == (uint8_t)Stepper::Axis::Z) {
+            startXIfZAtZero();
+        }
+    }
 }
+
+ZBUS_LISTENER_DEFINE(MOTION_ARRIVED_LIS, onAxisArrived);
+ZBUS_CHAN_ADD_OBS(AXIS_ARRIVED_CHAN, MOTION_ARRIVED_LIS, 3);
 
 namespace Motion
 {
@@ -99,11 +104,14 @@ namespace Motion
 
     const char *moveToZero()
     {
+        atomic_set(&g_zeroThenX, 1);
         const char *refusal = moveToSteps(Stepper::Axis::Z, 0);
-        if (!refusal) {
-            k_work_reschedule(&g_zeroThenX, K_MSEC(ZERO_POLL_MS));
+        if (refusal) {
+            atomic_set(&g_zeroThenX, 0);
+            return refusal;
         }
-        return refusal;
+        startXIfZAtZero();
+        return nullptr;
     }
 
     const char *zero(Stepper::Axis axis, int64_t du)
@@ -117,7 +125,7 @@ namespace Motion
 
     void stop(Stepper::Axis axis)
     {
-        k_work_cancel_delayable(&g_zeroThenX);
+        atomic_set(&g_zeroThenX, 0);
         Stepper::moveTo(axis, Stepper::position(axis));
     }
 

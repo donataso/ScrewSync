@@ -31,7 +31,7 @@ namespace
     Board g_board;
     Map g_map;
     char g_err[ERROR_MAX];
-    char g_json[4096];
+    char g_json[8192];
 
     void addConnector(const char *id, const char *title, uint8_t row, uint8_t col, std::initializer_list<int16_t> pins)
     {

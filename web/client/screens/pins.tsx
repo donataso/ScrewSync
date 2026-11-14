@@ -146,7 +146,7 @@ function PinsEditor({
   const [selected, setSelected] = useState<Focus | null>(null)
   const [placing, setPlacing] = useState<Placing | null>(null)
   const [preview, setPreview] = useState<Span | null>(null)
-  const [menu, setMenu] = useState<{ connector: string; start: number } | null>(null)
+  const [menu, setMenu] = useState<{ connector: string; start: number; assigned?: number } | null>(null)
   const toast = useToast()
 
   const used = useMemo(() => usage(board, map), [board, map])
@@ -261,6 +261,54 @@ function PinsEditor({
     setSelected({ index: moving ?? map.length })
   }
 
+  function replace(index: number, fnId: string, connectorId: string, start: number) {
+    const fn = functionDef(board, fnId)
+    if (!fn) {
+      return
+    }
+    const rest = map.filter((_, i) => i !== index)
+    setMap([...rest, defaultAssignment(fn, connectorId, start)])
+    setMenu(null)
+    setSelected({ index: rest.length })
+  }
+
+  function pickAt(fnId: string) {
+    if (!menu) {
+      return
+    }
+    const { connector, start, assigned } = menu
+    const pin = connectorOf(board, connector)?.pins[start]
+    const gpio = pin && "gpio" in pin ? pin.gpio : undefined
+    let next: number | undefined
+    if (assigned === undefined) {
+      place(fnId, connector, start)
+      next = map.length
+    } else if (map[assigned]?.fn === fnId) {
+      remove(assigned)
+      const other = gpio === undefined ? undefined : used.get(gpio)?.find((u) => u.index !== assigned)
+      next = other && (other.index > assigned ? other.index - 1 : other.index)
+    } else {
+      replace(assigned, fnId, connector, start)
+      next = map.length - 1
+    }
+    setSelected({ index: next, gpio })
+    setMenu({ connector, start, assigned: next })
+  }
+
+  function menuFunctions(connectorId: string, start: number, assigned?: number) {
+    if (assigned === undefined) {
+      return functionsAt(board, map, connectorId, start)
+    }
+    const assignedFn = map[assigned]?.fn
+    const available = functionsAt(
+      board,
+      map.filter((_, i) => i !== assigned),
+      connectorId,
+      start,
+    )
+    return board.functions.filter((fn) => fn.id === assignedFn || available.includes(fn))
+  }
+
   function remove(index: number) {
     setMap((m) => m.filter((_, i) => i !== index))
     setPlacing(null)
@@ -281,8 +329,8 @@ function PinsEditor({
     }
     const uses = used.get(pin.gpio)
     if (uses?.length) {
-      setMenu(null)
       setSelected({ index: uses[0].index, gpio: pin.gpio })
+      setMenu({ connector: c.id, start: index, assigned: uses[0].index })
       return
     }
     setSelected({ gpio: pin.gpio })
@@ -374,7 +422,7 @@ function PinsEditor({
                 onRename={(name) => rename(c.id, name)}
                 onCancelRename={() => setRenaming(null)}
                 highlighted={active?.connector === c.id || c.pins.some((p) => "gpio" in p && pinHighlighted(p))}
-                pinHighlighted={(p) => pinHighlighted(p)}
+                pinHighlighted={(p) => pinHighlighted(p) || ("gpio" in p && p.gpio === selected?.gpio)}
                 used={used}
                 placing={placing}
                 map={map}
@@ -391,12 +439,12 @@ function PinsEditor({
             ))}
           </div>
         </div>
-        <PinInfo gpio={active?.gpio} used={used} label={label} useLabel={(u) => assignmentLabel(board, map, u.index)} />
         {menu && (
           <PinMenu
             title={pinTitle(board, menu.connector, menu.start, label)}
-            functions={functionsAt(board, map, menu.connector, menu.start)}
-            onPick={(fnId) => place(fnId, menu.connector, menu.start)}
+            functions={menuFunctions(menu.connector, menu.start, menu.assigned)}
+            selectedFn={menu.assigned === undefined ? undefined : map[menu.assigned]?.fn}
+            onPick={pickAt}
             onClose={() => setMenu(null)}
           />
         )}
@@ -618,43 +666,6 @@ function ConnectorView({
   )
 }
 
-function PinInfo({
-  gpio,
-  used,
-  label,
-  useLabel,
-}: {
-  gpio?: number
-  used: Map<number, PinUse[]>
-  label: (id: string) => string
-  useLabel: (u: PinUse) => string
-}) {
-  const board = useBoard()
-  const c = gpio === undefined ? undefined : board.connectors.find((x) => x.pins.some((p) => "gpio" in p && p.gpio === gpio))
-  return (
-    <p className="mt-3 min-h-10 border-t border-border pt-2 text-sm text-muted-foreground">
-      {gpio === undefined || !c ? (
-        "Hover or tap a pin for details."
-      ) : (
-        <>
-          <span className="font-medium text-foreground">
-            GPIO {gpio} ({label(c.id)})
-          </span>
-          {(used.get(gpio) ?? []).map((u) => (
-            <span key={u.index}>
-              {" · "}
-              {useLabel(u)} {u.signal}
-            </span>
-          ))}
-          {gpio in board.reserved && <span className="block">Reserved: {board.reserved[gpio]}.</span>}
-          {board.strapping.includes(gpio) && <span className="block text-amber-600 dark:text-amber-400">Strapping pin: {STRAPPING_NOTE}.</span>}
-          {!(gpio in board.reserved) && !(used.get(gpio)?.length) && <span> · free</span>}
-        </>
-      )}
-    </p>
-  )
-}
-
 function pinTitle(board: Board, connectorId: string, start: number, label: (id: string) => string) {
   const c = connectorOf(board, connectorId)
   const p = c?.pins[start]
@@ -664,11 +675,13 @@ function pinTitle(board: Board, connectorId: string, start: number, label: (id: 
 function PinMenu({
   title,
   functions,
+  selectedFn,
   onPick,
   onClose,
 }: {
   title: string
   functions: FunctionDef[]
+  selectedFn?: string
   onPick: (fnId: string) => void
   onClose: () => void
 }) {
@@ -677,7 +690,12 @@ function PinMenu({
       <span className="text-muted-foreground">{title}:</span>
       {functions.length === 0 && <span className="text-muted-foreground">no function can be added here.</span>}
       {functions.map((fn) => (
-        <Button key={fn.id} onClick={() => onPick(fn.id)}>
+        <Button
+          key={fn.id}
+          variant={fn.id === selectedFn ? "primary" : undefined}
+          title={fn.id === selectedFn ? "Remove" : undefined}
+          onClick={() => onPick(fn.id)}
+        >
           {fn.label}
         </Button>
       ))}

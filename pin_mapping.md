@@ -21,24 +21,27 @@ Functions are assigned to connector pins from the web UI. The map applies after 
 
 The function table is only in the firmware. `GET /pins/functions` sends it to the web UI. To add a function, add a row to the table and the code that uses its pins.
 
-| Function        | Signals        | Dir | Required | Exclusive | Encoder  | Action               |
-|-----------------|----------------|-----|----------|-----------|----------|----------------------|
-| Z motor         | ENA, DIR, STEP | out | yes      | yes       | -        | -                    |
-| X motor         | ENA, DIR, STEP | out | no       | yes       | -        | -                    |
-| Spindle encoder | A, B           | in  | yes      | yes       | hw       | -                    |
-| Z handwheel     | A, B           | in  | no       | yes       | hw or sw | -                    |
-| X handwheel     | A, B           | in  | no       | yes       | hw or sw | -                    |
-| Probe           | SIG            | in  | no       | no        | -        | -                    |
-| Start here      | SIG            | in  | no       | no        | -        | `start`              |
-| Stop            | SIG            | in  | no       | no        | -        | `stop`               |
-| Set zero        | SIG            | in  | no       | no        | -        | zero Z and X         |
-| Set zero Z      | SIG            | in  | no       | no        | -        | `zero z`             |
-| Set zero X      | SIG            | in  | no       | no        | -        | `zero x`             |
-| Go to zero      | SIG            | in  | no       | no        | -        | `move zero`          |
-| Go to zero Z    | SIG            | in  | no       | no        | -        | `move z to 0`        |
-| Go to zero X    | SIG            | in  | no       | no        | -        | `move x to 0`        |
-| Mode `<name>`   | SIG            | in  | no       | no        | -        | `mode <name>`        |
-| Running         | SIG            | out | no       | no        | -        | on while a job runs  |
+| Function            | Signals        | Dir | Required | Exclusive | Encoder  | Action              |
+|---------------------|----------------|-----|----------|-----------|----------|---------------------|
+| Z motor             | ENA, DIR, STEP | out | yes      | yes       | -        | -                   |
+| X motor             | ENA, DIR, STEP | out | no       | yes       | -        | -                   |
+| Spindle encoder     | A, B           | in  | yes      | yes       | hw       | -                   |
+| Z handwheel         | A, B           | in  | no       | yes       | hw or sw | -                   |
+| X handwheel         | A, B           | in  | no       | yes       | hw or sw | -                   |
+| Probe               | SIG            | in  | no       | no        | -        | -                   |
+| Start here          | SIG            | in  | no       | no        | -        | `start`             |
+| Stop                | SIG            | in  | no       | no        | -        | `stop`              |
+| Set zero            | SIG            | in  | no       | no        | -        | zero Z and X        |
+| Set zero Z          | SIG            | in  | no       | no        | -        | `zero z`            |
+| Set zero X          | SIG            | in  | no       | no        | -        | `zero x`            |
+| Go to zero          | SIG            | in  | no       | no        | -        | `move zero`         |
+| Go to zero Z        | SIG            | in  | no       | no        | -        | `move z to 0`       |
+| Go to zero X        | SIG            | in  | no       | no        | -        | `move x to 0`       |
+| Feed override reset | SIG            | in  | no       | no        | -        | `override reset`    |
+| Feed +              | SIG            | in  | no       | no        | -        | `override +`        |
+| Feed -              | SIG            | in  | no       | no        | -        | `override -`        |
+| Mode `<name>`       | SIG            | in  | no       | no        | -        | `mode <name>`       |
+| Running             | SIG            | out | no       | no        | -        | on while a job runs |
 
 - Mode switches: one function for each mode in `Mode::NAMES`.
 - A function fills pins next to each other in one connector, in its signal order.
@@ -54,6 +57,7 @@ The function table is only in the firmware. `GET /pins/functions` sends it to th
 - `start` does not ask "Go to zero first?". That question is only on the display.
 - `move zero`: rapid Z to 0, then X to 0, the same as `start zero`. A stop, an ESTOP or a mode start cancels the X move.
 - An action can have more than one command, separated by `;`.
+- A refused action shows as a toast on the display.
 
 ## Encoders
 
@@ -71,7 +75,7 @@ The function table is only in the firmware. `GET /pins/functions` sends it to th
 - An assignment: function id, connector, start pin, encoder type, encoder filter, signal options. The list has a fixed maximum length.
 - If no map is saved, the firmware uses the board defaults.
 - An invalid assignment (unknown function id, bad pin, conflict) is ignored and logged as a warning. It stays in the saved map. In a conflict, the first assignment in the list stays.
-- If a required function is missing: pins fault. Move, jog and start reply `err pins: <reason>`. The display shows a toast at boot and on each refused command. Settings and the web UI still work.
+- If a required function is missing: pins fault. Commands that move an axis (`start`, `move` except `move stop`, `jog z|x`) reply `err pins: <reason>`. The display shows a toast at boot and on each refused command. Settings and the web UI still work.
 - Recovery: the `pins reset` serial command saves the board defaults.
 
 ## Validation
@@ -101,7 +105,7 @@ Strapping pins are a warning only.
 
 The Pins page loads `/pins`.
 
-- **Connector map** (primary view): the board's connectors and their pins. Reserved pins are locked with a red mark, strapping pins have an amber mark. A line under the map gives the details of the pin under the pointer.
+- **Connector map** (primary view): the board's connectors and their pins. Reserved pins are locked with a red mark, strapping pins have an amber mark.
 - **Functions:** the required functions and the assigned functions. Each one with its connector and pins, encoder type (a select only when the function allows both), invert/pull options, encoder filter, Move and Remove. Required functions have no Remove.
 - **Add function:** a list of the functions that can be added: the non-exclusive functions and the unused exclusive functions, in groups.
 - **Problems:** errors and warnings.
@@ -110,6 +114,7 @@ Assignment:
 
 - Select a function, then a start pin. The map shows where the function fits.
 - Or select a free pin, then a function that can start there.
+- On an assigned pin, the list shows its function as selected. Select it again to remove it, or select another function to replace it.
 
 Connector names:
 
@@ -127,10 +132,7 @@ Save:
 
 ## Phases
 
-1. Running output.
-2. Pin map in the settings backup.
-
-The two phases do not depend on each other.
+1. Pin map in the settings backup.
 
 ## Left to do
 

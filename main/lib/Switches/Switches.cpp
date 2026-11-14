@@ -18,6 +18,7 @@
 #include "Switches.hpp"
 #include "SwitchDebounce.hpp"
 #include "Command.hpp"
+#include "Events.hpp"
 #include "Mode.hpp"
 #include "Pins.hpp"
 #include <string.h>
@@ -61,6 +62,7 @@ namespace
                 Command::apply(line, g_reply, sizeof(g_reply));
                 if (strncmp(g_reply, "ok", 2) != 0) {
                     LOG_WRN("switch %s: %s", line, g_reply);
+                    Events::publishRefusal(g_reply);
                 }
             }
             action += len + (action[len] == ';');

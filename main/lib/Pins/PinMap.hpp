@@ -80,6 +80,9 @@ namespace PinMap
         GoToZero,
         GoToZeroZ,
         GoToZeroX,
+        FeedReset,
+        FeedUp,
+        FeedDown,
         ModeGear,
         ModeAsync,
         ModeTurn,
@@ -89,6 +92,7 @@ namespace PinMap
         ModeEllipse,
         ModeGcode,
         ModeProbe,
+        Running,
         Count,
     };
     constexpr size_t FN_COUNT = (size_t)Fn::Count;

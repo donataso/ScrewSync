@@ -39,6 +39,8 @@ namespace Pins
     uint32_t filterNs(PinMap::Fn fn);
 
     bool usingDefaults();
+    // Why the active map is missing a required function, or nullptr.
+    const char *fault();
 
     // The saved map (not the active one) with the board.
     int toJson(char *out, size_t outMax);

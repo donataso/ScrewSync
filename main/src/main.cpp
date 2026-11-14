@@ -19,6 +19,7 @@
 #include "WebUi.hpp"
 #include "Display.hpp"
 #include "Switches.hpp"
+#include "Outputs.hpp"
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF); // Wifi declares against this module
 
@@ -28,6 +29,7 @@ int main(void)
     Machine::begin();
     Settings::load();
     Pins::begin();
+    Outputs::begin();
     Encoder::begin();
     Handwheel::begin();
     Stepper::begin();
