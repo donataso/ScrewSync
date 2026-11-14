@@ -264,6 +264,8 @@ namespace Wifi::Detail
 
         if (net_mgmt(NET_REQUEST_WIFI_AP_ENABLE, g_iface, &apConfig, sizeof(apConfig)) != 0) {
             LOG_ERR("wifi: AP enable failed");
+            net_dhcpv4_server_stop(g_iface);
+            net_if_ipv4_addr_rm(g_iface, &g_apAddr);
             return;
         }
 
