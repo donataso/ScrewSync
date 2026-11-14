@@ -55,6 +55,21 @@ Each encoder has a filter, in µs:
 - "Start here" starts without the "Go to zero first?" question.
 - "Go to zero" moves Z to 0, then X to 0.
 
+## Jog
+
+- Jog Z+, Z-, X+, X- buttons work like the display's jog buttons: a short
+  press moves one step, a long press moves until the release.
+- If a jog is refused (for example, the axis is off), the button does
+  nothing more until you release it.
+- "Jog step cycle" selects the next preset, then the custom step, then the
+  first preset again.
+- "Jog step encoder" sets a custom step. Each detent changes the step by
+  the last digit that the display shows. A faster turn makes larger changes. On a preset,
+  the first detent starts from that preset. The step is saved when the
+  encoder stops.
+- The step encoder counts one per quadrature cycle. To reverse it, invert
+  A or B.
+
 ## Outputs
 
 - "Running" is on while a job runs.

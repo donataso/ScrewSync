@@ -379,10 +379,14 @@ namespace PinMapJson
             j.required = d.required;
             j.exclusive = d.exclusive;
             j.activeLow = d.activeLow;
+            // The first one is the default.
+            if (d.swEncoder && d.swDefault) {
+                j.encoders[j.encoderCount++] = "sw";
+            }
             if (d.hwEncoder) {
                 j.encoders[j.encoderCount++] = "hw";
             }
-            if (d.swEncoder) {
+            if (d.swEncoder && !d.swDefault) {
                 j.encoders[j.encoderCount++] = "sw";
             }
             j.filterUs = d.filterNs / 1000.0;

@@ -18,6 +18,7 @@
 #include "DisplayInternal.hpp"
 #include "GcodeCore.hpp"
 #include "GcodeStore.hpp"
+#include "JogStep.hpp"
 #include "Machine.hpp"
 #include "Motion.hpp"
 #include "Wifi.hpp"
@@ -85,13 +86,11 @@ namespace
 
     void pushJogStep(int32_t stepDu)
     {
-        static const int32_t PRESETS_MM_DU[] = {100, 1000, 10000};    // 0.01, 0.1, 1 mm
-        static const int32_t PRESETS_INCH_DU[] = {254, 2540, 25400}; // 0.001, 0.01, 0.1 in
-        const int32_t *presets = inchUnits() ? PRESETS_INCH_DU : PRESETS_MM_DU;
+        const int32_t *presets = Jog::stepPresets(inchUnits());
         bool custom = true;
         char key[KEY_MAX];
         char label[24];
-        for (size_t i = 0; i < 3; i++) {
+        for (size_t i = 0; i < Jog::STEP_PRESET_COUNT; i++) {
             bool selected = presets[i] == stepDu;
             custom = custom && !selected;
             snprintf(key, sizeof(key), "step%u", (unsigned)i);

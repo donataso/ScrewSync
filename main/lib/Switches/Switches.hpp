@@ -19,7 +19,9 @@
 #define Switches_h
 
 // Switch inputs of the pin map. Each press runs the function's action
-// through the command dispatcher, the same as a display command.
+// through the command dispatcher, the same as a display command. Jog
+// buttons tap, hold and release like the display's. Also runs the jog step
+// encoder.
 namespace Switches
 {
     // Call after Pins::begin() and the modules that the commands use.

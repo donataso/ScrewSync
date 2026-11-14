@@ -28,7 +28,10 @@ namespace
     void jogStep(const char *v, char *out, size_t outMax)
     {
         long du;
-        if (!*v) {
+        if (!strcmp(v, "next")) {
+            RunSettings::nextJogStep();
+            snprintf(out, outMax, "ok step=%ld", (long)RunSettings::jogStepDu());
+        } else if (!*v) {
             snprintf(out, outMax, "ok step=%ld", (long)RunSettings::jogStepDu());
         } else if (!Command::Detail::parseLong(v, du) || !RunSettings::setJogStepDu((int32_t)du)) {
             snprintf(out, outMax, "err jog step <deci-microns> out of range");
@@ -73,7 +76,7 @@ namespace Command::Detail
         Stepper::Axis axis;
         const char *rest;
         if (!takeAxis(a, "jog",
-                      "jog step [<deci-microns>] | z|x +|- [hold|release] | resolution <multiplier> | "
+                      "jog step [<deci-microns>|next] | z|x +|- [hold|release] | resolution <multiplier> | "
                       "speed <steps/sec|0> | status",
                       axisTok, axis, rest, out, outMax)) {
             return;

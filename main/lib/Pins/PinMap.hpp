@@ -70,6 +70,12 @@ namespace PinMap
         FeedReset,
         FeedUp,
         FeedDown,
+        JogZPlus,
+        JogZMinus,
+        JogXPlus,
+        JogXMinus,
+        JogStepNext,
+        JogStepEncoder,
         ModeGear,
         ModeAsync,
         ModeTurn,
@@ -134,6 +140,8 @@ namespace PinMap
         bool exclusive;
         bool hwEncoder;
         bool swEncoder;
+        // sw is the default when both are allowed.
+        bool swDefault;
         // Default invert of new assignments.
         bool activeLow;
         // Switch: commands run on press, separated by ';'. nullptr otherwise.
@@ -171,6 +179,7 @@ namespace PinMap
     };
 
     const FnDef &def(Fn fn);
+    Encoder defaultEncoder(const FnDef &d);
     int findFn(const char *id);
     int findConnector(const Board &board, const char *id);
 

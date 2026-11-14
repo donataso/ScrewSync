@@ -61,6 +61,8 @@ target_sources(app PRIVATE
     lib/Sync/SyncRatio.cpp
     lib/Jog/Jog.cpp
     lib/Jog/JogRatio.cpp
+    lib/Jog/JogStep.cpp
+    lib/Jog/JogStepDial.cpp
     lib/Switches/Switches.cpp
     lib/Rpm/Rpm.cpp
     lib/Rpm/RpmCalc.cpp

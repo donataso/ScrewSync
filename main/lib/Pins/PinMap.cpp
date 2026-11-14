@@ -25,17 +25,20 @@ namespace PinMap
     constexpr uint32_t ONE_APB_CYCLE_NS = 13;
     constexpr uint32_t SPINDLE_MAX_RPM = 3000;
     constexpr uint32_t HANDWHEEL_MAX_RPM = 600;
+    // Debounce for a mechanical detent encoder.
+    constexpr uint32_t JOG_STEP_ENCODER_FILTER_NS = 1000000;
 
-#define SWITCH_IN(group, id, label, action) {id, label, group, 1, {"SIG"}, Dir::In, false, false, false, false, true, action, 0, 0}
+#define SWITCH_IN(group, id, label, action) {id, label, group, 1, {"SIG"}, Dir::In, false, false, false, false, false, true, action, 0, 0}
 #define SWITCH(id, label, action) SWITCH_IN("Inputs", id, label, action)
 #define MODE_SWITCH(id, label, action) SWITCH_IN("Modes", id, label, action)
+#define JOG_SWITCH(id, label, action) SWITCH_IN("Jog", id, label, action)
     const FnDef FUNCTIONS[FN_COUNT] = {
-        {"zMotor", "Z motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, true, true, false, false, false, nullptr, 0, 0},
-        {"xMotor", "X motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, false, true, false, false, false, nullptr, 0, 0},
-        {"spindle", "Spindle encoder", "Encoders", 2, {"A", "B"}, Dir::In, true, true, true, false, false, nullptr, ONE_APB_CYCLE_NS, SPINDLE_MAX_RPM},
-        {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
-        {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
-        {"probe", "Probe", "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, false, nullptr, 0, 0},
+        {"zMotor", "Z motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, true, true, false, false, false, false, nullptr, 0, 0},
+        {"xMotor", "X motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, false, true, false, false, false, false, nullptr, 0, 0},
+        {"spindle", "Spindle encoder", "Encoders", 2, {"A", "B"}, Dir::In, true, true, true, false, false, false, nullptr, ONE_APB_CYCLE_NS, SPINDLE_MAX_RPM},
+        {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
+        {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
+        {"probe", "Probe", "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, false, false, nullptr, 0, 0},
         SWITCH("startHere", "Start here", "start"),
         SWITCH("stop", "Stop", "stop"),
         SWITCH("setZero", "Set zero", "zero z;zero x"),
@@ -47,6 +50,12 @@ namespace PinMap
         SWITCH("feedReset", "Feed override reset", "override reset"),
         SWITCH("feedUp", "Feed +", "override +"),
         SWITCH("feedDown", "Feed -", "override -"),
+        JOG_SWITCH("jogZPlus", "Jog Z+", nullptr),
+        JOG_SWITCH("jogZMinus", "Jog Z-", nullptr),
+        JOG_SWITCH("jogXPlus", "Jog X+", nullptr),
+        JOG_SWITCH("jogXMinus", "Jog X-", nullptr),
+        JOG_SWITCH("jogStepNext", "Jog step cycle", "jog step next"),
+        {"jogStepEncoder", "Jog step encoder", "Jog", 2, {"A", "B"}, Dir::In, false, true, true, true, true, false, nullptr, JOG_STEP_ENCODER_FILTER_NS, 0},
         MODE_SWITCH("modeGear", "Mode gear", "mode gear"),
         MODE_SWITCH("modeAsync", "Mode async", "mode async"),
         MODE_SWITCH("modeTurn", "Mode turn", "mode turn"),
@@ -56,8 +65,9 @@ namespace PinMap
         MODE_SWITCH("modeEllipse", "Mode ellipse", "mode ellipse"),
         MODE_SWITCH("modeGcode", "Mode G-code", "mode gcode"),
         MODE_SWITCH("modeProbe", "Mode probe", "mode probe"),
-        {"running", "Running", "Outputs", 1, {"SIG"}, Dir::Out, false, false, false, false, false, nullptr, 0, 0},
+        {"running", "Running", "Outputs", 1, {"SIG"}, Dir::Out, false, false, false, false, false, false, nullptr, 0, 0},
     };
+#undef JOG_SWITCH
 #undef MODE_SWITCH
 #undef SWITCH
 #undef SWITCH_IN
@@ -65,6 +75,14 @@ namespace PinMap
     const FnDef &def(Fn fn)
     {
         return FUNCTIONS[(size_t)fn];
+    }
+
+    Encoder defaultEncoder(const FnDef &d)
+    {
+        if (d.swEncoder && (d.swDefault || !d.hwEncoder)) {
+            return Encoder::Sw;
+        }
+        return d.hwEncoder ? Encoder::Hw : Encoder::None;
     }
 
     int findFn(const char *id)
@@ -171,7 +189,7 @@ namespace PinMap
                 out.fn = fn;
                 out.connector = (uint8_t)c;
                 out.start = (uint8_t)start;
-                out.encoder = d.hwEncoder ? Encoder::Hw : (d.swEncoder ? Encoder::Sw : Encoder::None);
+                out.encoder = defaultEncoder(d);
                 out.filterNs = d.filterNs;
                 for (size_t i = 0; i < count; i++) {
                     out.options[i] = {d.activeLow, d.dir == Dir::In ? Pull::Up : Pull::None};

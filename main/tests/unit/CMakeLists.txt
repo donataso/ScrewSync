@@ -28,11 +28,14 @@ target_sources(app PRIVATE
     src/test_json_span.cpp
     src/test_pin_map.cpp
     src/test_switch_debounce.cpp
+    src/test_jog_step.cpp
+    src/test_jog_button.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperRamp.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperLimits.cpp
     ${FIRMWARE_DIR}/lib/Rpm/RpmCalc.cpp
     ${FIRMWARE_DIR}/lib/Sync/SyncRatio.cpp
     ${FIRMWARE_DIR}/lib/Jog/JogRatio.cpp
+    ${FIRMWARE_DIR}/lib/Jog/JogStep.cpp
     ${FIRMWARE_DIR}/lib/Thread/ThreadTable.cpp
     ${FIRMWARE_DIR}/lib/Gcode/GcodeCore.cpp
     ${FIRMWARE_DIR}/lib/Gcode/GcodeLathecode.cpp

@@ -66,7 +66,7 @@ namespace
          "del <name|idx> | use <name|idx> | ap on|off | fallback on|off",
          "WiFi AP+STA control", wifi},
         {"settings", "settings get | set <field> <value> | set-all <json> | reset", "machine config storage", settings},
-        {"jog", "jog step [<deci-microns>] | z|x +|- [hold|release] | resolution <multiplier> | speed <steps/sec|0> | status",
+        {"jog", "jog step [<deci-microns>|next] | z|x +|- [hold|release] | resolution <multiplier> | speed <steps/sec|0> | status",
          "jog buttons (tap = one step, repeated hold = continuous, release = stop), handwheel resolution/speed", jog},
         {"move", "move z|x to|by <deci-microns> | stop | zero", "manual positioning; zero = rapid Z then X to 0", move},
         {"mode", "mode [<name>|status]", "selects the operating mode (refused while running)", mode},

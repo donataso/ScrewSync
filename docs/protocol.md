@@ -37,6 +37,8 @@ replies; see `docs/screen.md`.
 - Serial/UART replies stay `ok [data]` / `err <reason>` (unchanged).
 - Any command on any transport gets `err busy: flashing`/`err busy: estop`
   instead of running while machine state is `flashing` or `estop`.
+- `jog step [<deci-microns>|next]`: shows or sets the jog step. `next`
+  selects the next preset, then the custom step, then the first preset.
 - `estop` / `estop ack`: `estop` alone replies `ok state=<name>`. `estop ack`
   is the one command let through while tripped -- it clears the EStop and
   reboots.
