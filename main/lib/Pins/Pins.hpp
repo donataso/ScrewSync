@@ -46,6 +46,10 @@ namespace Pins
     int toJson(char *out, size_t outMax);
     // Validates and saves; nullptr on success, else the reason.
     const char *fromJson(char *json, size_t len);
+    // Decodes and validates, no save; nullptr on success, else the reason.
+    const char *parse(char *json, size_t len, PinMap::Map &out);
+    // Saves only if map differs from the saved map (or the defaults); nullptr on success.
+    const char *saveIfChanged(const PinMap::Map &map);
     // Saves the board defaults; nullptr on success.
     const char *reset();
 }

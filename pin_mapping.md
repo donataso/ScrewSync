@@ -89,6 +89,7 @@ The firmware (`PinMap::validate`) and the web UI (`validate`, `nameIssues` in `w
 - Outputs have no pull.
 - The encoder type is allowed for the function.
 - The encoder filter is within the limit of its encoder type.
+- The encoder filter lets through the edges of the function's top speed (fixed in the function table) at the PPR from the settings: 4 × PPR × rev/s edges per second. The `sw` debounce is rounded up to the kernel tick, with one tick as the minimum. A filter of 0 on `hw` is not checked. A settings change is not checked; at boot an out-of-limit encoder is a log warning only.
 - There are enough PCNT units for the hw encoders.
 - Connector names: not too long, no leading or trailing spaces, no control characters.
 
@@ -141,4 +142,3 @@ Save:
 - ESTOP input function.
 - Printable connector label with the user's names.
 - Optional: a live view of each input's level, to help identify wiring.
-- Optional: a maximum edge rate for `sw` encoders, so the UI can warn.

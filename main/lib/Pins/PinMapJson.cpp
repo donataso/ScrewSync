@@ -56,6 +56,12 @@ namespace
         const char *note;
     };
 
+    struct JPpr
+    {
+        const char *fn;
+        double ppr;
+    };
+
     struct JConnector
     {
         const char *id;
@@ -72,6 +78,9 @@ namespace
         int32_t pcntUnits;
         double maxHwFilterUs;
         double maxSwFilterUs;
+        double tickUs;
+        JPpr ppr[FN_COUNT];
+        size_t pprCount;
         int32_t strapping[MAX_STRAPPING];
         size_t strappingCount;
         JReserved reserved[MAX_RESERVED];
@@ -122,6 +131,11 @@ namespace
         JSON_OBJ_DESCR_PRIM(JReserved, note, JSON_TOK_STRING),
     };
 
+    const struct json_obj_descr PPR_DESCR[] = {
+        JSON_OBJ_DESCR_PRIM(JPpr, fn, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_PRIM(JPpr, ppr, JSON_TOK_DOUBLE_FP),
+    };
+
     const struct json_obj_descr CONNECTOR_DESCR[] = {
         JSON_OBJ_DESCR_PRIM(JConnector, id, JSON_TOK_STRING),
         JSON_OBJ_DESCR_PRIM(JConnector, title, JSON_TOK_STRING),
@@ -135,6 +149,8 @@ namespace
         JSON_OBJ_DESCR_PRIM(JBoard, pcntUnits, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(JBoard, maxHwFilterUs, JSON_TOK_DOUBLE_FP),
         JSON_OBJ_DESCR_PRIM(JBoard, maxSwFilterUs, JSON_TOK_DOUBLE_FP),
+        JSON_OBJ_DESCR_PRIM(JBoard, tickUs, JSON_TOK_DOUBLE_FP),
+        JSON_OBJ_DESCR_OBJ_ARRAY(JBoard, ppr, FN_COUNT, pprCount, PPR_DESCR, ARRAY_SIZE(PPR_DESCR)),
         JSON_OBJ_DESCR_ARRAY(JBoard, strapping, MAX_STRAPPING, strappingCount, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_OBJ_ARRAY(JBoard, reserved, MAX_RESERVED, reservedCount, RESERVED_DESCR,
                                  ARRAY_SIZE(RESERVED_DESCR)),
@@ -168,6 +184,7 @@ namespace
         const char *encoders[2];
         size_t encoderCount;
         double filterUs;
+        int32_t maxRpm;
     };
 
     struct JFnDoc
@@ -187,6 +204,7 @@ namespace
         JSON_OBJ_DESCR_PRIM(JFnDef, activeLow, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_ARRAY(JFnDef, encoders, 2, encoderCount, JSON_TOK_STRING),
         JSON_OBJ_DESCR_PRIM(JFnDef, filterUs, JSON_TOK_DOUBLE_FP),
+        JSON_OBJ_DESCR_PRIM(JFnDef, maxRpm, JSON_TOK_NUMBER),
     };
 
     const struct json_obj_descr FN_DOC_DESCR[] = {
@@ -227,6 +245,12 @@ namespace PinMapJson
         b.pcntUnits = board.pcntUnits;
         b.maxHwFilterUs = MAX_HW_FILTER_NS / 1000.0;
         b.maxSwFilterUs = MAX_SW_FILTER_NS / 1000.0;
+        b.tickUs = board.tickNs / 1000.0;
+        for (size_t i = 0; i < FN_COUNT; i++) {
+            if (board.ppr[i] > 0) {
+                b.ppr[b.pprCount++] = {FUNCTIONS[i].id, board.ppr[i]};
+            }
+        }
         b.strappingCount = board.strappingCount;
         for (size_t i = 0; i < board.strappingCount; i++) {
             b.strapping[i] = board.strapping[i];
@@ -362,6 +386,7 @@ namespace PinMapJson
                 j.encoders[j.encoderCount++] = "sw";
             }
             j.filterUs = d.filterNs / 1000.0;
+            j.maxRpm = (int32_t)d.maxRpm;
         }
         int rc = json_obj_encode_buf(FN_DOC_DESCR, ARRAY_SIZE(FN_DOC_DESCR), &g_fnDoc, out, outMax);
         return rc == 0 ? (int)strlen(out) : -1;

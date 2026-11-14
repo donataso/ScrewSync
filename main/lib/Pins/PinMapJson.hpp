@@ -20,14 +20,14 @@
 
 #include "PinMap.hpp"
 
-// GET /pins: {"board":{name,pcntUnits,maxHwFilterUs,maxSwFilterUs,strapping,reserved:[{gpio,note}],
+// GET /pins: {"board":{name,pcntUnits,maxHwFilterUs,maxSwFilterUs,tickUs,ppr:[{fn,ppr}],strapping,reserved:[{gpio,note}],
 //   connectors:[{id,title,row,col,pins}]},"functions":[...],"names":[...]}
 // POST /pins: {"functions":[{id,connector,start,encoder,filterUs,signals:[{invert,pull}]}],
 //   "names":[{connector,name}]}
 // Pins: GPIO number, -1 = 5V, -2 = GND. encoder: "hw", "sw" or "".
 // filterUs: PCNT glitch filter (hw) or debounce time (sw); missing = the function's default.
 // A non-exclusive function can be in "functions" more than once.
-// GET /pins/functions: {"functions":[{id,label,group,signals,dir,required,exclusive,activeLow,encoders,filterUs}]}
+// GET /pins/functions: {"functions":[{id,label,group,signals,dir,required,exclusive,activeLow,encoders,filterUs,maxRpm}]}
 namespace PinMapJson
 {
     int encode(const PinMap::Board &board, const PinMap::Map &map, char *out, size_t outMax);

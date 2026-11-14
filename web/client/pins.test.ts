@@ -44,6 +44,15 @@ describe("validate", () => {
     expect(issues.filter((i) => i.level === "warn").map((i) => i.gpio)).toEqual([3, 46])
   })
 
+  it("checks the encoder edge rate against the filter", () => {
+    const errors = (map: PinMap, ppr = MOCK_BOARD.ppr) =>
+      validate({ ...MOCK_BOARD, ppr }, map).filter((i) => i.level === "error" && i.fn === "zHandwheel")
+    expect(errors(replace("zHandwheel", { encoderType: "sw" }))).toHaveLength(1)
+    expect(errors(replace("zHandwheel", { encoderType: "sw", filterUs: 0 }))).toHaveLength(1)
+    expect(errors(replace("zHandwheel", { encoderType: "sw" }), { zHandwheel: 100 })).toEqual([])
+    expect(errors(replace("zHandwheel", { encoderType: "sw", filterUs: 5000 }), {})).toEqual([])
+  })
+
   it("rejects a missing required function", () => {
     const map = without("zMotor")
     expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.fn === "zMotor")).toBe(true)
@@ -82,7 +91,7 @@ describe("validate", () => {
   it("limits the filter by encoder type", () => {
     const long = MOCK_BOARD.maxHwFilterUs + 1
     expect(validate(MOCK_BOARD, replace("zHandwheel", { filterUs: long })).some((i) => i.level === "error" && i.fn === "zHandwheel")).toBe(true)
-    expect(validate(MOCK_BOARD, replace("zHandwheel", { encoderType: "sw", filterUs: long })).filter((i) => i.level === "error")).toEqual([])
+    expect(validate({ ...MOCK_BOARD, ppr: {} }, replace("zHandwheel", { encoderType: "sw", filterUs: long })).filter((i) => i.level === "error")).toEqual([])
     expect(
       validate(MOCK_BOARD, replace("zHandwheel", { encoderType: "sw", filterUs: MOCK_BOARD.maxSwFilterUs + 1 })).some(
         (i) => i.level === "error" && i.fn === "zHandwheel",

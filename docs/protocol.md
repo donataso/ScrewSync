@@ -86,11 +86,13 @@ replies; see `docs/screen.md`.
 
 - `GET /backup`: one JSON file, `{"settings":{...}, "run":{units,
   jogStepDu, mode, disabledZ, disabledX, "modes":[{mode, params}]},
-  "threads":{...}}`. `settings` is the `settings` push's fields, `threads`
-  the `/threads` shape, `params` the `<mode> status` line.
+  "threads":{...}, "pins":{...}}`. `settings` is the `settings` push's
+  fields, `threads` the `/threads` shape, `params` the `<mode> status`
+  line, `pins` the `GET /pins` shape.
 - `POST /backup`: refused unless idle. Every section present is validated
   first, then all are applied; absent sections and fields keep their current
-  values. Replies `ok` or the reason.
+  values. `pins` is saved only if it differs from the saved map, and applies
+  after a reboot. Replies `ok` or the reason.
 
 ## G-code (HTTP)
 

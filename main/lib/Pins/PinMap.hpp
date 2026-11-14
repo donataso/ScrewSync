@@ -51,19 +51,6 @@ namespace PinMap
         int16_t pins[MAX_PINS];
     };
 
-    struct Board
-    {
-        const char *name;
-        Connector connectors[MAX_CONNECTORS];
-        size_t connectorCount;
-        uint8_t reserved[MAX_RESERVED];
-        const char *reservedNotes[MAX_RESERVED];
-        size_t reservedCount;
-        uint8_t strapping[MAX_STRAPPING];
-        size_t strappingCount;
-        uint8_t pcntUnits;
-    };
-
     enum class Fn : uint8_t
     {
         ZMotor,
@@ -96,6 +83,23 @@ namespace PinMap
         Count,
     };
     constexpr size_t FN_COUNT = (size_t)Fn::Count;
+
+    struct Board
+    {
+        const char *name;
+        Connector connectors[MAX_CONNECTORS];
+        size_t connectorCount;
+        uint8_t reserved[MAX_RESERVED];
+        const char *reservedNotes[MAX_RESERVED];
+        size_t reservedCount;
+        uint8_t strapping[MAX_STRAPPING];
+        size_t strappingCount;
+        uint8_t pcntUnits;
+        // sw debounce is rounded up to this.
+        uint32_t tickNs;
+        // Encoder PPR from the settings, by function. 0 = not checked.
+        float ppr[FN_COUNT];
+    };
 
     enum class Dir : uint8_t
     {
@@ -136,6 +140,8 @@ namespace PinMap
         const char *action;
         // Default encoder filter: PCNT glitch filter (hw) or debounce time (sw).
         uint32_t filterNs;
+        // Encoder top speed for the edge rate check. 0 = not checked.
+        uint32_t maxRpm;
     };
 
     extern const FnDef FUNCTIONS[FN_COUNT];
@@ -188,6 +194,8 @@ namespace PinMap
     const char *checkAssignment(const Board &board, const Assignment *kept, size_t keptCount, const Assignment &a,
                                 char *err, size_t errMax);
     const char *missingRequired(const Map &map, char *err, size_t errMax);
+    // nullptr if the encoder filter lets through the edges of the function's top speed.
+    const char *checkEdgeRate(const Board &board, const Assignment &a, char *err, size_t errMax);
 
     // nullptr if the map is valid, else the first problem.
     const char *validate(const Board &board, const Map &map, char *err, size_t errMax);

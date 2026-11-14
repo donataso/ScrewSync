@@ -20,6 +20,7 @@
 #include "Machine.hpp"
 #include "Mode.hpp"
 #include "PersistBlob.hpp"
+#include "Settings.hpp"
 
 #include <dt-bindings/screwsync/pins.h>
 #include <esp_rom_gpio.h>
@@ -130,6 +131,15 @@ namespace
             }
         }
         g_board.pcntUnits = DT_CHILD_NUM_STATUS_OKAY(DT_NODELABEL(pcnt));
+        g_board.tickNs = 1000000000u / CONFIG_SYS_CLOCK_TICKS_PER_SEC;
+    }
+
+    void updatePpr()
+    {
+        const Settings::Conf &c = Settings::g_active;
+        g_board.ppr[(size_t)Fn::Spindle] = (float)c.encoderPpr;
+        g_board.ppr[(size_t)Fn::ZHandwheel] = c.z.handwheelPpr;
+        g_board.ppr[(size_t)Fn::XHandwheel] = c.x.handwheelPpr;
     }
 
     void defaults(Map &out)
@@ -239,6 +249,12 @@ namespace Pins
             defaults(saved);
         }
         keepValid(g_board, saved, g_active, warnIgnored);
+        updatePpr();
+        for (size_t i = 0; i < g_active.count; i++) {
+            if (checkEdgeRate(g_board, g_active.list[i], g_err, sizeof(g_err))) {
+                LOG_WRN("pin map: %s", g_err);
+            }
+        }
         if (missingRequired(g_active, g_fault, sizeof(g_fault))) {
             LOG_ERR("pin map: %s", g_fault);
         } else {
@@ -297,6 +313,7 @@ namespace Pins
         if (!loadSaved(saved)) {
             defaults(saved);
         }
+        updatePpr();
         return PinMapJson::encode(g_board, saved, out, outMax);
     }
 
@@ -306,9 +323,30 @@ namespace Pins
             return "machine not idle";
         }
         static Map map;
-        const char *refusal = PinMapJson::decode(g_board, json, len, map, g_err, sizeof(g_err));
+        const char *refusal = parse(json, len, map);
         if (refusal) {
             return refusal;
+        }
+        return save(map) ? nullptr : "save failed";
+    }
+
+    const char *parse(char *json, size_t len, Map &out)
+    {
+        updatePpr();
+        return PinMapJson::decode(g_board, json, len, out, g_err, sizeof(g_err));
+    }
+
+    const char *saveIfChanged(const Map &map)
+    {
+        static Map current;
+        static Stored currentStored;
+        if (!loadSaved(current)) {
+            defaults(current);
+        }
+        toStored(g_board, current, currentStored);
+        toStored(g_board, map, g_stored);
+        if (!memcmp(&currentStored, &g_stored, sizeof(g_stored))) {
+            return nullptr;
         }
         return save(map) ? nullptr : "save failed";
     }

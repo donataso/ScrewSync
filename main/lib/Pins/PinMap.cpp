@@ -23,17 +23,19 @@
 namespace PinMap
 {
     constexpr uint32_t ONE_APB_CYCLE_NS = 13;
+    constexpr uint32_t SPINDLE_MAX_RPM = 3000;
+    constexpr uint32_t HANDWHEEL_MAX_RPM = 600;
 
-#define SWITCH_IN(group, id, label, action) {id, label, group, 1, {"SIG"}, Dir::In, false, false, false, false, true, action, 0}
+#define SWITCH_IN(group, id, label, action) {id, label, group, 1, {"SIG"}, Dir::In, false, false, false, false, true, action, 0, 0}
 #define SWITCH(id, label, action) SWITCH_IN("Inputs", id, label, action)
 #define MODE_SWITCH(id, label, action) SWITCH_IN("Modes", id, label, action)
     const FnDef FUNCTIONS[FN_COUNT] = {
-        {"zMotor", "Z motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, true, true, false, false, false, nullptr, 0},
-        {"xMotor", "X motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, false, true, false, false, false, nullptr, 0},
-        {"spindle", "Spindle encoder", "Encoders", 2, {"A", "B"}, Dir::In, true, true, true, false, false, nullptr, ONE_APB_CYCLE_NS},
-        {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr, MAX_HW_FILTER_NS},
-        {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr, MAX_HW_FILTER_NS},
-        {"probe", "Probe", "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, false, nullptr, 0},
+        {"zMotor", "Z motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, true, true, false, false, false, nullptr, 0, 0},
+        {"xMotor", "X motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, false, true, false, false, false, nullptr, 0, 0},
+        {"spindle", "Spindle encoder", "Encoders", 2, {"A", "B"}, Dir::In, true, true, true, false, false, nullptr, ONE_APB_CYCLE_NS, SPINDLE_MAX_RPM},
+        {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
+        {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
+        {"probe", "Probe", "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, false, nullptr, 0, 0},
         SWITCH("startHere", "Start here", "start"),
         SWITCH("stop", "Stop", "stop"),
         SWITCH("setZero", "Set zero", "zero z;zero x"),
@@ -54,7 +56,7 @@ namespace PinMap
         MODE_SWITCH("modeEllipse", "Mode ellipse", "mode ellipse"),
         MODE_SWITCH("modeGcode", "Mode G-code", "mode gcode"),
         MODE_SWITCH("modeProbe", "Mode probe", "mode probe"),
-        {"running", "Running", "Outputs", 1, {"SIG"}, Dir::Out, false, false, false, false, false, nullptr, 0},
+        {"running", "Running", "Outputs", 1, {"SIG"}, Dir::Out, false, false, false, false, false, nullptr, 0, 0},
     };
 #undef MODE_SWITCH
 #undef SWITCH
@@ -274,6 +276,31 @@ namespace PinMap
         return nullptr;
     }
 
+    const char *checkEdgeRate(const Board &board, const Assignment &a, char *err, size_t errMax)
+    {
+        if ((size_t)a.fn >= FN_COUNT || a.encoder == Encoder::None) {
+            return nullptr;
+        }
+        const FnDef &d = def(a.fn);
+        double ppr = board.ppr[(size_t)a.fn];
+        uint64_t filterNs = a.filterNs;
+        if (a.encoder == Encoder::Sw && board.tickNs) {
+            uint64_t ticks = filterNs ? (filterNs + board.tickNs - 1) / board.tickNs : 1;
+            filterNs = ticks * board.tickNs;
+        }
+        if (!d.maxRpm || !(ppr > 0) || !filterNs) {
+            return nullptr;
+        }
+        // 4 edges per pulse; the filter must be shorter than the time between edges.
+        double maxRpm = 60e9 / (4.0 * ppr * (double)filterNs);
+        if (maxRpm >= d.maxRpm) {
+            return nullptr;
+        }
+        snprintf(err, errMax, "%s: the filter allows %u RPM at this PPR, needs %u RPM", d.label, (unsigned)maxRpm,
+                 (unsigned)d.maxRpm);
+        return err;
+    }
+
     const char *validate(const Board &board, const Map &map, char *err, size_t errMax)
     {
         if (map.count > MAX_ASSIGNMENTS) {
@@ -281,7 +308,8 @@ namespace PinMap
             return err;
         }
         for (size_t i = 0; i < map.count; i++) {
-            if (checkAssignment(board, map.list, i, map.list[i], err, errMax)) {
+            if (checkAssignment(board, map.list, i, map.list[i], err, errMax) ||
+                checkEdgeRate(board, map.list[i], err, errMax)) {
                 return err;
             }
         }

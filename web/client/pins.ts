@@ -19,6 +19,10 @@ export interface Board {
   maxHwFilterUs: number
   /** Longest sw debounce time. */
   maxSwFilterUs: number
+  /** sw debounce is rounded up to this. */
+  tickUs: number
+  /** Encoder PPR from the settings, by function id. Missing = not checked. */
+  ppr: Record<string, number>
   /** The firmware's function table. */
   functions: FunctionDef[]
 }
@@ -41,6 +45,8 @@ export interface FunctionDef {
   encoderTypes?: EncoderType[]
   /** Default encoder filter of new assignments. */
   filterUs: number
+  /** Encoder top speed for the edge rate check. 0 = not checked. */
+  maxRpm?: number
 }
 
 export interface SignalOptions {
@@ -89,9 +95,9 @@ const QUAD = ["A", "B"]
 export const MOCK_FUNCTIONS: FunctionDef[] = [
   { id: "zMotor", label: "Z motor", group: "Motors", signals: MOTOR, dir: "out", required: true, exclusive: true, activeLow: false, filterUs: 0 },
   { id: "xMotor", label: "X motor", group: "Motors", signals: MOTOR, dir: "out", required: false, exclusive: true, activeLow: false, filterUs: 0 },
-  { id: "spindle", label: "Spindle encoder", group: "Encoders", signals: QUAD, dir: "in", required: true, exclusive: true, activeLow: false, encoderTypes: ["hw"], filterUs: 0.013 },
-  { id: "zHandwheel", label: "Z handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"], filterUs: 12.787 },
-  { id: "xHandwheel", label: "X handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"], filterUs: 12.787 },
+  { id: "spindle", label: "Spindle encoder", group: "Encoders", signals: QUAD, dir: "in", required: true, exclusive: true, activeLow: false, encoderTypes: ["hw"], filterUs: 0.013, maxRpm: 3000 },
+  { id: "zHandwheel", label: "Z handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"], filterUs: 12.787, maxRpm: 600 },
+  { id: "xHandwheel", label: "X handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"], filterUs: 12.787, maxRpm: 600 },
   { id: "probe", label: "Probe", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: false, filterUs: 0 },
   { id: "stop", label: "Stop", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: true, filterUs: 0 },
 ]
@@ -137,6 +143,8 @@ export const MOCK_BOARD: Board = {
   pcntUnits: 4,
   maxHwFilterUs: 12.787,
   maxSwFilterUs: 5000,
+  tickUs: 100,
+  ppr: { spindle: 1200, zHandwheel: 600, xHandwheel: 600 },
   functions: MOCK_FUNCTIONS,
 }
 
@@ -260,6 +268,20 @@ export function maxFilterUs(board: Board, a: Assignment): number {
   return a.encoderType === "sw" ? board.maxSwFilterUs : board.maxHwFilterUs
 }
 
+/** Highest encoder speed whose edges pass the filter, or null if not checked. Same as the firmware's checkEdgeRate. */
+export function edgeRateMaxRpm(board: Board, a: Assignment): number | null {
+  const ppr = board.ppr[a.fn] ?? 0
+  let filterNs = Math.round(a.filterUs * 1000)
+  const tickNs = Math.round(board.tickUs * 1000)
+  if (a.encoderType === "sw" && tickNs > 0) {
+    filterNs = (filterNs > 0 ? Math.ceil(filterNs / tickNs) : 1) * tickNs
+  }
+  if (!a.encoderType || !(ppr > 0) || filterNs <= 0) {
+    return null
+  }
+  return 60e9 / (4 * ppr * filterNs)
+}
+
 export function validate(board: Board, map: PinMap): Issue[] {
   const issues: Issue[] = []
   for (const fn of board.functions) {
@@ -305,6 +327,15 @@ export function validate(board: Board, map: PinMap): Issue[] {
     const maxFilter = maxFilterUs(board, a)
     if (!Number.isFinite(a.filterUs) || a.filterUs < 0 || a.filterUs > maxFilter) {
       issues.push({ level: "error", fn: fn.id, index, msg: `${label}: filter must be 0 to ${maxFilter} µs` })
+    }
+    const maxRpm = edgeRateMaxRpm(board, a)
+    if (fn.maxRpm && maxRpm !== null && maxRpm < fn.maxRpm) {
+      issues.push({
+        level: "error",
+        fn: fn.id,
+        index,
+        msg: `${label}: the filter allows ${Math.floor(maxRpm)} RPM at ${board.ppr[a.fn]} PPR, needs ${fn.maxRpm} RPM`,
+      })
     }
   })
   for (const [gpio, uses] of usage(board, map)) {
@@ -357,6 +388,7 @@ export interface PinFunctionsJson {
     activeLow: boolean
     encoders: EncoderType[]
     filterUs: number
+    maxRpm?: number
   }[]
 }
 
@@ -367,6 +399,8 @@ export interface PinsJson extends PinsUpdateJson {
     pcntUnits: number
     maxHwFilterUs: number
     maxSwFilterUs: number
+    tickUs?: number
+    ppr?: { fn: string; ppr: number }[]
     strapping: number[]
     reserved: { gpio: number; note: string }[]
     connectors: { id: string; title: string; row: number; col: number; pins: number[] }[]
@@ -386,11 +420,14 @@ export function fromPinsJson(doc: PinsJson, fns: PinFunctionsJson): { board: Boa
       activeLow: f.activeLow,
       encoderTypes: f.encoders.length ? f.encoders : undefined,
       filterUs: f.filterUs,
+      maxRpm: f.maxRpm,
     })),
     name: doc.board.name,
     pcntUnits: doc.board.pcntUnits,
     maxHwFilterUs: doc.board.maxHwFilterUs,
     maxSwFilterUs: doc.board.maxSwFilterUs,
+    tickUs: doc.board.tickUs ?? 0,
+    ppr: Object.fromEntries((doc.board.ppr ?? []).map((p) => [p.fn, p.ppr])),
     strapping: doc.board.strapping,
     reserved: Object.fromEntries(doc.board.reserved.map((r) => [r.gpio, r.note])),
     connectors: doc.board.connectors.map((c) => ({

@@ -153,6 +153,22 @@ ZTEST(pin_map, test_ids_fit_storage)
     }
 }
 
+ZTEST(pin_map, test_edge_rate)
+{
+    g_board.tickNs = 100000;
+    g_board.ppr[(size_t)Fn::ZHandwheel] = 600;
+    zassert_is_null(check(), "%s", g_err);
+    at(Fn::ZHandwheel).encoder = Encoder::Sw;
+    zassert_not_null(check());
+    at(Fn::ZHandwheel).filterNs = 0;
+    zassert_not_null(check());
+    g_board.ppr[(size_t)Fn::ZHandwheel] = 100;
+    zassert_is_null(check(), "%s", g_err);
+    g_board.ppr[(size_t)Fn::ZHandwheel] = 0;
+    at(Fn::ZHandwheel).filterNs = MAX_SW_FILTER_NS;
+    zassert_is_null(check(), "%s", g_err);
+}
+
 ZTEST(pin_map, test_from_gpios_needs_adjacent_pins)
 {
     Assignment a;
