@@ -28,6 +28,7 @@ Proposal: assign pins to functions from the web UI, not in `main/app.overlay`.
 ## Storage
 
 - A `PinMap` blob in Settings/PersistBlob. One entry per role: `{role, gpio, activeLow, pull}`.
+- The blob also holds the user's connector names. A connector with no name uses the board's label.
 - If no blob is saved, the firmware uses the board's default map.
 - Recovery: a serial command, or a button held at boot, sets the map back to defaults.
 
@@ -41,7 +42,7 @@ Proposal: assign pins to functions from the web UI, not in `main/app.overlay`.
 
 - Plain GPIO: make the `gpio_dt_spec` at runtime from the pin number (`gpio0` or `gpio1`, as the pin number sets).
 - Encoders: send the pins to PCNT through the GPIO matrix at init (`esp_rom_gpio_connect_in_signal()` or `pinctrl_configure_pins()`). The PCNT unit and channel setup stays in devicetree.
-- The firmware rejects conflicts and pins that the board does not mark as free. The web UI only shows the result.
+- The firmware rejects conflicts, incomplete groups, and pins that the board does not mark as free. The web UI does the same checks before it saves.
 
 ## Encoders
 
@@ -56,7 +57,34 @@ Proposal: assign pins to functions from the web UI, not in `main/app.overlay`.
 
 ## Web UI
 
-- The board's connector map.
-- A table: role → pin dropdown. The dropdown shows only pins that are free and can do that role.
-- It shows conflicts in red, and has invert/pull toggles and a "Save & reboot" button.
+The pin page has two parts:
+
+- **Connector map** (primary view): the board's connectors and their pins.
+- **Assigned functions:** a list of the groups and single signals, with their pins.
+
+Connector names:
+
+- Click a connector's name to change it. An empty name sets it back to the board's label.
+- Two connectors can have the same name.
+- The names are saved with the pin map.
+- Later: a printable label of the connectors with their names.
+
+Assignment:
+
+- **Groups** (for example Z step/dir/ena, spindle A/B, Z handwheel A/B): the user selects a group, then a start pin. The group fills pins that are next to each other in one connector, in the group's fixed order. The map shows only the places where the group fits.
+- **Single signals** (probe, generic I/O): the user selects a pin, then a function. The menu shows only the functions that the pin can do.
+- Pins that the board reserves are locked. Strapping pins show a warning.
+
+Highlights:
+
+- Hover (or tap) a function: the map highlights its connector and pins.
+- Hover (or tap) a connector or pin: the list highlights the related functions.
+- Tap is the same as hover, for touch screens.
+
+Validation and save:
+
+- The page shows conflicts, required functions with no pins, and changes that are not saved.
+- It cannot save an incomplete group.
+- One "Save and reboot" button, with a confirmation.
+- Invert/pull toggles per signal.
 - Optional: a live view of each input's level, to help identify wiring.

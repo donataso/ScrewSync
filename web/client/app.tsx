@@ -9,6 +9,7 @@ import { AppearanceScreen } from "./screens/appearance"
 import { DeviceScreen } from "./screens/device"
 import { GcodeScreen } from "./screens/gcode"
 import { NetworkScreen } from "./screens/network"
+import { PinsScreen } from "./screens/pins"
 import { SettingsScreen } from "./screens/settings"
 import { ThreadsScreen } from "./screens/threads"
 import { Badge } from "./ui/primitives"
@@ -19,6 +20,7 @@ const NAV = [
   { path: "/threads", label: "Threads" },
   { path: "/gcode", label: "Gcode" },
   { path: "/network", label: "Network" },
+  { path: "/pins", label: "Pins" },
   { path: "/device", label: "Device" },
   { path: "/appearance", label: "Appearance" },
 ]
@@ -33,6 +35,9 @@ return <GcodeScreen />
   if (path.startsWith("/network")) {
 return <NetworkScreen />
 }
+  if (path.startsWith("/pins")) {
+return <PinsScreen />
+}
   if (path.startsWith("/device")) {
 return <DeviceScreen />
 }
@@ -43,7 +48,7 @@ return <AppearanceScreen />
 }
 
 function availableWhenOffline(path: string) {
-  return path.startsWith("/device") || path.startsWith("/appearance")
+  return path.startsWith("/device") || path.startsWith("/appearance") || path.startsWith("/pins")
 }
 
 export function App() {
