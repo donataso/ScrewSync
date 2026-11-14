@@ -685,23 +685,33 @@ function PinMenu({
   onPick: (fnId: string) => void
   onClose: () => void
 }) {
+  const groups = [...new Set(functions.map((fn) => fn.group))]
   return (
-    <div data-keep-selection className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-sm">
-      <span className="text-muted-foreground">{title}:</span>
-      {functions.length === 0 && <span className="text-muted-foreground">no function can be added here.</span>}
-      {functions.map((fn) => (
-        <Button
-          key={fn.id}
-          variant={fn.id === selectedFn ? "primary" : undefined}
-          title={fn.id === selectedFn ? "Remove" : undefined}
-          onClick={() => onPick(fn.id)}
-        >
-          {fn.label}
+    <div data-keep-selection className="mt-3 flex flex-col gap-2 border-t border-border pt-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-muted-foreground">{title}:</span>
+        {functions.length === 0 && <span className="text-muted-foreground">no function can be added here.</span>}
+        <Button variant="ghost" className="ml-auto" onClick={onClose}>
+          Cancel
         </Button>
+      </div>
+      {groups.map((g) => (
+        <div key={g} className="flex flex-wrap items-center gap-2">
+          <span className="w-20 shrink-0 text-xs uppercase tracking-wide text-muted-foreground">{g}</span>
+          {functions
+            .filter((fn) => fn.group === g)
+            .map((fn) => (
+              <Button
+                key={fn.id}
+                variant={fn.id === selectedFn ? "primary" : undefined}
+                title={fn.id === selectedFn ? "Remove" : undefined}
+                onClick={() => onPick(fn.id)}
+              >
+                {fn.label}
+              </Button>
+            ))}
+        </div>
       ))}
-      <Button variant="ghost" onClick={onClose}>
-        Cancel
-      </Button>
     </div>
   )
 }
