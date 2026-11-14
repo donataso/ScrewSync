@@ -20,6 +20,7 @@
 #include "ProbeCycle.hpp"
 #include "ProbeInput.hpp"
 #include "Settings.hpp"
+#include "Wcs.hpp"
 #include <math.h>
 #include <stddef.h>
 #include <zephyr/sys/util.h>
@@ -185,7 +186,7 @@ namespace
             return;
         }
         if (r.done) {
-            Stepper::zero(g_axis, currentPos - r.surfaceSteps);
+            Wcs::setOffset(Wcs::active(), g_axis, llround(stepsToDu(g_axis, r.surfaceSteps)));
             g_watch = BacklashCycle::Watch::None;
             finish();
             return;

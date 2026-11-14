@@ -26,7 +26,7 @@
 namespace
 {
     const struct json_obj_descr AXIS_DESCR[] = {
-        JSON_OBJ_DESCR_PRIM(Status::Axis, pos, JSON_TOK_INT64),
+        JSON_OBJ_DESCR_PRIM(Status::Axis, posDu, JSON_TOK_INT64),
         JSON_OBJ_DESCR_PRIM(Status::Axis, moving, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM(Status::Axis, enabled, JSON_TOK_TRUE),
     };

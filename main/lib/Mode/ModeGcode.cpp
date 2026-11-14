@@ -20,6 +20,7 @@
 #include "GcodeFlavors.hpp"
 #include "GcodeStore.hpp"
 #include "Rpm.hpp"
+#include "Wcs.hpp"
 #include <math.h>
 #include <stdlib.h>
 #include <zephyr/sys/util.h>
@@ -113,7 +114,12 @@ namespace
 
     double axisDeltaDu(Stepper::Axis axis, int32_t targetDu)
     {
-        return (double)targetDu - stepsToDu(axis, Stepper::position(axis));
+        return (double)(targetDu - Wcs::position(axis));
+    }
+
+    int64_t machineSteps(Stepper::Axis axis, const Gcode::Step &s)
+    {
+        return duToSteps(axis, (double)Wcs::toMachine(axis, axis == Stepper::Axis::Z ? s.zDu : s.xDu));
     }
 
     void beginStep(Job &j, const Gcode::Step &s, int64_t spindlePos)
@@ -124,8 +130,8 @@ namespace
         j.auxAxis = j.mainAxis == Stepper::Axis::Z ? Stepper::Axis::X : Stepper::Axis::Z;
         j.mainFrom = Stepper::position(j.mainAxis);
         j.auxFrom = Stepper::position(j.auxAxis);
-        j.mainTo = duToSteps(j.mainAxis, j.mainAxis == Stepper::Axis::Z ? s.zDu : s.xDu);
-        j.auxTo = duToSteps(j.auxAxis, j.auxAxis == Stepper::Axis::Z ? s.zDu : s.xDu);
+        j.mainTo = machineSteps(j.mainAxis, s);
+        j.auxTo = machineSteps(j.auxAxis, s);
         // A sub-step du delta can round the chosen main axis to zero steps;
         // fall back to whichever axis actually has somewhere to go.
         if (j.mainTo == j.mainFrom && j.auxTo != j.auxFrom) {
@@ -228,8 +234,7 @@ namespace
         g_job.flavor = flavor;
         g_job.text = text;
         g_job.len = len;
-        flavor->begin((int32_t)llround(stepsToDu(Stepper::Axis::Z, Stepper::position(Stepper::Axis::Z))),
-                      (int32_t)llround(stepsToDu(Stepper::Axis::X, Stepper::position(Stepper::Axis::X))));
+        flavor->begin((int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
         return nullptr;
     }
 

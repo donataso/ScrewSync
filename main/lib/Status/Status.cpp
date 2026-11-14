@@ -22,12 +22,13 @@
 #include "Rpm.hpp"
 #include "RunSettings.hpp"
 #include "Stepper.hpp"
+#include "Wcs.hpp"
 
 namespace
 {
     Status::Axis axisStatus(Stepper::Axis axis)
     {
-        return {Stepper::position(axis), Stepper::isMoving(axis), !Stepper::isDisabled(axis)};
+        return {Wcs::position(axis), Stepper::isMoving(axis), !Stepper::isDisabled(axis)};
     }
 }
 

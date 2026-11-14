@@ -1,5 +1,5 @@
 export interface AxisStatus {
-  pos: number
+  posDu: number
   moving: boolean
   enabled: boolean
 }

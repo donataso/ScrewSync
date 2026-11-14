@@ -20,7 +20,6 @@
 #include "GcodeStore.hpp"
 #include "JogStep.hpp"
 #include "Machine.hpp"
-#include "Motion.hpp"
 #include "Wifi.hpp"
 #include "display_config.hpp"
 #include <ctype.h>
@@ -45,7 +44,7 @@ namespace
     atomic_t g_previewLoaded = ATOMIC_INIT(0);
     Display::PreviewMapping g_previewMapping;
 
-    void pushAxis(char letter, Stepper::Axis axis, const Status::Axis &a)
+    void pushAxis(char letter, const Status::Axis &a)
     {
         bool z = letter == 'z';
         int on = z ? COLOR_Z : COLOR_X;
@@ -56,7 +55,7 @@ namespace
         snprintf(key, sizeof(key), "%cOn.val", letter);
         pushNum(key, a.enabled);
 
-        formatLength(Motion::stepsToDu(axis, a.pos), text, sizeof(text));
+        formatLength((double)a.posDu, text, sizeof(text));
         snprintf(key, sizeof(key), "%cPos.txt", letter);
         pushText(key, "%s", text);
         snprintf(key, sizeof(key), "%cPos", letter);
@@ -166,8 +165,8 @@ namespace
         Display::PreviewMapping m = g_previewMapping;
         bool shown = atomic_get(&g_previewLoaded) && m.pxPerMm > 0;
         if (shown) {
-            float zMm = (float)(Motion::stepsToDu(Stepper::Axis::Z, s.z.pos) / Gcode::DU_PER_MM);
-            float xMm = (float)(Motion::stepsToDu(Stepper::Axis::X, s.x.pos) / Gcode::DU_PER_MM);
+            float zMm = (float)((double)s.z.posDu / Gcode::DU_PER_MM);
+            float xMm = (float)((double)s.x.posDu / Gcode::DU_PER_MM);
             pushNum("gcodeTool.x", previewPx(PREVIEW_X, PREVIEW_W, m.originX + zMm * m.pxPerMm));
             pushNum("gcodeTool.y", previewPx(PREVIEW_Y, PREVIEW_H, m.originY + xMm * m.pxPerMm));
         }
@@ -306,8 +305,8 @@ namespace Display::Detail
         pushNum("unitsInch.val", inchUnits());
         pushSelected("unitMm", !inchUnits());
         pushSelected("unitIn", inchUnits());
-        pushAxis('z', Stepper::Axis::Z, s.z);
-        pushAxis('x', Stepper::Axis::X, s.x);
+        pushAxis('z', s.z);
+        pushAxis('x', s.x);
         pushJogStep(s.jogStepDu);
         pushMode(s);
         pushJobError(s.error, s.running);

@@ -90,10 +90,6 @@ namespace Stepper
     int64_t motorPosition(Axis axis);
     bool isMoving(Axis axis);
 
-    // Rebases current/target position so the axis's present position
-    // becomes positionSteps -- an absolute origin shift, not a move.
-    void zero(Axis axis, int64_t positionSteps = 0);
-
     // Runtime max-speed override for moveTo() (e.g. a touchscreen jog-speed
     // slider): 0 clears it, falling back to Settings::active.{z,x}'s
     // configured speedRapid. Not persisted -- deliberately separate

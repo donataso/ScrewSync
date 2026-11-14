@@ -494,17 +494,6 @@ namespace Stepper
         return pos;
     }
 
-    void zero(Axis axis, int64_t positionSteps)
-    {
-        AxisState &s = stateOf(axis);
-        k_spinlock_key_t key = k_spin_lock(&s.lock);
-        int64_t delta = s.currentPos - positionSteps;
-        s.currentPos = positionSteps;
-        s.motorPos -= delta;
-        s.targetPos -= delta;
-        k_spin_unlock(&s.lock, key);
-    }
-
     bool isMoving(Axis axis)
     {
         AxisState &s = stateOf(axis);

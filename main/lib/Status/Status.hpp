@@ -25,7 +25,7 @@ namespace Status
 {
     struct Axis
     {
-        int64_t pos;
+        int64_t posDu; // work coordinates
         bool moving;
         bool enabled;
     };

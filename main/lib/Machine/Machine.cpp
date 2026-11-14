@@ -16,7 +16,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Machine.hpp"
+#include "Motion.hpp"
 #include "PersistBlob.hpp"
+#include <math.h>
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -165,5 +167,10 @@ namespace Machine
         PersistBlob::save(NVS_NS, ESTOP_KEY, &v, sizeof(v));
         k_mutex_unlock(&g_mutex);
         sys_reboot(SYS_REBOOT_WARM);
+    }
+
+    int64_t position(Stepper::Axis axis)
+    {
+        return llround(Motion::stepsToDu(axis, Stepper::position(axis)));
     }
 }

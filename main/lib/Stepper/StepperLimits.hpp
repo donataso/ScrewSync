@@ -24,7 +24,7 @@
 namespace Stepper
 {
     // Settings::Axis.maxTravelMm converted to motor steps -- the hard
-    // sanity bound around the zero origin, enforced in moveTo().
+    // sanity bound around machine zero, enforced in moveTo().
     int64_t maxTravelSteps(int32_t maxTravelMm, int32_t motorSteps, int32_t screwPitchDu);
 
     int64_t clampToTravel(int64_t targetSteps, int64_t maxTravelSteps);

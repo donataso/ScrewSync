@@ -23,6 +23,7 @@
 #include "ModeMath.hpp"
 #include "RunSettings.hpp"
 #include "Settings.hpp"
+#include "Wcs.hpp"
 #include <math.h>
 #include <zephyr/kernel.h>
 
@@ -53,14 +54,19 @@ namespace
 
     atomic_t g_zeroThenX = ATOMIC_INIT(0);
 
+    int64_t workZeroSteps(Stepper::Axis axis)
+    {
+        return Motion::duToSteps(axis, (double)Wcs::toMachine(axis, 0));
+    }
+
     // Starts X once Z is at 0. Gives up if Z stopped elsewhere or the machine is not idle.
     void startXIfZAtZero()
     {
         if (!Stepper::arrived(Stepper::Axis::Z) || !atomic_cas(&g_zeroThenX, 1, 0)) {
             return;
         }
-        if (Motion::idle() && Stepper::position(Stepper::Axis::Z) == 0) {
-            moveToSteps(Stepper::Axis::X, 0);
+        if (Motion::idle() && Wcs::position(Stepper::Axis::Z) == 0) {
+            moveToSteps(Stepper::Axis::X, workZeroSteps(Stepper::Axis::X));
         }
     }
 
@@ -102,7 +108,7 @@ namespace Motion
 
     const char *moveTo(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin)
     {
-        targetSteps = duToSteps(axis, (double)du);
+        targetSteps = duToSteps(axis, (double)Wcs::toMachine(axis, du));
         return moveToSteps(axis, targetSteps, rapidSpeed(axis, duPerMin));
     }
 
@@ -115,7 +121,7 @@ namespace Motion
     const char *moveToZero()
     {
         atomic_set(&g_zeroThenX, 1);
-        const char *refusal = moveToSteps(Stepper::Axis::Z, 0);
+        const char *refusal = moveToSteps(Stepper::Axis::Z, workZeroSteps(Stepper::Axis::Z));
         if (refusal) {
             atomic_set(&g_zeroThenX, 0);
             return refusal;
@@ -129,7 +135,7 @@ namespace Motion
         if (Mode::owns(axis)) {
             return "mode running, stop first";
         }
-        Stepper::zero(axis, duToSteps(axis, (double)du));
+        Wcs::setPosition(axis, du);
         return nullptr;
     }
 

@@ -21,6 +21,7 @@
 #include "Events.hpp"
 #include "Machine.hpp"
 #include "Watchdog.hpp"
+#include "Wcs.hpp"
 #include <stdio.h>
 #include <string.h>
 #include <zephyr/kernel.h>
@@ -339,7 +340,7 @@ namespace Mode
 
     StartPrompt startPrompt()
     {
-        bool atZero = Stepper::position(Stepper::Axis::Z) == 0 && Stepper::position(Stepper::Axis::X) == 0;
+        bool atZero = Wcs::position(Stepper::Axis::Z) == 0 && Wcs::position(Stepper::Axis::X) == 0;
         if (running() || atZero) {
             return StartPrompt::None;
         }

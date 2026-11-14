@@ -23,6 +23,7 @@ target_sources(app PRIVATE
     lib/Settings/SettingsFields.cpp
     lib/RunSettings/RunSettings.cpp
     lib/Machine/Machine.cpp
+    lib/Wcs/Wcs.cpp
     lib/Watchdog/Watchdog.cpp
     lib/Mode/Mode.cpp
     lib/Mode/ModeParams.cpp
@@ -97,6 +98,7 @@ target_include_directories(app PRIVATE
     lib/Settings
     lib/RunSettings
     lib/Machine
+    lib/Wcs
     lib/Watchdog
     lib/Mode
     lib/Probe

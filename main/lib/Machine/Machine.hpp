@@ -60,6 +60,9 @@ namespace Machine
 
     // Clears the persisted EStop flag and reboots into a normal boot.
     void ackEstop();
+
+    // Machine coordinates in du. From the stepper count until scales exist.
+    int64_t position(Stepper::Axis axis);
 }
 
 #endif
