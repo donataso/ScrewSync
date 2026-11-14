@@ -43,8 +43,6 @@ target_sources(app PRIVATE
     lib/Mode/ModeSteps.cpp
     lib/Mode/ModeMdi.cpp
     lib/Mode/ModeProbe.cpp
-    lib/Mode/ProbeCycle.cpp
-    lib/Mode/BacklashCycle.cpp
     lib/Probe/ProbeInput.cpp
     lib/Pins/Pins.cpp
     lib/Pins/PinMap.cpp

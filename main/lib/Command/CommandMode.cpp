@@ -226,31 +226,11 @@ namespace Command::Detail
 
     void cal(const char *args, char *out, size_t outMax)
     {
-        constexpr int DEFAULT_RUNS = 5;
-        const char *a = skipSpaces(args);
-        if (!strcmp(a, "count")) {
+        if (!strcmp(skipSpaces(args), "count")) {
             snprintf(out, outMax, "ok count=%lld", (long long)Encoder::position());
-            return;
+        } else {
+            snprintf(out, outMax, "err cal count");
         }
-        if (!strcmp(a, "stop")) {
-            Mode::stop();
-            snprintf(out, outMax, "ok stopped");
-            return;
-        }
-        if (!strcmp(a, "status")) {
-            snprintf(out, outMax, "ok backlash=%ld", (long)Mode::lastBacklashDu());
-            return;
-        }
-        char axisTok[4];
-        char dirTok[4];
-        int runs = DEFAULT_RUNS;
-        Stepper::Axis axis;
-        int n = sscanf(a, "backlash %3s %3s %d", axisTok, dirTok, &runs);
-        if (n < 2 || !parseAxis(axisTok, axis) || (strcmp(dirTok, "-") != 0 && strcmp(dirTok, "+") != 0)) {
-            snprintf(out, outMax, "err cal count | status | backlash z|x -|+ [runs] | stop");
-            return;
-        }
-        reply(out, outMax, Mode::probeBacklash(axis, dirTok[0] == '+', runs), "ok %s", "backlash started");
     }
 
     void threads(const char *args, char *out, size_t outMax)

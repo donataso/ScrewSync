@@ -106,6 +106,11 @@ export class Interpreter {
               hasMotionG = true
               hasG33 = true
               break
+            case 382:
+            case 383:
+            case 384:
+            case 385:
+              return "only in MDI"
             case 100:
               hasG10 = true
               break

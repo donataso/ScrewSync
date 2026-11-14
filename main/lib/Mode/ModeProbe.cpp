@@ -15,16 +15,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "BacklashCycle.hpp"
 #include "ModeInternal.hpp"
-#include "ProbeCycle.hpp"
+#include "ModeSteps.hpp"
+#include "GcodeInterpreter.hpp"
 #include "ProbeInput.hpp"
 #include "Settings.hpp"
 #include "Wcs.hpp"
-#include <math.h>
 #include <stddef.h>
 #include <zephyr/sys/util.h>
 
+// Touch-off as a fixed G-code sequence on the step runner: G38.2, back
+// off, G38.2 at the reprobe feed, back off, G10 L20.
 namespace
 {
     using namespace Mode::Detail;
@@ -45,55 +46,88 @@ namespace
         {"offset", Kind::Du, offsetof(Probe, offsetDu), 0, MAX_LENGTH_DU, false, false},
     };
 
+    enum class Line : uint8_t
+    {
+        Approach,
+        BackOff1,
+        Reprobe,
+        BackOff2,
+        SetZero,
+        Done,
+    };
+
     // Set by Mode::probeGo(); a plain start is refused.
     Stepper::Axis g_axis = Stepper::Axis::Z;
     bool g_reverse = false;
     bool g_goPending = false;
-    bool g_backlash = false;
-    int g_backlashRuns = 0;
 
-    ProbeCycle::State g_cycle;
-    BacklashCycle::State g_backlashCycle;
-    volatile int32_t g_backlashDu = -1;
-    int64_t g_commanded; // re-issuing an unchanged target would undo a contact halt
+    Gcode::Interpreter g_interp;
+    Line g_next = Line::Done;
+    Line g_running = Line::Done;
+    bool g_moving = false;
+    Gcode::Step g_step;
+    StepMotion g_motion;
 
-    // Shared with Mode::probeEdge() (ISR context): plain flags, no mode
-    // lock -- the lock is a k_mutex, not ISR-safe.
-    volatile BacklashCycle::Watch g_watch = BacklashCycle::Watch::None;
-    volatile bool g_contactLatched = false;
-    volatile int64_t g_latchedPos = 0;
-    volatile int64_t g_latchedMotor = 0;
-
-    int probeDirection()
+    struct OneStep : Gcode::StepSink
     {
-        return g_reverse ? 1 : -1;
+        Gcode::Step step;
+        bool has = false;
+        void emit(const Gcode::Step &s) override
+        {
+            step = s;
+            has = true;
+        }
+    };
+
+    void add(Gcode::Words &w, char letter, double value)
+    {
+        w.words[w.count++] = {letter, value};
     }
 
-    ProbeCycle::Params cycleParams()
+    double mm(double du)
     {
-        return {
-            probeDirection(),
-            duToSteps(g_axis, g_params.probeDstDu),
-            duToSteps(g_axis, Settings::g_active.probeBackOffDu),
-            duToSteps(g_axis, REPROBE_MARGIN_DU),
-            duToSteps(g_axis, g_params.offsetDu),
-        };
+        return du / Gcode::DU_PER_MM;
     }
 
-    BacklashCycle::Params backlashParams()
+    void build(Line line, Gcode::Words &w)
     {
-        return {
-            probeDirection(),
-            duToSteps(g_axis, g_params.probeDstDu),
-            duToSteps(g_axis, Settings::g_active.probeBackOffDu),
-            duToSteps(g_axis, REPROBE_MARGIN_DU),
-            g_backlashRuns,
-        };
-    }
-
-    BacklashCycle::Watch probeWatch()
-    {
-        return ProbeCycle::watching(g_cycle) ? BacklashCycle::Watch::Contact : BacklashCycle::Watch::None;
+        const Settings::Conf &cfg = Settings::g_active;
+        char axis = g_axis == Stepper::Axis::Z ? 'Z' : 'X';
+        int dir = g_reverse ? 1 : -1;
+        double backOff = cfg.probeBackOffDu;
+        w.count = 0;
+        add(w, 'G', 21);
+        switch (line) {
+        case Line::Approach:
+            add(w, 'G', 91);
+            add(w, 'G', 38.2);
+            add(w, axis, mm(dir * (double)g_params.probeDstDu));
+            add(w, 'F', mm(cfg.probeFeedDuPerMin));
+            break;
+        case Line::Reprobe:
+            add(w, 'G', 91);
+            add(w, 'G', 38.2);
+            add(w, axis, mm(dir * (backOff + REPROBE_MARGIN_DU)));
+            add(w, 'F', mm(cfg.reprobeFeedDuPerMin));
+            break;
+        case Line::BackOff1:
+        case Line::BackOff2:
+            add(w, 'G', 91);
+            add(w, 'G', 1);
+            add(w, axis, mm(-dir * backOff));
+            add(w, 'F', mm(cfg.reprobeFeedDuPerMin));
+            break;
+        case Line::SetZero:
+            // The surface is at contact + dir * offset.
+            add(w, 'G', 90);
+            add(w, 'G', 10);
+            add(w, 'L', 20);
+            add(w, 'P', 1);
+            add(w, axis, mm(-dir * (backOff + g_params.offsetDu)));
+            break;
+        case Line::Done:
+            break;
+        }
     }
 
     const char *startMode(int64_t)
@@ -102,135 +136,75 @@ namespace
             return "use probe go";
         }
         g_goPending = false;
+        if (ProbeInput::contact()) {
+            return "contact present";
+        }
         const char *refusal = claim(g_axis);
         if (refusal) {
             return refusal;
         }
-        int64_t pos = Stepper::position(g_axis);
-        bool contact = ProbeInput::contact();
-        const char *err = g_backlash ? BacklashCycle::begin(g_backlashCycle, backlashParams(), pos, contact)
-                                     : ProbeCycle::begin(g_cycle, cycleParams(), pos, contact);
-        if (err) {
-            return err;
-        }
-        if (g_backlash) {
-            g_backlashDu = -1;
-        }
-        g_contactLatched = false;
-        g_commanded = INT64_MIN;
-        g_watch = g_backlash ? BacklashCycle::watching(g_backlashCycle) : probeWatch();
+        g_interp.begin(0, 0);
+        g_interp.setMdi(true);
+        g_next = Line::Approach;
+        g_running = Line::Approach;
+        g_moving = false;
         return nullptr;
     }
 
-    void command(bool reprobeFeed, int64_t target)
+    void tickMode(int64_t spindlePos)
     {
-        if (target == g_commanded) {
+        if (g_moving) {
+            const char *error;
+            bool done = g_motion.drive(g_step, spindlePos, false, error);
+            if (error) {
+                finish(error);
+            } else if (done) {
+                g_moving = false;
+                if (g_step.kind == Gcode::StepKind::Feed && ProbeInput::contact()) {
+                    finish("contact not lost");
+                }
+            }
             return;
         }
-        g_commanded = target;
-        int32_t feedDuPerMin = reprobeFeed ? Settings::g_active.reprobeFeedDuPerMin : Settings::g_active.probeFeedDuPerMin;
-        int32_t speed = duPerMinToStepsPerSec(g_axis, feedDuPerMin);
-        if (Stepper::moveTo(g_axis, target, speed) != target) {
-            g_watch = BacklashCycle::Watch::None;
-            finish(Stepper::isDisabled(g_axis) ? "axis disabled" : "travel limit");
-        }
-    }
-
-    void tickBacklash()
-    {
-        BacklashCycle::Input in = {Stepper::position(g_axis), Stepper::motorPosition(g_axis), ProbeInput::contact(),
-                                   g_contactLatched, g_latchedPos, g_latchedMotor};
-        if (in.latched) {
-            g_contactLatched = false;
-            g_commanded = INT64_MIN;
-        }
-        BacklashCycle::Result r = BacklashCycle::tick(g_backlashCycle, backlashParams(), in);
-        g_watch = BacklashCycle::watching(g_backlashCycle);
-        if (r.error) {
-            g_watch = BacklashCycle::Watch::None;
-            finish(r.error);
-            return;
-        }
-        if (r.done) {
-            g_backlashDu = (int32_t)llround(stepsToDu(g_axis, r.backlashSteps));
-            g_watch = BacklashCycle::Watch::None;
+        if (g_next == Line::Done) {
             finish();
             return;
         }
-        if (r.move) {
-            command(r.reprobeFeed, r.target);
-        }
-    }
-
-    void tickMode(int64_t)
-    {
-        if (g_backlash) {
-            tickBacklash();
+        // A G38 move ends where the probe stops it, not at its target.
+        g_interp.setPosition((int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
+        Gcode::Words words;
+        build(g_next, words);
+        OneStep sink;
+        const char *err = g_interp.line(words, (uint32_t)g_next + 1, sink);
+        if (err) {
+            finish(err);
             return;
         }
-        int64_t currentPos = Stepper::position(g_axis);
-        bool contactNow = ProbeInput::contact();
-        bool justContacted = g_contactLatched;
-        int64_t contactPos = g_latchedPos;
-        if (justContacted) {
-            g_contactLatched = false;
-            g_commanded = INT64_MIN;
-        }
-
-        ProbeCycle::Result r = ProbeCycle::tick(g_cycle, cycleParams(), currentPos, contactNow, justContacted, contactPos);
-        g_watch = probeWatch();
-
-        if (r.error) {
-            g_watch = BacklashCycle::Watch::None;
-            finish(r.error);
+        g_running = g_next;
+        g_next = (Line)((uint8_t)g_next + 1);
+        if (!sink.has) {
             return;
         }
-        if (r.done) {
-            Wcs::setOffset(Wcs::active(), g_axis, llround(stepsToDu(g_axis, r.surfaceSteps)));
-            g_watch = BacklashCycle::Watch::None;
-            finish();
-            return;
+        g_step = sink.step;
+        if (isMotion(g_step.kind)) {
+            g_motion.begin(g_step, spindlePos);
+            g_moving = true;
+        } else {
+            applyMachineStep(g_step);
         }
-        if (r.move) {
-            command(r.reprobeFeed, r.target);
-        }
-    }
-
-    void progressBacklash(Mode::Progress &out)
-    {
-        switch (g_backlashCycle.phase) {
-        case BacklashCycle::Phase::Approach:
-            out.phase = "approach";
-            break;
-        case BacklashCycle::Phase::Release:
-            out.phase = "release";
-            break;
-        case BacklashCycle::Phase::BackOff:
-            out.phase = "back off";
-            break;
-        default:
-            out.phase = "run";
-            break;
-        }
-        out.pass = g_backlashCycle.run + 1 > g_backlashRuns ? g_backlashRuns : g_backlashCycle.run + 1;
-        out.passes = g_backlashRuns;
     }
 
     void progressMode(Mode::Progress &out)
     {
-        if (g_backlash) {
-            progressBacklash(out);
-            return;
-        }
-        switch (g_cycle.phase) {
-        case ProbeCycle::Phase::Approach:
+        switch (g_running) {
+        case Line::Approach:
             out.phase = "approach";
             break;
-        case ProbeCycle::Phase::BackOff1:
-        case ProbeCycle::Phase::BackOff2:
+        case Line::BackOff1:
+        case Line::BackOff2:
             out.phase = "back off";
             break;
-        case ProbeCycle::Phase::Reprobe:
+        case Line::Reprobe:
             out.phase = "reprobe";
             break;
         default:
@@ -256,7 +230,6 @@ namespace Mode
         }
         g_axis = axis;
         g_reverse = reverse;
-        g_backlash = false;
         g_goPending = true;
         const char *err = select(Id::Probe);
         if (!err) {
@@ -264,46 +237,5 @@ namespace Mode
         }
         g_goPending = false;
         return err;
-    }
-
-    const char *probeBacklash(Stepper::Axis axis, bool reverse, int runs)
-    {
-        Detail::Guard guard;
-        if (running()) {
-            return "already running";
-        }
-        if (runs < 1 || runs > BacklashCycle::MAX_RUNS) {
-            return "bad run count";
-        }
-        g_axis = axis;
-        g_reverse = reverse;
-        g_backlash = true;
-        g_backlashRuns = runs;
-        g_goPending = true;
-        const char *err = select(Id::Probe);
-        if (!err) {
-            err = start();
-        }
-        g_goPending = false;
-        return err;
-    }
-
-    int32_t lastBacklashDu()
-    {
-        return g_backlashDu;
-    }
-
-    // ISR context (ProbeInput's GPIO callback) -- no mode lock.
-    void probeEdge(bool contactNow)
-    {
-        BacklashCycle::Watch watch = g_watch;
-        bool wanted = contactNow ? watch == BacklashCycle::Watch::Contact : watch == BacklashCycle::Watch::Release;
-        if (!wanted) {
-            return;
-        }
-        g_latchedPos = Stepper::haltNow(g_axis);
-        g_latchedMotor = Stepper::motorPosition(g_axis);
-        g_watch = BacklashCycle::Watch::None;
-        g_contactLatched = true;
     }
 }

@@ -59,7 +59,11 @@ namespace Gcode
         SetPosition,  // G10 L20: the axes in mask read zDu/xDu
         Motors,       // M100: the axes in mask on (1) or off (0) in zDu/xDu
         SpindleAngle, // M110: the current angle becomes feed millidegrees
+        Probe,        // G38.x: one axis toward zDu/xDu at feed, see the probe flags
     };
+
+    constexpr uint8_t PROBE_AWAY = 1;     // G38.4/.5: stops when the contact opens
+    constexpr uint8_t PROBE_NO_ERROR = 2; // G38.3/.5: no error if the input does not change
 
     constexpr uint8_t AXIS_Z = 1;
     constexpr uint8_t AXIS_X = 2;
@@ -74,6 +78,7 @@ namespace Gcode
         int32_t feed; // du/min for Feed, lead du per spindle rev for Thread
         uint32_t line;
         uint8_t axes;
+        uint8_t probe;
     };
 
     struct StepSink

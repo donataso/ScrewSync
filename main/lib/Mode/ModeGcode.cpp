@@ -176,6 +176,7 @@ namespace
         case Gcode::StepKind::Rapid:
         case Gcode::StepKind::Feed:
         case Gcode::StepKind::Thread:
+        case Gcode::StepKind::Probe:
             g_job.motion.begin(s, spindlePos);
             g_job.phase = Phase::Move;
             break;

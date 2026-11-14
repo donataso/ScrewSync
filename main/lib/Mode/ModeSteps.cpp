@@ -18,7 +18,10 @@
 #include "ModeSteps.hpp"
 #include "ModeInternal.hpp"
 #include "ModeMath.hpp"
+#include "Events.hpp"
+#include "Mode.hpp"
 #include "Motion.hpp"
+#include "ProbeInput.hpp"
 #include "Rpm.hpp"
 #include "Wcs.hpp"
 #include <math.h>
@@ -45,6 +48,71 @@ namespace
         return Stepper::isDisabled(axis) ? "axis disabled" : "travel limit";
     }
 
+    enum class Watch : uint8_t
+    {
+        None,
+        Contact,
+        Release,
+    };
+
+    // Shared with Mode::probeEdge() (ISR context): plain flags, no mode
+    // lock -- the lock is a k_mutex, not ISR-safe.
+    volatile Watch g_watch = Watch::None;
+    volatile bool g_latched = false;
+    volatile int64_t g_latchedPos = 0;
+    volatile int64_t g_latchedMotor = 0;
+    Stepper::Axis g_probeAxis = Stepper::Axis::Z;
+
+    void publishProbe(Stepper::Axis axis, bool found, int64_t pos, int64_t motor)
+    {
+        int64_t machineDu = llround(stepsToDu(axis, pos));
+        Events::ProbeResult r = {(uint8_t)axis, found, machineDu - Wcs::offset(Wcs::active(), axis),
+                                 (int64_t)llround(stepsToDu(axis, motor))};
+        Events::publish(&PROBE_CHAN, &r);
+    }
+
+    // True once the move ends. The target is commanded one time: a second
+    // moveTo() would undo the halt of the interrupt.
+    bool driveProbe(StepMotion &m, const Gcode::Step &s, const char *&error)
+    {
+        bool away = s.probe & Gcode::PROBE_AWAY;
+        Stepper::Axis axis = m.mainAxis;
+        if (!m.probeStarted) {
+            g_latched = false;
+            g_probeAxis = axis;
+            g_watch = away ? Watch::Release : Watch::Contact;
+            if (ProbeInput::contact() != away) {
+                error = away ? "no contact" : "contact present";
+            } else if (Stepper::moveTo(axis, m.mainTo, duPerMinToStepsPerSec(axis, s.feed)) != m.mainTo) {
+                error = clampReason(axis);
+            }
+            m.probeStarted = true;
+            return false;
+        }
+        if (g_latched) {
+            g_latched = false;
+            if (ProbeInput::contact() == away) {
+                error = away ? "release glitch" : "contact glitch";
+                return false;
+            }
+            publishProbe(axis, true, g_latchedPos, g_latchedMotor);
+            return true;
+        }
+        if (!Stepper::arrived(axis) || Stepper::position(axis) != m.mainTo) {
+            return false;
+        }
+        g_watch = Watch::None;
+        if (g_latched) {
+            return false;
+        }
+        if (s.probe & Gcode::PROBE_NO_ERROR) {
+            publishProbe(axis, false, Stepper::position(axis), Stepper::motorPosition(axis));
+            return true;
+        }
+        error = away ? "no release" : "no contact";
+        return false;
+    }
+
     // True once aux reaches its target.
     bool followAux(StepMotion &m, const char *&error)
     {
@@ -65,7 +133,14 @@ namespace Mode::Detail
 {
     bool isMotion(Gcode::StepKind kind)
     {
-        return kind == Gcode::StepKind::Rapid || kind == Gcode::StepKind::Feed || kind == Gcode::StepKind::Thread;
+        return kind == Gcode::StepKind::Rapid || kind == Gcode::StepKind::Feed || kind == Gcode::StepKind::Thread ||
+               kind == Gcode::StepKind::Probe;
+    }
+
+    void probeDisarm()
+    {
+        g_watch = Watch::None;
+        g_latched = false;
     }
 
     void applyMachineStep(const Gcode::Step &s)
@@ -118,11 +193,15 @@ namespace Mode::Detail
         } else if (s.kind == Gcode::StepKind::Feed) {
             vectorDu = sqrt(dz * dz + dx * dx);
         }
+        probeStarted = false;
     }
 
     bool StepMotion::drive(const Gcode::Step &s, int64_t spindlePos, bool spindleGated, const char *&error)
     {
         error = nullptr;
+        if (s.kind == Gcode::StepKind::Probe) {
+            return driveProbe(*this, s, error);
+        }
         if (s.kind == Gcode::StepKind::Thread) {
             int64_t target = thread.target(spindlePos);
             target = CLAMP(target, MIN(mainFrom, mainTo), MAX(mainFrom, mainTo));
@@ -151,5 +230,22 @@ namespace Mode::Detail
         bool mainDone = Stepper::arrived(mainAxis) && Stepper::position(mainAxis) == mainTo;
         bool auxDone = followAux(*this, error);
         return !error && mainDone && auxDone;
+    }
+}
+
+namespace Mode
+{
+    // ISR context (ProbeInput's GPIO callback) -- no mode lock.
+    void probeEdge(bool contactNow)
+    {
+        Watch watch = g_watch;
+        bool wanted = contactNow ? watch == Watch::Contact : watch == Watch::Release;
+        if (!wanted) {
+            return;
+        }
+        g_latchedPos = Stepper::haltNow(g_probeAxis);
+        g_latchedMotor = Stepper::motorPosition(g_probeAxis);
+        g_watch = Watch::None;
+        g_latched = true;
     }
 }

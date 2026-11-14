@@ -61,6 +61,14 @@ replies; see `docs/screen.md`.
   override applies to G1.
 - `G10 L20 P1 Z… X…`: the current position reads the given values (X is
   radius). Also in programs.
+- MDI only: `G38.2`–`G38.5 <axis>… F…` moves one axis until the probe
+  input changes: `.2`/`.3` until contact, `.4`/`.5` until the contact
+  opens. `.2`/`.4` give an error if it does not change before the target;
+  `.3`/`.5` do not. The axis halts with no deceleration. Not modal. No
+  line queues behind it. The result is a push:
+  `probe z|x found=0|1 pos=<work du> motor=<du>` on the serial console,
+  `{"type":"probe","msg":"z|x found=… pos=… motor=…"}` on the WebSocket.
+  `motor` is the motor position without backlash compensation.
 - MDI only: `M100 Z<0|1> X<0|1>` turns the motors off or on (an axis not
   named stays); `M110 [R<deg>]` makes the current spindle angle R (0 if
   omitted).
@@ -96,9 +104,8 @@ replies; see `docs/screen.md`.
 
 ## Calibration
 
-- `cal count | status | backlash z|x -|+ [runs] | stop`. See
-  `docs/calibration.md`. Over the WebSocket the reply is
-  `{"type":"cal","msg":"<reply>"}`.
+- `cal count`: the raw spindle encoder count. See `docs/calibration.md`.
+  Over the WebSocket the reply is `{"type":"cal","msg":"<reply>"}`.
 
 ## Thread table (HTTP)
 

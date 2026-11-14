@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react"
 import { sendCommand } from "../api"
 import { parseMachineConfig } from "../machine-config"
 import { CONFIGURE_LOCK_MESSAGE, useCanConfigure, useDeviceState } from "../state-provider"
+import { median, type ProbeResult } from "../probe"
 import type { CmdOutcome } from "../types"
+import { wsSubscribe } from "../ws"
 import { Badge, Button, Field, LockNotice, Panel, TextInput } from "../ui/primitives"
 import { useToast } from "../ui/toast"
 
@@ -13,6 +15,8 @@ const DIRECTION_MOVE_DU = DU_PER_MM
 const PRELOAD_MOVE_DU = DU_PER_MM
 const STEPS_PER_MM_DU_PER_MIN = 100 * DU_PER_MM
 const BACKLASH_RUNS = 5
+const BACKLASH_MARGIN_DU = 5000
+const BACKLASH_FIRST_TOUCH_MM = 5
 const BACKLASH_SIDE_TOLERANCE = 0.2
 
 type Axis = "Z" | "X"
@@ -21,6 +25,10 @@ type Raw = Record<string, string>
 
 function mm(du: number, digits = 4): string {
   return `${(du / DU_PER_MM).toFixed(digits)} mm`
+}
+
+function gcodeMm(du: number): string {
+  return (du / DU_PER_MM).toFixed(4)
 }
 
 function denial(outcome: CmdOutcome): string {
@@ -365,50 +373,77 @@ function StepsPerMm(props: CheckProps) {
   )
 }
 
-function BacklashRow({ axis, raw, apply, canConfigure }: CheckProps & { axis: Axis }) {
-  const { state } = useDeviceState()
+// One G38 move: sends the line, then waits for its result push. Rejects
+// with the reason if the line is refused, the move fails or stop() is called.
+function probeMove(line: string, onStop: (stop: () => void) => void): Promise<ProbeResult> {
+  return new Promise((resolve, reject) => {
+    let accepted = false
+    const unsubscribe = wsSubscribe({
+      onProbe: (r) => {
+        unsubscribe()
+        resolve(r)
+      },
+      onStatus: (s) => {
+        if (accepted && s.error) {
+          unsubscribe()
+          reject(new Error(s.error))
+        }
+      },
+    })
+    onStop(() => {
+      unsubscribe()
+      reject(new Error("stopped"))
+    })
+    sendCommand(line).then((outcome) => {
+      if (outcome.status === "ok") {
+        accepted = true
+      } else {
+        unsubscribe()
+        reject(new Error(denial(outcome)))
+      }
+    })
+  })
+}
+
+function BacklashRow({ axis, raw, apply, canConfigure, firstTouchMm }: CheckProps & { axis: Axis; firstTouchMm: number }) {
   const toast = useToast()
   const [results, setResults] = useState<Partial<Record<Side, number>>>({})
   const [active, setActive] = useState<Side | null>(null)
-  const seenRunning = useRef(false)
+  const [run, setRun] = useState(0)
+  const stop = useRef<(() => void) | null>(null)
   const key = `backlashDu${axis}`
 
-  useEffect(() => {
-    if (!active || !state) {
-      return
-    }
-    if (state.running) {
-      seenRunning.current = true
-      return
-    }
-    if (!seenRunning.current) {
-      return
-    }
-    const side = active
-    setActive(null)
-    if (state.error) {
-      toast.push(`Backlash ${axis}${side}: ${state.error}`, "bad")
-      return
-    }
-    sendCommand("cal status").then((outcome) => {
-      const du = replyValue(outcome, "backlash")
-      if (du === null || du < 0) {
-        toast.push(denial(outcome), "bad")
-      } else {
-        setResults((r) => ({ ...r, [side]: du }))
-      }
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, active])
-
+  // Touch (G38.2), reverse until the contact opens (G38.4), back off. The
+  // sample is the motor travel between the two.
   async function measure(side: Side) {
-    seenRunning.current = false
-    const outcome = await sendCommand(`cal backlash ${axis.toLowerCase()} ${side} ${BACKLASH_RUNS}`)
-    if (outcome.status === "ok") {
-      setActive(side)
-    } else {
-      toast.push(denial(outcome), "bad")
+    const dir = side === "-" ? -1 : 1
+    const backOffDu = Number(raw?.probeBackOffDu ?? 0)
+    const probeFeed = gcodeMm(Number(raw?.probeFeedDuPerMin ?? 0))
+    const reprobeFeed = gcodeMm(Number(raw?.reprobeFeedDuPerMin ?? 0))
+    const move = (code: string, du: number, feed: string) => `@G21 G91 ${code} ${axis}${gcodeMm(du)} F${feed}`
+    const onStop = (s: () => void) => {
+      stop.current = s
     }
+    const samples: number[] = []
+    setActive(side)
+    try {
+      for (let i = 0; i < BACKLASH_RUNS; i++) {
+        setRun(i + 1)
+        const touch = i === 0 ? move("G38.2", dir * firstTouchMm * DU_PER_MM, probeFeed) : move("G38.2", dir * (backOffDu + BACKLASH_MARGIN_DU), reprobeFeed)
+        const contact = await probeMove(touch, onStop)
+        const release = await probeMove(move("G38.4", -dir * backOffDu, reprobeFeed), onStop)
+        samples.push(Math.abs(release.motorDu - contact.motorDu))
+        const outcome = await sendCommand(move("G1", -dir * backOffDu, reprobeFeed))
+        if (outcome.status !== "ok") {
+          throw new Error(denial(outcome))
+        }
+      }
+      setResults((r) => ({ ...r, [side]: Math.round(median(samples)) }))
+    } catch (e) {
+      toast.push(`Backlash ${axis}${side}: ${(e as Error).message}`, "bad")
+    }
+    stop.current = null
+    setActive(null)
   }
 
   const values = Object.values(results)
@@ -417,13 +452,12 @@ function BacklashRow({ axis, raw, apply, canConfigure }: CheckProps & { axis: Ax
   const plus = results["+"]
   const apart =
     minus !== undefined && plus !== undefined && Math.abs(minus - plus) > BACKLASH_SIDE_TOLERANCE * Math.max(minus, plus)
-  const job = state?.job
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
         {(["-", "+"] as Side[]).map((side) => (
-          <Button key={side} disabled={!canConfigure || active !== null} onClick={() => measure(side)}>
+          <Button key={side} disabled={!canConfigure || active !== null || firstTouchMm <= 0} onClick={() => measure(side)}>
             Probe {axis}
             {side}
           </Button>
@@ -431,9 +465,15 @@ function BacklashRow({ axis, raw, apply, canConfigure }: CheckProps & { axis: Ax
         {active && (
           <>
             <span className="text-sm text-muted-foreground">
-              {job?.phase} {job && job.passes > 0 && `${job.pass}/${job.passes}`}
+              {run}/{BACKLASH_RUNS}
             </span>
-            <Button variant="danger" onClick={() => sendCommand("cal stop")}>
+            <Button
+              variant="danger"
+              onClick={() => {
+                stop.current?.()
+                sendCommand("stop")
+              }}
+            >
               Stop
             </Button>
           </>
@@ -453,15 +493,19 @@ function BacklashRow({ axis, raw, apply, canConfigure }: CheckProps & { axis: Ax
 }
 
 function Backlash(props: CheckProps) {
+  const [firstTouchMm, setFirstTouchMm] = useState(BACKLASH_FIRST_TOUCH_MM)
   return (
     <Panel title="Backlash">
       <p className="mb-3 text-sm text-muted-foreground">
         Use a contact plate, not a switch. Set it against the workpiece and jog the tool near it. Probe from one side or
-        both. The probe settings set the feeds, the back-off and the probe distance.
+        both. The probe settings set the feeds and the back-off.
       </p>
       <div className="flex flex-col gap-4">
-        <BacklashRow axis="Z" {...props} />
-        <BacklashRow axis="X" {...props} />
+        <Field label="First touch distance (mm)">
+          <TextInput type="number" step={0.1} value={firstTouchMm} onChange={(e) => setFirstTouchMm(Number(e.target.value))} />
+        </Field>
+        <BacklashRow axis="Z" firstTouchMm={firstTouchMm} {...props} />
+        <BacklashRow axis="X" firstTouchMm={firstTouchMm} {...props} />
       </div>
     </Panel>
   )

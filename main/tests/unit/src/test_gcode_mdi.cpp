@@ -179,3 +179,34 @@ ZTEST(gcode_mdi, test_program_rejects_mdi_codes)
     zassert_not_null(interpretLine(*find("linuxcnc"), interp, "M100 Z1", 1, sink));
     zassert_not_null(interpretLine(*find("linuxcnc"), interp, "M110", 1, sink));
 }
+
+ZTEST(gcode_mdi, test_probe)
+{
+    Mdi mdi = session();
+    Collect sink;
+    zassert_is_null(mdi.line("G91 G38.2 Z-5 F100", false, 4, sink));
+    zassert_is_null(mdi.line("G38.5 X1", false, 4, sink));
+    zassert_equal(sink.count, 2);
+    zassert_equal(sink.steps[0].kind, StepKind::Probe);
+    zassert_equal(sink.steps[0].zDu, -5 * DU_PER_MM);
+    zassert_equal(sink.steps[0].feed, 100 * DU_PER_MM);
+    zassert_equal(sink.steps[0].probe, 0);
+    zassert_equal(sink.steps[1].probe, PROBE_AWAY | PROBE_NO_ERROR);
+    zassert_equal(sink.steps[1].xDu, DU_PER_MM);
+    // Not modal.
+    zassert_not_null(mdi.line("Z-1", false, 4, sink));
+    zassert_not_null(mdi.line("G38.2 Z-1 X1", false, 4, sink));
+    zassert_not_null(mdi.line("G38.2", false, 4, sink));
+    zassert_not_null(mdi.line("G38.2 Z0", false, 4, sink));
+    zassert_not_null(mdi.line("G0 G38.2 Z-1", false, 4, sink));
+    zassert_not_null(mdi.line("G38.1 Z-1", false, 4, sink));
+    zassert_not_null(mdi.line("G38.2 Z-1", true, 4, sink));
+}
+
+ZTEST(gcode_mdi, test_program_rejects_probe)
+{
+    Interpreter interp;
+    find("linuxcnc")->begin(interp, 0, 0);
+    Collect sink;
+    zassert_not_null(interpretLine(*find("linuxcnc"), interp, "G38.2 Z-1 F10", 1, sink));
+}

@@ -21,8 +21,8 @@
 #include "GcodeCore.hpp"
 
 // Standard (LinuxCNC) interpreter: G0/G1/G33, G10 L20 P1, G20/G21, G90/G91,
-// G94/G18/G8/G54 (no-op), M0/M1/M2/M30, M100/M110 (MDI only), F, K, T
-// (ignored). Z/X axes only, X is radius.
+// G94/G18/G8/G54 (no-op), M0/M1/M2/M30, G38.2-.5 and M100/M110 (MDI only),
+// F, K, T (ignored). Z/X axes only, X is radius. G38.x is not modal.
 namespace Gcode
 {
     class Interpreter

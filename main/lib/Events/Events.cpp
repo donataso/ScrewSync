@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Events.hpp"
+#include <stdio.h>
 #include <string.h>
 #include <zephyr/logging/log.h>
 
@@ -27,6 +28,7 @@ ZBUS_CHAN_DEFINE(RUNNING_CHAN, Running, nullptr, nullptr, ZBUS_OBSERVERS_EMPTY, 
 ZBUS_CHAN_DEFINE(AXIS_ARRIVED_CHAN, AxisArrived, nullptr, nullptr, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0));
 ZBUS_CHAN_DEFINE(SETTINGS_CHAN, SettingsChanged, nullptr, nullptr, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0));
 ZBUS_CHAN_DEFINE(REFUSAL_CHAN, Refusal, nullptr, nullptr, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT({0}));
+ZBUS_CHAN_DEFINE(PROBE_CHAN, ProbeResult, nullptr, nullptr, ZBUS_OBSERVERS_EMPTY, ZBUS_MSG_INIT(0));
 
 namespace Events
 {
@@ -38,6 +40,12 @@ namespace Events
         if (err) {
             LOG_WRN("publish failed: %d", err);
         }
+    }
+
+    void formatProbe(const ProbeResult &r, char *out, size_t outMax)
+    {
+        snprintf(out, outMax, "%c found=%d pos=%lld motor=%lld", r.axis == 0 ? 'z' : 'x', (int)r.found, (long long)r.posDu,
+                 (long long)r.motorDu);
     }
 
     void publishRefusal(const char *reply)

@@ -203,6 +203,8 @@ namespace
             return "motors";
         case StepKind::SpindleAngle:
             return "spindle-angle";
+        case StepKind::Probe:
+            return "probe";
         }
         return "?";
     }

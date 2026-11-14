@@ -82,7 +82,8 @@ namespace Gcode
     {
         bool hasF = false, hasK = false, hasZ = false, hasX = false, hasM = false, hasG33 = false;
         bool hasMotionG = false, hasG10 = false, hasL = false, hasP = false, hasR = false;
-        bool hasM100 = false, hasM110 = false;
+        bool hasM100 = false, hasM110 = false, hasProbe = false;
+        uint8_t probeFlags = 0;
         double fVal = 0, kVal = 0, zVal = 0, xVal = 0, lVal = 0, pVal = 0, rVal = 0;
         StepKind mKind = StepKind::Pause;
 
@@ -116,6 +117,20 @@ namespace Gcode
                     motion_ = Motion::Thread;
                     hasMotionG = true;
                     hasG33 = true;
+                    break;
+                case 382:
+                case 383:
+                case 384:
+                case 385:
+                    if (!mdi_) {
+                        return "only in MDI";
+                    }
+                    if (hasMotionG) {
+                        return "two motion commands";
+                    }
+                    hasMotionG = true;
+                    hasProbe = true;
+                    probeFlags = (code >= 384 ? PROBE_AWAY : 0) | (code % 2 ? PROBE_NO_ERROR : 0);
                     break;
                 case 100:
                     hasG10 = true;
@@ -223,7 +238,10 @@ namespace Gcode
         if (hasG33 && !hasZ && !hasX) {
             return "G33 requires axis move";
         }
-        if (hasK && (motion_ != Motion::Thread || hasG10 || hasM100)) {
+        if (hasProbe && hasZ == hasX) {
+            return "G38 requires one axis";
+        }
+        if (hasK && (motion_ != Motion::Thread || hasG10 || hasM100 || hasProbe)) {
             return "K requires G33";
         }
 
@@ -277,6 +295,28 @@ namespace Gcode
             step.zDu = (int32_t)zVal;
             step.xDu = (int32_t)xVal;
             step.axes = axes;
+            sink.emit(step);
+        } else if (hasProbe) {
+            if (!feedSet_) {
+                return "no feed rate";
+            }
+            int32_t newZDu = zDu_, newXDu = xDu_;
+            if (hasZ && !axisTargetDu(zVal, zDu_, absolute_, unitScaleDu_, newZDu)) {
+                return "value out of range";
+            }
+            if (hasX && !axisTargetDu(xVal, xDu_, absolute_, unitScaleDu_, newXDu)) {
+                return "value out of range";
+            }
+            if (newZDu == zDu_ && newXDu == xDu_) {
+                return "G38 requires axis move";
+            }
+            zDu_ = newZDu;
+            xDu_ = newXDu;
+            step.kind = StepKind::Probe;
+            step.zDu = zDu_;
+            step.xDu = xDu_;
+            step.feed = feedDuPerMin_;
+            step.probe = probeFlags;
             sink.emit(step);
         } else if (axes) {
             if (motion_ == Motion::None) {

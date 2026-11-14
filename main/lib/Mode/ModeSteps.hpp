@@ -25,13 +25,18 @@
 // Runs one G-code Step with Z and X driven together: the axis with the
 // larger du delta is "main" and moves at the computed speed (rapid for G0,
 // feed-derived for G1, phased to the thread helix for G33); "aux" chases
-// main's fraction of progress. Targets are work coordinates.
+// main's fraction of progress. Targets are work coordinates. G38.x moves
+// one axis until the probe input changes; the interrupt halts it with no
+// deceleration, so the caller must take the position again afterwards.
 namespace Mode::Detail
 {
     bool isMotion(Gcode::StepKind kind);
 
     // SetPosition, Motors, SpindleAngle.
     void applyMachineStep(const Gcode::Step &s);
+
+    // The probe interrupt halts no axis after this.
+    void probeDisarm();
 
     struct StepMotion
     {
@@ -40,6 +45,7 @@ namespace Mode::Detail
         int64_t mainFrom, mainTo, auxFrom, auxTo;
         double vectorDu; // Feed only: path length for the per-minute speed split
         Sync::Link thread;
+        bool probeStarted;
 
         void begin(const Gcode::Step &s, int64_t spindlePos);
         // True once done. error is set when a travel clamp or a disabled axis

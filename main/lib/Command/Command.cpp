@@ -96,8 +96,7 @@ namespace
          "half-ellipse mode (dir picks the Z side)", ellipse},
         {"probe", "probe go z-|z+|x-|x+ | [status] | probe-dst <du> | offset <du>",
          "touch-off mode: starts a cycle on an axis, and its params/status", probe},
-        {"cal", "cal count | status | backlash z|x -|+ [runs] | stop",
-         "calibration: raw spindle count, backlash measurement with the probe", cal},
+        {"cal", "cal count", "calibration: raw spindle count", cal},
         {"info", "info", "firmware version, target, reset cause, uptime, OTA image confirmed", info},
 #ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
         {"display", "display status | info | flash",
@@ -161,9 +160,6 @@ namespace Command::Detail
         args = skipSpaces(args);
         if (tokLen == 5 && !strncmp(token, "start", 5)) {
             return true;
-        }
-        if (tokLen == 3 && !strncmp(token, "cal", 3)) {
-            return !strncmp(args, "backlash", 8);
         }
         if (tokLen == 3 && !strncmp(token, "jog", 3)) {
             return (args[0] == 'z' || args[0] == 'x') && args[1] == ' ';

@@ -56,7 +56,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - Linear moves, spindle-synchronized threading (G33; LatheCode G32),
   G10 L20 position setting, and M0/M1 pauses.
 - MDI: G-code lines on the web client or the serial console, with modes
-  kept between lines.
+  kept between lines. G38 probe moves.
 - Programs with the wrong axis directions are refused; the web client
   offers to flip them.
 

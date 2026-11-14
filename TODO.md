@@ -21,4 +21,6 @@
   confirmation.
 - Printable connector label with the user's connector names.
 - Optional: live view of each input's level, to help identify wiring.
-- G-code: G92, G38.x, more WCS slots.
+- G-code: G92, more WCS slots.
+- LinuxCNC style NGC macros (parameters, expressions, O-words), stored on
+  the device. The probe touch-off sequence becomes a macro.

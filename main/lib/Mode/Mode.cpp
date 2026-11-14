@@ -21,6 +21,7 @@
 #include "Events.hpp"
 #include "Machine.hpp"
 #include "Watchdog.hpp"
+#include "ModeSteps.hpp"
 #include "Wcs.hpp"
 #include <stdio.h>
 #include <string.h>
@@ -200,6 +201,7 @@ namespace Mode::Detail
 
     void releaseAxes()
     {
+        probeDisarm();
         for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
             if (ownedFlag(axis)) {
                 ownedFlag(axis) = false;

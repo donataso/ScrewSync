@@ -27,14 +27,14 @@ These persist in `RunSettings` like the parameters of every other mode:
 
 ## Cycle
 
-A direction button (Z-, Z+, X-, X+) starts the cycle on that axis:
+A direction button (Z-, Z+, X-, X+) starts the cycle on that axis. The firmware runs it as G-code on the G-code step runner:
 
 1. Refuse to start if the probe input already shows contact.
-2. Move toward the workpiece at probe feed. On contact, an interrupt stops the axis immediately, with no decel.
-3. Back off `backOff` at reprobe feed.
-4. Reprobe toward the workpiece at reprobe feed, at most `backOff` plus a small fixed margin, and latch the contact position.
-5. Back off `backOff` again.
-6. Set the axis so that the surface reads 0. The surface is at `contact + dir × offset`, where `dir` is the probe direction (±1).
+2. `G38.2` toward the workpiece at probe feed, at most `probeDst`. On contact, an interrupt stops the axis immediately, with no decel.
+3. `G1` back off `backOff` at reprobe feed.
+4. `G38.2` at reprobe feed, at most `backOff` plus a small fixed margin.
+5. `G1` back off `backOff` again.
+6. `G10 L20` so that the surface reads 0. The surface is at `contact + dir × offset`, where `dir` is the probe direction (±1).
 
 Distances are carriage positions, so the axis backlash setting is applied on each reversal.
 
