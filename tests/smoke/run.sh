@@ -1,6 +1,7 @@
 #!/bin/sh
 # run.sh <target> <test dir> [pytest args]: backup, tests, restore however the tests end.
 set -u
+trap : INT TERM HUP
 target=$1
 tests=$2
 shift 2

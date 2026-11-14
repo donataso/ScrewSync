@@ -4,7 +4,7 @@ import pytest
 
 from conftest import Status, kv
 
-JOG_STEP_DU = 1000
+JOG_STEP_DU = 50000
 MIN_ANGLE_DEG = 20
 
 
@@ -15,9 +15,17 @@ def status(dut):
     s.close()
 
 
+def ask(prompt):
+    try:
+        return input(prompt).strip().lower()
+    except (KeyboardInterrupt, EOFError):
+        print()
+        pytest.exit("stopped by operator")
+
+
 def step(text):
     print(f"\n>>> {text}")
-    answer = input("    [Enter] run, s skip, q quit: ").strip().lower()
+    answer = ask("    [Enter] run, s skip, q quit: ")
     if answer == "s":
         pytest.skip("skipped by operator")
     if answer == "q":
@@ -25,11 +33,20 @@ def step(text):
 
 
 def done(text):
-    input(f">>> {text}, then press Enter ")
+    ask(f">>> {text}, then press Enter ")
 
 
 def confirm(text):
-    assert input(f">>> {text} [Y/n] ").strip().lower() in ("", "y"), text
+    assert ask(f">>> {text} [Y/n] ") in ("", "y"), text
+
+
+def stopped_pos(status, axis, timeout=30):
+    deadline = time.monotonic() + timeout
+    s = status.fresh()
+    while s[axis]["moving"]:
+        assert time.monotonic() < deadline, f"{axis} still moving"
+        s = status.fresh()
+    return s[axis]["pos"]
 
 
 def angle_delta(a, b):
@@ -37,12 +54,12 @@ def angle_delta(a, b):
 
 
 def test_spindle_encoder(status):
-    step("Spindle encoder: turn the spindle by hand, about a quarter turn forward")
+    step("Spindle encoder: turn the spindle by hand, about a quarter turn either way")
     before = status.fresh()["angleDeg"]
     done("Turn it now")
     delta = angle_delta(before, status.fresh()["angleDeg"])
     assert abs(delta) >= MIN_ANGLE_DEG, f"angle moved {delta:.1f} deg"
-    confirm(f"Angle moved {delta:+.1f} deg. Is that the forward direction")
+    confirm(f"Angle moved {delta:+.1f} deg. You turned it {'forward' if delta > 0 else 'in reverse'}?")
 
 
 @pytest.mark.parametrize("axis", ["z", "x"])
@@ -61,12 +78,10 @@ def test_jog_step(dut, status, axis):
     dut.ok(f"jog step {JOG_STEP_DU}")
     before = status.fresh()[axis]["pos"]
     dut.ok(f"jog {axis} +")
-    time.sleep(1)
-    moved = status.fresh()[axis]["pos"] - before
+    moved = stopped_pos(status, axis) - before
     dut.ok(f"jog {axis} -")
-    time.sleep(1)
     assert moved > 0, f"jog + moved {moved} steps"
-    assert status.fresh()[axis]["pos"] == before, "did not come back"
+    assert stopped_pos(status, axis) == before, "did not come back"
 
 
 def test_probe(dut, status):
