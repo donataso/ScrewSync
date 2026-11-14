@@ -98,8 +98,8 @@ export const MOCK_FUNCTIONS: FunctionDef[] = [
   { id: "spindle", label: "Spindle encoder", group: "Encoders", signals: QUAD, dir: "in", required: true, exclusive: true, activeLow: false, encoderTypes: ["hw"], filterUs: 0.013, maxRpm: 3000 },
   { id: "zHandwheel", label: "Z handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"], filterUs: 12.787, maxRpm: 600 },
   { id: "xHandwheel", label: "X handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"], filterUs: 12.787, maxRpm: 600 },
-  { id: "probe", label: "Probe", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: false, filterUs: 0 },
-  { id: "stop", label: "Stop", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: true, filterUs: 0 },
+  { id: "probe", label: "Probe", group: "Cycle", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: false, filterUs: 0 },
+  { id: "stop", label: "Stop", group: "Cycle", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: true, filterUs: 0 },
 ]
 
 const g = (gpio: number): BoardPin => ({ gpio })

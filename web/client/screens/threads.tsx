@@ -221,14 +221,14 @@ setEntries(group.entries.filter((_, i) => i !== editing))
             </option>
           ))}
         </Select>
-        <Button disabled={groups.length >= MAX_GROUPS} onClick={addGroup}>
+        <Button disabled={!canConfigure || groups.length >= MAX_GROUPS} onClick={addGroup}>
           + Group
         </Button>
         <div className="ml-auto flex items-center gap-2">
           <span className="text-sm text-muted-foreground tabular-nums">
             {group.entries.length} / {MAX_GROUP_ENTRIES}
           </span>
-          <Button variant="primary" disabled={full} onClick={() => setEditing("new")}>
+          <Button variant="primary" disabled={!canConfigure || full} onClick={() => setEditing("new")}>
             + Thread
           </Button>
         </div>
@@ -237,12 +237,12 @@ setEntries(group.entries.filter((_, i) => i !== editing))
       <Panel
         title="Group"
         action={
-          <Button variant="danger" disabled={groups.length <= 1} onClick={deleteGroup}>
+          <Button variant="danger" disabled={!canConfigure || groups.length <= 1} onClick={deleteGroup}>
             Delete group
           </Button>
         }
       >
-        <div className="flex flex-col gap-3">
+        <fieldset disabled={!canConfigure} className="min-w-0 flex flex-col gap-3">
           <div className="grid gap-3 sm:grid-cols-4">
             <Field label="Name" error={errors.name}>
               <TextInput value={group.name} maxLength={NAME_MAX_LEN} onChange={(e) => updateGroup({ name: e.target.value })} />
@@ -258,10 +258,10 @@ setEntries(group.entries.filter((_, i) => i !== editing))
             </Field>
           </div>
           <TaperInput key={`${loadCount}-${sel}`} value={group.taper} onChange={(taper) => updateGroup({ taper: taper ?? 0 })} />
-        </div>
+        </fieldset>
       </Panel>
 
-      <ThreadList entries={group.entries} units={units} onReorder={setEntries} onOpen={setEditing} />
+      <ThreadList entries={group.entries} units={units} locked={!canConfigure} onReorder={setEntries} onOpen={setEditing} />
 
       {editing !== null && (
         <ThreadEditor
@@ -269,6 +269,7 @@ setEntries(group.entries.filter((_, i) => i !== editing))
           entry={editing === "new" ? undefined : group.entries[editing]}
           taken={group.entries.filter((_, i) => i !== editing).map((e) => e.designation)}
           units={units}
+          locked={!canConfigure}
           onDone={finishEdit}
           onDelete={editing === "new" ? undefined : deleteEntry}
           onCancel={() => setEditing(null)}
@@ -281,11 +282,13 @@ setEntries(group.entries.filter((_, i) => i !== editing))
 function ThreadList({
   entries,
   units,
+  locked,
   onReorder,
   onOpen,
 }: {
   entries: ThreadEntry[]
   units: Units
+  locked: boolean
   onReorder: (entries: ThreadEntry[]) => void
   onOpen: (index: number) => void
 }) {
@@ -331,9 +334,12 @@ return
           className={`flex items-center border-b border-border last:border-b-0 ${dragIndex === i ? "bg-muted" : ""}`}
         >
           <span
-            className="flex cursor-grab touch-none items-center self-stretch px-3 text-muted-foreground active:cursor-grabbing"
+            className={`flex touch-none items-center self-stretch px-3 text-muted-foreground ${locked ? "cursor-not-allowed opacity-40" : "cursor-grab active:cursor-grabbing"}`}
             aria-label={`Drag ${e.designation}`}
             onPointerDown={(ev) => {
+              if (locked) {
+                return
+              }
               ev.preventDefault()
               ev.currentTarget.setPointerCapture(ev.pointerId)
               setDragIndex(i)
@@ -377,6 +383,7 @@ function ThreadEditor({
   entry,
   taken,
   units,
+  locked,
   onDone,
   onDelete,
   onCancel,
@@ -385,6 +392,7 @@ function ThreadEditor({
   entry?: ThreadEntry
   taken: string[]
   units: Units
+  locked: boolean
   onDone: (entry: ThreadEntry) => void
   onDelete?: () => void
   onCancel: () => void
@@ -483,7 +491,7 @@ return `Must be under ${formatLength(2 * pitchDu, edUnits)} ${unit}`
             {entry ? entry.designation : "New thread"} <span className="font-normal text-muted-foreground">in {group.name}</span>
           </h2>
         </header>
-        <div className="flex flex-col gap-3 p-4">
+        <fieldset disabled={locked} className="min-w-0 flex flex-col gap-3 p-4">
           <Field label="Designation" error={errors.designation}>
             <TextInput autoFocus value={designation} maxLength={DESIGNATION_MAX_LEN} onChange={(e) => setDesignation(e.target.value)} />
           </Field>
@@ -514,16 +522,16 @@ return `Must be under ${formatLength(2 * pitchDu, edUnits)} ${unit}`
             <ThreadSketch ratio={ratio} internal={false} />
             <ThreadSketch ratio={ratio} internal />
           </div>
-        </div>
+        </fieldset>
         <footer className="mt-auto flex gap-2 border-t border-border px-4 py-3">
           {onDelete && (
-            <Button variant="danger" onClick={onDelete}>
+            <Button variant="danger" disabled={locked} onClick={onDelete}>
               Delete
             </Button>
           )}
           <div className="ml-auto flex gap-2">
             <Button onClick={onCancel}>Cancel</Button>
-            <Button variant="primary" disabled={!valid} onClick={done}>
+            <Button variant="primary" disabled={locked || !valid} onClick={done}>
               Done
             </Button>
           </div>

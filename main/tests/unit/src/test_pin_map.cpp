@@ -367,7 +367,7 @@ ZTEST(pin_map, test_functions_json)
     zassert_not_null(strstr(g_json, R"("id":"zHandwheel")"), "%s", g_json);
     zassert_not_null(strstr(g_json, R"("encoders":["hw","sw"])"), "%s", g_json);
     zassert_not_null(strstr(g_json, R"("signals":["ENA","DIR","STEP"])"), "%s", g_json);
-    zassert_not_null(strstr(g_json, R"("id":"stop","label":"Stop","group":"Inputs","signals":["SIG"],"dir":"in",)"
+    zassert_not_null(strstr(g_json, R"("id":"stop","label":"Stop","group":"Cycle","signals":["SIG"],"dir":"in",)"
                                     R"("required":false,"exclusive":false,"activeLow":true)"),
                      "%s", g_json);
 }

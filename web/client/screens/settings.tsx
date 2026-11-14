@@ -122,7 +122,8 @@ toast.push("Applied and saved to flash.", "good")
           <p className="text-sm text-muted-foreground">{loading ? "Loading..." : "Not loaded."}</p>
         </Panel>
       ) : (
-        MACHINE_CONFIG_SECTIONS.map((section) => (
+        <fieldset disabled={!canConfigure} className="contents">
+          {MACHINE_CONFIG_SECTIONS.map((section) => (
           <Panel key={section.title} title={section.title}>
             <div className="flex flex-col gap-4">
               {section.fields.length > 0 && (
@@ -149,7 +150,8 @@ toast.push("Applied and saved to flash.", "good")
               )}
             </div>
           </Panel>
-        ))
+          ))}
+        </fieldset>
       )}
     </div>
   )

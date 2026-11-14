@@ -29,28 +29,30 @@ namespace PinMap
     constexpr uint32_t DIAL_ENCODER_FILTER_NS = 1000000;
 
 #define SWITCH_IN(group, id, label, action) {id, label, group, 1, {"SIG"}, Dir::In, false, false, false, false, false, true, action, 0, 0}
-#define SWITCH(id, label, action) SWITCH_IN("Inputs", id, label, action)
+#define SWITCH(id, label, action) SWITCH_IN("Cycle", id, label, action)
 #define MODE_SWITCH(id, label, action) SWITCH_IN("Modes", id, label, action)
 #define JOG_SWITCH(id, label, action) SWITCH_IN("Jog", id, label, action)
+#define ZERO_SWITCH(id, label, action) SWITCH_IN("Zero", id, label, action)
+#define FEED_SWITCH(id, label, action) SWITCH_IN("Feed", id, label, action)
     const FnDef FUNCTIONS[FN_COUNT] = {
         {"zMotor", "Z motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, true, true, false, false, false, false, nullptr, 0, 0},
         {"xMotor", "X motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, false, true, false, false, false, false, nullptr, 0, 0},
         {"spindle", "Spindle encoder", "Encoders", 2, {"A", "B"}, Dir::In, true, true, true, false, false, false, nullptr, ONE_APB_CYCLE_NS, SPINDLE_MAX_RPM},
         {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
         {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
-        {"probe", "Probe", "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, false, false, nullptr, 0, 0},
+        {"probe", "Probe", "Cycle", 1, {"SIG"}, Dir::In, false, false, false, false, false, false, nullptr, 0, 0},
         SWITCH("startHere", "Start here", "start"),
         SWITCH("stop", "Stop", "stop"),
-        SWITCH("setZero", "Set zero", "zero z;zero x"),
-        SWITCH("setZeroZ", "Set zero Z", "zero z"),
-        SWITCH("setZeroX", "Set zero X", "zero x"),
-        SWITCH("goToZero", "Go to zero", "move zero"),
-        SWITCH("goToZeroZ", "Go to zero Z", "move z to 0"),
-        SWITCH("goToZeroX", "Go to zero X", "move x to 0"),
-        SWITCH("feedReset", "Feed override reset", "override reset"),
-        SWITCH("feedUp", "Feed +", "override +"),
-        SWITCH("feedDown", "Feed -", "override -"),
-        {"feedEncoder", "Feed override encoder", "Inputs", 2, {"A", "B"}, Dir::In, false, true, true, true, true, false, nullptr, DIAL_ENCODER_FILTER_NS, 0},
+        ZERO_SWITCH("setZero", "Set zero", "zero z;zero x"),
+        ZERO_SWITCH("setZeroZ", "Set zero Z", "zero z"),
+        ZERO_SWITCH("setZeroX", "Set zero X", "zero x"),
+        ZERO_SWITCH("goToZero", "Go to zero", "move zero"),
+        ZERO_SWITCH("goToZeroZ", "Go to zero Z", "move z to 0"),
+        ZERO_SWITCH("goToZeroX", "Go to zero X", "move x to 0"),
+        FEED_SWITCH("feedReset", "Feed override reset", "override reset"),
+        FEED_SWITCH("feedUp", "Feed +", "override +"),
+        FEED_SWITCH("feedDown", "Feed -", "override -"),
+        {"feedEncoder", "Feed override encoder", "Feed", 2, {"A", "B"}, Dir::In, false, true, true, true, true, false, nullptr, DIAL_ENCODER_FILTER_NS, 0},
         JOG_SWITCH("jogZPlus", "Jog Z+", nullptr),
         JOG_SWITCH("jogZMinus", "Jog Z-", nullptr),
         JOG_SWITCH("jogXPlus", "Jog X+", nullptr),
@@ -68,6 +70,8 @@ namespace PinMap
         MODE_SWITCH("modeProbe", "Mode probe", "mode probe"),
         {"running", "Running", "Outputs", 1, {"SIG"}, Dir::Out, false, false, false, false, false, false, nullptr, 0, 0},
     };
+#undef FEED_SWITCH
+#undef ZERO_SWITCH
 #undef JOG_SWITCH
 #undef MODE_SWITCH
 #undef SWITCH

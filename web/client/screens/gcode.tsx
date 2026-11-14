@@ -425,7 +425,7 @@ navigate(ROUTE)
 
         <div className="flex min-w-0 flex-col gap-4">
           <Panel title="Program">
-            <div className="flex flex-col gap-3">
+            <fieldset disabled={!canConfigure} className="min-w-0 flex flex-col gap-3">
               <div className="flex gap-2">
                 <Button variant={sourceMode === "paste" ? "primary" : "secondary"} onClick={() => setSourceMode("paste")}>
                   Paste
@@ -532,7 +532,7 @@ navigate(ROUTE)
                   </Button>
                 )}
               </div>
-            </div>
+            </fieldset>
           </Panel>
 
           {/* Kept mounted so the canvas can be drawn before it is shown. */}

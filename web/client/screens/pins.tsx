@@ -141,13 +141,16 @@ function PinsEditor({
   const [names, setNames] = useState<ConnectorNames>(initialNames)
   const [busy, setBusy] = useState(false)
   const canConfigure = useCanConfigure()
-  const [renaming, setRenaming] = useState<string | null>(null)
+  const [renamingState, setRenaming] = useState<string | null>(null)
   const [hover, setHover] = useState<Focus | null>(null)
   const [selected, setSelected] = useState<Focus | null>(null)
-  const [placing, setPlacing] = useState<Placing | null>(null)
+  const [placingState, setPlacing] = useState<Placing | null>(null)
   const [preview, setPreview] = useState<Span | null>(null)
-  const [menu, setMenu] = useState<{ connector: string; start: number; assigned?: number } | null>(null)
+  const [menuState, setMenu] = useState<{ connector: string; start: number; assigned?: number } | null>(null)
   const toast = useToast()
+  const renaming = canConfigure ? renamingState : null
+  const placing = canConfigure ? placingState : null
+  const menu = canConfigure ? menuState : null
 
   const used = useMemo(() => usage(board, map), [board, map])
   const issues = useMemo(() => [...validate(board, map), ...nameIssues(board, names)], [board, map, names])
@@ -155,17 +158,6 @@ function PinsEditor({
   const dirty = JSON.stringify(map) !== JSON.stringify(saved) || JSON.stringify(names) !== JSON.stringify(savedNames)
   const label = (id: string) => connectorLabel(board, names, id)
   const active = hover ?? selected
-
-  useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      if (!(e.target instanceof Element) || !e.target.closest("[data-keep-selection]")) {
-        setSelected(null)
-        setMenu(null)
-      }
-    }
-    document.addEventListener("pointerdown", onPointerDown)
-    return () => document.removeEventListener("pointerdown", onPointerDown)
-  }, [])
 
   useFooterBar(
     <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
@@ -316,6 +308,10 @@ function PinsEditor({
   }
 
   function onPinClick(c: Connector, index: number, pin: BoardPin) {
+    if (!canConfigure) {
+      setSelected("gpio" in pin ? { gpio: pin.gpio } : { connector: c.id })
+      return
+    }
     if (placing) {
       if (canStartAt(board, map, placing.fn, c.id, index, placing.moving)) {
         place(placing.fn, c.id, index, placing.moving)
@@ -421,7 +417,11 @@ function PinsEditor({
                 renaming={renaming === c.id}
                 onRename={(name) => rename(c.id, name)}
                 onCancelRename={() => setRenaming(null)}
-                highlighted={active?.connector === c.id || c.pins.some((p) => "gpio" in p && pinHighlighted(p))}
+                highlighted={
+                  active?.connector === c.id ||
+                  selected?.connector === c.id ||
+                  c.pins.some((p) => "gpio" in p && (pinHighlighted(p) || p.gpio === selected?.gpio))
+                }
                 pinHighlighted={(p) => pinHighlighted(p) || ("gpio" in p && p.gpio === selected?.gpio)}
                 used={used}
                 placing={placing}
@@ -433,7 +433,9 @@ function PinsEditor({
                 onConnectorClick={() => {
                   setMenu(null)
                   setSelected({ connector: c.id })
-                  setRenaming(c.id)
+                  if (canConfigure) {
+                    setRenaming(c.id)
+                  }
                 }}
               />
             ))}
@@ -455,7 +457,7 @@ function PinsEditor({
         action={
           <Select
             value=""
-            disabled={addable.length === 0}
+            disabled={!canConfigure || addable.length === 0}
             title="Add a function, then select its first pin."
             onChange={(e) => {
               setMenu(null)
@@ -492,6 +494,7 @@ function PinsEditor({
                 connectorLabel={a ? label(a.connector) : ""}
                 highlighted={rowHighlighted(fn, index)}
                 placing={isPlacing}
+                locked={!canConfigure}
                 hasErrors={errors.some((e) => (index === undefined ? e.fn === fn.id : e.index === index))}
                 onHover={(f) => setHover(f && (index === undefined ? { fn: fn.id } : { index }))}
                 onSelect={() => {
@@ -575,7 +578,6 @@ function ConnectorView({
   const placingLength = placing ? (functionDef(board, placing.fn)?.signals.length ?? 0) : 0
   return (
     <div
-      data-keep-selection
       className={`flex flex-col gap-1.5 rounded-md border p-2 transition-colors ${
         highlighted ? "border-primary bg-primary/5" : "border-border"
       }`}
@@ -650,11 +652,11 @@ function ConnectorView({
                   : reserved
                     ? "cursor-not-allowed border-border bg-muted text-muted-foreground"
                     : fill || "border-border hover:bg-muted"
-              } ${pinHighlighted(p) ? "ring-2 ring-primary" : ""} ${conflict ? "ring-2 ring-destructive" : ""} ${
+              } ${!reserved && pinHighlighted(p) ? "ring-2 ring-primary" : ""} ${conflict ? "ring-2 ring-destructive" : ""} ${
                 validStart ? "outline-2 outline-offset-1 outline-emerald-500 outline-dashed" : ""
               } ${inPreview ? "bg-emerald-500/30" : ""}`}
             >
-              <span className={`font-medium ${reserved ? "line-through" : ""}`}>{isGpio ? p.gpio : p.power}</span>
+              <span className="font-medium">{isGpio ? p.gpio : p.power}</span>
               {uses.length > 0 && <span className="text-[10px] leading-none">{uses[0].signal}</span>}
               {strapping && <span className="absolute right-0.5 top-0 text-xs font-extrabold text-amber-600 dark:text-amber-400">!</span>}
               {reserved && <span className="absolute right-0.5 top-0 text-xs font-extrabold text-red-600 dark:text-red-400">!</span>}
@@ -687,7 +689,7 @@ function PinMenu({
 }) {
   const groups = [...new Set(functions.map((fn) => fn.group))]
   return (
-    <div data-keep-selection className="mt-3 flex flex-col gap-2 border-t border-border pt-3 text-sm">
+    <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3 text-sm">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-muted-foreground">{title}:</span>
         {functions.length === 0 && <span className="text-muted-foreground">no function can be added here.</span>}
@@ -696,20 +698,22 @@ function PinMenu({
         </Button>
       </div>
       {groups.map((g) => (
-        <div key={g} className="flex flex-wrap items-center gap-2">
-          <span className="w-20 shrink-0 text-xs uppercase tracking-wide text-muted-foreground">{g}</span>
-          {functions
-            .filter((fn) => fn.group === g)
-            .map((fn) => (
-              <Button
-                key={fn.id}
-                variant={fn.id === selectedFn ? "primary" : undefined}
-                title={fn.id === selectedFn ? "Remove" : undefined}
-                onClick={() => onPick(fn.id)}
-              >
-                {fn.label}
-              </Button>
-            ))}
+        <div key={g} className="flex items-start gap-2">
+          <span className="w-20 shrink-0 pt-2 text-xs uppercase tracking-wide text-muted-foreground">{g}</span>
+          <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+            {functions
+              .filter((fn) => fn.group === g)
+              .map((fn) => (
+                <Button
+                  key={fn.id}
+                  variant={fn.id === selectedFn ? "primary" : undefined}
+                  title={fn.id === selectedFn ? "Remove" : undefined}
+                  onClick={() => onPick(fn.id)}
+                >
+                  {fn.label}
+                </Button>
+              ))}
+          </div>
         </div>
       ))}
     </div>
@@ -723,6 +727,7 @@ function FunctionRow({
   connectorLabel: cLabel,
   highlighted,
   placing,
+  locked,
   hasErrors,
   onHover,
   onSelect,
@@ -738,6 +743,7 @@ function FunctionRow({
   connectorLabel: string
   highlighted: boolean
   placing: boolean
+  locked: boolean
   hasErrors: boolean
   onHover: (f: Focus | null) => void
   onSelect: () => void
@@ -752,7 +758,6 @@ function FunctionRow({
   const pins = a ? pinsOf(board, fn, a) : []
   return (
     <div
-      data-keep-selection
       className={`rounded-md border p-2.5 transition-colors ${highlighted ? "border-primary bg-primary/5" : "border-border"}`}
       onMouseEnter={() => onHover({ fn: fn.id })}
       onMouseLeave={() => onHover(null)}
@@ -769,7 +774,7 @@ function FunctionRow({
             {cLabel}: {fn.signals.map((s, i) => `${s} ${pins[i] ?? "?"}`).join(" · ")}
           </span>
         )}
-        <div className="ml-auto flex flex-wrap items-center gap-1">
+        <fieldset disabled={locked} className="min-w-0 ml-auto flex flex-wrap items-center gap-1">
           {fn.encoderTypes?.length === 1 && a && <span className="px-2.5 text-sm text-muted-foreground">{fn.encoderTypes[0]}</span>}
           {fn.encoderTypes && fn.encoderTypes.length > 1 && a && (
             <Select
@@ -787,16 +792,16 @@ function FunctionRow({
           <Button variant={placing ? "primary" : "secondary"} onClick={onPlace}>
             {placing ? "Cancel" : a ? "Move" : "Place"}
           </Button>
-          {a && <Button onClick={() => setOpen(!open)}>{open ? "Hide options" : "Options"}</Button>}
           {onRemove && (
             <Button variant="ghost" onClick={onRemove}>
               Remove
             </Button>
           )}
-        </div>
+        </fieldset>
+        {a && <Button onClick={() => setOpen(!open)}>{open ? "Hide options" : "Options"}</Button>}
       </div>
       {a && open && (
-        <div className="mt-2 grid gap-2 border-t border-border pt-2 sm:grid-cols-2">
+        <fieldset disabled={locked} className="min-w-0 mt-2 grid gap-2 border-t border-border pt-2 sm:grid-cols-2">
           {fn.signals.map((s, i) => (
             <div key={s} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="w-16 font-medium">
@@ -837,7 +842,7 @@ function FunctionRow({
               <span className="text-muted-foreground">µs</span>
             </label>
           )}
-        </div>
+        </fieldset>
       )}
     </div>
   )
