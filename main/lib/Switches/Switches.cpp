@@ -21,6 +21,7 @@
 #include "JogStepDial.hpp"
 #include "Command.hpp"
 #include "Events.hpp"
+#include "Handwheel.hpp"
 #include "Mode.hpp"
 #include "Pins.hpp"
 #include "display_config.hpp"
@@ -70,6 +71,8 @@ namespace
     size_t g_count = 0;
     char g_reply[Command::MAX_REPLY_LEN];
     bool g_dial = false;
+    bool g_feedDial = false;
+    int64_t g_feedCount = 0;
 
     K_THREAD_STACK_DEFINE(g_pollStack, 4096);
     struct k_thread g_pollThreadData;
@@ -123,6 +126,17 @@ namespace
         }
     }
 
+    // One percent per pulse. Turns while no job takes a feed override are dropped.
+    void feedDial()
+    {
+        int64_t count = Handwheel::feedOverride();
+        int64_t delta = count - g_feedCount;
+        g_feedCount = count;
+        if (delta != 0) {
+            Mode::setFeedOverride(Mode::feedOverride() + (int32_t)delta);
+        }
+    }
+
     void pollLoop(void *, void *, void *)
     {
         while (true) {
@@ -138,6 +152,9 @@ namespace
             }
             if (g_dial) {
                 JogStepDial::tick(nowMs);
+            }
+            if (g_feedDial) {
+                feedDial();
             }
             k_sleep(K_MSEC(POLL_PERIOD_MS));
         }
@@ -181,7 +198,9 @@ namespace Switches
             }
         }
         g_dial = Pins::count(Fn::JogStepEncoder) > 0;
-        if (!g_count && !g_dial) {
+        g_feedDial = Pins::count(Fn::FeedEncoder) > 0;
+        g_feedCount = Handwheel::feedOverride();
+        if (!g_count && !g_dial && !g_feedDial) {
             return;
         }
         k_thread_create(&g_pollThreadData, g_pollStack, K_THREAD_STACK_SIZEOF(g_pollStack), pollLoop, nullptr,

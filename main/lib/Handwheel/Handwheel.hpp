@@ -29,6 +29,8 @@ namespace Handwheel
     int64_t x();
     // Jog step encoder count since boot, one per pulse.
     int64_t jogStep();
+    // Feed override encoder count since boot, one per pulse.
+    int64_t feedOverride();
 }
 
 #endif

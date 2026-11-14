@@ -55,6 +55,11 @@ Each encoder has a filter, in µs:
 - "Start here" starts without the "Go to zero first?" question.
 - "Go to zero" moves Z to 0, then X to 0.
 
+## Feed override encoder
+
+- Each pulse changes the feed override of the running job by 1%.
+- Turns while no job with a feed override runs are ignored, with no toast.
+
 ## Jog
 
 - Jog Z+, Z-, X+, X- buttons work like the display's jog buttons: a short

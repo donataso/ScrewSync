@@ -26,7 +26,7 @@ namespace PinMap
     constexpr uint32_t SPINDLE_MAX_RPM = 3000;
     constexpr uint32_t HANDWHEEL_MAX_RPM = 600;
     // Debounce for a mechanical detent encoder.
-    constexpr uint32_t JOG_STEP_ENCODER_FILTER_NS = 1000000;
+    constexpr uint32_t DIAL_ENCODER_FILTER_NS = 1000000;
 
 #define SWITCH_IN(group, id, label, action) {id, label, group, 1, {"SIG"}, Dir::In, false, false, false, false, false, true, action, 0, 0}
 #define SWITCH(id, label, action) SWITCH_IN("Inputs", id, label, action)
@@ -50,12 +50,13 @@ namespace PinMap
         SWITCH("feedReset", "Feed override reset", "override reset"),
         SWITCH("feedUp", "Feed +", "override +"),
         SWITCH("feedDown", "Feed -", "override -"),
+        {"feedEncoder", "Feed override encoder", "Inputs", 2, {"A", "B"}, Dir::In, false, true, true, true, true, false, nullptr, DIAL_ENCODER_FILTER_NS, 0},
         JOG_SWITCH("jogZPlus", "Jog Z+", nullptr),
         JOG_SWITCH("jogZMinus", "Jog Z-", nullptr),
         JOG_SWITCH("jogXPlus", "Jog X+", nullptr),
         JOG_SWITCH("jogXMinus", "Jog X-", nullptr),
         JOG_SWITCH("jogStepNext", "Jog step cycle", "jog step next"),
-        {"jogStepEncoder", "Jog step encoder", "Jog", 2, {"A", "B"}, Dir::In, false, true, true, true, true, false, nullptr, JOG_STEP_ENCODER_FILTER_NS, 0},
+        {"jogStepEncoder", "Jog step encoder", "Jog", 2, {"A", "B"}, Dir::In, false, true, true, true, true, false, nullptr, DIAL_ENCODER_FILTER_NS, 0},
         MODE_SWITCH("modeGear", "Mode gear", "mode gear"),
         MODE_SWITCH("modeAsync", "Mode async", "mode async"),
         MODE_SWITCH("modeTurn", "Mode turn", "mode turn"),

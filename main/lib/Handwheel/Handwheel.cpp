@@ -32,7 +32,7 @@ LOG_MODULE_REGISTER(handwheel, LOG_LEVEL_INF);
 // spindle), or a software decoder on GPIO interrupts that reads A and B
 // once both have been quiet for the debounce time.
 // Both count the edges of A and B, so bounce on one line cancels, and are
-// halved to two counts per pulse (the jog step encoder to one).
+// halved to two counts per pulse (the jog step and feed override encoders to one).
 
 namespace
 {
@@ -64,6 +64,7 @@ namespace
     Wheel g_z = {PinMap::Fn::ZHandwheel};
     Wheel g_x = {PinMap::Fn::XHandwheel};
     Wheel g_step = {PinMap::Fn::JogStepEncoder};
+    Wheel g_feed = {PinMap::Fn::FeedEncoder};
 
     K_THREAD_STACK_DEFINE(g_pollStack, 1024);
     struct k_thread g_pollThreadData;
@@ -93,6 +94,7 @@ namespace
             poll(g_z);
             poll(g_x);
             poll(g_step);
+            poll(g_feed);
             k_sleep(K_MSEC(POLL_PERIOD_MS));
         }
     }
@@ -176,7 +178,9 @@ namespace Handwheel
         setUp(g_x);
         g_step.shift = 2;
         setUp(g_step);
-        if (g_z.unit >= 0 || g_x.unit >= 0 || g_step.unit >= 0) {
+        g_feed.shift = 2;
+        setUp(g_feed);
+        if (g_z.unit >= 0 || g_x.unit >= 0 || g_step.unit >= 0 || g_feed.unit >= 0) {
             k_thread_create(&g_pollThreadData, g_pollStack, K_THREAD_STACK_SIZEOF(g_pollStack), pollLoop, nullptr,
                             nullptr, nullptr, K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
         }
@@ -195,5 +199,10 @@ namespace Handwheel
     int64_t jogStep()
     {
         return read(g_step, false);
+    }
+
+    int64_t feedOverride()
+    {
+        return read(g_feed, false);
     }
 }

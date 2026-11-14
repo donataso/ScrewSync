@@ -70,6 +70,7 @@ namespace PinMap
         FeedReset,
         FeedUp,
         FeedDown,
+        FeedEncoder,
         JogZPlus,
         JogZMinus,
         JogXPlus,
