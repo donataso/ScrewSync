@@ -21,8 +21,6 @@ The table is laid out like the connectors on the back of the case:
 * **ENCODER**: 5V, GND, A, B
 * **POWER**: 5V, 5V, GND, GND
 
-GPIO numbers of every connector: [pin_map.md](pin_map.md).
-
 **Why the connections were moved**: the STEP pin of the Z connector is GPIO35, which on
 the ESP32-S3R8 is one of the octal PSRAM data lines, bonded inside the chip
 package. Driving it as a stepper output corrupts the PSRAM bus, which

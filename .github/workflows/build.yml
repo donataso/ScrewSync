@@ -98,10 +98,36 @@ jobs:
       # tidy reads the compile databases of the firmware and test builds.
       - run: make test tidy
 
+      # archive: false uploads one file per artifact, named after the file.
       - uses: actions/upload-artifact@v7
         with:
-          name: firmware
-          path: .build/release/
+          path: .build/release/nanoels-h5-nextion-5in/firmware.bin
+          archive: false
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          path: .build/release/nanoels-h5-nextion-5in/firmware.full.bin
+          archive: false
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          path: .build/release/nextion-5in/display.tft
+          archive: false
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          path: .build/release/nextion-5in/display_180.tft
+          archive: false
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          path: .build/release/nextion-5in/display.HMI
+          archive: false
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          path: .build/release/nextion-5in/display_180.HMI
+          archive: false
           if-no-files-found: error
 
   release:
@@ -117,8 +143,8 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: firmware
-          path: .build/release/
+          path: dist/
+          merge-multiple: true
 
       - name: Collect commits
         run: |
@@ -133,4 +159,4 @@ jobs:
             --title "$GITHUB_REF_NAME" \
             --notes-file "$RUNNER_TEMP/notes.md" \
             $([[ "$GITHUB_REF_NAME" == *-* ]] && echo --prerelease) \
-            .build/release/*/*
+            dist/*

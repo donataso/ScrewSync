@@ -82,6 +82,13 @@ replies; see `docs/screen.md`.
   optional). Validated as a whole, then stored in full; replies `ok` or the
   reason. Names and designations may not contain spaces or commas.
 
+## Pin map (HTTP)
+
+- `GET /pins`: the board and the saved map.
+- `GET /pins/functions`: the function table.
+- `POST /pins`: validates and saves a map. Refused unless idle. Applies
+  after a reboot.
+
 ## Backup (HTTP)
 
 - `GET /backup`: one JSON file, `{"settings":{...}, "run":{units,

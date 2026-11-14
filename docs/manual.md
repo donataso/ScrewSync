@@ -11,6 +11,9 @@ How to operate ScrewSync. For connectors and flashing, see
   `invertDirectionZ` or `invertDirectionX`.
 - Encoder: the spindle angle must increase when the spindle turns
   forward. If it decreases, toggle `invertEncoder`.
+- Pins: to move a function to another connector pin, or to add switches
+  and outputs, use the Pins page on the web client. See
+  [pins.md](pins.md).
 
 ## Wi-Fi
 

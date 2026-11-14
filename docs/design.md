@@ -51,6 +51,32 @@
   code needs (chosen UART, partition, Kconfig).
 - `Makefile.local` (not in git) is optional and holds personal shortcuts.
 
+## Pin map
+
+User side: [pins.md](pins.md).
+
+- Board data: a `screwsync,connectors` node in `board.overlay` (binding
+  `main/dts/bindings/screwsync,connectors.yaml`). One child per connector:
+  title, row, column and pins. Power pins are `PIN_5V` / `PIN_GND` from
+  `main/include/dt-bindings/screwsync/pins.h`. The node also holds the
+  strapping pins, the reserved pins with a note each, and the default pins
+  of each function in signal order. The default pins of a function must be
+  next to each other in one connector.
+- `main/lib/Pins` builds the board table from the node with `DT_FOREACH`
+  macros. The PCNT unit count is the number of PCNT units in the
+  devicetree.
+- To add a function: add a row to `FUNCTIONS` in `PinMap.cpp` and the code
+  that uses its pins. The web client reads the table from
+  `GET /pins/functions`.
+- At boot, `Pins` connects each hw encoder's A and B to its PCNT unit
+  through the GPIO matrix and sets its glitch filter. The PCNT pins in the
+  board's `pinctrl` are only the routing until then. Unused units get a
+  constant low input.
+- The saved map is keyed by function and connector id, so a new function or
+  connector does not break it.
+- The firmware (`PinMap::validate`) and the web client (`validate`,
+  `nameIssues` in `web/client/pins.ts`) must check the same rules.
+
 ## Smoke tests
 
 - `tests/smoke/`, run on real hardware with `<t>-smoke` (automatic) and

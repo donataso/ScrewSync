@@ -45,6 +45,13 @@ once, which chatters and tears on deeper threads. With alternating flank
 infeed, each pass shifts sideways so only one edge cuts, alternating sides.
 A spring pass at full depth finishes the thread.
 
+### Pin mapping
+
+Put any function on any free connector pin, from the web client. Motors,
+encoders, handwheels, a probe, physical buttons for start, stop, zero and
+modes, and a "running" output. Rename the connectors to match your wiring.
+No rebuild, no soldering of adapters. See [docs/pins.md](docs/pins.md).
+
 ### And more
 
 - **Spindle direction check**: the job stops if the spindle turns the wrong
@@ -76,6 +83,7 @@ connectors. See [docs/install.md](docs/install.md).
 | [Features](docs/features.md)               | everything it does                      |
 | [Manual](docs/manual.md)                   | how to operate it                       |
 | [Probe](docs/probe.md)                     | probe hardware, settings and cycle      |
+| [Pins](docs/pins.md)                       | pin mapping, encoders, switches         |
 | [Design](docs/design.md)                   | architecture and machine state          |
 | [Protocol](docs/protocol.md)               | command set for serial, display and web |
 | [Display](docs/screen.md)                  | display UI design and tooling           |
