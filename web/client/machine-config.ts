@@ -18,8 +18,13 @@ export interface MachineConfigPair {
 
 export interface MachineConfigSection {
   title: string
+  fieldsTitle?: string
   fields: MachineConfigField[]
+  /** Shown with the pairs, for both axes. */
+  common?: MachineConfigField[]
+  commonTitle?: string
   pairs?: MachineConfigPair[]
+  pairsTitle?: string
 }
 
 export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
@@ -107,7 +112,7 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
     },
     {
       key: `handwheelPpr${axis}`,
-      label: "Handwheel PPR",
+      label: "PPR",
       unit: "pulses/rev",
       min: 1,
       max: 100000,
@@ -116,7 +121,7 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
     },
     {
       key: `handwheelLagMs${axis}`,
-      label: "Handwheel lag",
+      label: "Lag",
       unit: "ms",
       min: 1,
       max: 1000,
@@ -125,7 +130,7 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
     },
     {
       key: `invertHandwheel${axis}`,
-      label: "Invert handwheel direction",
+      label: "Invert direction",
       type: "checkbox",
       help: `Toggle if turning the ${axis} handwheel moves the axis the wrong way.`,
     },
@@ -155,10 +160,11 @@ function pair(name: string, copy: boolean): MachineConfigPair {
 export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
   {
     title: "Encoders",
+    fieldsTitle: "Spindle encoder",
     fields: [
       {
         key: "encoderPpr",
-        label: "Spindle encoder PPR",
+        label: "PPR",
         unit: "pulses/rev",
         min: 1,
         max: 15000,
@@ -167,7 +173,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
       },
       {
         key: "encoderBacklash",
-        label: "Spindle encoder backlash",
+        label: "Backlash",
         unit: "pulses",
         min: 0,
         max: 30000,
@@ -176,10 +182,13 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
       },
       {
         key: "invertEncoder",
-        label: "Invert spindle encoder",
+        label: "Invert direction",
         type: "checkbox",
         help: "Toggle if the spindle position/RPM sign is reversed from the actual spindle rotation direction.",
       },
+    ],
+    commonTitle: "Handwheel encoders",
+    common: [
       {
         key: "axisEncoderBacklash",
         label: "Handwheel backlash",
@@ -190,7 +199,8 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
         help: "Handwheel encoder pulses ignored after direction reverses. Set to 0 for direct encoders without mechanical play.",
       },
     ],
-    pairs: [pair("handwheelPpr", true), pair("handwheelLagMs", true), pair("invertHandwheel", true)],
+    pairsTitle: "handwheel",
+    pairs: [pair("handwheelPpr", true), pair("handwheelLagMs", true), pair("invertHandwheel", false)],
   },
   {
     title: "Drive",
@@ -201,7 +211,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
       pair("backlashDu", false),
       pair("maxTravelMm", false),
       pair("invertDirection", false),
-      pair("invertEnable", true),
+      pair("invertEnable", false),
     ],
   },
   {
@@ -302,6 +312,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
 
 export const MACHINE_CONFIG_FIELDS: MachineConfigField[] = MACHINE_CONFIG_SECTIONS.flatMap((s) => [
   ...s.fields,
+  ...(s.common ?? []),
   ...(s.pairs ?? []).flatMap((p) => [p.z, p.x]),
 ])
 

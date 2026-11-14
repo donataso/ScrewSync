@@ -12,7 +12,7 @@ import {
   type MachineConfigField,
   type MachineConfigPair,
 } from "../machine-config"
-import { Button, Field, InfoIcon, LockNotice, Panel, TextInput, Toggle } from "../ui/primitives"
+import { Button, InfoIcon, LockNotice, Panel, TextInput, Toggle } from "../ui/primitives"
 import { useToast } from "../ui/toast"
 
 export function SettingsScreen() {
@@ -127,27 +127,23 @@ toast.push("Applied and saved to flash.", "good")
           <Panel key={section.title} title={section.title}>
             <div className="flex flex-col gap-4">
               {section.fields.length > 0 && (
-                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+                <div className={GRID}>
+                  {section.fieldsTitle && <div className={`col-span-2 md:col-span-4 ${SUBTITLE}`}>{section.fieldsTitle}</div>}
                   {section.fields.map((field) => (
-                    <Field key={field.key} label={fieldLabel(field)} tooltip={field.help}>
-                      <FieldInput field={field} value={valueOf(field)} onChange={(v) => setField(field, v)} />
-                    </Field>
+                    <SettingCell key={field.key} field={field} value={valueOf(field)} onChange={(v) => setField(field, v)} />
                   ))}
                 </div>
               )}
-              {section.pairs && (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {section.pairs.map((p) => (
-                    <PairRow
-                      key={p.z.key}
-                      pair={p}
-                      zValue={valueOf(p.z)}
-                      xValue={valueOf(p.x)}
-                      onChange={(field, v) => setField(field, v)}
-                    />
+              {section.fields.length > 0 && section.pairs && <hr className="my-2 border-border" />}
+              {section.common && (
+                <div className={GRID}>
+                  {section.commonTitle && <div className={`col-span-2 md:col-span-4 ${SUBTITLE}`}>{section.commonTitle}</div>}
+                  {section.common.map((field) => (
+                    <SettingCell key={field.key} field={field} value={valueOf(field)} onChange={(v) => setField(field, v)} />
                   ))}
                 </div>
               )}
+              {section.pairs && <AxisGrid pairs={section.pairs} title={section.pairsTitle} valueOf={valueOf} onChange={setField} />}
             </div>
           </Panel>
           ))}
@@ -184,45 +180,93 @@ function FieldInput({ field, value, onChange }: { field: MachineConfigField; val
   )
 }
 
-function PairRow({
-  pair,
-  zValue,
-  xValue,
+const GRID = "grid grid-cols-2 gap-x-6 gap-y-3 md:grid-cols-4"
+const SUBTITLE = "text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+
+function AxisGrid({
+  pairs,
+  title,
+  valueOf,
   onChange,
 }: {
-  pair: MachineConfigPair
-  zValue: Value
-  xValue: Value
+  pairs: MachineConfigPair[]
+  title?: string
+  valueOf: (field: MachineConfigField) => Value
   onChange: (field: MachineConfigField, v: Value) => void
 }) {
-  const showCopy = pair.copy && zValue !== xValue
-  const copyButton = (label: string, title: string, onClick: () => void) => (
-    <Button variant="ghost" className={`px-2 ${showCopy ? "" : "invisible"}`} title={title} onClick={onClick}>
-      {label}
-    </Button>
-  )
+  const rows: MachineConfigPair[][] = []
+  for (let i = 0; i < pairs.length; i += 2) {
+    rows.push(pairs.slice(i, i + 2))
+  }
+  const cell = (p: MachineConfigPair | undefined, axis: "Z" | "X", key: string) => {
+    if (!p) {
+      return <div key={key} />
+    }
+    const [field, other] = axis === "Z" ? [p.z, p.x] : [p.x, p.z]
+    const value = valueOf(field)
+    const otherValue = valueOf(other)
+    return (
+      <SettingCell
+        key={field.key}
+        field={field}
+        axis={axis}
+        value={value}
+        onChange={(v) => onChange(field, v)}
+        copy={
+          p.copy && value !== otherValue
+            ? { label: `Copy to ${axis === "Z" ? "X" : "Z"}`, onClick: () => onChange(other, value) }
+            : undefined
+        }
+      />
+    )
+  }
   return (
-    <div className="flex flex-col gap-1 text-sm">
-      <span className="text-muted-foreground">{fieldLabel(pair.z)}</span>
-      <div className="grid grid-cols-[auto_1fr_auto_auto_1fr] items-center gap-1.5">
-        <AxisTag field={pair.z} axis="Z" />
-        <FieldInput field={pair.z} value={zValue} onChange={(v) => onChange(pair.z, v)} />
-        {copyButton("→", "Copy Z to X", () => onChange(pair.x, zValue))}
-        {copyButton("←", "Copy X to Z", () => onChange(pair.z, xValue))}
-        <span className="flex items-center gap-1.5">
-          <AxisTag field={pair.x} axis="X" />
-          <FieldInput field={pair.x} value={xValue} onChange={(v) => onChange(pair.x, v)} />
-        </span>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-1/2 hidden border-l border-border md:block" />
+      <div className={GRID}>
+        <div className={`col-span-2 hidden md:block ${SUBTITLE}`}>{title ? `Z axis ${title}` : "Z axis"}</div>
+        <div className={`col-span-2 hidden md:block ${SUBTITLE}`}>{title ? `X axis ${title}` : "X axis"}</div>
+        {rows.flatMap((r, i) => [
+          cell(r[0], "Z", `z0-${i}`),
+          cell(r[1], "Z", `z1-${i}`),
+          cell(r[0], "X", `x0-${i}`),
+          cell(r[1], "X", `x1-${i}`),
+        ])}
       </div>
     </div>
   )
 }
 
-function AxisTag({ field, axis }: { field: MachineConfigField; axis: string }) {
+function SettingCell({
+  field,
+  axis,
+  value,
+  onChange,
+  copy,
+}: {
+  field: MachineConfigField
+  axis?: string
+  value: Value
+  onChange: (v: Value) => void
+  copy?: { label: string; onClick: () => void }
+}) {
   return (
-    <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-      {axis}
-      <InfoIcon tooltip={field.help} />
-    </span>
+    <div className="flex min-w-0 flex-col gap-1 text-sm">
+      <div className="flex items-center gap-1 text-muted-foreground">
+        {axis && <span className="font-semibold text-foreground md:hidden">{axis}</span>}
+        <span className="truncate">{fieldLabel(field)}</span>
+        <InfoIcon tooltip={field.help} />
+        {copy && (
+          <button
+            type="button"
+            className="ml-auto shrink-0 cursor-pointer rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-px text-xs font-medium text-sky-700 hover:bg-sky-500/20 dark:text-sky-300 disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={copy.onClick}
+          >
+            {copy.label}
+          </button>
+        )}
+      </div>
+      <FieldInput field={field} value={value} onChange={onChange} />
+    </div>
   )
 }

@@ -16,6 +16,18 @@ export default defineConfig({
   resolve: {
     alias: [{ find: "@/client", replacement: path.resolve(__dirname, "../client") }],
   },
+  server: process.env.DEVICE_HOST
+    ? {
+        host: "0.0.0.0",
+        proxy: {
+          "^/(ws|wifi|update|update-display|display-preview|threads|pins|backup|log|gcode)(/.*)?$": {
+            target: `http://${process.env.DEVICE_HOST}`,
+            changeOrigin: true,
+            ws: true,
+          },
+        },
+      }
+    : undefined,
   build: {
     target: "es2018",
     cssCodeSplit: false,

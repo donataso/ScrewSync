@@ -16,11 +16,11 @@ import { Badge } from "./ui/primitives"
 import { ToastProvider } from "./ui/toast"
 
 const NAV = [
-  { path: "/settings", label: "Settings" },
-  { path: "/threads", label: "Threads" },
   { path: "/gcode", label: "Gcode" },
-  { path: "/network", label: "Network" },
+  { path: "/threads", label: "Threads" },
+  { path: "/settings", label: "Settings" },
   { path: "/pins", label: "Pins" },
+  { path: "/network", label: "Network" },
   { path: "/device", label: "Device" },
   { path: "/appearance", label: "Appearance" },
 ]
@@ -29,8 +29,8 @@ function screenFor(path: string) {
   if (path.startsWith("/threads")) {
 return <ThreadsScreen />
 }
-  if (path.startsWith("/gcode")) {
-return <GcodeScreen />
+  if (path.startsWith("/settings")) {
+return <SettingsScreen />
 }
   if (path.startsWith("/network")) {
 return <NetworkScreen />
@@ -44,7 +44,7 @@ return <DeviceScreen />
   if (path.startsWith("/appearance")) {
 return <AppearanceScreen />
 }
-  return <SettingsScreen />
+  return <GcodeScreen />
 }
 
 function availableWhenOffline(path: string) {
@@ -81,7 +81,7 @@ function AppShell() {
           <nav className="flex flex-wrap gap-1">
             {NAV.map((n) => {
               const active =
-                n.path === "/settings"
+                n.path === "/gcode"
                   ? path === "/" || path === n.path || path.startsWith(n.path + "/")
                   : path === n.path || path.startsWith(n.path + "/")
               return (

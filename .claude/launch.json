@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web-device",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["web-preview"],
+      "port": 5173
+    }
+  ]
+}
