@@ -94,7 +94,13 @@ namespace
          "half-ellipse mode (dir picks the Z side)", ellipse},
         {"probe", "probe go z-|z+|x-|x+ | [status] | probe-dst <du> | offset <du>",
          "touch-off mode: starts a cycle on an axis, and its params/status", probe},
-        {"display", "display info | flash", "stored display .tft: size and crc / flashes it to the display", display},
+        {"info", "info", "firmware version, target, reset cause, uptime, OTA image confirmed", info},
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
+        {"display", "display status | info | flash",
+         "display link / stored display .tft: size and crc / flashes it to the display", display},
+#else
+        {"display", "display status", "display link", display},
+#endif
         {"units", "units [mm|inch]", "display units", units},
         {"ws", "ws list | kill <n>", "web UI WebSocket clients: numbered list / closes one", ws},
         {"zero", "zero z|x [<deci-microns>] | spindle",

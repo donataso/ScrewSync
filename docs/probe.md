@@ -4,7 +4,7 @@ Touch off an axis: move until the probe makes contact, then zero the axis.
 
 ## Hardware
 
-The probe is a digital input with a pull-up and an RC filter against stepper noise. Its pin is set in `app.overlay`, and its polarity (NO/NC) is in settings. Ideas for a simple DIY probe:
+The probe is a digital input with a pull-up and an RC filter against stepper noise. Its pin is set in the board overlay (`boards/<board>/board.overlay`), and its polarity (NO/NC) is in settings. Ideas for a simple DIY probe:
 
 - **Contact plate:** a plastic block with a conductor on one face, wired to the probe pin and held against the workpiece. The tool must be earthed, which it usually is through the machine frame. DC GND should be connected to AC Earth. Contact pulls the pin to ground.
 - **Switch:** a small switch, for example a low-profile keyboard switch, in a holder placed against the workpiece. Both wires go to the switch, so no earthing is needed. After it triggers, the switch has only a little travel left, so the probe feed must be slow enough for the axis to stop within that travel.

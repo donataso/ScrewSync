@@ -25,7 +25,7 @@
 // A Nextion display on a UART: framed commands and return data, page
 // attributes written only when changed, and the whmi-wri / twfile
 // transfers (docs/protocol.md "Display UI upload"). Heartbeats write the
-// linkAge global of display/program.nx.
+// linkAge global of displays/nextion-5in/program.nx.
 namespace Nextion
 {
     struct Config

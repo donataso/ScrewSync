@@ -207,7 +207,7 @@ def press(sim, name):
 
 
 def take(name, steps):
-    sim = HeadlessSimulation(ROOT / "display", page=PAGES.get(name, "page0"))
+    sim = HeadlessSimulation(ROOT / "displays/nextion-5in", page=PAGES.get(name, "page0"))
     try:
         for step in steps:
             if isinstance(step, tuple):

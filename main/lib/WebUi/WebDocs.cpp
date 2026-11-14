@@ -29,7 +29,7 @@ using WebHttp::reply;
 
 namespace
 {
-    constexpr size_t PREVIEW_MAX = 64 * 1024; // display/app.toml memory_file_storage_size
+    constexpr size_t PREVIEW_MAX = 64 * 1024; // displays/nextion-5in/app.toml memory_file_storage_size
     uint8_t g_preview[PREVIEW_MAX] EXT_RAM_BSS;
 
     struct PreviewUpload

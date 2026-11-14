@@ -26,6 +26,13 @@
 #include <zephyr/sys/crc.h>
 #include <zephyr/sys/util.h>
 
+#ifndef CONFIG_SCREWSYNC_DISPLAY_IMAGE
+#error "Display image needs CONFIG_SCREWSYNC_DISPLAY_IMAGE"
+#endif
+#if !DT_NODE_EXISTS(DT_NODELABEL(display_partition))
+#error "Display image needs display_partition in the target overlay"
+#endif
+
 LOG_MODULE_DECLARE(display_image);
 
 namespace

@@ -64,6 +64,7 @@ namespace Command::Detail
     void wifi(const char *args, char *out, size_t outMax);
 
     void settings(const char *args, char *out, size_t outMax);
+    void info(const char *args, char *out, size_t outMax);
     void display(const char *args, char *out, size_t outMax);
     void units(const char *args, char *out, size_t outMax);
     void ws(const char *args, char *out, size_t outMax);

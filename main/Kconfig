@@ -1,3 +1,6 @@
 mainmenu "ScrewSync"
 
 source "Kconfig.zephyr"
+
+config SCREWSYNC_DISPLAY_IMAGE
+	bool "Store and flash a display firmware image"

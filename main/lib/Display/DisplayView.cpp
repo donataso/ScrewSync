@@ -21,7 +21,7 @@
 #include "Machine.hpp"
 #include "Motion.hpp"
 #include "Wifi.hpp"
-#include "config.hpp"
+#include "display_config.hpp"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>

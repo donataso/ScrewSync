@@ -72,6 +72,6 @@ jobs:
           cd ~/zephyrproject
           west sdk install --version $SDK_VERSION --install-dir $ZEPHYR_SDK_INSTALL_DIR -t xtensa-espressif_esp32s3_zephyr-elf
 
-      - run: make build
+      - run: make nanoels-h5-nextion-5in-build
       - run: make test
       - run: make tidy

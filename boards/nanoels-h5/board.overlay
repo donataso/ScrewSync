@@ -1,0 +1,113 @@
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/pinctrl/esp32s3-pinctrl.h>
+
+&psram0 {
+	status = "okay";
+	size = <DT_SIZE_M(8)>;
+};
+
+&flash0 {
+	partitions {
+		/* Saved G-code programs (LittleFS). */
+		gcode_partition: partition@700000 {
+			compatible = "zephyr,mapped-partition";
+			label = "gcode";
+			reg = <0x700000 DT_SIZE_M(1)>;
+		};
+	};
+};
+
+&usb_serial {
+	status = "okay";
+};
+
+/ {
+	chosen {
+		zephyr,console = &usb_serial;
+		zephyr,shell-uart = &usb_serial;
+	};
+
+	zephyr,user {
+		z-ena-gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
+		z-dir-gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+		z-step-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+
+		x-ena-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+		x-dir-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+		x-step-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+
+		probe-gpios = <&gpio0 8 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+	};
+};
+
+/* Quadrature inputs, decoded in hardware by PCNT: unit0 = spindle encoder,
+ * unit1 = Z handwheel, unit2 = X handwheel. Only unit0 is read via an
+ * interrupt (main/lib/Encoder) -- units 1/2 are read by polling
+ * (main/lib/Handwheel), since Zephyr's pcnt_esp32 driver can't arm a
+ * threshold on one unit without resetting every unit's counter. */
+&pinctrl {
+	pcnt_default: pcnt_default {
+		group1 {
+			pinmux = <PCNT0_CH0SIG_GPIO10>,
+				 <PCNT0_CH0CTRL_GPIO11>,
+				 <PCNT1_CH0SIG_GPIO47>,
+				 <PCNT1_CH0CTRL_GPIO21>,
+				 <PCNT2_CH0SIG_GPIO46>,
+				 <PCNT2_CH0CTRL_GPIO3>;
+			bias-pull-up;
+		};
+	};
+};
+
+&pcnt {
+	pinctrl-0 = <&pcnt_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	unit0@0 {
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		filter = <1>;
+
+		channelA@0 {
+			reg = <0>;
+			sig-pos-mode = <1>; /* increase on rising edge */
+			sig-neg-mode = <2>; /* decrease on falling edge */
+			ctrl-h-mode = <1>;  /* invert direction when control is high */
+			ctrl-l-mode = <0>;
+		};
+	};
+
+	unit1@1 {
+		reg = <1>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		filter = <1>;
+
+		channelA@0 {
+			reg = <0>;
+			sig-pos-mode = <1>;
+			sig-neg-mode = <2>;
+			ctrl-h-mode = <1>;
+			ctrl-l-mode = <0>;
+		};
+	};
+
+	unit2@2 {
+		reg = <2>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		filter = <1>;
+
+		channelA@0 {
+			reg = <0>;
+			sig-pos-mode = <1>;
+			sig-neg-mode = <2>;
+			ctrl-h-mode = <1>;
+			ctrl-l-mode = <0>;
+		};
+	};
+};

@@ -24,6 +24,13 @@
 #include <zephyr/sys/atomic.h>
 #include <zephyr/sys/ring_buffer.h>
 
+#ifndef CONFIG_UART_INTERRUPT_DRIVEN
+#error "Nextion needs CONFIG_UART_INTERRUPT_DRIVEN"
+#endif
+#ifndef CONFIG_UART_USE_RUNTIME_CONFIGURE
+#error "Nextion needs CONFIG_UART_USE_RUNTIME_CONFIGURE"
+#endif
+
 LOG_MODULE_REGISTER(nextion, LOG_LEVEL_INF);
 
 namespace

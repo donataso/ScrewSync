@@ -21,10 +21,18 @@
 #include "Machine.hpp"
 #include "Mode.hpp"
 #include "Nextion.hpp"
-#include "config.hpp"
+#include "display_config.hpp"
+#include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
+
+#ifndef CONFIG_SCREWSYNC_DISPLAY_IMAGE
+#error "Display image needs CONFIG_SCREWSYNC_DISPLAY_IMAGE"
+#endif
+#if !DT_NODE_EXISTS(DT_NODELABEL(display_partition))
+#error "Display image needs display_partition in the target overlay"
+#endif
 
 LOG_MODULE_REGISTER(display_image, LOG_LEVEL_INF);
 

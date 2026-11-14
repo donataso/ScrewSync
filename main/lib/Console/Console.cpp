@@ -23,7 +23,9 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
 #include "Command.hpp"
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
 #include "DisplayImage.hpp"
+#endif
 
 #ifdef CONFIG_ESP_SPIRAM
 #define EXT_RAM_BSS __attribute__((section(".ext_ram.bss")))
@@ -33,6 +35,7 @@
 
 namespace
 {
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
     constexpr const char *UPLOAD_PREFIX = "display upload ";
     constexpr uint32_t UPLOAD_IDLE_TIMEOUT_MS = 5000;
 
@@ -96,6 +99,7 @@ namespace
             printf("ok display flash started\n");
         }
     }
+#endif
 }
 
 void consolePoll()
@@ -120,10 +124,12 @@ void consolePoll()
             continue;
         }
 
+#ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
         if (!strncmp(buf, UPLOAD_PREFIX, strlen(UPLOAD_PREFIX))) {
             handleUpload(dev, buf + strlen(UPLOAD_PREFIX));
             continue;
         }
+#endif
         Command::apply(buf, out, sizeof(out));
         printf("%s\n", out);
     }

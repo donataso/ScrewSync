@@ -75,20 +75,6 @@ target_sources(app PRIVATE
     lib/WebUi/WsCommand.cpp
     lib/WebUi/WsMessages.cpp
     lib/Ota/Ota.cpp
-    lib/Display/Display.cpp
-    lib/Display/DisplayWidgets.cpp
-    lib/Display/DisplayFormat.cpp
-    lib/Display/DisplayText.cpp
-    lib/Display/DisplayView.cpp
-    lib/Display/DisplayPanel.cpp
-    lib/Display/DisplayPicker.cpp
-    lib/Nextion/NextionLink.cpp
-    lib/Nextion/NextionFrame.cpp
-    lib/Nextion/NextionAttrs.cpp
-    lib/Nextion/NextionUpload.cpp
-    lib/Display/DisplayImage.cpp
-    lib/Display/DisplayImageStore.cpp
-    lib/Display/ModeCells.cpp
     lib/LogRing/LogRing.cpp
 )
 
@@ -118,8 +104,6 @@ target_include_directories(app PRIVATE
     lib/StaticAssets
     lib/WebUi
     lib/Ota
-    lib/Display
-    lib/Nextion
     lib/Wifi
     lib/WifiPortal
     lib/LogRing
@@ -127,6 +111,18 @@ target_include_directories(app PRIVATE
     # WsCommand reads a client's peer address from Zephyr's internal websocket context.
     ${ZEPHYR_BASE}/subsys/net/lib/websocket
 )
+
+zephyr_get(SCREWSYNC_TARGET SYSBUILD LOCAL)
+if(NOT SCREWSYNC_TARGET)
+    message(FATAL_ERROR "SCREWSYNC_TARGET is not set -- build through the Makefile")
+endif()
+target_compile_definitions(app PRIVATE SCREWSYNC_TARGET="${SCREWSYNC_TARGET}")
+zephyr_get(SCREWSYNC_DISPLAY SYSBUILD LOCAL)
+if(NOT SCREWSYNC_DISPLAY)
+    message(FATAL_ERROR "SCREWSYNC_DISPLAY is not set -- build through the Makefile (TARGET=...)")
+endif()
+set(SCREWSYNC_MAIN_DIR ${CMAKE_CURRENT_LIST_DIR})
+include(${CMAKE_CURRENT_LIST_DIR}/../displays/${SCREWSYNC_DISPLAY}/display.cmake)
 
 target_compile_options(app PRIVATE -Werror)
 

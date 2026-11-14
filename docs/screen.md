@@ -5,7 +5,7 @@
 - Genuine Nextion Intelligent panel, NX8048P050-011 (5.0", 800x480), closed
   MCU ("Ai HMI T8") -- cannot run custom firmware; stays on stock Nextion
   firmware.
-- UI source: nxwright/nxlang in `display/`. Built to `.HMI` with nxwright,
+- UI source: nxwright/nxlang in `displays/nextion-5in/`. Built to `.HMI` with nxwright,
   compiled to `.tft` in Nextion Editor (Windows/Wine), pushed over UART by
   the main firmware (`docs/protocol.md`, "Display UI upload").
 - Direct `.tft` generation/patching tools were ruled out: they can only patch

@@ -22,7 +22,7 @@
 #include "Settings.hpp"
 #include "RunSettings.hpp"
 #include "Watchdog.hpp"
-#include "config.hpp"
+#include "display_config.hpp"
 #include <math.h>
 #include <zephyr/kernel.h>
 

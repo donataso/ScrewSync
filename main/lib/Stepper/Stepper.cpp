@@ -33,7 +33,7 @@ LOG_MODULE_REGISTER(stepper, LOG_LEVEL_INF);
 // than a PWM peripheral: the ramp needs a freshly computed, different
 // period on every single step, which a PWM channel's slowly-updated duty
 // register can't give. Z uses timer2, X uses timer3 (TIMG1 T0/T1, prescaled
-// to a 1MHz/1us tick in app.overlay -- TIMG0 is reserved for the Wi-Fi
+// to a 1MHz/1us tick in main/app.overlay -- TIMG0 is reserved for the Wi-Fi
 // stack's RTC slow-clock calibration), so the two axes never contend for
 // the same hardware alarm.
 
