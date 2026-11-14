@@ -29,15 +29,20 @@ LOG_MODULE_REGISTER(handwheel, LOG_LEVEL_INF);
 
 // A handwheel is a PCNT unit (read on demand, plus a poll so the 16-bit
 // counter cannot wrap unseen; this keeps the PCNT interrupt to the
-// spindle), or a software decoder on GPIO interrupts.
-// A PCNT unit counts the edges of A and B, so bounce on one line cancels,
-// and is halved to match the software decoder, which counts A's edges.
+// spindle), or a software decoder on GPIO interrupts that reads A and B
+// once both have been quiet for the debounce time.
+// Both count the edges of A and B, so bounce on one line cancels, and are
+// halved to two counts per pulse.
 
 namespace
 {
     constexpr int32_t POLL_PERIOD_MS = 10;
 
     pcnt_dev_t *g_hw = PCNT_LL_GET_HW(0);
+
+    // Indexed by previous state << 2 | new state, state = A << 1 | B.
+    // Both lines changing at once is a missed edge and counts nothing.
+    constexpr int8_t QUADRATURE_STEP[16] = {0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0};
 
     struct Wheel
     {
@@ -46,10 +51,14 @@ namespace
         struct k_spinlock lock = {};
         int16_t last = 0;
         atomic_t count = ATOMIC_INIT(0);
-        int shift = 0;
+        int shift = 1;
+        uint8_t state = 0;
+        struct k_timer settle = {};
+        k_timeout_t settleTime = K_NO_WAIT;
         gpio_dt_spec a = {};
         gpio_dt_spec b = {};
-        gpio_callback cb = {};
+        gpio_callback cbA = {};
+        gpio_callback cbB = {};
     };
 
     Wheel g_z = {PinMap::Fn::ZHandwheel};
@@ -86,10 +95,42 @@ namespace
         }
     }
 
-    void onEdge(const struct device *, struct gpio_callback *cb, uint32_t)
+    uint8_t pinState(const Wheel &w)
     {
-        Wheel &w = *CONTAINER_OF(cb, Wheel, cb);
-        atomic_add(&w.count, gpio_pin_get_dt(&w.a) != gpio_pin_get_dt(&w.b) ? 1 : -1);
+        return (uint8_t)((gpio_pin_get_dt(&w.a) << 1) | gpio_pin_get_dt(&w.b));
+    }
+
+    void decode(Wheel &w)
+    {
+        k_spinlock_key_t key = k_spin_lock(&w.lock);
+        uint8_t state = pinState(w);
+        atomic_add(&w.count, QUADRATURE_STEP[(w.state << 2) | state]);
+        w.state = state;
+        k_spin_unlock(&w.lock, key);
+    }
+
+    void onSettled(struct k_timer *timer)
+    {
+        decode(*CONTAINER_OF(timer, Wheel, settle));
+    }
+
+    void onEdge(Wheel &w)
+    {
+        if (K_TIMEOUT_EQ(w.settleTime, K_NO_WAIT)) {
+            decode(w);
+        } else {
+            k_timer_start(&w.settle, w.settleTime, K_NO_WAIT);
+        }
+    }
+
+    void onEdgeA(const struct device *, struct gpio_callback *cb, uint32_t)
+    {
+        onEdge(*CONTAINER_OF(cb, Wheel, cbA));
+    }
+
+    void onEdgeB(const struct device *, struct gpio_callback *cb, uint32_t)
+    {
+        onEdge(*CONTAINER_OF(cb, Wheel, cbB));
     }
 
     void setUp(Wheel &w)
@@ -97,7 +138,6 @@ namespace
         switch (Pins::encoder(w.fn)) {
         case PinMap::Encoder::Hw:
             w.unit = Pins::pcntUnit(w.fn);
-            w.shift = 1;
             if (w.unit >= 0) {
                 w.last = (int16_t)pcnt_ll_get_count(g_hw, w.unit);
             }
@@ -110,9 +150,15 @@ namespace
             }
             gpio_pin_configure_dt(&w.a, GPIO_INPUT);
             gpio_pin_configure_dt(&w.b, GPIO_INPUT);
-            gpio_init_callback(&w.cb, onEdge, BIT(w.a.pin));
-            gpio_add_callback(w.a.port, &w.cb);
+            w.state = pinState(w);
+            k_timer_init(&w.settle, onSettled, nullptr);
+            w.settleTime = K_NSEC(Pins::filterNs(w.fn));
+            gpio_init_callback(&w.cbA, onEdgeA, BIT(w.a.pin));
+            gpio_init_callback(&w.cbB, onEdgeB, BIT(w.b.pin));
+            gpio_add_callback(w.a.port, &w.cbA);
+            gpio_add_callback(w.b.port, &w.cbB);
             gpio_pin_interrupt_configure_dt(&w.a, GPIO_INT_EDGE_BOTH);
+            gpio_pin_interrupt_configure_dt(&w.b, GPIO_INT_EDGE_BOTH);
             break;
         default:
             break;

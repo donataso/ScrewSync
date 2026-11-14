@@ -58,15 +58,17 @@ The function table is only in the firmware. `GET /pins/functions` sends it to th
 ## Encoders
 
 - `hw`: a PCNT unit. The spindle always has unit 0. The hw handwheels get the next units, in function order.
-- `sw`: an interrupt on both edges of A; B gives the direction. Same count as a PCNT unit. Only for slow encoders.
-- At boot, `Pins` connects each hw encoder's A and B to its PCNT unit through the GPIO matrix. Units that the map does not use get a constant low input.
+- `sw`: interrupts on both edges of A and B. A and B are read once both have been steady for the debounce time, then decoded with a state table. Same count as a PCNT unit. Only for slow encoders.
+- Both count the edges of A and B, so contact bounce on one line cancels.
+- Each encoder has a filter in µs: the PCNT glitch filter (hw, pulses shorter than it are ignored) or the debounce time (sw, rounded up to the kernel tick). Each function has a default; handwheels get the hw maximum, for mechanical contacts.
+- At boot, `Pins` connects each hw encoder's A and B to its PCNT unit through the GPIO matrix and sets its glitch filter. Units that the map does not use get a constant low input.
 - The PCNT pins in the board's `pinctrl` are only the routing until `Pins` starts.
 - On the nanoels H5 the handwheel connectors have B before A, so the default map has A and B swapped compared with the case labels. Use the handwheel invert-direction setting.
 
 ## Storage
 
 - One `PersistBlob` entry (`pins/map`): a list of assignments and the connector names.
-- An assignment: function id, connector, start pin, encoder type, signal options. The list has a fixed maximum length.
+- An assignment: function id, connector, start pin, encoder type, glitch filter, signal options. The list has a fixed maximum length.
 - If no map is saved, the firmware uses the board defaults.
 - An invalid assignment (unknown function id, bad pin, conflict) is ignored and logged as a warning. It stays in the saved map. In a conflict, the first assignment in the list stays.
 - If a required function is missing: pins fault. Move, jog and start reply `err pins: <reason>`. The display shows a toast at boot and on each refused command. Settings and the web UI still work.

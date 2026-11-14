@@ -103,6 +103,7 @@ namespace
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "backlashDuZ", conf.z.backlashDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "handwheelPprZ", conf.z.handwheelPpr, JSON_TOK_FLOAT_FP),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "invertHandwheelZ", conf.z.invertHandwheel, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "handwheelLagMsZ", conf.z.handwheelLagMs, JSON_TOK_NUMBER),
 
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "screwPitchDuX", conf.x.screwPitchDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "motorStepsX", conf.x.motorSteps, JSON_TOK_NUMBER),
@@ -116,6 +117,7 @@ namespace
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "backlashDuX", conf.x.backlashDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "handwheelPprX", conf.x.handwheelPpr, JSON_TOK_FLOAT_FP),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "invertHandwheelX", conf.x.invertHandwheel, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "handwheelLagMsX", conf.x.handwheelLagMs, JSON_TOK_NUMBER),
     };
 
     struct SavedNet

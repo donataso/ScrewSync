@@ -84,6 +84,7 @@ namespace Settings
         {"backlashDuZ", FieldType::I32, offsetof(Conf, z.backlashDu), 0, 10000000},
         {"handwheelPprZ", FieldType::Float, offsetof(Conf, z.handwheelPpr), 1, 100000},
         {"invertHandwheelZ", FieldType::Bool, offsetof(Conf, z.invertHandwheel), 0, 0},
+        {"handwheelLagMsZ", FieldType::I32, offsetof(Conf, z.handwheelLagMs), 1, 1000},
         {"screwPitchDuX", FieldType::I32, offsetof(Conf, x.screwPitchDu), 1, 10000000},
         {"motorStepsX", FieldType::I32, offsetof(Conf, x.motorSteps), 1, 1000000},
         {"speedStartX", FieldType::I32, offsetof(Conf, x.speedStart), 1, 1000000},
@@ -96,6 +97,7 @@ namespace Settings
         {"backlashDuX", FieldType::I32, offsetof(Conf, x.backlashDu), 0, 10000000},
         {"handwheelPprX", FieldType::Float, offsetof(Conf, x.handwheelPpr), 1, 100000},
         {"invertHandwheelX", FieldType::Bool, offsetof(Conf, x.invertHandwheel), 0, 0},
+        {"handwheelLagMsX", FieldType::I32, offsetof(Conf, x.handwheelLagMs), 1, 1000},
     };
 
     const struct json_obj_descr CONF_JSON_DESCR[] = {
@@ -126,6 +128,7 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "backlashDuZ", z.backlashDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelPprZ", z.handwheelPpr, JSON_TOK_FLOAT_FP),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertHandwheelZ", z.invertHandwheel, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelLagMsZ", z.handwheelLagMs, JSON_TOK_NUMBER),
 
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "screwPitchDuX", x.screwPitchDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "motorStepsX", x.motorSteps, JSON_TOK_NUMBER),
@@ -139,6 +142,7 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "backlashDuX", x.backlashDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelPprX", x.handwheelPpr, JSON_TOK_FLOAT_FP),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertHandwheelX", x.invertHandwheel, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelLagMsX", x.handwheelLagMs, JSON_TOK_NUMBER),
     };
 
     const Field *findField(const char *name)

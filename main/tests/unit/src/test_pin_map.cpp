@@ -119,6 +119,7 @@ namespace
             zassert_equal(x.connector, y.connector, "%s", id);
             zassert_equal(x.start, y.start, "%s", id);
             zassert_equal(x.encoder, y.encoder, "%s", id);
+            zassert_equal(x.filterNs, y.filterNs, "%s", id);
             for (size_t s = 0; s < def(x.fn).signalCount; s++) {
                 zassert_equal(x.options[s].invert, y.options[s].invert, "%s", id);
                 zassert_equal(x.options[s].pull, y.options[s].pull, "%s", id);
@@ -230,6 +231,14 @@ ZTEST(pin_map, test_rejects_bad_encoder_and_pull)
     setUp(nullptr);
     g_board.pcntUnits = 2;
     zassert_not_null(check());
+
+    setUp(nullptr);
+    at(Fn::ZHandwheel).filterNs = MAX_HW_FILTER_NS + 1;
+    zassert_not_null(check());
+    at(Fn::ZHandwheel).encoder = Encoder::Sw;
+    zassert_is_null(check(), "%s", g_err);
+    at(Fn::ZHandwheel).filterNs = MAX_SW_FILTER_NS + 1;
+    zassert_not_null(check());
 }
 
 ZTEST(pin_map, test_keep_valid_first_wins)
@@ -304,6 +313,8 @@ ZTEST(pin_map, test_json_round_trip)
 {
     strcpy(g_map.names[0], "Coolant");
     at(Fn::ZHandwheel).encoder = Encoder::Sw;
+    at(Fn::ZHandwheel).filterNs = 1500000;
+    at(Fn::XHandwheel).filterNs = 500;
     at(Fn::Probe).options[0] = {true, Pull::Down};
     place(Fn::Probe, {18});
     int len = PinMapJson::encode(g_board, g_map, g_json, sizeof(g_json));
@@ -326,6 +337,7 @@ ZTEST(pin_map, test_json_rejects)
                  R"("signals":[{"invert":false,"pull":"up"},{"invert":false,"pull":"up"}]}]})";
     zassert_not_null(PinMapJson::decode(g_board, noZ, strlen(noZ), out, g_err, sizeof(g_err)));
     zassert_not_null(strstr(g_err, "Z motor"), "%s", g_err);
+    zassert_equal(find(out, Fn::Spindle)->filterNs, def(Fn::Spindle).filterNs);
 
     char badPull[] = R"({"functions":[{"id":"probe","connector":"r2c1","start":2,"encoder":"",)"
                      R"("signals":[{"invert":false,"pull":"sideways"}]}]})";

@@ -117,6 +117,14 @@ ZTEST(settings_fields, test_float)
     zassert_within(g_conf.z.handwheelPpr, 100.5f, 1e-6f);
 }
 
+ZTEST(settings_fields, test_handwheel_lag)
+{
+    zassert_true(set("handwheelLagMsX", "250"));
+    zassert_equal(g_conf.x.handwheelLagMs, 250);
+    zassert_false(set("handwheelLagMsX", "0"));
+    zassert_equal(g_conf.x.handwheelLagMs, 250);
+}
+
 ZTEST(settings_fields, test_axis_fields_reach_their_axis)
 {
     Conf defaults;

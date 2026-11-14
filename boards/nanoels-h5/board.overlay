@@ -67,7 +67,8 @@
  * (read via the driver's interrupt, main/lib/Encoder); the others are
  * handwheels (polled, main/lib/Handwheel), which count the edges of both
  * A and B to cancel contact bounce. The pins below are only the
- * boot routing: main/lib/Pins routes the units from the pin map. */
+ * boot routing: main/lib/Pins routes the units and sets their glitch
+ * filters from the pin map. */
 &pinctrl {
 	pcnt_default: pcnt_default {
 		group1 {
@@ -93,7 +94,6 @@
 		reg = <0>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		filter = <1>;
 
 		channelA@0 {
 			reg = <0>;
@@ -108,7 +108,6 @@
 		reg = <1>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		filter = <1023>;
 
 		channelA@0 {
 			reg = <0>;
@@ -131,7 +130,6 @@
 		reg = <2>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		filter = <1023>;
 
 		channelA@0 {
 			reg = <0>;
@@ -154,7 +152,6 @@
 		reg = <3>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		filter = <1023>;
 
 		channelA@0 {
 			reg = <0>;

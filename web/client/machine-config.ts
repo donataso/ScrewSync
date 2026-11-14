@@ -114,6 +114,15 @@ function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       help: `Toggle if turning the ${axis} handwheel moves the axis the wrong way.`,
     },
     {
+      key: `handwheelLagMs${axis}`,
+      label: "Handwheel lag",
+      unit: "ms",
+      min: 1,
+      max: 1000,
+      step: 1,
+      help: `How far ${axis} may fall behind a fast handwheel, as time at the manual move speed. Turning beyond that is dropped, so ${axis} stops soon after the handwheel stops.`,
+    },
+    {
       key: `invertEnable${axis}`,
       label: "Invert enable",
       type: "checkbox",

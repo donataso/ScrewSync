@@ -39,6 +39,8 @@ namespace Settings
         int32_t backlashDu;
         float handwheelPpr;
         bool invertHandwheel;
+        // How far the handwheel target may lead the axis, as travel time at the manual speed.
+        int32_t handwheelLagMs;
     };
 
     struct Conf
@@ -60,13 +62,13 @@ namespace Settings
         int32_t reprobeFeedDuPerMin = 100000; // 10 mm/min
         int32_t probeBackOffDu = 5000;        // 0.5 mm
 
-        Axis z{20000, 1600, 800, 10000, 20000, 12800, true, false, 300, 0, 600, false};
-        Axis x{20000, 1600, 800, 10000, 20000, 6400, false, false, 100, 0, 600, false};
+        Axis z{20000, 1600, 800, 10000, 20000, 12800, true, false, 300, 0, 600, false, 100};
+        Axis x{20000, 1600, 800, 10000, 20000, 6400, false, false, 100, 0, 600, false, 100};
     };
 
     extern Conf g_active;
 
-    constexpr size_t CONF_JSON_FIELDS = 37;
+    constexpr size_t CONF_JSON_FIELDS = 39;
     extern const struct json_obj_descr CONF_JSON_DESCR[CONF_JSON_FIELDS];
 
     void load();

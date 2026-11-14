@@ -37,6 +37,9 @@ namespace PinMap
     constexpr size_t ID_MAX = 15;
     constexpr size_t MAX_ASSIGNMENTS = 32;
     constexpr size_t ERROR_MAX = 96;
+    // PCNT glitch filter limit: 1023 APB cycles at 80 MHz.
+    constexpr uint32_t MAX_HW_FILTER_NS = 12787;
+    constexpr uint32_t MAX_SW_FILTER_NS = 5000000;
 
     struct Connector
     {
@@ -127,6 +130,8 @@ namespace PinMap
         bool activeLow;
         // Switch: commands run on press, separated by ';'. nullptr otherwise.
         const char *action;
+        // Default encoder filter: PCNT glitch filter (hw) or debounce time (sw).
+        uint32_t filterNs;
     };
 
     extern const FnDef FUNCTIONS[FN_COUNT];
@@ -144,6 +149,7 @@ namespace PinMap
         uint8_t start;
         Encoder encoder;
         SignalOptions options[MAX_SIGNALS];
+        uint32_t filterNs;
     };
 
     struct Map
@@ -187,7 +193,7 @@ namespace PinMap
     void keepValid(const Board &board, const Map &in, Map &out, Warn warn);
 
     // Saved form, keyed by id, so new functions or connectors do not break a saved map.
-    constexpr uint32_t STORED_MAGIC = 0x50494e32; // "PIN2"
+    constexpr uint32_t STORED_MAGIC = 0x50494e33; // "PIN3"
 
     struct StoredAssignment
     {
@@ -196,6 +202,7 @@ namespace PinMap
         uint8_t start;
         uint8_t encoder;
         SignalOptions options[MAX_SIGNALS];
+        uint32_t filterNs;
     };
 
     struct StoredName

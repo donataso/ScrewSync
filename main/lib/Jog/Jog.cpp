@@ -31,7 +31,6 @@ namespace
     constexpr int32_t POLL_PERIOD_MS = 2;
     // Tolerates one late repeat before the run-ahead target runs out.
     constexpr uint32_t HOLD_HORIZON_US = 2 * JOG_REPEAT_INTERVAL_MS * 1000;
-    constexpr uint32_t HANDWHEEL_LAG_US = 100000;
 
     struct AxisJog
     {
@@ -97,7 +96,7 @@ namespace
         int64_t steps = Jog::jogSteps(handwheelCount - lastCount, s.cfg->motorSteps, s.cfg->handwheelPpr,
                                       resolutionMultiplier, s.stepRemainder);
         if (steps != 0) {
-            Stepper::followBy(axis, steps, HANDWHEEL_LAG_US);
+            Stepper::followBy(axis, steps, (uint32_t)s.cfg->handwheelLagMs * 1000);
         }
     }
 

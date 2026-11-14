@@ -79,6 +79,17 @@ describe("validate", () => {
     expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.fn === "spindle")).toBe(true)
   })
 
+  it("limits the filter by encoder type", () => {
+    const long = MOCK_BOARD.maxHwFilterUs + 1
+    expect(validate(MOCK_BOARD, replace("zHandwheel", { filterUs: long })).some((i) => i.level === "error" && i.fn === "zHandwheel")).toBe(true)
+    expect(validate(MOCK_BOARD, replace("zHandwheel", { encoderType: "sw", filterUs: long })).filter((i) => i.level === "error")).toEqual([])
+    expect(
+      validate(MOCK_BOARD, replace("zHandwheel", { encoderType: "sw", filterUs: MOCK_BOARD.maxSwFilterUs + 1 })).some(
+        (i) => i.level === "error" && i.fn === "zHandwheel",
+      ),
+    ).toBe(true)
+  })
+
   it("rejects an exclusive function given twice", () => {
     const map: PinMap = [...MOCK_MAP, defaultAssignment(fn("xMotor"), "r1c4", 0)]
     expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.index === map.length - 1)).toBe(true)
@@ -158,6 +169,8 @@ describe("pins JSON", () => {
   const board: PinsJson["board"] = {
     name: "nanoels H5",
     pcntUnits: 4,
+    maxHwFilterUs: 12.787,
+    maxSwFilterUs: 5000,
     strapping: [3],
     reserved: [{ gpio: 35, note: "PSRAM" }],
     connectors: [

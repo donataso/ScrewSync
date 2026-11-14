@@ -17,6 +17,7 @@
  */
 #include "PinMapJson.hpp"
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <zephyr/data/json.h>
@@ -40,6 +41,7 @@ namespace
         const char *encoder;
         JSignal signals[MAX_SIGNALS];
         size_t signalCount;
+        double filterUs;
     };
 
     struct JName
@@ -68,6 +70,8 @@ namespace
     {
         const char *name;
         int32_t pcntUnits;
+        double maxHwFilterUs;
+        double maxSwFilterUs;
         int32_t strapping[MAX_STRAPPING];
         size_t strappingCount;
         JReserved reserved[MAX_RESERVED];
@@ -105,6 +109,7 @@ namespace
         JSON_OBJ_DESCR_PRIM(JFunction, encoder, JSON_TOK_STRING),
         JSON_OBJ_DESCR_OBJ_ARRAY(JFunction, signals, MAX_SIGNALS, signalCount, SIGNAL_DESCR,
                                  ARRAY_SIZE(SIGNAL_DESCR)),
+        JSON_OBJ_DESCR_PRIM(JFunction, filterUs, JSON_TOK_DOUBLE_FP),
     };
 
     const struct json_obj_descr NAME_DESCR[] = {
@@ -128,6 +133,8 @@ namespace
     const struct json_obj_descr BOARD_DESCR[] = {
         JSON_OBJ_DESCR_PRIM(JBoard, name, JSON_TOK_STRING),
         JSON_OBJ_DESCR_PRIM(JBoard, pcntUnits, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM(JBoard, maxHwFilterUs, JSON_TOK_DOUBLE_FP),
+        JSON_OBJ_DESCR_PRIM(JBoard, maxSwFilterUs, JSON_TOK_DOUBLE_FP),
         JSON_OBJ_DESCR_ARRAY(JBoard, strapping, MAX_STRAPPING, strappingCount, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_OBJ_ARRAY(JBoard, reserved, MAX_RESERVED, reservedCount, RESERVED_DESCR,
                                  ARRAY_SIZE(RESERVED_DESCR)),
@@ -160,6 +167,7 @@ namespace
         bool activeLow;
         const char *encoders[2];
         size_t encoderCount;
+        double filterUs;
     };
 
     struct JFnDoc
@@ -178,6 +186,7 @@ namespace
         JSON_OBJ_DESCR_PRIM(JFnDef, exclusive, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM(JFnDef, activeLow, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_ARRAY(JFnDef, encoders, 2, encoderCount, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_PRIM(JFnDef, filterUs, JSON_TOK_DOUBLE_FP),
     };
 
     const struct json_obj_descr FN_DOC_DESCR[] = {
@@ -216,6 +225,8 @@ namespace PinMapJson
         JBoard &b = g_doc.board;
         b.name = board.name;
         b.pcntUnits = board.pcntUnits;
+        b.maxHwFilterUs = MAX_HW_FILTER_NS / 1000.0;
+        b.maxSwFilterUs = MAX_SW_FILTER_NS / 1000.0;
         b.strappingCount = board.strappingCount;
         for (size_t i = 0; i < board.strappingCount; i++) {
             b.strapping[i] = board.strapping[i];
@@ -248,6 +259,7 @@ namespace PinMapJson
             f.connector = board.connectors[a.connector].id;
             f.start = a.start;
             f.encoder = ENCODERS[(size_t)a.encoder <= 2 ? (size_t)a.encoder : 0];
+            f.filterUs = a.filterNs / 1000.0;
             f.signalCount = d.signalCount;
             for (size_t s = 0; s < f.signalCount; s++) {
                 f.signals[s] = {a.options[s].invert, PULLS[(size_t)a.options[s].pull <= 2 ? (size_t)a.options[s].pull : 0]};
@@ -265,6 +277,9 @@ namespace PinMapJson
     const char *decode(const Board &board, char *json, size_t len, Map &out, char *err, size_t errMax)
     {
         memset(&g_update, 0, sizeof(g_update));
+        for (JFunction &f : g_update.functions) {
+            f.filterUs = -1;
+        }
         int64_t mask = json_obj_parse(json, len, UPDATE_DESCR, ARRAY_SIZE(UPDATE_DESCR), &g_update);
         if (mask < 0 || !(mask & 1)) {
             return fail(err, errMax, "bad json", nullptr);
@@ -295,6 +310,10 @@ namespace PinMapJson
             a.connector = (uint8_t)c;
             a.start = (uint8_t)f.start;
             a.encoder = (Encoder)enc;
+            if (!(f.filterUs <= UINT32_MAX / 1000.0)) {
+                return fail(err, errMax, "bad filter", f.id);
+            }
+            a.filterNs = f.filterUs < 0 ? FUNCTIONS[fn].filterNs : (uint32_t)lround(f.filterUs * 1000.0);
             for (size_t s = 0; s < f.signalCount; s++) {
                 int pull = indexOf(PULLS, ARRAY_SIZE(PULLS), f.signals[s].pull ? f.signals[s].pull : "none");
                 if (pull < 0) {
@@ -342,6 +361,7 @@ namespace PinMapJson
             if (d.swEncoder) {
                 j.encoders[j.encoderCount++] = "sw";
             }
+            j.filterUs = d.filterNs / 1000.0;
         }
         int rc = json_obj_encode_buf(FN_DOC_DESCR, ARRAY_SIZE(FN_DOC_DESCR), &g_fnDoc, out, outMax);
         return rc == 0 ? (int)strlen(out) : -1;

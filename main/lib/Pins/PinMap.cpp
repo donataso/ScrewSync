@@ -22,14 +22,19 @@
 
 namespace PinMap
 {
-#define SWITCH(id, label, action) {id, label, "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, true, action}
+    constexpr uint32_t ONE_APB_CYCLE_NS = 13;
+
+#define SWITCH(id, label, action) {id, label, "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, true, action, 0}
     const FnDef FUNCTIONS[FN_COUNT] = {
-        {"zMotor", "Z motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, true, true, false, false, false, nullptr},
-        {"xMotor", "X motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, false, true, false, false, false, nullptr},
-        {"spindle", "Spindle encoder", "Encoders", 2, {"A", "B"}, Dir::In, true, true, true, false, false, nullptr},
-        {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr},
-        {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr},
-        {"probe", "Probe", "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, false, nullptr},
+        {"zMotor", "Z motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, true, true, false, false, false, nullptr, 0},
+        {"xMotor", "X motor", "Motors", 3, {"ENA", "DIR", "STEP"}, Dir::Out, false, true, false, false, false, nullptr, 0},
+        {"spindle", "Spindle encoder", "Encoders", 2, {"A", "B"}, Dir::In, true, true, true, false, false, nullptr,
+         ONE_APB_CYCLE_NS},
+        {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr,
+         MAX_HW_FILTER_NS},
+        {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, nullptr,
+         MAX_HW_FILTER_NS},
+        {"probe", "Probe", "Inputs", 1, {"SIG"}, Dir::In, false, false, false, false, false, nullptr, 0},
         SWITCH("startHere", "Start here", "start"),
         SWITCH("stop", "Stop", "stop"),
         SWITCH("setZero", "Set zero", "zero z;zero x"),
@@ -160,6 +165,7 @@ namespace PinMap
                 out.connector = (uint8_t)c;
                 out.start = (uint8_t)start;
                 out.encoder = d.hwEncoder ? Encoder::Hw : (d.swEncoder ? Encoder::Sw : Encoder::None);
+                out.filterNs = d.filterNs;
                 for (size_t i = 0; i < count; i++) {
                     out.options[i] = {d.activeLow, d.dir == Dir::In ? Pull::Up : Pull::None};
                 }
@@ -238,6 +244,11 @@ namespace PinMap
                              : a.encoder == Encoder::None;
         if (!encoderOk) {
             snprintf(err, errMax, "%s: encoder type not allowed", d.label);
+            return err;
+        }
+        uint32_t maxFilterNs = a.encoder == Encoder::Sw ? MAX_SW_FILTER_NS : MAX_HW_FILTER_NS;
+        if (a.filterNs > maxFilterNs) {
+            snprintf(err, errMax, "%s: filter above %lu ns", d.label, (unsigned long)maxFilterNs);
             return err;
         }
         if (a.encoder == Encoder::Hw && hw > board.pcntUnits) {
@@ -327,6 +338,7 @@ namespace PinMap
             s.start = a.start;
             s.encoder = (uint8_t)a.encoder;
             memcpy(s.options, a.options, sizeof(s.options));
+            s.filterNs = a.filterNs;
         }
         for (size_t c = 0; c < board.connectorCount && c < MAX_CONNECTORS; c++) {
             if (map.names[c][0]) {
@@ -357,7 +369,7 @@ namespace PinMap
                 warn(msg);
                 continue;
             }
-            Assignment a = {(Fn)fn, (uint8_t)c, s.start, (Encoder)s.encoder, {}};
+            Assignment a = {(Fn)fn, (uint8_t)c, s.start, (Encoder)s.encoder, {}, s.filterNs};
             memcpy(a.options, s.options, sizeof(a.options));
             add(out, a);
         }

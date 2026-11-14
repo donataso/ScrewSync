@@ -15,6 +15,10 @@ export interface Board {
   reserved: Record<number, string>
   strapping: number[]
   pcntUnits: number
+  /** Longest PCNT glitch filter. */
+  maxHwFilterUs: number
+  /** Longest sw debounce time. */
+  maxSwFilterUs: number
   /** The firmware's function table. */
   functions: FunctionDef[]
 }
@@ -35,6 +39,8 @@ export interface FunctionDef {
   /** Default invert of new assignments. */
   activeLow: boolean
   encoderTypes?: EncoderType[]
+  /** Default encoder filter of new assignments. */
+  filterUs: number
 }
 
 export interface SignalOptions {
@@ -47,6 +53,8 @@ export interface Assignment {
   connector: string
   start: number
   encoderType?: EncoderType
+  /** PCNT glitch filter (hw) or debounce time (sw). */
+  filterUs: number
   options: SignalOptions[]
 }
 
@@ -79,13 +87,13 @@ const QUAD = ["A", "B"]
 
 // The firmware's function table, for tests.
 export const MOCK_FUNCTIONS: FunctionDef[] = [
-  { id: "zMotor", label: "Z motor", group: "Motors", signals: MOTOR, dir: "out", required: true, exclusive: true, activeLow: false },
-  { id: "xMotor", label: "X motor", group: "Motors", signals: MOTOR, dir: "out", required: false, exclusive: true, activeLow: false },
-  { id: "spindle", label: "Spindle encoder", group: "Encoders", signals: QUAD, dir: "in", required: true, exclusive: true, activeLow: false, encoderTypes: ["hw"] },
-  { id: "zHandwheel", label: "Z handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"] },
-  { id: "xHandwheel", label: "X handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"] },
-  { id: "probe", label: "Probe", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: false },
-  { id: "stop", label: "Stop", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: true },
+  { id: "zMotor", label: "Z motor", group: "Motors", signals: MOTOR, dir: "out", required: true, exclusive: true, activeLow: false, filterUs: 0 },
+  { id: "xMotor", label: "X motor", group: "Motors", signals: MOTOR, dir: "out", required: false, exclusive: true, activeLow: false, filterUs: 0 },
+  { id: "spindle", label: "Spindle encoder", group: "Encoders", signals: QUAD, dir: "in", required: true, exclusive: true, activeLow: false, encoderTypes: ["hw"], filterUs: 0.013 },
+  { id: "zHandwheel", label: "Z handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"], filterUs: 12.787 },
+  { id: "xHandwheel", label: "X handwheel", group: "Encoders", signals: QUAD, dir: "in", required: false, exclusive: true, activeLow: false, encoderTypes: ["hw", "sw"], filterUs: 12.787 },
+  { id: "probe", label: "Probe", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: false, filterUs: 0 },
+  { id: "stop", label: "Stop", group: "Inputs", signals: ["SIG"], dir: "in", required: false, exclusive: false, activeLow: true, filterUs: 0 },
 ]
 
 const g = (gpio: number): BoardPin => ({ gpio })
@@ -127,6 +135,8 @@ export const MOCK_BOARD: Board = {
   },
   strapping: [0, 3, 45, 46],
   pcntUnits: 4,
+  maxHwFilterUs: 12.787,
+  maxSwFilterUs: 5000,
   functions: MOCK_FUNCTIONS,
 }
 
@@ -134,12 +144,12 @@ const OUT: SignalOptions = { invert: false, pull: "none" }
 const UP: SignalOptions = { invert: false, pull: "up" }
 
 export const MOCK_MAP: PinMap = [
-  { fn: "zMotor", connector: "r1c2", start: 1, options: [OUT, OUT, OUT] },
-  { fn: "xMotor", connector: "r1c3", start: 1, options: [OUT, OUT, OUT] },
-  { fn: "spindle", connector: "r3c5", start: 2, encoderType: "hw", options: [UP, UP] },
-  { fn: "zHandwheel", connector: "r2c2", start: 2, encoderType: "hw", options: [UP, UP] },
-  { fn: "xHandwheel", connector: "r2c3", start: 2, encoderType: "hw", options: [UP, UP] },
-  { fn: "probe", connector: "r2c1", start: 2, options: [UP] },
+  { fn: "zMotor", connector: "r1c2", start: 1, filterUs: 0, options: [OUT, OUT, OUT] },
+  { fn: "xMotor", connector: "r1c3", start: 1, filterUs: 0, options: [OUT, OUT, OUT] },
+  { fn: "spindle", connector: "r3c5", start: 2, encoderType: "hw", filterUs: 0.013, options: [UP, UP] },
+  { fn: "zHandwheel", connector: "r2c2", start: 2, encoderType: "hw", filterUs: 12.787, options: [UP, UP] },
+  { fn: "xHandwheel", connector: "r2c3", start: 2, encoderType: "hw", filterUs: 12.787, options: [UP, UP] },
+  { fn: "probe", connector: "r2c1", start: 2, filterUs: 0, options: [UP] },
 ]
 
 export function connectorLabel(board: Board, names: ConnectorNames, id: string): string {
@@ -241,8 +251,13 @@ export function defaultAssignment(fn: FunctionDef, connectorId: string, start: n
     connector: connectorId,
     start,
     encoderType: fn.encoderTypes?.[0],
+    filterUs: fn.filterUs,
     options: fn.signals.map(() => ({ ...opt })),
   }
+}
+
+export function maxFilterUs(board: Board, a: Assignment): number {
+  return a.encoderType === "sw" ? board.maxSwFilterUs : board.maxHwFilterUs
 }
 
 export function validate(board: Board, map: PinMap): Issue[] {
@@ -287,6 +302,10 @@ export function validate(board: Board, map: PinMap): Issue[] {
     if (fn.encoderTypes && (!a.encoderType || !fn.encoderTypes.includes(a.encoderType))) {
       issues.push({ level: "error", fn: fn.id, index, msg: `${label}: encoder type must be ${fn.encoderTypes.join(" or ")}` })
     }
+    const maxFilter = maxFilterUs(board, a)
+    if (!Number.isFinite(a.filterUs) || a.filterUs < 0 || a.filterUs > maxFilter) {
+      issues.push({ level: "error", fn: fn.id, index, msg: `${label}: filter must be 0 to ${maxFilter} µs` })
+    }
   })
   for (const [gpio, uses] of usage(board, map)) {
     if (uses.length > 1) {
@@ -311,6 +330,7 @@ interface PinsJsonFunction {
   connector: string
   start: number
   encoder: "" | EncoderType
+  filterUs: number
   signals: PinsJsonSignal[]
 }
 
@@ -336,6 +356,7 @@ export interface PinFunctionsJson {
     exclusive: boolean
     activeLow: boolean
     encoders: EncoderType[]
+    filterUs: number
   }[]
 }
 
@@ -344,6 +365,8 @@ export interface PinsJson extends PinsUpdateJson {
   board: {
     name: string
     pcntUnits: number
+    maxHwFilterUs: number
+    maxSwFilterUs: number
     strapping: number[]
     reserved: { gpio: number; note: string }[]
     connectors: { id: string; title: string; row: number; col: number; pins: number[] }[]
@@ -362,9 +385,12 @@ export function fromPinsJson(doc: PinsJson, fns: PinFunctionsJson): { board: Boa
       exclusive: f.exclusive,
       activeLow: f.activeLow,
       encoderTypes: f.encoders.length ? f.encoders : undefined,
+      filterUs: f.filterUs,
     })),
     name: doc.board.name,
     pcntUnits: doc.board.pcntUnits,
+    maxHwFilterUs: doc.board.maxHwFilterUs,
+    maxSwFilterUs: doc.board.maxSwFilterUs,
     strapping: doc.board.strapping,
     reserved: Object.fromEntries(doc.board.reserved.map((r) => [r.gpio, r.note])),
     connectors: doc.board.connectors.map((c) => ({
@@ -380,6 +406,7 @@ export function fromPinsJson(doc: PinsJson, fns: PinFunctionsJson): { board: Boa
     connector: f.connector,
     start: f.start,
     encoderType: f.encoder || undefined,
+    filterUs: f.filterUs,
     options: f.signals.map((s) => ({ invert: s.invert, pull: s.pull })),
   }))
   const names: ConnectorNames = Object.fromEntries((doc.names ?? []).map((n) => [n.connector, n.name]))
@@ -393,6 +420,7 @@ export function toPinsJson(map: PinMap, names: ConnectorNames): PinsUpdateJson {
       connector: a.connector,
       start: a.start,
       encoder: a.encoderType ?? "",
+      filterUs: a.filterUs,
       signals: a.options.map((o) => ({ invert: o.invert, pull: o.pull })),
     })),
     names: Object.entries(names).map(([connector, name]) => ({ connector, name })),

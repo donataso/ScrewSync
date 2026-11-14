@@ -36,6 +36,7 @@ namespace Pins
     bool spec(PinMap::Fn fn, size_t signal, gpio_dt_spec &out);
     PinMap::Encoder encoder(PinMap::Fn fn);
     int pcntUnit(PinMap::Fn fn);
+    uint32_t filterNs(PinMap::Fn fn);
 
     bool usingDefaults();
 

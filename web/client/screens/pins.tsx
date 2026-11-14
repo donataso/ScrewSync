@@ -15,6 +15,7 @@ import {
   fromPinsJson,
   functionDef,
   functionsAt,
+  maxFilterUs,
   nameIssues,
   pinsOf,
   toPinsJson,
@@ -454,7 +455,11 @@ function PinsEditor({
                   setPlacing(isPlacing ? null : { fn: fn.id, moving: index })
                 }}
                 onRemove={index === undefined || fn.required ? undefined : () => remove(index)}
-                onEncoderType={(t) => index !== undefined && update(index, (x) => ({ ...x, encoderType: t }))}
+                onEncoderType={(t) =>
+                  index !== undefined &&
+                  update(index, (x) => ({ ...x, encoderType: t, filterUs: Math.min(x.filterUs, maxFilterUs(board, { ...x, encoderType: t })) }))
+                }
+                onFilter={(us) => index !== undefined && update(index, (x) => ({ ...x, filterUs: us }))}
                 onOption={(i, o) =>
                   index !== undefined && update(index, (x) => ({ ...x, options: x.options.map((y, j) => (j === i ? { ...y, ...o } : y)) }))
                 }
@@ -696,6 +701,7 @@ function FunctionRow({
   onPlace,
   onRemove,
   onEncoderType,
+  onFilter,
   onOption,
 }: {
   fn: FunctionDef
@@ -710,6 +716,7 @@ function FunctionRow({
   onPlace: () => void
   onRemove?: () => void
   onEncoderType: (t: EncoderType) => void
+  onFilter: (us: number) => void
   onOption: (index: number, o: { invert?: boolean; pull?: Pull }) => void
 }) {
   const board = useBoard()
@@ -735,10 +742,10 @@ function FunctionRow({
           </span>
         )}
         <div className="ml-auto flex flex-wrap items-center gap-1">
-          {fn.encoderTypes && a && (
+          {fn.encoderTypes?.length === 1 && a && <span className="px-2.5 text-sm text-muted-foreground">{fn.encoderTypes[0]}</span>}
+          {fn.encoderTypes && fn.encoderTypes.length > 1 && a && (
             <Select
               value={a.encoderType}
-              disabled={fn.encoderTypes.length < 2}
               onChange={(e) => onEncoderType(e.target.value as EncoderType)}
               title="hw: PCNT unit. sw: GPIO interrupts, for slow encoders only."
             >
@@ -780,6 +787,28 @@ function FunctionRow({
               )}
             </div>
           ))}
+          {a.encoderType && (
+            <label
+              className="flex flex-wrap items-center gap-2 text-sm"
+              title={
+                a.encoderType === "hw"
+                  ? "Pulses shorter than this are ignored. Long for mechanical encoders, short for fast optical ones."
+                  : "A and B are read once both have been steady this long. Covers contact bounce; too long misses fast turns."
+              }
+            >
+              <span className="font-medium">{a.encoderType === "hw" ? "Glitch filter" : "Debounce"}</span>
+              <TextInput
+                type="number"
+                className="w-28"
+                min={0}
+                max={maxFilterUs(board, a)}
+                step={0.001}
+                value={a.filterUs}
+                onChange={(e) => onFilter(Math.min(maxFilterUs(board, a), Math.max(0, Number(e.target.value) || 0)))}
+              />
+              <span className="text-muted-foreground">µs</span>
+            </label>
+          )}
         </div>
       )}
     </div>

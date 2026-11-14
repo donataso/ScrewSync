@@ -23,6 +23,7 @@
 
 #include <dt-bindings/screwsync/pins.h>
 #include <esp_rom_gpio.h>
+#include <hal/pcnt_ll.h>
 #include <soc/gpio_pins.h>
 #include <soc/gpio_sig_map.h>
 #include <string.h>
@@ -48,6 +49,7 @@ namespace
     constexpr const char *NVS_KEY = "map";
     // GPIO matrix input signals of PCNT unit n are 4 apart.
     constexpr uint32_t PCNT_SIGNAL_STRIDE = PCNT_SIG_CH0_IN1_IDX - PCNT_SIG_CH0_IN0_IDX;
+    constexpr uint32_t APB_MHZ = 80;
 
     constexpr int16_t pinCode(uint32_t v)
     {
@@ -208,6 +210,9 @@ namespace
             esp_rom_gpio_connect_in_signal(gpioB, PCNT_CTRL_CH0_IN0_IDX + offset, invB);
             esp_rom_gpio_connect_in_signal(gpioB, PCNT_SIG_CH1_IN0_IDX + offset, invB);
             esp_rom_gpio_connect_in_signal(gpioA, PCNT_CTRL_CH1_IN0_IDX + offset, invA);
+            uint32_t filterCycles = ((uint32_t)as.filterNs * APB_MHZ + 500) / 1000;
+            pcnt_ll_set_glitch_filter_thres(PCNT_LL_GET_HW(0), unit, filterCycles);
+            pcnt_ll_enable_glitch_filter(PCNT_LL_GET_HW(0), unit, filterCycles != 0);
         }
         for (int unit = 0; unit < g_board.pcntUnits && unit < (int)ARRAY_SIZE(used); unit++) {
             if (!used[unit]) {
@@ -265,6 +270,12 @@ namespace Pins
     int pcntUnit(Fn fn)
     {
         return PinMap::pcntUnit(g_active, fn);
+    }
+
+    uint32_t filterNs(Fn fn)
+    {
+        const Assignment *a = find(g_active, fn);
+        return a ? a->filterNs : 0;
     }
 
     bool usingDefaults()
