@@ -25,6 +25,7 @@
 #include <zephyr/sys/util.h>
 #include "Command.hpp"
 #include "Events.hpp"
+#include "GcodeMdi.hpp"
 #include "Settings.hpp"
 #include "Wifi.hpp"
 #include "Machine.hpp"
@@ -189,8 +190,7 @@ namespace
     bool isStatusVerb(const char *verb)
     {
         static const char *const VERBS[] = {"jog", "mode", "start", "stop", "skip", "gear", "async",
-                                            "turn", "thread", "part", "slot", "ellipse", "units", "enable",
-                                            "move", "zero"};
+                                            "turn", "thread", "part", "slot", "ellipse", "units"};
         for (const char *v : VERBS) {
             if (!strcmp(verb, v)) {
                 return true;
@@ -287,7 +287,7 @@ namespace
                 broadcast(json, WsMessages::wifi(json, JSON_REPLY_BUF));
             } else if (!strcmp(verb, "settings") && isSettingsQuery(line)) {
                 sendTo(sock, bigJson, WsMessages::settings(bigJson, JSON_BIG_BUF));
-            } else if (isStatusVerb(verb)) {
+            } else if (isStatusVerb(verb) || Gcode::isMdiLine(line[0] == Gcode::MDI_UI_MARKER ? line + 1 : line)) {
                 // Same throttle as idle(): a burst of commands must not raise the status rate.
                 uint32_t now = k_uptime_get_32();
                 if (statusDue(now)) {

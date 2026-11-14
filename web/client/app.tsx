@@ -9,6 +9,7 @@ import { AppearanceScreen } from "./screens/appearance"
 import { CalibrationScreen } from "./screens/calibration"
 import { DeviceScreen } from "./screens/device"
 import { GcodeScreen } from "./screens/gcode"
+import { MdiScreen } from "./screens/mdi"
 import { NetworkScreen } from "./screens/network"
 import { PinsScreen } from "./screens/pins"
 import { SettingsScreen } from "./screens/settings"
@@ -18,6 +19,7 @@ import { ToastProvider } from "./ui/toast"
 
 const NAV = [
   { path: "/gcode", label: "Gcode" },
+  { path: "/mdi", label: "MDI" },
   { path: "/threads", label: "Threads" },
   { path: "/settings", label: "Settings" },
   { path: "/calibration", label: "Calibration" },
@@ -28,6 +30,9 @@ const NAV = [
 ]
 
 function screenFor(path: string) {
+  if (path.startsWith("/mdi")) {
+return <MdiScreen />
+}
   if (path.startsWith("/calibration")) {
 return <CalibrationScreen />
 }

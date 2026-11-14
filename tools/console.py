@@ -49,6 +49,9 @@ from dut import BAUD, _open, resolve_port
 RECONNECT_POLL_S = 0.2
 DEFAULT_TFT = Path(__file__).resolve().parent.parent / ".build" / "release" / "nextion-5in" / "display.tft"
 UPLOAD_REPLY_TIMEOUT_S = 10
+READY_TIMEOUT_S = 30
+PING_INTERVAL_S = 0.5
+PONG = "ok pong"
 UPLOAD_CHUNK = 4096
 UPLOAD_REPLIES = ("ok upload", "err display upload")
 FLASH_STARTED = "ok display flash started"
@@ -57,32 +60,63 @@ UPLOAD_ERRORS = ("err display upload", "err display flash")
 _start = time.monotonic()
 
 
+def _reply(text, prefixes):
+    """The reply from the first prefix on: boot log text without a line end
+    can come before it."""
+    starts = [i for i in (text.find(p) for p in prefixes) if i >= 0]
+    return text[min(starts):] if starts else None
+
+
 def _stamp():
     m, sec = divmod(int(time.monotonic() - _start), 60)
     return f"[{m:02d}:{sec:02d}]"
 
 
-def _upload_tft(state, path):
+def _request(state, line, prefixes, timeout):
+    """Sends line; the first reply that has one of prefixes, else None."""
     ser = state["ser"]
     if ser is None:
+        return None
+    state["reply"] = None
+    state["reply_event"].clear()
+    state["expect"] = prefixes
+    try:
+        ser.write(f"{line}\n".encode())
+    except (serial.SerialException, OSError):
+        return None
+    got = state["reply_event"].wait(timeout)
+    state["expect"] = None
+    return state["reply"] if got else None
+
+
+def _wait_ready(state):
+    """Pings until the firmware answers, so a booting device gets no upload."""
+    deadline = time.monotonic() + READY_TIMEOUT_S
+    while time.monotonic() < deadline:
+        if _request(state, "ping", (PONG,), PING_INTERVAL_S):
+            return True
+    return False
+
+
+def _upload_tft(state, path):
+    if state["ser"] is None:
         print(f"{_stamp()} console: not connected", file=sys.stderr)
-        return
+        return False
     try:
         image = Path(path).read_bytes()
     except OSError as e:
         print(f"{_stamp()} console: {e}", file=sys.stderr)
-        return
-    state["reply"] = None
-    state["reply_event"].clear()
-    state["await_reply"] = True
-    ser.write(f"display upload {len(image)} {zlib.crc32(image):08x}\n".encode())
-    got = state["reply_event"].wait(UPLOAD_REPLY_TIMEOUT_S)
-    state["await_reply"] = False
-    if not got:
+        return False
+    if not _wait_ready(state):
+        print(f"{_stamp()} console: no reply to ping", file=sys.stderr)
+        return False
+    reply = _request(state, f"display upload {len(image)} {zlib.crc32(image):08x}", UPLOAD_REPLIES, UPLOAD_REPLY_TIMEOUT_S)
+    if reply is None:
         print(f"{_stamp()} console: no reply to display upload", file=sys.stderr)
-        return
-    if state["reply"] != "ok upload ready":
-        return
+        return False
+    if reply != "ok upload ready":
+        return not reply.startswith("err")
+    ser = state["ser"]
     print(f"{_stamp()} console: uploading {path} ({len(image)} B)", file=sys.stderr)
     last_pct = -1
     try:
@@ -95,6 +129,13 @@ def _upload_tft(state, path):
         ser.flush()
     except (serial.SerialException, OSError) as e:
         print(f"{_stamp()} console: upload failed: {e}", file=sys.stderr)
+        return False
+    return True
+
+
+def _upload_then_flag(state, path):
+    if not _upload_tft(state, path):
+        state["upload_failed"] = True
 
 
 def _writer(state):
@@ -124,7 +165,7 @@ def main():
 
     print(f"{_stamp()} console: waiting for a port @ {args.baud} -- Ctrl-C to stop", file=sys.stderr)
 
-    state = {"ser": None, "reply": None, "reply_event": threading.Event(), "await_reply": False}
+    state = {"ser": None, "reply": None, "reply_event": threading.Event(), "expect": None, "upload_failed": False}
     pending_tft = args.tft
     threading.Thread(target=_writer, args=(state,), daemon=True).start()
 
@@ -146,7 +187,7 @@ def main():
                 print(f"{_stamp()} console: connected to {port}", file=sys.stderr)
                 state["ser"] = ser
                 if pending_tft:
-                    threading.Thread(target=_upload_tft, args=(state, pending_tft), daemon=True).start()
+                    threading.Thread(target=_upload_then_flag, args=(state, pending_tft), daemon=True).start()
                     pending_tft = None
 
             try:
@@ -161,21 +202,26 @@ def main():
                 time.sleep(RECONNECT_POLL_S)
                 continue
 
+            if args.exit_after_upload and state["upload_failed"]:
+                exit_code = 1
+                break
             if not chunk:
                 continue
             buf += chunk
             while b"\n" in buf:
                 head, buf = buf.split(b"\n", 1)
                 text = head.decode(errors="replace").rstrip("\r")
-                if state["await_reply"] and text.startswith(UPLOAD_REPLIES):
-                    state["reply"] = text
+                expect = state["expect"]
+                reply = _reply(text, expect) if expect else None
+                if reply:
+                    state["reply"] = reply
                     state["reply_event"].set()
                 print(_stamp(), text, flush=True)
                 if args.exit_after_upload and args.tft:
-                    if text == FLASH_STARTED:
+                    if _reply(text, (FLASH_STARTED,)):
                         done = True
                         break
-                    if text.startswith(UPLOAD_ERRORS):
+                    if _reply(text, UPLOAD_ERRORS):
                         exit_code = 1
                         done = True
                         break

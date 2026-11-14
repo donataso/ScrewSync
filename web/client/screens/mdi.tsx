@@ -1,0 +1,124 @@
+"use client"
+
+import { useEffect, useRef, useState, type KeyboardEvent } from "react"
+import { sendCommand } from "../api"
+import { addToHistory, freshRecall, loadHistory, saveHistory, stepHistory, type Recall } from "../mdi-history"
+import type { CmdOutcome } from "../types"
+import { Button, Panel, TextInput } from "../ui/primitives"
+
+interface Entry {
+  id: number
+  line: string
+  reply: string | null
+  ok: boolean
+}
+
+function replyText(outcome: CmdOutcome): { reply: string; ok: boolean } {
+  if (outcome.status === "denied") {
+    return { reply: `err ${outcome.msg}`, ok: false }
+  }
+  if (outcome.status === "unconfirmed") {
+    return { reply: "no reply", ok: false }
+  }
+  const msg = (outcome.data as { msg?: unknown } | undefined)?.msg
+  return { reply: typeof msg === "string" && msg ? `ok ${msg}` : "ok", ok: true }
+}
+
+export function MdiScreen() {
+  const [history, setHistory] = useState<string[]>(() => loadHistory())
+  const [recall, setRecall] = useState<Recall>(() => freshRecall(history))
+  const [input, setInput] = useState("")
+  const [log, setLog] = useState<Entry[]>([])
+  const nextId = useRef(0)
+  // The firmware's replies carry no id, so lines go one at a time.
+  const queue = useRef<Promise<void>>(Promise.resolve())
+  const logEnd = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    logEnd.current?.scrollIntoView({ block: "nearest" })
+  }, [log])
+
+  async function run(id: number, line: string) {
+    const { reply, ok } = replyText(await sendCommand(line))
+    setLog((l) => l.map((e) => (e.id === id ? { ...e, reply, ok } : e)))
+  }
+
+  // queued: after the lines sent before; Stop goes at once.
+  function send(line: string, queued = true) {
+    const id = nextId.current++
+    setLog((l) => [...l, { id, line, reply: null, ok: true }])
+    if (queued) {
+      queue.current = queue.current.then(() => run(id, line))
+    } else {
+      void run(id, line)
+    }
+  }
+
+  function submit() {
+    const line = input.trim()
+    if (!line) {
+      return
+    }
+    const next = addToHistory(history, line)
+    setHistory(next)
+    saveHistory(next)
+    setRecall(freshRecall(next))
+    setInput("")
+    send(line)
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      submit()
+    } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      e.preventDefault()
+      const step = stepHistory(history, recall, input, e.key === "ArrowUp" ? -1 : 1)
+      setRecall(step.recall)
+      setInput(step.text)
+    } else if (e.key === "Escape") {
+      setInput("")
+      setRecall(freshRecall(history))
+    }
+  }
+
+  return (
+    <Panel
+      title="MDI"
+      action={
+        <div className="flex gap-2">
+          <Button onClick={() => setLog([])} disabled={!log.length}>
+            Clear
+          </Button>
+          <Button variant="danger" onClick={() => send("stop", false)}>
+            Stop
+          </Button>
+        </div>
+      }
+    >
+      <div className="h-80 overflow-y-auto rounded-md border border-border bg-muted/30 p-2 font-mono text-sm">
+        {log.map((e) => (
+          <div key={e.id}>
+            <div>&gt; {e.line}</div>
+            {e.reply !== null && <div className={e.ok ? "text-muted-foreground" : "text-destructive"}>{e.reply}</div>}
+          </div>
+        ))}
+        <div ref={logEnd} />
+      </div>
+      <TextInput
+        autoFocus
+        className="mt-2 w-full font-mono"
+        value={input}
+        onChange={(e) => {
+          setInput(e.target.value)
+        }}
+        onKeyDown={onKeyDown}
+        placeholder="G-code (LinuxCNC) or a command, e.g. G91 G0 Z-1"
+        spellCheck={false}
+        autoCapitalize="off"
+        autoComplete="off"
+      />
+      <p className="mt-1 text-xs text-muted-foreground">Enter sends. Up and Down recall earlier lines. Esc clears the line.</p>
+    </Panel>
+  )
+}
