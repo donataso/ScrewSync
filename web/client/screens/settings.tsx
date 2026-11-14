@@ -10,8 +10,9 @@ import {
   toDisplayValue,
   toRawValue,
   type MachineConfigField,
+  type MachineConfigPair,
 } from "../machine-config"
-import { Button, Field, LockNotice, Panel, TextInput, Toggle } from "../ui/primitives"
+import { Button, Field, InfoIcon, LockNotice, Panel, TextInput, Toggle } from "../ui/primitives"
 import { useToast } from "../ui/toast"
 
 export function SettingsScreen() {
@@ -54,6 +55,10 @@ export function SettingsScreen() {
       </div>
     ),
   )
+
+  function valueOf(field: MachineConfigField) {
+    return toDisplayValue(field, dirty[field.key] ?? raw?.[field.key])
+  }
 
   function setField(field: MachineConfigField, display: number | boolean) {
     setDirty((d) => ({ ...d, [field.key]: toRawValue(field, display) }))
@@ -119,35 +124,103 @@ toast.push("Applied and saved to flash.", "good")
       ) : (
         MACHINE_CONFIG_SECTIONS.map((section) => (
           <Panel key={section.title} title={section.title}>
-            <div className="grid gap-3 md:grid-cols-3">
-              {section.fields.map((field) => {
-                const value = toDisplayValue(field, dirty[field.key] ?? raw[field.key])
-                if (field.type === "checkbox") {
-                  return (
-                    <Field key={field.key} label={field.label} tooltip={field.help}>
-                      <span className="flex h-[34px] items-center">
-                        <Toggle checked={value as boolean} onChange={(v) => setField(field, v)} label={field.label} />
-                      </span>
+            <div className="flex flex-col gap-4">
+              {section.fields.length > 0 && (
+                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+                  {section.fields.map((field) => (
+                    <Field key={field.key} label={fieldLabel(field)} tooltip={field.help}>
+                      <FieldInput field={field} value={valueOf(field)} onChange={(v) => setField(field, v)} />
                     </Field>
-                  )
-                }
-                return (
-                  <Field key={field.key} label={field.unit ? `${field.label} (${field.unit})` : field.label} tooltip={field.help}>
-                    <TextInput
-                      type="number"
-                      min={field.min}
-                      max={field.max}
-                      step={field.step}
-                      value={value as number}
-                      onChange={(e) => setField(field, Number(e.target.value))}
+                  ))}
+                </div>
+              )}
+              {section.pairs && (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {section.pairs.map((p) => (
+                    <PairRow
+                      key={p.z.key}
+                      pair={p}
+                      zValue={valueOf(p.z)}
+                      xValue={valueOf(p.x)}
+                      onChange={(field, v) => setField(field, v)}
                     />
-                  </Field>
-                )
-              })}
+                  ))}
+                </div>
+              )}
             </div>
           </Panel>
         ))
       )}
     </div>
+  )
+}
+
+type Value = number | boolean
+
+function fieldLabel(field: MachineConfigField) {
+  return field.unit ? `${field.label} (${field.unit})` : field.label
+}
+
+function FieldInput({ field, value, onChange }: { field: MachineConfigField; value: Value; onChange: (v: Value) => void }) {
+  if (field.type === "checkbox") {
+    return (
+      <span className="flex h-[34px] items-center">
+        <Toggle checked={value as boolean} onChange={onChange} label={field.label} />
+      </span>
+    )
+  }
+  return (
+    <TextInput
+      type="number"
+      className="w-full min-w-0"
+      min={field.min}
+      max={field.max}
+      step={field.step}
+      value={value as number}
+      onChange={(e) => onChange(Number(e.target.value))}
+    />
+  )
+}
+
+function PairRow({
+  pair,
+  zValue,
+  xValue,
+  onChange,
+}: {
+  pair: MachineConfigPair
+  zValue: Value
+  xValue: Value
+  onChange: (field: MachineConfigField, v: Value) => void
+}) {
+  const showCopy = pair.copy && zValue !== xValue
+  const copyButton = (label: string, title: string, onClick: () => void) => (
+    <Button variant="ghost" className={`px-2 ${showCopy ? "" : "invisible"}`} title={title} onClick={onClick}>
+      {label}
+    </Button>
+  )
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      <span className="text-muted-foreground">{fieldLabel(pair.z)}</span>
+      <div className="grid grid-cols-[auto_1fr_auto_auto_1fr] items-center gap-1.5">
+        <AxisTag field={pair.z} axis="Z" />
+        <FieldInput field={pair.z} value={zValue} onChange={(v) => onChange(pair.z, v)} />
+        {copyButton("→", "Copy Z to X", () => onChange(pair.x, zValue))}
+        {copyButton("←", "Copy X to Z", () => onChange(pair.z, xValue))}
+        <span className="flex items-center gap-1.5">
+          <AxisTag field={pair.x} axis="X" />
+          <FieldInput field={pair.x} value={xValue} onChange={(v) => onChange(pair.x, v)} />
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function AxisTag({ field, axis }: { field: MachineConfigField; axis: string }) {
+  return (
+    <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+      {axis}
+      <InfoIcon tooltip={field.help} />
+    </span>
   )
 }
