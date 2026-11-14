@@ -68,7 +68,7 @@ The function table is only in the firmware. `GET /pins/functions` sends it to th
 ## Storage
 
 - One `PersistBlob` entry (`pins/map`): a list of assignments and the connector names.
-- An assignment: function id, connector, start pin, encoder type, glitch filter, signal options. The list has a fixed maximum length.
+- An assignment: function id, connector, start pin, encoder type, encoder filter, signal options. The list has a fixed maximum length.
 - If no map is saved, the firmware uses the board defaults.
 - An invalid assignment (unknown function id, bad pin, conflict) is ignored and logged as a warning. It stays in the saved map. In a conflict, the first assignment in the list stays.
 - If a required function is missing: pins fault. Move, jog and start reply `err pins: <reason>`. The display shows a toast at boot and on each refused command. Settings and the web UI still work.
@@ -84,6 +84,7 @@ The firmware (`PinMap::validate`) and the web UI (`validate`, `nameIssues` in `w
 - No GPIO is used twice.
 - Outputs have no pull.
 - The encoder type is allowed for the function.
+- The encoder filter is within the limit of its encoder type.
 - There are enough PCNT units for the hw encoders.
 - Connector names: not too long, no leading or trailing spaces, no control characters.
 
@@ -101,7 +102,7 @@ Strapping pins are a warning only.
 The Pins page loads `/pins`.
 
 - **Connector map** (primary view): the board's connectors and their pins. Reserved pins are locked with a red mark, strapping pins have an amber mark. A line under the map gives the details of the pin under the pointer.
-- **Functions:** the required functions and the assigned functions. Each one with its connector and pins, encoder type, invert/pull options, Move and Remove. Required functions have no Remove.
+- **Functions:** the required functions and the assigned functions. Each one with its connector and pins, encoder type (a select only when the function allows both), invert/pull options, encoder filter, Move and Remove. Required functions have no Remove.
 - **Add function:** a list of the functions that can be added: the non-exclusive functions and the unused exclusive functions, in groups.
 - **Problems:** errors and warnings.
 
@@ -126,18 +127,14 @@ Save:
 
 ## Phases
 
-1. Keyed map (backend): a list of assignments, the `exclusive` flag, keyed storage, invalid assignments ignored on load. Multiple probes.
-2. Function table from the backend (web): `GET /pins/functions`, the web copy removed, Add and Remove.
-3. Pins fault: refused commands and display toast.
-4. Switches and `move zero`.
-5. Running output.
-6. Pin map in the settings backup.
+1. Running output.
+2. Pin map in the settings backup.
 
-Phases 1 and 2 ship together. Phases 3 to 6 do not depend on each other.
+The two phases do not depend on each other.
 
 ## Left to do
 
-- Test on the lathe: motors, spindle, handwheels (hw and sw), probe, switches, output, and a moved function.
+- Test on the lathe: motors, spindle, probe, switches, output, and a moved function.
 - Recovery from the display: a menu item with a confirmation that saves the board defaults.
 - ESTOP input function.
 - Printable connector label with the user's names.

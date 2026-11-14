@@ -10,7 +10,8 @@
   the missing input/UI
 - DRO from glass scales, per axis: a present scale is the source of truth
   for position, otherwise motor steps. Needs a DRO panel; fixed stops in
-  machine coordinates can be revisited then.
+  machine coordinates can be revisited then. Scale functions need their
+  own default encoder filter, short enough for their fastest edges.
 - Hide an absent X motor or DRO everywhere in the UI (display and web),
   with no greyed-out placeholders, including the modes that need X.
 - add joystick support

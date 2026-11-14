@@ -108,12 +108,6 @@ function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       help: `Physical pulses per revolution of the optional ${axis} handwheel encoder. Use the handwheel specification.`,
     },
     {
-      key: `invertHandwheel${axis}`,
-      label: "Invert handwheel direction",
-      type: "checkbox",
-      help: `Toggle if turning the ${axis} handwheel moves the axis the wrong way.`,
-    },
-    {
       key: `handwheelLagMs${axis}`,
       label: "Handwheel lag",
       unit: "ms",
@@ -121,6 +115,12 @@ function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       max: 1000,
       step: 1,
       help: `How far ${axis} may fall behind a fast handwheel, as time at the manual move speed. Turning beyond that is dropped, so ${axis} stops soon after the handwheel stops.`,
+    },
+    {
+      key: `invertHandwheel${axis}`,
+      label: "Invert handwheel direction",
+      type: "checkbox",
+      help: `Toggle if turning the ${axis} handwheel moves the axis the wrong way.`,
     },
     {
       key: `invertEnable${axis}`,
