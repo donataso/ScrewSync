@@ -5,7 +5,7 @@ import { joinWifi, sendCommand } from "../api"
 import { cmd } from "../commands"
 import type { ScanResult, WifiPush } from "../types"
 import { wsSubscribe } from "../ws"
-import { Badge, Button, Field, Panel, TextInput } from "../ui/primitives"
+import { Badge, Button, Field, Panel, RemoveButton, TextInput } from "../ui/primitives"
 import { useToast } from "../ui/toast"
 
 export function NetworkScreen() {
@@ -139,9 +139,7 @@ toast.push(`Denied: ${result.message || "rejected"}`, "bad")
                         Connect
                       </Button>
                     )}
-                    <Button variant="ghost" disabled={connecting} onClick={() => removeSaved(n.ssid)}>
-                      Remove
-                    </Button>
+                    <RemoveButton disabled={connecting} onClick={() => removeSaved(n.ssid)} />
                   </div>
                 </li>
               )
@@ -176,14 +174,18 @@ toast.push(`Denied: ${result.message || "rejected"}`, "bad")
       </Panel>
 
       <Panel title="Join a network">
-        <div className="flex flex-col gap-3">
-          <Field label="SSID">
-            <TextInput value={ssid} onChange={(e) => setSsid(e.target.value)} />
-          </Field>
-          <Field label="Password">
-            <TextInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          </Field>
-          <Button variant="primary" disabled={joining || !ssid} onClick={join}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <Field label="SSID">
+              <TextInput value={ssid} onChange={(e) => setSsid(e.target.value)} />
+            </Field>
+          </div>
+          <div className="flex-1">
+            <Field label="Password">
+              <TextInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            </Field>
+          </div>
+          <Button variant="primary" className="py-[7px]" disabled={joining || !ssid} onClick={join}>
             Join
           </Button>
         </div>

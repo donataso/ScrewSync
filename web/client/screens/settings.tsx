@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { sendCommand } from "../api"
-import { useFooterBar } from "../footer-bar"
+import { SaveBar, useFooterBar } from "../footer-bar"
 import { CONFIGURE_LOCK_MESSAGE, useCanConfigure } from "../state-provider"
 import {
+  MACHINE_CONFIG_FIELDS,
   MACHINE_CONFIG_SECTIONS,
   parseMachineConfig,
   toDisplayValue,
@@ -12,7 +13,7 @@ import {
   type MachineConfigField,
   type MachineConfigPair,
 } from "../machine-config"
-import { Button, InfoIcon, LockNotice, Panel, TextInput, Toggle } from "../ui/primitives"
+import { InfoIcon, LockNotice, Panel, TextInput, Toggle } from "../ui/primitives"
 import { useToast } from "../ui/toast"
 
 export function SettingsScreen() {
@@ -45,14 +46,15 @@ export function SettingsScreen() {
 
   useFooterBar(
     raw && (
-      <div className="mx-auto flex max-w-5xl gap-2 px-4 py-3">
-        <Button variant="primary" disabled={busy || loading || !canConfigure || Object.keys(dirty).length === 0} onClick={save}>
-          Save
-        </Button>
-        <Button variant="danger" disabled={busy || loading || !canConfigure} onClick={reset}>
-          Reset to defaults
-        </Button>
-      </div>
+      <SaveBar
+        dirty={MACHINE_CONFIG_FIELDS.some((f) => f.key in dirty && valueOf(f) !== toDisplayValue(f, raw[f.key]))}
+        saveDisabled={busy || loading || !canConfigure}
+        discardDisabled={busy || loading}
+        resetDisabled={busy || loading || !canConfigure}
+        onSave={save}
+        onDiscard={() => setDirty({})}
+        onReset={reset}
+      />
     ),
   )
 
@@ -99,6 +101,9 @@ toast.push("Applied and saved to flash.", "good")
   }
 
   async function reset() {
+    if (!window.confirm("Replace all settings with the defaults?")) {
+      return
+    }
     setBusy(true)
     try {
       const r = await sendCommand("settings reset")

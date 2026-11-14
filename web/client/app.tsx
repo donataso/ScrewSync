@@ -107,7 +107,7 @@ function AppShell() {
         {/* flex-1 + overflow-y-auto here (full width) so the scrollbar sits at
             the window edge, not on the centered <main> below -- max-w-5xl
             there would otherwise inset it. */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]">
           <main className="mx-auto max-w-5xl px-4 py-6">
             {connected || availableWhenOffline(path) ? (
               screenFor(path)

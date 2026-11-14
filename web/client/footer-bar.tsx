@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import { Button } from "./ui/primitives"
 
 const FooterBarContext = createContext<{ setContent: (n: ReactNode | null) => void } | null>(null)
 
@@ -22,4 +23,41 @@ export function useFooterBar(node: ReactNode | null) {
     ctx?.setContent(node)
     return () => ctx?.setContent(null)
   }, [ctx, node])
+}
+
+export function SaveBar({
+  dirty,
+  saveLabel = "Save",
+  saveDisabled,
+  discardDisabled,
+  resetDisabled,
+  onSave,
+  onDiscard,
+  onReset,
+}: {
+  dirty: boolean
+  saveLabel?: string
+  saveDisabled: boolean
+  discardDisabled: boolean
+  resetDisabled: boolean
+  onSave: () => void
+  onDiscard: () => void
+  onReset: () => void
+}) {
+  return (
+    <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
+      <Button variant="ghost" disabled={resetDisabled} onClick={onReset}>
+        Reset to defaults
+      </Button>
+      <div className="ml-auto flex flex-wrap items-center gap-2">
+        {dirty && <span className="text-sm text-muted-foreground">Not saved</span>}
+        <Button disabled={!dirty || discardDisabled} onClick={onDiscard}>
+          Discard
+        </Button>
+        <Button variant="primary" disabled={!dirty || saveDisabled} onClick={onSave}>
+          {saveLabel}
+        </Button>
+      </div>
+    </div>
+  )
 }

@@ -15,6 +15,7 @@ export default defineConfig({
   },
   resolve: {
     alias: [{ find: "@/client", replacement: path.resolve(__dirname, "../client") }],
+    dedupe: ["lucide-react"],
   },
   server: process.env.DEVICE_HOST
     ? {

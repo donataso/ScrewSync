@@ -9,24 +9,25 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "lucide-react": "^1.73.0",
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
     "@eslint/js": "^9",
     "@stylistic/eslint-plugin": "^5",
-    "eslint": "^9",
-    "eslint-plugin-react-hooks": "^5",
-    "typescript-eslint": "^8",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9",
+    "eslint-plugin-react-hooks": "^5",
+    "tailwindcss": "^4.3.3",
     "typescript": "5.7.3",
+    "typescript-eslint": "^8",
     "vite": "^6.0.0",
     "vite-plugin-singlefile": "^2.1.0",
-    "vitest": "^2.1.9",
-    "tailwindcss": "^4.3.3",
-    "@tailwindcss/vite": "^4.3.3"
+    "vitest": "^2.1.9"
   }
 }

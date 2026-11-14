@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { fetchThreads, saveThreads, sendCommand } from "../api"
-import { useFooterBar } from "../footer-bar"
+import { SaveBar, useFooterBar } from "../footer-bar"
 import { CONFIGURE_LOCK_MESSAGE, useCanConfigure, useDeviceState } from "../state-provider"
 import {
   DESIGNATION_MAX_LEN,
@@ -125,19 +125,15 @@ return
 
   useFooterBar(
     groups && (
-      <div className="mx-auto flex max-w-5xl flex-wrap gap-2 px-4 py-3">
-        <Button variant="danger" disabled={busy || loading || !canConfigure} onClick={reset}>
-          Reset to defaults
-        </Button>
-        <div className="ml-auto flex gap-2">
-          <Button disabled={busy || loading || !dirty} onClick={load}>
-            Discard
-          </Button>
-          <Button variant="primary" disabled={busy || loading || !canConfigure || !dirty || !valid} onClick={save}>
-            Save
-          </Button>
-        </div>
-      </div>
+      <SaveBar
+        dirty={dirty}
+        saveDisabled={busy || loading || !canConfigure || !valid}
+        discardDisabled={busy || loading}
+        resetDisabled={busy || loading || !canConfigure}
+        onSave={save}
+        onDiscard={load}
+        onReset={reset}
+      />
     ),
   )
 

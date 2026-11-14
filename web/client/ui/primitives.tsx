@@ -1,5 +1,6 @@
 "use client"
 
+import { Settings, Trash2, type LucideIcon } from "lucide-react"
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react"
 
 export function Panel({ title, action, children, className = "" }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
@@ -31,6 +32,31 @@ export function Button({
     ghost: "hover:bg-muted text-foreground",
   }
   return <button className={`${base} ${variants[variant]} ${className}`} {...props} />
+}
+
+export function IconButton({
+  icon: Icon,
+  title,
+  iconClassName = "",
+  hoverClassName = "hover:bg-border!",
+  className = "",
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { icon: LucideIcon; title: string; iconClassName?: string; hoverClassName?: string }) {
+  return (
+    <Button title={title} aria-label={title} className={`size-[34px] cursor-pointer p-0! ${hoverClassName} ${className}`} {...props}>
+      <Icon className={`size-4 ${iconClassName}`} />
+    </Button>
+  )
+}
+
+export function RemoveButton({ title = "Remove", className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <IconButton icon={Trash2} title={title} iconClassName="text-destructive" hoverClassName="hover:bg-destructive/10!" className={className} {...props} />
+}
+
+export function OptionsButton({ open, className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { open: boolean }) {
+  return (
+    <IconButton icon={Settings} title={open ? "Hide options" : "Options"} aria-pressed={open} className={`${open ? "bg-border!" : ""} ${className}`} {...props} />
+  )
 }
 
 export function InfoIcon({ tooltip }: { tooltip: string }) {

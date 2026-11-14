@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type KeyboardEvent } from "react"
 import { fetchPinFunctions, fetchPins, savePins, sendCommand } from "../api"
-import { useFooterBar } from "../footer-bar"
+import { ArrowRightLeft, MapPinPlus, X } from "lucide-react"
+import { SaveBar, useFooterBar } from "../footer-bar"
 import {
   CONNECTOR_NAME_MAX,
   STRAPPING_NOTE,
@@ -32,7 +33,7 @@ import {
   type PinUse,
   type Pull,
 } from "../pins"
-import { Badge, Button, LockNotice, Panel, Select, TextInput, Toggle } from "../ui/primitives"
+import { Badge, Button, IconButton, LockNotice, OptionsButton, Panel, RemoveButton, Select, TextInput, Toggle } from "../ui/primitives"
 import { CONFIGURE_LOCK_MESSAGE, useCanConfigure } from "../state-provider"
 import { useToast } from "../ui/toast"
 
@@ -100,7 +101,9 @@ export function PinsScreen() {
 
   async function load() {
     const [doc, fns] = await Promise.all([fetchPins(), fetchPinFunctions()])
-    setLoaded(fromPinsJson(doc, fns))
+    const next = fromPinsJson(doc, fns)
+    const functions = [...next.board.functions].sort((a, b) => Number(b.id === "spindle") - Number(a.id === "spindle"))
+    setLoaded({ ...next, board: { ...next.board, functions } })
     setVersion((v) => v + 1)
   }
 
@@ -152,6 +155,18 @@ function PinsEditor({
   const placing = canConfigure ? placingState : null
   const menu = canConfigure ? menuState : null
 
+  useEffect(() => {
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setPlacing(null)
+        setSelected(null)
+        setMenu(null)
+      }
+    }
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [])
+
   const used = useMemo(() => usage(board, map), [board, map])
   const issues = useMemo(() => [...validate(board, map), ...nameIssues(board, names)], [board, map, names])
   const errors = issues.filter((i) => i.level === "error")
@@ -160,18 +175,16 @@ function PinsEditor({
   const active = hover ?? selected
 
   useFooterBar(
-    <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
-      <Button variant="primary" disabled={busy || !canConfigure || !dirty || errors.length > 0} onClick={save}>
-        Save and reboot
-      </Button>
-      <Button disabled={busy || !dirty} onClick={discard}>
-        Discard changes
-      </Button>
-      <Button variant="ghost" disabled={busy || !canConfigure} onClick={resetDefaults}>
-        Reset to defaults
-      </Button>
-      {dirty && <span className="text-sm text-muted-foreground">Changes are not saved.</span>}
-    </div>,
+    <SaveBar
+      dirty={dirty}
+      saveLabel="Save and reboot"
+      saveDisabled={busy || !canConfigure || errors.length > 0}
+      discardDisabled={busy}
+      resetDisabled={busy || !canConfigure}
+      onSave={save}
+      onDiscard={discard}
+      onReset={resetDefaults}
+    />,
   )
 
   async function save() {
@@ -379,6 +392,7 @@ function PinsEditor({
   const rows = Math.max(...board.connectors.map((c) => c.row))
   const cols = Math.max(...board.connectors.map((c) => c.col))
   const placingFn = placing ? functionDef(board, placing.fn) : undefined
+  const placingWithoutRow = !!placing && !fnRows.some((r) => r.fn.id === placing.fn && r.index === placing.moving)
 
   return (
     <div className="flex flex-col gap-4">
@@ -393,9 +407,6 @@ function PinsEditor({
           placingFn && (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Select the first pin for {placingFn.label}</span>
-              <Button variant="ghost" onClick={() => setPlacing(null)}>
-                Cancel
-              </Button>
             </div>
           )
         }
@@ -455,30 +466,37 @@ function PinsEditor({
       <Panel
         title="Functions"
         action={
-          <Select
-            value=""
-            disabled={!canConfigure || addable.length === 0}
-            title="Add a function, then select its first pin."
-            onChange={(e) => {
-              setMenu(null)
-              setPlacing({ fn: e.target.value })
-            }}
-          >
-            <option value="" disabled>
-              Add function...
-            </option>
-            {groups.map((g) => (
-              <optgroup key={g} label={g}>
-                {addable
-                  .filter((fn) => fn.group === g)
-                  .map((fn) => (
-                    <option key={fn.id} value={fn.id}>
-                      {fn.label}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-          </Select>
+          <div className="flex items-center gap-2">
+            {placingWithoutRow && (
+              <Button className="py-1!" onClick={() => setPlacing(null)}>
+                Cancel
+              </Button>
+            )}
+            <Select
+              value={placingWithoutRow && placing ? placing.fn : ""}
+              disabled={!canConfigure || addable.length === 0}
+              title="Add a function, then select its first pin."
+              onChange={(e) => {
+                setMenu(null)
+                setPlacing({ fn: e.target.value })
+              }}
+            >
+              <option value="" disabled>
+                Add function...
+              </option>
+              {groups.map((g) => (
+                <optgroup key={g} label={g}>
+                  {addable
+                    .filter((fn) => fn.group === g)
+                    .map((fn) => (
+                      <option key={fn.id} value={fn.id}>
+                        {fn.label}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </Select>
+          </div>
         }
       >
         <div className="flex flex-col gap-2">
@@ -693,9 +711,6 @@ function PinMenu({
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-muted-foreground">{title}:</span>
         {functions.length === 0 && <span className="text-muted-foreground">no function can be added here.</span>}
-        <Button variant="ghost" className="ml-auto" onClick={onClose}>
-          Cancel
-        </Button>
       </div>
       {groups.map((g) => (
         <div key={g} className="flex items-start gap-2">
@@ -716,6 +731,9 @@ function PinMenu({
           </div>
         </div>
       ))}
+      <div className="flex justify-end">
+        <Button onClick={onClose}>Cancel</Button>
+      </div>
     </div>
   )
 }
@@ -756,14 +774,28 @@ function FunctionRow({
   const board = useBoard()
   const [open, setOpen] = useState(false)
   const pins = a ? pinsOf(board, fn, a) : []
+  const toggle = () => {
+    onSelect()
+    if (a) {
+      setOpen(!open)
+    }
+  }
   return (
     <div
       className={`rounded-md border p-2.5 transition-colors ${highlighted ? "border-primary bg-primary/5" : "border-border"}`}
       onMouseEnter={() => onHover({ fn: fn.id })}
       onMouseLeave={() => onHover(null)}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className="flex min-w-40 items-center gap-2 text-left text-sm font-medium" onClick={onSelect}>
+      <div
+        className={`flex flex-wrap items-center gap-2 ${a ? "cursor-pointer" : ""}`}
+        onClick={(e) => {
+          if (e.target instanceof Element && e.target.closest("button, select, input, label")) {
+            return
+          }
+          toggle()
+        }}
+      >
+        <button type="button" className="flex min-w-40 items-center gap-2 text-left text-sm font-medium" onClick={toggle}>
           <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${DOTS[colorIndex(board, fn.id)]}`} />
           {label}
         </button>
@@ -789,16 +821,10 @@ function FunctionRow({
               ))}
             </Select>
           )}
-          <Button variant={placing ? "primary" : "secondary"} onClick={onPlace}>
-            {placing ? "Cancel" : a ? "Move" : "Place"}
-          </Button>
-          {onRemove && (
-            <Button variant="ghost" onClick={onRemove}>
-              Remove
-            </Button>
-          )}
+          <IconButton icon={placing ? X : a ? ArrowRightLeft : MapPinPlus} title={placing ? "Cancel" : a ? "Change pins" : "Place"} onClick={onPlace} />
         </fieldset>
-        {a && <Button onClick={() => setOpen(!open)}>{open ? "Hide options" : "Options"}</Button>}
+        <OptionsButton open={open} className={a ? "" : "invisible"} onClick={() => setOpen(!open)} />
+        <RemoveButton disabled={locked} className={onRemove ? "" : "invisible"} onClick={onRemove} />
       </div>
       {a && open && (
         <fieldset disabled={locked} className="min-w-0 mt-2 grid gap-2 border-t border-border pt-2 sm:grid-cols-2">
