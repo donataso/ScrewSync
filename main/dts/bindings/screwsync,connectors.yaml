@@ -1,0 +1,53 @@
+description: |
+  Board connectors for the runtime pin map. Each child is one connector.
+  The function properties give the default pins, in signal order. The pins
+  of one function must be next to each other in one connector.
+
+compatible: "screwsync,connectors"
+
+properties:
+  board-name:
+    type: string
+    required: true
+  strapping-gpios:
+    type: array
+  reserved-gpios:
+    type: array
+  reserved-notes:
+    type: string-array
+    description: One note per reserved-gpios entry.
+  z-motor:
+    type: array
+    description: ENA, DIR, STEP
+  x-motor:
+    type: array
+    description: ENA, DIR, STEP
+  spindle:
+    type: array
+    description: A, B
+  z-handwheel:
+    type: array
+    description: A, B
+  x-handwheel:
+    type: array
+    description: A, B
+  probe:
+    type: array
+    description: SIG
+
+child-binding:
+  description: One connector.
+  properties:
+    title:
+      type: string
+      required: true
+    row:
+      type: int
+      required: true
+    col:
+      type: int
+      required: true
+    pins:
+      type: array
+      required: true
+      description: GPIO numbers, or PIN_5V / PIN_GND from dt-bindings/screwsync/pins.h.

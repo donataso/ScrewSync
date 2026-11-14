@@ -101,6 +101,8 @@ namespace
 #else
         {"display", "display status", "display link", display},
 #endif
+        {"pins", "pins [reset]", "pin map in use (saved or board defaults) / saves the board defaults, applies after reboot",
+         pins},
         {"units", "units [mm|inch]", "display units", units},
         {"ws", "ws list | kill <n>", "web UI WebSocket clients: numbered list / closes one", ws},
         {"zero", "zero z|x [<deci-microns>] | spindle",

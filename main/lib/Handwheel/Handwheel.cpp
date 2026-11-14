@@ -16,50 +16,94 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Handwheel.hpp"
+#include "Pins.hpp"
 #include "Settings.hpp"
 #include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/atomic.h>
 #include <hal/pcnt_ll.h>
 
 LOG_MODULE_REGISTER(handwheel, LOG_LEVEL_INF);
 
-// Z/X handwheels are PCNT units 1/2 on the same peripheral as the spindle
-// encoder (main/lib/Encoder) -- read by plain polling here rather than
-// the spindle's threshold-interrupt scheme, since a hand-cranked handwheel
-// can't come close to wrapping the 16-bit counter between poll ticks, and
-// this avoids a second unit sharing (and fighting over) the PCNT interrupt.
+// A handwheel is a PCNT unit (read by polling: a hand-cranked wheel cannot
+// wrap the 16-bit counter between polls, and polling keeps the PCNT
+// interrupt to the spindle), or a software decoder on GPIO interrupts.
+// Both count the edges of A, signed by B, like the PCNT unit setup in the
+// board overlay.
 
 namespace
 {
-    constexpr uint32_t UNIT_Z = 1;
-    constexpr uint32_t UNIT_X = 2;
     constexpr int32_t POLL_PERIOD_MS = 10;
 
-    const struct device *g_dev = DEVICE_DT_GET(DT_NODELABEL(pcnt));
     pcnt_dev_t *g_hw = PCNT_LL_GET_HW(0);
 
-    struct k_mutex g_mutex;
-    int64_t g_accZ = 0, g_accX = 0;
-    int16_t g_lastZ = 0, g_lastX = 0;
+    struct Wheel
+    {
+        PinMap::Fn fn;
+        int unit = -1;
+        int16_t last = 0;
+        atomic_t count = ATOMIC_INIT(0);
+        gpio_dt_spec a = {};
+        gpio_dt_spec b = {};
+        gpio_callback cb = {};
+    };
+
+    Wheel g_z = {PinMap::Fn::ZHandwheel};
+    Wheel g_x = {PinMap::Fn::XHandwheel};
 
     K_THREAD_STACK_DEFINE(g_pollStack, 1024);
     struct k_thread g_pollThreadData;
 
+    void poll(Wheel &w)
+    {
+        if (w.unit < 0) {
+            return;
+        }
+        int16_t cur = (int16_t)pcnt_ll_get_count(g_hw, w.unit);
+        atomic_add(&w.count, (int16_t)(cur - w.last));
+        w.last = cur;
+    }
+
     void pollLoop(void *, void *, void *)
     {
         while (true) {
-            int16_t curZ = (int16_t)pcnt_ll_get_count(g_hw, UNIT_Z);
-            int16_t curX = (int16_t)pcnt_ll_get_count(g_hw, UNIT_X);
-
-            k_mutex_lock(&g_mutex, K_FOREVER);
-            g_accZ += (int16_t)(curZ - g_lastZ);
-            g_accX += (int16_t)(curX - g_lastX);
-            g_lastZ = curZ;
-            g_lastX = curX;
-            k_mutex_unlock(&g_mutex);
-
+            poll(g_z);
+            poll(g_x);
             k_sleep(K_MSEC(POLL_PERIOD_MS));
+        }
+    }
+
+    void onEdge(const struct device *, struct gpio_callback *cb, uint32_t)
+    {
+        Wheel &w = *CONTAINER_OF(cb, Wheel, cb);
+        atomic_add(&w.count, gpio_pin_get_dt(&w.a) != gpio_pin_get_dt(&w.b) ? 1 : -1);
+    }
+
+    void setUp(Wheel &w)
+    {
+        switch (Pins::encoder(w.fn)) {
+        case PinMap::Encoder::Hw:
+            w.unit = Pins::pcntUnit(w.fn);
+            if (w.unit >= 0) {
+                w.last = (int16_t)pcnt_ll_get_count(g_hw, w.unit);
+            }
+            break;
+        case PinMap::Encoder::Sw:
+            if (!Pins::spec(w.fn, 0, w.a) || !Pins::spec(w.fn, 1, w.b) || !gpio_is_ready_dt(&w.a) ||
+                !gpio_is_ready_dt(&w.b)) {
+                LOG_ERR("%s: pins not ready", PinMap::def(w.fn).id);
+                return;
+            }
+            gpio_pin_configure_dt(&w.a, GPIO_INPUT);
+            gpio_pin_configure_dt(&w.b, GPIO_INPUT);
+            gpio_init_callback(&w.cb, onEdge, BIT(w.a.pin));
+            gpio_add_callback(w.a.port, &w.cb);
+            gpio_pin_interrupt_configure_dt(&w.a, GPIO_INT_EDGE_BOTH);
+            break;
+        default:
+            break;
         }
     }
 }
@@ -68,30 +112,23 @@ namespace Handwheel
 {
     void begin()
     {
-        if (!device_is_ready(g_dev)) {
-            LOG_ERR("pcnt device not ready");
-            return;
+        setUp(g_z);
+        setUp(g_x);
+        if (g_z.unit >= 0 || g_x.unit >= 0) {
+            k_thread_create(&g_pollThreadData, g_pollStack, K_THREAD_STACK_SIZEOF(g_pollStack), pollLoop, nullptr,
+                            nullptr, nullptr, K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
         }
-
-        k_mutex_init(&g_mutex);
-        k_thread_create(&g_pollThreadData, g_pollStack, K_THREAD_STACK_SIZEOF(g_pollStack),
-                        pollLoop, nullptr, nullptr, nullptr,
-                        K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
     }
 
     int64_t z()
     {
-        k_mutex_lock(&g_mutex, K_FOREVER);
-        int64_t pos = g_accZ;
-        k_mutex_unlock(&g_mutex);
+        int64_t pos = atomic_get(&g_z.count);
         return Settings::g_active.z.invertHandwheel ? -pos : pos;
     }
 
     int64_t x()
     {
-        k_mutex_lock(&g_mutex, K_FOREVER);
-        int64_t pos = g_accX;
-        k_mutex_unlock(&g_mutex);
+        int64_t pos = atomic_get(&g_x.count);
         return Settings::g_active.x.invertHandwheel ? -pos : pos;
     }
 }

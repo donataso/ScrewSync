@@ -8,12 +8,15 @@ import {
   connectorLabel,
   defaultAssignment,
   functionDef,
+  fromPinsJson,
   functionsAt,
   nameIssues,
   pinsOf,
   placements,
+  toPinsJson,
   validate,
   type PinMap,
+  type PinsJson,
 } from "./pins"
 
 const fn = (id: string) => functionDef(id)!
@@ -124,5 +127,39 @@ describe("connector names", () => {
       nope: "Foo",
     }
     expect(nameIssues(MOCK_BOARD, bad).map((i) => i.connector)).toEqual(["r1c1", "r1c4", "r2c5", "r3c1", "nope"])
+  })
+})
+
+describe("pins JSON", () => {
+  const board: PinsJson["board"] = {
+    name: "nanoels H5",
+    pcntUnits: 4,
+    strapping: [3],
+    reserved: [{ gpio: 35, note: "PSRAM" }],
+    connectors: [
+      { id: "r1c1", title: "Spare 1", row: 1, col: 1, pins: [-1, 41, 42, 35] },
+      { id: "r2c1", title: "PROBE", row: 2, col: 1, pins: [-1, -2, 8, 18] },
+    ],
+  }
+
+  it("reads the board", () => {
+    const { board: b } = fromPinsJson({ board, functions: [], names: [] })
+    expect(b.connectors[0].pins).toEqual([{ power: "5V" }, { gpio: 41 }, { gpio: 42 }, { gpio: 35 }])
+    expect(b.connectors[1].pins[1]).toEqual({ power: "GND" })
+    expect(b.reserved).toEqual({ 35: "PSRAM" })
+    expect(b.connectors[0].label).toBe("Spare 1")
+  })
+
+  it("gives back the same map and names", () => {
+    const names = { r1c1: "Coolant" }
+    const doc = { board, ...toPinsJson(MOCK_MAP, names) }
+    const back = fromPinsJson(doc)
+    expect(back.map).toEqual(MOCK_MAP)
+    expect(back.names).toEqual(names)
+  })
+
+  it("sends an empty encoder type for non-encoders", () => {
+    const probe = toPinsJson(MOCK_MAP, {}).functions.find((f) => f.id === "probe")
+    expect(probe?.encoder).toBe("")
   })
 })

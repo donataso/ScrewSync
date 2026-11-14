@@ -17,6 +17,7 @@
  */
 #include "ProbeInput.hpp"
 #include "Settings.hpp"
+#include "Pins.hpp"
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
@@ -25,13 +26,16 @@ LOG_MODULE_REGISTER(probe_input, LOG_LEVEL_INF);
 
 namespace
 {
-    const gpio_dt_spec PROBE = GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), probe_gpios);
+    gpio_dt_spec g_probe = {};
     gpio_callback g_cb;
     ProbeInput::Callback g_onEdge = nullptr;
 
     bool rawLevel()
     {
-        return gpio_pin_get_dt(&PROBE) > 0;
+        if (!g_probe.port) {
+            return !Settings::g_active.probePolarityNc;
+        }
+        return gpio_pin_get_dt(&g_probe) > 0;
     }
 
     void isr(const struct device *, struct gpio_callback *, uint32_t)
@@ -47,14 +51,19 @@ namespace ProbeInput
     void begin(Callback onEdge)
     {
         g_onEdge = onEdge;
-        if (!gpio_is_ready_dt(&PROBE)) {
+        if (!Pins::spec(PinMap::Fn::Probe, 0, g_probe)) {
+            g_probe = {};
+            LOG_INF("probe has no pin");
+            return;
+        }
+        if (!gpio_is_ready_dt(&g_probe)) {
             LOG_ERR("probe GPIO not ready");
             return;
         }
-        gpio_pin_configure_dt(&PROBE, GPIO_INPUT);
-        gpio_pin_interrupt_configure_dt(&PROBE, GPIO_INT_EDGE_BOTH);
-        gpio_init_callback(&g_cb, isr, BIT(PROBE.pin));
-        gpio_add_callback(PROBE.port, &g_cb);
+        gpio_pin_configure_dt(&g_probe, GPIO_INPUT);
+        gpio_pin_interrupt_configure_dt(&g_probe, GPIO_INT_EDGE_BOTH);
+        gpio_init_callback(&g_cb, isr, BIT(g_probe.pin));
+        gpio_add_callback(g_probe.port, &g_cb);
     }
 
     bool contact()

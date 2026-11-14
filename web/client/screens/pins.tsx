@@ -1,24 +1,25 @@
 "use client"
 
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react"
+import { createContext, useContext, useEffect, useMemo, useState, type KeyboardEvent } from "react"
+import { fetchPins, savePins, sendCommand } from "../api"
 import { useFooterBar } from "../footer-bar"
 import {
   FUNCTIONS,
-  MOCK_BOARD,
   CONNECTOR_NAME_MAX,
-  MOCK_MAP,
-  MOCK_NAMES,
   STRAPPING_NOTE,
   canStartAt,
   connectorLabel,
   connectorOf,
   defaultAssignment,
+  fromPinsJson,
   functionsAt,
   nameIssues,
   pinsOf,
+  toPinsJson,
   usage,
   validate,
   type Assignment,
+  type Board,
   type BoardPin,
   type Connector,
   type ConnectorNames,
@@ -28,9 +29,18 @@ import {
   type Pull,
 } from "../pins"
 import { Badge, Button, LockNotice, Panel, Select, TextInput, Toggle } from "../ui/primitives"
+import { CONFIGURE_LOCK_MESSAGE, useCanConfigure } from "../state-provider"
 import { useToast } from "../ui/toast"
 
-const board = MOCK_BOARD
+const BoardContext = createContext<Board | null>(null)
+
+function useBoard(): Board {
+  const board = useContext(BoardContext)
+  if (!board) {
+    throw new Error("useBoard must be used within BoardContext")
+  }
+  return board
+}
 
 // Literal class names, so Tailwind keeps them.
 const COLORS = [
@@ -65,11 +75,47 @@ interface Span {
   length: number
 }
 
+interface Loaded {
+  board: Board
+  map: PinMap
+  names: ConnectorNames
+}
+
 export function PinsScreen() {
-  const [saved, setSaved] = useState<PinMap>(MOCK_MAP)
-  const [map, setMap] = useState<PinMap>(MOCK_MAP)
-  const [savedNames, setSavedNames] = useState<ConnectorNames>(MOCK_NAMES)
-  const [names, setNames] = useState<ConnectorNames>(MOCK_NAMES)
+  const [loaded, setLoaded] = useState<Loaded | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchPins()
+      .then((doc) => setLoaded(fromPinsJson(doc)))
+      .catch((e: Error) => setError(e.message))
+  }, [])
+
+  if (!loaded) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-lg font-semibold">Pins</h1>
+        <Panel>
+          <p className="text-sm text-muted-foreground">{error ? `Could not load the pin map: ${error}` : "Loading..."}</p>
+        </Panel>
+      </div>
+    )
+  }
+  return (
+    <BoardContext.Provider value={loaded.board}>
+      <PinsEditor initialMap={loaded.map} initialNames={loaded.names} />
+    </BoardContext.Provider>
+  )
+}
+
+function PinsEditor({ initialMap, initialNames }: { initialMap: PinMap; initialNames: ConnectorNames }) {
+  const board = useBoard()
+  const [saved, setSaved] = useState<PinMap>(initialMap)
+  const [map, setMap] = useState<PinMap>(initialMap)
+  const [savedNames, setSavedNames] = useState<ConnectorNames>(initialNames)
+  const [names, setNames] = useState<ConnectorNames>(initialNames)
+  const [busy, setBusy] = useState(false)
+  const canConfigure = useCanConfigure()
   const [renaming, setRenaming] = useState<string | null>(null)
   const [hover, setHover] = useState<Focus | null>(null)
   const [selected, setSelected] = useState<Focus | null>(null)
@@ -78,8 +124,8 @@ export function PinsScreen() {
   const [menu, setMenu] = useState<{ connector: string; start: number } | null>(null)
   const toast = useToast()
 
-  const used = useMemo(() => usage(board, map), [map])
-  const issues = useMemo(() => [...validate(board, map), ...nameIssues(board, names)], [map, names])
+  const used = useMemo(() => usage(board, map), [board, map])
+  const issues = useMemo(() => [...validate(board, map), ...nameIssues(board, names)], [board, map, names])
   const errors = issues.filter((i) => i.level === "error")
   const dirty = JSON.stringify(map) !== JSON.stringify(saved) || JSON.stringify(names) !== JSON.stringify(savedNames)
   const label = (id: string) => connectorLabel(board, names, id)
@@ -98,23 +144,34 @@ export function PinsScreen() {
 
   useFooterBar(
     <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
-      <Button variant="primary" disabled={!dirty || errors.length > 0} onClick={save}>
+      <Button variant="primary" disabled={busy || !canConfigure || !dirty || errors.length > 0} onClick={save}>
         Save and reboot
       </Button>
-      <Button disabled={!dirty} onClick={discard}>
+      <Button disabled={busy || !dirty} onClick={discard}>
         Discard changes
       </Button>
       {dirty && <span className="text-sm text-muted-foreground">Changes are not saved.</span>}
     </div>,
   )
 
-  function save() {
+  async function save() {
     if (!window.confirm("Save the pin map and reboot the controller?")) {
       return
     }
-    setSaved(map)
-    setSavedNames(names)
-    toast.push("Mock data: the firmware has no pin map API yet. Nothing was sent.", "info")
+    setBusy(true)
+    try {
+      const r = await savePins(toPinsJson(map, names))
+      if (!r.ok) {
+        toast.push(`Not saved: ${r.message}`, "bad")
+        return
+      }
+      setSaved(map)
+      setSavedNames(names)
+      toast.push("Saved. Rebooting.", "good")
+      await sendCommand("reboot")
+    } finally {
+      setBusy(false)
+    }
   }
 
   function discard() {
@@ -229,12 +286,8 @@ export function PinsScreen() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-lg font-semibold">Pins</h1>
-        <Badge tone="warn">mock data</Badge>
       </div>
-      <LockNotice>
-        The firmware does not serve the board or the pin map yet. This page shows the {board.name} layout and the
-        current pins, but it does not save.
-      </LockNotice>
+      {!canConfigure && <LockNotice>{CONFIGURE_LOCK_MESSAGE}</LockNotice>}
 
       <Panel
         title={`Connectors (${board.name})`}
@@ -287,7 +340,7 @@ export function PinsScreen() {
         <PinInfo gpio={active?.gpio} used={used} label={label} />
         {menu && (
           <PinMenu
-            title={pinTitle(menu.connector, menu.start, label)}
+            title={pinTitle(board, menu.connector, menu.start, label)}
             functions={functionsAt(board, map, menu.connector, menu.start)}
             map={map}
             onPick={(fnId) => place(fnId, menu.connector, menu.start)}
@@ -377,6 +430,7 @@ function ConnectorView({
   onPinClick: (index: number, pin: BoardPin) => void
   onConnectorClick: () => void
 }) {
+  const board = useBoard()
   const placingLength = placing ? (FUNCTIONS.find((f) => f.id === placing)?.signals.length ?? 0) : 0
   return (
     <div
@@ -418,9 +472,9 @@ function ConnectorView({
         {c.pins.map((p, i) => {
           const isGpio = "gpio" in p
           const uses = isGpio ? (used.get(p.gpio) ?? []) : []
-          const reserved = isGpio && p.gpio in MOCK_BOARD.reserved
-          const strapping = isGpio && MOCK_BOARD.strapping.includes(p.gpio)
-          const validStart = !!placing && canStartAt(MOCK_BOARD, map, placing, c.id, i)
+          const reserved = isGpio && p.gpio in board.reserved
+          const strapping = isGpio && board.strapping.includes(p.gpio)
+          const validStart = !!placing && canStartAt(board, map, placing, c.id, i)
           const inPreview = !!preview && i >= preview.start && i < preview.start + preview.length
           const conflict = uses.length > 1
           const fill = uses.length ? COLORS[colorIndex(uses[0].fn)] : ""
@@ -428,7 +482,7 @@ function ConnectorView({
             ? [
                 `GPIO ${p.gpio}`,
                 ...uses.map((u) => `${FUNCTIONS.find((f) => f.id === u.fn)?.label} ${u.signal}`),
-                reserved ? `Reserved: ${MOCK_BOARD.reserved[p.gpio]}` : "",
+                reserved ? `Reserved: ${board.reserved[p.gpio]}` : "",
                 strapping ? `Strapping pin: ${STRAPPING_NOTE}` : "",
               ]
                 .filter(Boolean)
@@ -480,6 +534,7 @@ function PinInfo({
   used: Map<number, { fn: string; signal: string }[]>
   label: (id: string) => string
 }) {
+  const board = useBoard()
   const c = gpio === undefined ? undefined : board.connectors.find((x) => x.pins.some((p) => "gpio" in p && p.gpio === gpio))
   return (
     <p className="mt-3 min-h-10 border-t border-border pt-2 text-sm text-muted-foreground">
@@ -505,7 +560,7 @@ function PinInfo({
   )
 }
 
-function pinTitle(connectorId: string, start: number, label: (id: string) => string) {
+function pinTitle(board: Board, connectorId: string, start: number, label: (id: string) => string) {
   const c = connectorOf(board, connectorId)
   const p = c?.pins[start]
   return `${label(connectorId)}, GPIO ${p && "gpio" in p ? p.gpio : "?"}`
@@ -567,8 +622,9 @@ function FunctionRow({
   onEncoderType: (t: EncoderType) => void
   onOption: (index: number, o: { invert?: boolean; pull?: Pull }) => void
 }) {
+  const board = useBoard()
   const [open, setOpen] = useState(false)
-  const pins = a ? pinsOf(MOCK_BOARD, fn, a) : []
+  const pins = a ? pinsOf(board, fn, a) : []
   return (
     <div
       data-keep-selection

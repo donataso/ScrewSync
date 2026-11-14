@@ -20,12 +20,14 @@
 #include "StepperLimits.hpp"
 #include "Settings.hpp"
 #include "Machine.hpp"
+#include "Pins.hpp"
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/counter.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <initializer_list>
+#include <utility>
 
 LOG_MODULE_REGISTER(stepper, LOG_LEVEL_INF);
 
@@ -67,9 +69,9 @@ namespace
     };
 
     AxisState g_axisZ = {
-        GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), z_step_gpios),
-        GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), z_dir_gpios),
-        GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), z_ena_gpios),
+        {},
+        {},
+        {},
         nullptr,
         &Settings::g_active.z,
         {},
@@ -86,9 +88,9 @@ namespace
         false,
     };
     AxisState g_axisX = {
-        GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), x_step_gpios),
-        GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), x_dir_gpios),
-        GPIO_DT_SPEC_GET(DT_PATH(zephyr_user), x_ena_gpios),
+        {},
+        {},
+        {},
         nullptr,
         &Settings::g_active.x,
         {},
@@ -117,9 +119,17 @@ namespace
         return !s.disabled;
     }
 
+    // An axis with no pins in the pin map keeps a null port; it never drives a pin.
+    bool hasPins(const AxisState &s)
+    {
+        return s.step.port != nullptr;
+    }
+
     void reconcile(AxisState &s)
     {
-        gpio_pin_set_dt(&s.ena, shouldHold(s) != s.cfg->invertEnable);
+        if (hasPins(s)) {
+            gpio_pin_set_dt(&s.ena, shouldHold(s) != s.cfg->invertEnable);
+        }
     }
 
     int32_t maxSpeedOf(const AxisState &s)
@@ -146,7 +156,7 @@ namespace
         // instead of accepting a new one, so an in-flight ramp sees zero
         // distance remaining and stops on its very next tick.
         Machine::State ms = Machine::state();
-        if (ms == Machine::State::Flashing || ms == Machine::State::EStop || s.disabled) {
+        if (ms == Machine::State::Flashing || ms == Machine::State::EStop || s.disabled || !hasPins(s)) {
             s.targetPos = s.currentPos;
             return s.targetPos;
         }
@@ -192,7 +202,7 @@ namespace
             k_spinlock_key_t key = k_spin_lock(&s.lock);
 
             int64_t delta = s.targetPos - s.currentPos;
-            if (delta == 0) {
+            if (delta == 0 || !hasPins(s)) {
                 s.running = false;
                 reconcile(s);
                 k_spin_unlock(&s.lock, key);
@@ -244,7 +254,14 @@ namespace Stepper
         g_axisZ.timer = DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(timer2), counter));
         g_axisX.timer = DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(timer3), counter));
 
-        for (AxisState *s : {&g_axisZ, &g_axisX}) {
+        using PinMap::Fn;
+        for (auto [s, fn] : {std::pair{&g_axisZ, Fn::ZMotor}, std::pair{&g_axisX, Fn::XMotor}}) {
+            // Signal order of a motor in the pin map: ENA, DIR, STEP.
+            if (!Pins::spec(fn, 0, s->ena) || !Pins::spec(fn, 1, s->dir) || !Pins::spec(fn, 2, s->step)) {
+                s->ena = s->dir = s->step = {};
+                LOG_WRN("%s motor has no pins", fn == Fn::ZMotor ? "Z" : "X");
+                continue;
+            }
             if (!gpio_is_ready_dt(&s->step) || !gpio_is_ready_dt(&s->dir) || !gpio_is_ready_dt(&s->ena)) {
                 LOG_ERR("stepper GPIOs not ready");
                 continue;
@@ -268,7 +285,9 @@ namespace Stepper
     void setEnabled(Axis axis, bool enabled)
     {
         AxisState &s = stateOf(axis);
-        gpio_pin_set_dt(&s.ena, enabled != s.cfg->invertEnable);
+        if (hasPins(s)) {
+            gpio_pin_set_dt(&s.ena, enabled != s.cfg->invertEnable);
+        }
     }
 
     void setHoldRequested(Axis axis, bool requested)

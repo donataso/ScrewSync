@@ -1,5 +1,6 @@
 #include <zephyr/dt-bindings/gpio/gpio.h>
 #include <zephyr/dt-bindings/pinctrl/esp32s3-pinctrl.h>
+#include <dt-bindings/screwsync/pins.h>
 
 &psram0 {
 	status = "okay";
@@ -27,24 +28,45 @@
 		zephyr,shell-uart = &usb_serial;
 	};
 
-	zephyr,user {
-		z-ena-gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
-		z-dir-gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
-		z-step-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+	/* Laid out like the connectors on the back of the case. */
+	connectors {
+		compatible = "screwsync,connectors";
+		board-name = "nanoels H5";
+		strapping-gpios = <0 3 45 46>;
+		reserved-gpios = <35 36 37>;
+		reserved-notes = "octal PSRAM data line inside the chip package. Driving it corrupts the PSRAM and breaks Wi-Fi",
+				 "octal PSRAM data line inside the chip package. Driving it corrupts the PSRAM and breaks Wi-Fi",
+				 "octal PSRAM data line inside the chip package. Driving it corrupts the PSRAM and breaks Wi-Fi";
 
-		x-ena-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
-		x-dir-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
-		x-step-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+		z-motor = <16 15 7>;
+		x-motor = <1 2 17>;
+		spindle = <10 11>;
+		z-handwheel = <21 47>;
+		x-handwheel = <3 46>;
+		probe = <8>;
 
-		probe-gpios = <&gpio0 8 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+		r1c1 { title = "Spare 1"; row = <1>; col = <1>; pins = <PIN_5V 41 42 35>; };
+		r1c2 { title = "Z motor"; row = <1>; col = <2>; pins = <PIN_5V 16 15 7>; };
+		r1c3 { title = "X motor"; row = <1>; col = <3>; pins = <PIN_5V 1 2 17>; };
+		r1c4 { title = "Spare 2"; row = <1>; col = <4>; pins = <38 6 5 4>; };
+		r1c5 { title = "Spare 3"; row = <1>; col = <5>; pins = <PIN_5V PIN_GND 36 37>; };
+		r2c1 { title = "PROBE"; row = <2>; col = <1>; pins = <PIN_5V PIN_GND 8 18>; };
+		r2c2 { title = "Z handwheel"; row = <2>; col = <2>; pins = <PIN_5V PIN_GND 21 47>; };
+		r2c3 { title = "X handwheel"; row = <2>; col = <3>; pins = <PIN_5V PIN_GND 3 46>; };
+		r2c4 { title = "POWER"; row = <2>; col = <4>; pins = <PIN_5V PIN_5V PIN_GND PIN_GND>; };
+		r2c5 { title = "Spare 4"; row = <2>; col = <5>; pins = <PIN_5V PIN_GND 14 13>; };
+		r3c1 { title = "Spare 5"; row = <3>; col = <1>; pins = <PIN_5V PIN_GND 12 9>; };
+		r3c2 { title = "Spare 6"; row = <3>; col = <2>; pins = <PIN_5V PIN_GND 39 40>; };
+		r3c3 { title = "Spare 7"; row = <3>; col = <3>; pins = <PIN_5V PIN_GND 48 45>; };
+		r3c4 { title = "POWER"; row = <3>; col = <4>; pins = <PIN_5V PIN_5V PIN_GND PIN_GND>; };
+		r3c5 { title = "ENCODER"; row = <3>; col = <5>; pins = <PIN_5V PIN_GND 10 11>; };
 	};
 };
 
-/* Quadrature inputs, decoded in hardware by PCNT: unit0 = spindle encoder,
- * unit1 = Z handwheel, unit2 = X handwheel. Only unit0 is read via an
- * interrupt (main/lib/Encoder) -- units 1/2 are read by polling
- * (main/lib/Handwheel), since Zephyr's pcnt_esp32 driver can't arm a
- * threshold on one unit without resetting every unit's counter. */
+/* PCNT units for hardware quadrature decoding. Unit 0 is the spindle
+ * (read via the driver's interrupt, main/lib/Encoder); the others are
+ * handwheels (polled, main/lib/Handwheel). The pins below are only the
+ * boot routing: main/lib/Pins routes the units from the pin map. */
 &pinctrl {
 	pcnt_default: pcnt_default {
 		group1 {
@@ -98,6 +120,21 @@
 
 	unit2@2 {
 		reg = <2>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		filter = <1>;
+
+		channelA@0 {
+			reg = <0>;
+			sig-pos-mode = <1>;
+			sig-neg-mode = <2>;
+			ctrl-h-mode = <1>;
+			ctrl-l-mode = <0>;
+		};
+	};
+
+	unit3@3 {
+		reg = <3>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		filter = <1>;

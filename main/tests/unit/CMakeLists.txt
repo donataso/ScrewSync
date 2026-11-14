@@ -26,6 +26,7 @@ target_sources(app PRIVATE
     src/test_thread_table_json.cpp
     src/test_settings_fields.cpp
     src/test_json_span.cpp
+    src/test_pin_map.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperRamp.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperLimits.cpp
     ${FIRMWARE_DIR}/lib/Rpm/RpmCalc.cpp
@@ -49,9 +50,12 @@ target_sources(app PRIVATE
     ${FIRMWARE_DIR}/lib/Thread/ThreadTableJson.cpp
     ${FIRMWARE_DIR}/lib/Settings/SettingsFields.cpp
     ${FIRMWARE_DIR}/lib/Backup/JsonSpan.cpp
+    ${FIRMWARE_DIR}/lib/Pins/PinMap.cpp
+    ${FIRMWARE_DIR}/lib/Pins/PinMapJson.cpp
 )
 
 target_include_directories(app PRIVATE
+    ${FIRMWARE_DIR}/lib/Pins
     ${FIRMWARE_DIR}/lib/Stepper
     ${FIRMWARE_DIR}/lib/Sync
     ${FIRMWARE_DIR}/lib/Jog

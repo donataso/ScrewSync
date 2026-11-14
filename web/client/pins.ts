@@ -83,7 +83,7 @@ const PSRAM_NOTE = "octal PSRAM data line inside the chip package. Driving it co
 
 export const STRAPPING_NOTE = "its level at reset selects the boot mode. A pull or a load on it can stop the board from booting"
 
-// Mock until the firmware serves the board table.
+// The nanoels H5 board, for tests.
 export const MOCK_BOARD: Board = {
   name: "nanoels H5",
   connectors: [
@@ -123,8 +123,6 @@ export const MOCK_MAP: PinMap = {
   xHandwheel: { connector: "r2c3", start: 2, encoderType: "hw", options: [UP, UP] },
   probe: { connector: "r2c1", start: 2, options: [UP] },
 }
-
-export const MOCK_NAMES: ConnectorNames = {}
 
 export function connectorLabel(board: Board, names: ConnectorNames, id: string): string {
   return names[id] ?? connectorOf(board, id)?.label ?? id
@@ -258,4 +256,81 @@ export function validate(board: Board, map: PinMap): Issue[] {
     issues.push({ level: "error", msg: `${hw} hardware encoders, but the board has ${board.pcntUnits} PCNT units` })
   }
   return issues
+}
+
+interface PinsJsonSignal {
+  invert: boolean
+  pull: Pull
+}
+
+interface PinsJsonFunction {
+  id: string
+  connector: string
+  start: number
+  encoder: "" | EncoderType
+  signals: PinsJsonSignal[]
+}
+
+interface PinsJsonName {
+  connector: string
+  name: string
+}
+
+export interface PinsUpdateJson {
+  functions: PinsJsonFunction[]
+  names: PinsJsonName[]
+}
+
+/** GET /pins. Pins: GPIO number, -1 = 5V, -2 = GND. */
+export interface PinsJson extends PinsUpdateJson {
+  board: {
+    name: string
+    pcntUnits: number
+    strapping: number[]
+    reserved: { gpio: number; note: string }[]
+    connectors: { id: string; title: string; row: number; col: number; pins: number[] }[]
+  }
+}
+
+export function fromPinsJson(doc: PinsJson): { board: Board; map: PinMap; names: ConnectorNames } {
+  const board: Board = {
+    name: doc.board.name,
+    pcntUnits: doc.board.pcntUnits,
+    strapping: doc.board.strapping,
+    reserved: Object.fromEntries(doc.board.reserved.map((r) => [r.gpio, r.note])),
+    connectors: doc.board.connectors.map((c) => ({
+      id: c.id,
+      label: c.title,
+      row: c.row,
+      col: c.col,
+      pins: c.pins.map((p): BoardPin => (p === -1 ? { power: "5V" } : p === -2 ? { power: "GND" } : { gpio: p })),
+    })),
+  }
+  const map: PinMap = {}
+  for (const f of doc.functions ?? []) {
+    map[f.id] = {
+      connector: f.connector,
+      start: f.start,
+      encoderType: f.encoder || undefined,
+      options: f.signals.map((s) => ({ invert: s.invert, pull: s.pull })),
+    }
+  }
+  const names: ConnectorNames = Object.fromEntries((doc.names ?? []).map((n) => [n.connector, n.name]))
+  return { board, map, names }
+}
+
+export function toPinsJson(map: PinMap, names: ConnectorNames): PinsUpdateJson {
+  return {
+    functions: FUNCTIONS.filter((fn) => map[fn.id]).map((fn) => {
+      const a = map[fn.id]
+      return {
+        id: fn.id,
+        connector: a.connector,
+        start: a.start,
+        encoder: a.encoderType ?? "",
+        signals: a.options.map((o) => ({ invert: o.invert, pull: o.pull })),
+      }
+    }),
+    names: Object.entries(names).map(([connector, name]) => ({ connector, name })),
+  }
 }

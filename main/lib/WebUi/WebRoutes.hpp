@@ -28,6 +28,7 @@ namespace WebRoutes
 #endif
     extern struct http_resource_detail_dynamic g_preview;
     extern struct http_resource_detail_dynamic g_threads;
+    extern struct http_resource_detail_dynamic g_pins;
     extern struct http_resource_detail_dynamic g_backup;
     extern struct http_resource_detail_dynamic g_logRing;
     extern struct http_resource_detail_dynamic g_gcodeList;

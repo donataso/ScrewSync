@@ -3,6 +3,7 @@
 #include "Console.hpp"
 #include "PersistBlob.hpp"
 #include "Settings.hpp"
+#include "Pins.hpp"
 #include "Encoder.hpp"
 #include "Handwheel.hpp"
 #include "Stepper.hpp"
@@ -25,6 +26,7 @@ int main(void)
     PersistBlob::preload();
     Machine::begin();
     Settings::load();
+    Pins::begin();
     Encoder::begin();
     Handwheel::begin();
     Stepper::begin();

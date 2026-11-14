@@ -42,6 +42,9 @@ target_sources(app PRIVATE
     lib/Mode/ModeProbe.cpp
     lib/Mode/ProbeCycle.cpp
     lib/Probe/ProbeInput.cpp
+    lib/Pins/Pins.cpp
+    lib/Pins/PinMap.cpp
+    lib/Pins/PinMapJson.cpp
     lib/Thread/ThreadTable.cpp
     lib/Thread/ThreadStore.cpp
     lib/Thread/ThreadStoreJson.cpp
@@ -91,6 +94,8 @@ target_include_directories(app PRIVATE
     lib/Watchdog
     lib/Mode
     lib/Probe
+    lib/Pins
+    include
     lib/Thread
     lib/Backup
     lib/Encoder
