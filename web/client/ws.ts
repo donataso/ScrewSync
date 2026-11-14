@@ -70,8 +70,8 @@ export function expectedReplyType(line: string): string {
   if (verb === "settings") {
 return "settings"
 }
-  if (verb === "display") {
-return "display"
+  if (verb === "display" || verb === "cal") {
+return verb
 }
   if (verb === "wifi") {
 return line.startsWith("wifi scan") ? "scan" : "wifi"

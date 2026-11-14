@@ -112,6 +112,10 @@ namespace Mode
     // Selects probe mode and starts its cycle on the given axis/direction
     // in one call (the display's/protocol's "probe go z-|z+|x-|x+").
     const char *probeGo(Stepper::Axis axis, bool reverse);
+    // Probe mode's backlash release measurement (docs/calibration.md),
+    // median of runs. Result in lastBacklashDu(), -1 until one finishes.
+    const char *probeBacklash(Stepper::Axis axis, bool reverse, int runs);
+    int32_t lastBacklashDu();
     // The probe input's contact ISR; see ProbeInput::begin().
     void probeEdge(bool contactNow);
 

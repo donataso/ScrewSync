@@ -12,3 +12,4 @@ a web client.
 - [docs/install.md](docs/install.md) — connectors, flashing, first setup
 - [docs/features.md](docs/features.md) — full feature list
 - [docs/probe.md](docs/probe.md) — probe hardware, settings and cycle
+- [docs/calibration.md](docs/calibration.md) — calibration checks in the web client

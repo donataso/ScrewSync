@@ -71,6 +71,12 @@ replies; see `docs/screen.md`.
   (selects probe mode and starts it in one call); a plain `start` is refused. `probe [status]` adds
   `contact=0|1`, the live probe input state, to the usual `name=value` line.
 
+## Calibration
+
+- `cal count | status | backlash z|x -|+ [runs] | stop`. See
+  `docs/calibration.md`. Over the WebSocket the reply is
+  `{"type":"cal","msg":"<reply>"}`.
+
 ## Thread table (HTTP)
 
 - `GET /threads`: the whole table, `{"groups":[{name, depthExternal,

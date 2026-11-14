@@ -280,7 +280,8 @@ namespace
             const char *sp = strchr(reply, ' ');
             if (strncmp(reply, "ok", 2) != 0) {
                 sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, "error", sp ? sp + 1 : reply));
-            } else if (!strcmp(verb, "commands") || !strcmp(verb, "display") || !strcmp(verb, "ws")) {
+            } else if (!strcmp(verb, "commands") || !strcmp(verb, "display") || !strcmp(verb, "ws") ||
+                       !strcmp(verb, "cal")) {
                 sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, verb, sp ? sp + 1 : ""));
             } else if (!strcmp(verb, "wifi")) {
                 broadcast(json, WsMessages::wifi(json, JSON_REPLY_BUF));

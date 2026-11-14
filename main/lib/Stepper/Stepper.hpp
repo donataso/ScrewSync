@@ -86,6 +86,8 @@ namespace Stepper
     int64_t haltNow(Axis axis);
 
     int64_t position(Axis axis);
+    // Motor shaft position: position() without backlash compensation.
+    int64_t motorPosition(Axis axis);
     bool isMoving(Axis axis);
 
     // Rebases current/target position so the axis's present position

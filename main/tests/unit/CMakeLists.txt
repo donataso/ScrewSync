@@ -15,6 +15,7 @@ target_sources(app PRIVATE
     src/test_gcode.cpp
     src/test_gcode_meta.cpp
     src/test_probe_cycle.cpp
+    src/test_backlash_cycle.cpp
     src/test_mode_cells.cpp
     src/test_mode_pass_plan.cpp
     src/test_mode_param_codec.cpp
@@ -42,6 +43,7 @@ target_sources(app PRIVATE
     ${FIRMWARE_DIR}/lib/Gcode/GcodeFlavors.cpp
     ${FIRMWARE_DIR}/lib/GcodeStore/GcodeMeta.cpp
     ${FIRMWARE_DIR}/lib/Mode/ProbeCycle.cpp
+    ${FIRMWARE_DIR}/lib/Mode/BacklashCycle.cpp
     ${FIRMWARE_DIR}/lib/Display/ModeCells.cpp
     ${FIRMWARE_DIR}/lib/Display/DisplayText.cpp
     ${FIRMWARE_DIR}/lib/Mode/ModePassPlan.cpp

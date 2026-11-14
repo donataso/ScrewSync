@@ -5,6 +5,7 @@ describe("expectedReplyType", () => {
   it("waits for the push of the command's domain", () => {
     expect(expectedReplyType("settings set encoderPpr 600")).toBe("settings")
     expect(expectedReplyType("display flash")).toBe("display")
+    expect(expectedReplyType("cal count")).toBe("cal")
     expect(expectedReplyType("wifi status")).toBe("wifi")
     expect(expectedReplyType("wifi add home secret")).toBe("wifi")
     expect(expectedReplyType("wifi scan")).toBe("scan")

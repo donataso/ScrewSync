@@ -24,6 +24,14 @@ export interface StatusPush {
   jogStepDu: number
   gear: GearStatus
   probeContact: boolean
+  job: JobStatus
+  error: string
+}
+
+export interface JobStatus {
+  phase: string
+  pass: number
+  passes: number
 }
 
 export type CmdOutcome =

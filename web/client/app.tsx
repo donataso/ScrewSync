@@ -6,6 +6,7 @@ import { FooterBarProvider } from "./footer-bar"
 import { useRouter } from "./router"
 import { useDeviceState } from "./state-provider"
 import { AppearanceScreen } from "./screens/appearance"
+import { CalibrationScreen } from "./screens/calibration"
 import { DeviceScreen } from "./screens/device"
 import { GcodeScreen } from "./screens/gcode"
 import { NetworkScreen } from "./screens/network"
@@ -19,6 +20,7 @@ const NAV = [
   { path: "/gcode", label: "Gcode" },
   { path: "/threads", label: "Threads" },
   { path: "/settings", label: "Settings" },
+  { path: "/calibration", label: "Calibration" },
   { path: "/pins", label: "Pins" },
   { path: "/network", label: "Network" },
   { path: "/device", label: "Device" },
@@ -26,6 +28,9 @@ const NAV = [
 ]
 
 function screenFor(path: string) {
+  if (path.startsWith("/calibration")) {
+return <CalibrationScreen />
+}
   if (path.startsWith("/threads")) {
 return <ThreadsScreen />
 }

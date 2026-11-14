@@ -485,6 +485,15 @@ namespace Stepper
         return pos;
     }
 
+    int64_t motorPosition(Axis axis)
+    {
+        AxisState &s = stateOf(axis);
+        k_spinlock_key_t key = k_spin_lock(&s.lock);
+        int64_t pos = s.motorPos;
+        k_spin_unlock(&s.lock, key);
+        return pos;
+    }
+
     void zero(Axis axis, int64_t positionSteps)
     {
         AxisState &s = stateOf(axis);
