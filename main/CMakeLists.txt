@@ -40,6 +40,8 @@ target_sources(app PRIVATE
     lib/Mode/ModeSlot.cpp
     lib/Mode/ModeEllipse.cpp
     lib/Mode/ModeGcode.cpp
+    lib/Mode/ModeSteps.cpp
+    lib/Mode/ModeMdi.cpp
     lib/Mode/ModeProbe.cpp
     lib/Mode/ProbeCycle.cpp
     lib/Mode/BacklashCycle.cpp
@@ -72,6 +74,7 @@ target_sources(app PRIVATE
     lib/Gcode/GcodeInterpreter.cpp
     lib/Gcode/GcodeLathecode.cpp
     lib/Gcode/GcodeDialects.cpp
+    lib/Gcode/GcodeMdi.cpp
     lib/GcodeStore/GcodeMeta.cpp
     lib/GcodeStore/GcodeFiles.cpp
     lib/GcodeStore/GcodeStore.cpp

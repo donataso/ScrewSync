@@ -114,6 +114,15 @@ namespace Mode::Detail
     void saveParams(Id id);
 
     const char *claim(Stepper::Axis axis);
+    void releaseAxes();
+    void setLastError(const char *reason);
+
+    // MDI runs its queued steps when no mode runs. mdiClear() drops the
+    // queue and leaves the axes to the caller.
+    void mdiBegin();
+    bool mdiActive();
+    void mdiTick(int64_t spindlePos);
+    void mdiClear();
 
     // Ends the running mode from its own tick (job done or failed).
     void finish(const char *reason = nullptr);

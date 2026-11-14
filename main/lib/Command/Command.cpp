@@ -17,7 +17,9 @@
  */
 #include "Command.hpp"
 #include "CommandInternal.hpp"
+#include "GcodeMdi.hpp"
 #include "Machine.hpp"
+#include "Mode.hpp"
 #include "Motion.hpp"
 #include "Pins.hpp"
 #include <zephyr/sys/reboot.h>
@@ -209,6 +211,17 @@ namespace Command
         }
 
         const char *pinsFault = Pins::fault();
+        bool ui = *a == Gcode::MDI_UI_MARKER;
+        const char *gcode = ui ? a + 1 : a;
+        if (Gcode::isMdiLine(gcode)) {
+            const char *refusal = pinsFault ? pinsFault : Mode::mdi(gcode, ui);
+            if (refusal) {
+                snprintf(out, outMax, "err %s%s", pinsFault ? "pins: " : "", refusal);
+            } else {
+                snprintf(out, outMax, "ok");
+            }
+            return;
+        }
         if (pinsFault && startsMotion(a, tokLen, a + tokLen)) {
             snprintf(out, outMax, "err pins: %s", pinsFault);
             return;

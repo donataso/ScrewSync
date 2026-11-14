@@ -27,7 +27,7 @@ namespace Motion
     double stepsToDu(Stepper::Axis axis, int64_t steps);
     int32_t spindleCountsPerRev();
 
-    // No mode running and the machine is Idle.
+    // No mode or MDI running and the machine is Idle.
     bool idle();
 
     // Each returns nullptr on success, else the reason. duPerMin 0 = speedRapid.

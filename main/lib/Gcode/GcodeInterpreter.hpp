@@ -38,6 +38,21 @@ namespace Gcode
         void begin(int32_t startZDu, int32_t startXDu, Motion motion = Motion::None);
         const char *line(const Words &words, uint32_t lineNo, StepSink &sink);
 
+        // Keeps the modal state.
+        void setPosition(int32_t zDu, int32_t xDu)
+        {
+            zDu_ = zDu;
+            xDu_ = xDu;
+        }
+        int32_t zDu() const
+        {
+            return zDu_;
+        }
+        int32_t xDu() const
+        {
+            return xDu_;
+        }
+
     private:
         Motion motion_;
         bool absolute_;

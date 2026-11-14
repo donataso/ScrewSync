@@ -103,7 +103,7 @@ namespace Motion
 
     bool idle()
     {
-        return Machine::state() == Machine::State::Idle && !Mode::running();
+        return Machine::state() == Machine::State::Idle && !Mode::busy();
     }
 
     const char *moveTo(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin)

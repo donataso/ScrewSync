@@ -16,23 +16,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ModeInternal.hpp"
-#include "ModeMath.hpp"
+#include "ModeSteps.hpp"
 #include "GcodeDialects.hpp"
 #include "GcodeInterpreter.hpp"
 #include "GcodeStore.hpp"
-#include "Rpm.hpp"
 #include "Wcs.hpp"
-#include <math.h>
-#include <stdlib.h>
-#include <zephyr/sys/util.h>
 #include <stdio.h>
 #include <string.h>
 
-// Walks the active G-code program. Z/X are driven together: the axis with
-// the larger du delta is "main" and moves at the computed speed (rapid for
-// G0, feed-derived for G1, phased to the thread helix for G33); "aux"
-// chases main's fraction of progress, same pattern as a taper's X-follows-Z
-// elsewhere. Positions are absolute from the machine zero, no dialect offset.
+// Walks the active G-code program; ModeSteps runs each step.
 namespace
 {
     using namespace Mode::Detail;
@@ -59,11 +51,7 @@ namespace
 
         Phase phase;
         uint32_t executedSteps; // motion steps completed, for display progress
-        Stepper::Axis mainAxis;
-        Stepper::Axis auxAxis;
-        int64_t mainFrom, mainTo, auxFrom, auxTo;
-        double vectorDu; // Feed only: path length for the per-minute speed split
-        Sync::Link thread;
+        StepMotion motion;
     };
 
     uint8_t g_dummyParams[1];
@@ -114,101 +102,6 @@ namespace
         return nullptr;
     }
 
-    double axisDeltaDu(Stepper::Axis axis, int32_t targetDu)
-    {
-        return (double)(targetDu - Wcs::position(axis));
-    }
-
-    int64_t machineSteps(Stepper::Axis axis, const Gcode::Step &s)
-    {
-        return duToSteps(axis, (double)Wcs::toMachine(axis, axis == Stepper::Axis::Z ? s.zDu : s.xDu));
-    }
-
-    void beginStep(Job &j, const Gcode::Step &s, int64_t spindlePos)
-    {
-        double dz = axisDeltaDu(Stepper::Axis::Z, s.zDu);
-        double dx = axisDeltaDu(Stepper::Axis::X, s.xDu);
-        j.mainAxis = fabs(dz) >= fabs(dx) ? Stepper::Axis::Z : Stepper::Axis::X;
-        j.auxAxis = j.mainAxis == Stepper::Axis::Z ? Stepper::Axis::X : Stepper::Axis::Z;
-        j.mainFrom = Stepper::position(j.mainAxis);
-        j.auxFrom = Stepper::position(j.auxAxis);
-        j.mainTo = machineSteps(j.mainAxis, s);
-        j.auxTo = machineSteps(j.auxAxis, s);
-        // A sub-step du delta can round the chosen main axis to zero steps;
-        // fall back to whichever axis actually has somewhere to go.
-        if (j.mainTo == j.mainFrom && j.auxTo != j.auxFrom) {
-            Stepper::Axis axis = j.mainAxis;
-            j.mainAxis = j.auxAxis;
-            j.auxAxis = axis;
-            int64_t v = j.mainFrom;
-            j.mainFrom = j.auxFrom;
-            j.auxFrom = v;
-            v = j.mainTo;
-            j.mainTo = j.auxTo;
-            j.auxTo = v;
-        }
-        if (s.kind == Gcode::StepKind::Thread) {
-            int32_t dupr = (j.mainTo > j.mainFrom ? -1 : 1) * abs(s.feed);
-            j.thread = {j.mainAxis, dupr, 1, 0, j.mainFrom};
-            j.thread.originSpindlePos = helixOrigin(j.thread, j.mainFrom, 0, spindlePos);
-        } else if (s.kind == Gcode::StepKind::Feed) {
-            j.vectorDu = sqrt(dz * dz + dx * dx);
-        }
-        j.phase = Phase::Move;
-    }
-
-    // True once aux reaches its target; finishes the job on a travel clamp.
-    bool followAux(Job &j)
-    {
-        if (j.auxTo == j.auxFrom) {
-            return true;
-        }
-        double fraction = (double)(Stepper::position(j.mainAxis) - j.mainFrom) / (double)(j.mainTo - j.mainFrom);
-        int64_t target = j.auxFrom + (int64_t)llround(fraction * (double)(j.auxTo - j.auxFrom));
-        if (Stepper::moveTo(j.auxAxis, target, rapidSpeed(j.auxAxis)) != target) {
-            finish(Stepper::isDisabled(j.auxAxis) ? "axis disabled" : "travel limit");
-            return false;
-        }
-        return target == j.auxTo && Stepper::arrived(j.auxAxis) && Stepper::position(j.auxAxis) == j.auxTo;
-    }
-
-    // True once the step's motion is complete. Freezes (no finish, no
-    // progress) while the spindle isn't turning, like the reference
-    // firmware's "spindle pauses gcode" behaviour.
-    bool driveStep(Job &j, int64_t spindlePos, const Gcode::Step &s)
-    {
-        if (s.kind == Gcode::StepKind::Thread) {
-            int64_t target = j.thread.target(spindlePos);
-            int64_t lo = MIN(j.mainFrom, j.mainTo);
-            int64_t hi = MAX(j.mainFrom, j.mainTo);
-            target = CLAMP(target, lo, hi);
-            if (Stepper::moveTo(j.mainAxis, target, rapidSpeed(j.mainAxis)) != target) {
-                finish(Stepper::isDisabled(j.mainAxis) ? "axis disabled" : "travel limit");
-                return false;
-            }
-            bool mainDone = target == j.mainTo && Stepper::arrived(j.mainAxis) && Stepper::position(j.mainAxis) == j.mainTo;
-            bool auxDone = followAux(j);
-            return mainDone && auxDone;
-        }
-        if (Rpm::value() == 0) {
-            Stepper::stop(j.mainAxis);
-            Stepper::stop(j.auxAxis);
-            return false;
-        }
-        int32_t cap = rapidSpeed(j.mainAxis);
-        int32_t speed = cap;
-        if (s.kind != Gcode::StepKind::Rapid) {
-            speed = vectorFeedStepsPerSec(j.vectorDu, overridden(s.feed), j.mainTo - j.mainFrom, cap);
-        }
-        if (Stepper::moveTo(j.mainAxis, j.mainTo, speed) != j.mainTo) {
-            finish(Stepper::isDisabled(j.mainAxis) ? "axis disabled" : "travel limit");
-            return false;
-        }
-        bool mainDone = Stepper::arrived(j.mainAxis) && Stepper::position(j.mainAxis) == j.mainTo;
-        bool auxDone = followAux(j);
-        return mainDone && auxDone;
-    }
-
     const char *startMode(int64_t)
     {
         GcodeStore::ActiveInfo info = GcodeStore::active();
@@ -256,7 +149,11 @@ namespace
         }
         if (g_job.phase == Phase::Move) {
             const Gcode::Step &s = g_job.pending[g_job.pendingIndex];
-            if (driveStep(g_job, spindlePos, s)) {
+            const char *error;
+            bool done = g_job.motion.drive(s, spindlePos, true, error);
+            if (error) {
+                finish(error);
+            } else if (done) {
                 g_job.pendingIndex++;
                 g_job.executedSteps++;
                 g_job.phase = Phase::Parse;
@@ -279,7 +176,8 @@ namespace
         case Gcode::StepKind::Rapid:
         case Gcode::StepKind::Feed:
         case Gcode::StepKind::Thread:
-            beginStep(g_job, s, spindlePos);
+            g_job.motion.begin(s, spindlePos);
+            g_job.phase = Phase::Move;
             break;
         case Gcode::StepKind::Pause:
         case Gcode::StepKind::OptionalPause:

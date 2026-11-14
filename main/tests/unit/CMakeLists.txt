@@ -14,6 +14,7 @@ target_sources(app PRIVATE
     src/test_thread_table.cpp
     src/test_gcode.cpp
     src/test_gcode_meta.cpp
+    src/test_gcode_mdi.cpp
     src/test_probe_cycle.cpp
     src/test_backlash_cycle.cpp
     src/test_mode_cells.cpp
@@ -42,6 +43,7 @@ target_sources(app PRIVATE
     ${FIRMWARE_DIR}/lib/Gcode/GcodeInterpreter.cpp
     ${FIRMWARE_DIR}/lib/Gcode/GcodeLathecode.cpp
     ${FIRMWARE_DIR}/lib/Gcode/GcodeDialects.cpp
+    ${FIRMWARE_DIR}/lib/Gcode/GcodeMdi.cpp
     ${FIRMWARE_DIR}/lib/GcodeStore/GcodeMeta.cpp
     ${FIRMWARE_DIR}/lib/Mode/ProbeCycle.cpp
     ${FIRMWARE_DIR}/lib/Mode/BacklashCycle.cpp

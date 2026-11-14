@@ -67,7 +67,13 @@ namespace Mode
 
     Id current();
     bool running();
+    // A mode runs or MDI moves.
+    bool busy();
     bool owns(Stepper::Axis axis);
+
+    // One G-code line into the MDI queue; nullptr if accepted. ui: a UI
+    // line, run without changing the MDI modal state.
+    const char *mdi(const char *line, bool ui);
 
     // Each returns nullptr on success, else the reason it was refused.
     const char *select(Id id);

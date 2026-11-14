@@ -1,0 +1,162 @@
+/*
+ * This file is part of the ScrewSync project.
+ * Copyright (c) 2026 Donatas Olsevičius
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "ModeInternal.hpp"
+#include "ModeSteps.hpp"
+#include "GcodeDialects.hpp"
+#include "GcodeMdi.hpp"
+#include "Wcs.hpp"
+#include <zephyr/logging/log.h>
+#include <initializer_list>
+
+LOG_MODULE_DECLARE(mode, LOG_LEVEL_INF);
+
+namespace
+{
+    using namespace Mode::Detail;
+
+    constexpr size_t QUEUE_LEN = 4;
+
+    Gcode::Mdi g_session;
+    Gcode::Step g_queue[QUEUE_LEN];
+    size_t g_head = 0;
+    size_t g_count = 0;
+    bool g_moving = false;
+    StepMotion g_motion;
+
+    struct LineSteps : Gcode::StepSink
+    {
+        Gcode::Step steps[Gcode::Mdi::MAX_LINE_STEPS];
+        size_t count = 0;
+        void emit(const Gcode::Step &step) override
+        {
+            if (count < Gcode::Mdi::MAX_LINE_STEPS) {
+                steps[count++] = step;
+            }
+        }
+    };
+
+    // Claims each axis the steps move, starting from z/x.
+    const char *claimMoved(const LineSteps &line, int32_t z, int32_t x)
+    {
+        for (size_t i = 0; i < line.count; i++) {
+            const Gcode::Step &s = line.steps[i];
+            const char *refusal = nullptr;
+            if (s.zDu != z) {
+                refusal = claim(Stepper::Axis::Z);
+            }
+            if (!refusal && s.xDu != x) {
+                refusal = claim(Stepper::Axis::X);
+            }
+            if (refusal) {
+                return refusal;
+            }
+            z = s.zDu;
+            x = s.xDu;
+        }
+        return nullptr;
+    }
+
+    void fail(const char *reason)
+    {
+        LOG_WRN("mdi stopped: %s", reason);
+        setLastError(reason);
+        for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
+            Stepper::stop(axis);
+        }
+        mdiClear();
+        releaseAxes();
+    }
+}
+
+namespace Mode::Detail
+{
+    void mdiBegin()
+    {
+        g_session.begin(*Gcode::find("linuxcnc"), 0, 0);
+    }
+
+    bool mdiActive()
+    {
+        return g_count > 0;
+    }
+
+    void mdiTick(int64_t spindlePos)
+    {
+        const Gcode::Step &s = g_queue[g_head];
+        if (!g_moving) {
+            g_motion.begin(s, spindlePos);
+            g_moving = true;
+        }
+        const char *error;
+        bool done = g_motion.drive(s, spindlePos, false, error);
+        if (error) {
+            fail(error);
+            return;
+        }
+        if (!done) {
+            return;
+        }
+        g_head = (g_head + 1) % QUEUE_LEN;
+        g_count--;
+        g_moving = false;
+        if (!g_count) {
+            releaseAxes();
+        }
+    }
+
+    void mdiClear()
+    {
+        g_head = 0;
+        g_count = 0;
+        g_moving = false;
+    }
+}
+
+namespace Mode
+{
+    const char *mdi(const char *line, bool ui)
+    {
+        Detail::Guard guard;
+        if (running()) {
+            return "mode running, stop first";
+        }
+        // Jog, handwheel, modes and programs move the axes between MDI lines.
+        if (!g_count) {
+            g_session.setPosition((int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
+        }
+        Gcode::Mdi saved = g_session;
+        LineSteps steps;
+        const char *err = g_session.line(line, ui, QUEUE_LEN - g_count, steps);
+        if (err) {
+            return err;
+        }
+        err = claimMoved(steps, saved.zDu(), saved.xDu());
+        if (err) {
+            g_session = saved;
+            if (!g_count) {
+                Detail::releaseAxes();
+            }
+            return err;
+        }
+        for (size_t i = 0; i < steps.count; i++) {
+            g_queue[(g_head + g_count) % QUEUE_LEN] = steps.steps[i];
+            g_count++;
+        }
+        return nullptr;
+    }
+}
