@@ -20,8 +20,9 @@
 
 #include "GcodeCore.hpp"
 
-// Standard (LinuxCNC) interpreter: G0/G1/G33, G20/G21, G90/G91, G94/G18
-// (no-op), M0/M1/M2/M30, F, K, T (ignored). Z/X axes only, X is radius.
+// Standard (LinuxCNC) interpreter: G0/G1/G33, G10 L20 P1, G20/G21, G90/G91,
+// G94/G18/G8/G54 (no-op), M0/M1/M2/M30, M100/M110 (MDI only), F, K, T
+// (ignored). Z/X axes only, X is radius.
 namespace Gcode
 {
     class Interpreter
@@ -52,6 +53,10 @@ namespace Gcode
         {
             return xDu_;
         }
+        void setMdi(bool mdi)
+        {
+            mdi_ = mdi;
+        }
 
     private:
         Motion motion_;
@@ -61,6 +66,7 @@ namespace Gcode
         bool feedSet_;
         int32_t zDu_;
         int32_t xDu_;
+        bool mdi_ = false;
     };
 }
 

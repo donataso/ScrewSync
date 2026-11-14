@@ -1,8 +1,9 @@
-// Standard (LinuxCNC) interpreter: G0/G1/G33, G20/G21, G90/G91, G94/G18
-// (no-op), M0/M1/M2/M30, F, K, T (ignored). Z/X axes only, X is radius.
-// Mirrors main/lib/Gcode/GcodeInterpreter.{hpp,cpp}.
+// Standard (LinuxCNC) interpreter: G0/G1/G33, G10 L20 P1, G20/G21, G90/G91,
+// G94/G18/G8/G54 (no-op), M0/M1/M2/M30, F, K, T (ignored). Z/X axes only, X
+// is radius. Mirrors main/lib/Gcode/GcodeInterpreter.{hpp,cpp}, which also
+// takes M100/M110 in MDI.
 
-import { DU_PER_INCH, DU_PER_MM, type StepKind, type StepSink, type Word } from "./core"
+import { AXIS_X, AXIS_Z, DU_PER_INCH, DU_PER_MM, type StepKind, type StepSink, type Word } from "./core"
 
 const INT32_MAX = 2147483647
 const INT32_MIN = -2147483648
@@ -70,16 +71,12 @@ export class Interpreter {
   }
 
   line(words: Word[], lineNo: number, sink: StepSink): string | null {
-    let hasF = false
-    let hasK = false
-    let hasZ = false
-    let hasX = false
+    const has: Record<string, boolean> = {}
+    const val: Record<string, number> = {}
     let hasM = false
     let hasG33 = false
-    let fVal = 0
-    let kVal = 0
-    let zVal = 0
-    let xVal = 0
+    let hasMotionG = false
+    let hasG10 = false
     let mKind: StepKind = "pause"
 
     for (const w of words) {
@@ -89,14 +86,22 @@ export class Interpreter {
           switch (code) {
             case 0:
               this.motion = Motion.Rapid
+              hasMotionG = true
               break
             case 10:
               this.motion = Motion.Feed
+              hasMotionG = true
               break
             case 330:
               this.motion = Motion.Thread
+              hasMotionG = true
               hasG33 = true
               break
+            case 100:
+              hasG10 = true
+              break
+            case 70:
+              return "G7 not supported, X is radius"
             case 200:
               this.unitScaleDu = DU_PER_INCH
               break
@@ -111,6 +116,8 @@ export class Interpreter {
               break
             case 940:
             case 180:
+            case 80:
+            case 540:
               break
             default:
               return "unsupported command"
@@ -130,6 +137,9 @@ export class Interpreter {
             case 300:
               mKind = "end"
               break
+            case 1000:
+            case 1100:
+              return "only in MDI"
             default:
               return "unsupported command"
           }
@@ -139,38 +149,41 @@ export class Interpreter {
         case "T":
           break
         case "F":
-          if (hasF) {
-            return "duplicate word"
-          }
-          hasF = true
-          fVal = w.value
-          break
         case "K":
-          if (hasK) {
-            return "duplicate word"
-          }
-          hasK = true
-          kVal = w.value
-          break
         case "Z":
-          if (hasZ) {
-            return "duplicate word"
-          }
-          hasZ = true
-          zVal = w.value
-          break
         case "X":
-          if (hasX) {
+        case "L":
+        case "P":
+        case "R":
+          if (has[w.letter]) {
             return "duplicate word"
           }
-          hasX = true
-          xVal = w.value
+          has[w.letter] = true
+          val[w.letter] = w.value
           break
         default:
           return "unsupported axis"
       }
     }
 
+    const hasF = has.F === true
+    const hasK = has.K === true
+    const hasZ = has.Z === true
+    const hasX = has.X === true
+    const fVal = val.F ?? 0
+    const kVal = val.K ?? 0
+    const zVal = val.Z ?? 0
+    const xVal = val.X ?? 0
+
+    if ((has.L || has.P) && !hasG10) {
+      return "L/P requires G10"
+    }
+    if (has.R) {
+      return "R requires M110"
+    }
+    if (hasG10 && hasMotionG) {
+      return "axis words conflict"
+    }
     if (hasG33 && !hasZ && !hasX) {
       return "G33 requires axis move"
     }
@@ -196,7 +209,35 @@ export class Interpreter {
       leadDu = k
     }
 
-    if (hasZ || hasX) {
+    const axes = (hasZ ? AXIS_Z : 0) | (hasX ? AXIS_X : 0)
+
+    if (hasG10) {
+      if (val.L !== 20 || val.P !== 1) {
+        return "only G10 L20 P1"
+      }
+      if (!axes) {
+        return "G10 requires axis"
+      }
+      let newZDu = this.zDu
+      let newXDu = this.xDu
+      if (hasZ) {
+        const z = scaledValueToDu(zVal, this.unitScaleDu)
+        if (z === null) {
+          return "value out of range"
+        }
+        newZDu = z
+      }
+      if (hasX) {
+        const x = scaledValueToDu(xVal, this.unitScaleDu)
+        if (x === null) {
+          return "value out of range"
+        }
+        newXDu = x
+      }
+      this.zDu = newZDu
+      this.xDu = newXDu
+      sink.emit({ kind: "set-position", zDu: newZDu, xDu: newXDu, feed: 0, line: lineNo, axes })
+    } else if (axes) {
       if (this.motion === Motion.None) {
         return "no motion mode"
       }

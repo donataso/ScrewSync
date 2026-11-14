@@ -160,6 +160,13 @@ namespace Motion
         return pos;
     }
 
+    void setSpindleAngle(double deg)
+    {
+        int32_t countsPerRev = spindleCountsPerRev();
+        int64_t origin = (Encoder::position() - (int64_t)llround(deg * countsPerRev / 360.0)) % countsPerRev;
+        Encoder::setOrigin(origin < 0 ? origin + countsPerRev : origin);
+    }
+
     float spindleAngleDeg()
     {
         int32_t countsPerRev = spindleCountsPerRev();

@@ -122,3 +122,56 @@ ZTEST(gcode_mdi, test_program_codes_do_nothing)
     zassert_is_null(mdi.line("M2", false, 0, sink));
     zassert_equal(sink.count, 0);
 }
+
+ZTEST(gcode_mdi, test_motors)
+{
+    Mdi mdi = session();
+    Collect sink;
+    zassert_is_null(mdi.line("M100 Z1 X0", false, 4, sink));
+    zassert_is_null(mdi.line("M100 X1", true, 4, sink));
+    zassert_equal(sink.count, 2);
+    zassert_equal(sink.steps[0].kind, StepKind::Motors);
+    zassert_equal(sink.steps[0].axes, AXIS_Z | AXIS_X);
+    zassert_equal(sink.steps[0].zDu, 1);
+    zassert_equal(sink.steps[0].xDu, 0);
+    zassert_equal(sink.steps[1].axes, AXIS_X);
+    zassert_equal(sink.steps[1].xDu, 1);
+    zassert_not_null(mdi.line("M100", false, 4, sink));
+    zassert_not_null(mdi.line("M100 Z2", false, 4, sink));
+    zassert_not_null(mdi.line("G0 M100 Z1", false, 4, sink));
+}
+
+ZTEST(gcode_mdi, test_spindle_angle)
+{
+    Mdi mdi = session();
+    Collect sink;
+    zassert_is_null(mdi.line("M110 R90.5", false, 4, sink));
+    zassert_is_null(mdi.line("M110", false, 4, sink));
+    zassert_equal(sink.count, 2);
+    zassert_equal(sink.steps[0].kind, StepKind::SpindleAngle);
+    zassert_equal(sink.steps[0].feed, 90500);
+    zassert_equal(sink.steps[1].feed, 0);
+    zassert_not_null(mdi.line("G0 Z1 R5", false, 4, sink));
+}
+
+ZTEST(gcode_mdi, test_set_position_moves_session)
+{
+    Mdi mdi = session();
+    Collect sink;
+    mdi.setPosition(5 * DU_PER_MM, 0);
+    zassert_is_null(mdi.line("G10 L20 P1 Z0", false, 4, sink));
+    zassert_is_null(mdi.line("G91 G0 Z1", false, 4, sink));
+    zassert_equal(sink.count, 2);
+    zassert_equal(sink.steps[0].kind, StepKind::SetPosition);
+    zassert_equal(sink.steps[0].axes, AXIS_Z);
+    zassert_equal(sink.steps[1].zDu, DU_PER_MM);
+}
+
+ZTEST(gcode_mdi, test_program_rejects_mdi_codes)
+{
+    Interpreter interp;
+    find("linuxcnc")->begin(interp, 0, 0);
+    Collect sink;
+    zassert_not_null(interpretLine(*find("linuxcnc"), interp, "M100 Z1", 1, sink));
+    zassert_not_null(interpretLine(*find("linuxcnc"), interp, "M110", 1, sink));
+}

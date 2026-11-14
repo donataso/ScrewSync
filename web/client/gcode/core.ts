@@ -14,16 +14,21 @@ export interface Word {
   value: number
 }
 
-export type StepKind = "rapid" | "feed" | "thread" | "pause" | "optional-pause" | "end"
+// set-position: G10 L20, the axes in mask read zDu/xDu.
+export type StepKind = "rapid" | "feed" | "thread" | "pause" | "optional-pause" | "end" | "set-position"
 
-// One interpreted motion/control action. zDu/xDu are absolute targets,
-// meaningful for the motion kinds only.
+export const AXIS_Z = 1
+export const AXIS_X = 2
+
+// One interpreted motion/control action. For the motion kinds zDu/xDu are
+// absolute targets.
 export interface Step {
   kind: StepKind
   zDu: number
   xDu: number
   feed: number // du/min for Feed, lead du per spindle rev for Thread
   line: number
+  axes?: number
 }
 
 export interface StepSink {

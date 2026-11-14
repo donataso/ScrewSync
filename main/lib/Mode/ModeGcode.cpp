@@ -188,6 +188,12 @@ namespace
             g_job.pendingIndex++;
             finish();
             break;
+        case Gcode::StepKind::SetPosition:
+        case Gcode::StepKind::Motors:
+        case Gcode::StepKind::SpindleAngle:
+            g_job.pendingIndex++;
+            applyMachineStep(s);
+            break;
         }
     }
 

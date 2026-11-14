@@ -197,6 +197,12 @@ namespace
             return "optional-pause";
         case StepKind::End:
             return "end";
+        case StepKind::SetPosition:
+            return "set-position";
+        case StepKind::Motors:
+            return "motors";
+        case StepKind::SpindleAngle:
+            return "spindle-angle";
         }
         return "?";
     }
@@ -219,6 +225,7 @@ namespace
         int32_t zDu;
         int32_t xDu;
         int32_t feed;
+        uint8_t axes;
     };
 
     bool parseKind(const char *text, StepKind &kind)
@@ -245,6 +252,10 @@ namespace
         }
         if (strcmp(text, "end") == 0) {
             kind = StepKind::End;
+            return true;
+        }
+        if (strcmp(text, "set-position") == 0) {
+            kind = StepKind::SetPosition;
             return true;
         }
         return false;
@@ -291,6 +302,7 @@ namespace
                         haveF = true;
                     }
                 }
+                e.axes = (haveZ ? AXIS_Z : 0) | (haveX ? AXIS_X : 0);
                 zassert_true(!isMotionKind(e.kind) || (haveZ && haveX), "missing z/x in .steps line");
                 zassert_true(!hasFeedField(e.kind) || haveF, "missing f in .steps line");
             }
@@ -344,6 +356,11 @@ namespace
             if (isMotionKind(e.kind)) {
                 zassert_equal(s.zDu, e.zDu, "%s: step %u wrong zDu", v.name, (unsigned)stepIndex);
                 zassert_equal(s.xDu, e.xDu, "%s: step %u wrong xDu", v.name, (unsigned)stepIndex);
+            }
+            if (e.kind == StepKind::SetPosition) {
+                zassert_equal(s.axes, e.axes, "%s: step %u wrong axes", v.name, (unsigned)stepIndex);
+                zassert_true(!(e.axes & AXIS_Z) || s.zDu == e.zDu, "%s: step %u wrong zDu", v.name, (unsigned)stepIndex);
+                zassert_true(!(e.axes & AXIS_X) || s.xDu == e.xDu, "%s: step %u wrong xDu", v.name, (unsigned)stepIndex);
             }
             if (hasFeedField(e.kind)) {
                 zassert_equal(s.feed, e.feed, "%s: step %u wrong feed", v.name, (unsigned)stepIndex);

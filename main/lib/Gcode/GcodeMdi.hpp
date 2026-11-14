@@ -31,7 +31,7 @@ namespace Gcode
     class Mdi
     {
     public:
-        static constexpr size_t MAX_LINE_STEPS = 2;
+        static constexpr size_t MAX_LINE_STEPS = 4;
 
         void begin(Dialect &dialect, int32_t zDu, int32_t xDu);
         void setPosition(int32_t zDu, int32_t xDu);
@@ -44,8 +44,8 @@ namespace Gcode
             return interp_.xDu();
         }
 
-        // Motion steps go to sink, all or none, at most room of them; M0/M1/M2/M30
-        // do nothing. ui: a fresh interpreter at the session position runs the
+        // Steps go to sink, all or none, at most room of them; M0/M1/M2/M30 do
+        // nothing. ui: a fresh interpreter at the session position runs the
         // line, so only the position carries back.
         const char *line(const char *text, bool ui, size_t room, StepSink &sink);
 

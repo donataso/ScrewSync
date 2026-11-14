@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
-import { interpretLine, type Step, type StepKind, type StepSink } from "./core"
+import { AXIS_X, AXIS_Z, interpretLine, type Step, type StepKind, type StepSink } from "./core"
 import { find } from "./dialects"
 import { Interpreter } from "./interpreter"
 
@@ -16,6 +16,7 @@ interface Expectation {
   zDu?: number
   xDu?: number
   feed?: number
+  axes?: number
 }
 
 function isMotionKind(kind: StepKind): boolean {
@@ -50,6 +51,7 @@ e.xDu = parseInt(tok.slice(2), 10)
 e.feed = parseInt(tok.slice(2), 10)
 }
     }
+    e.axes = (e.zDu !== undefined ? AXIS_Z : 0) | (e.xDu !== undefined ? AXIS_X : 0)
     out.push(e)
   }
   return out
@@ -119,6 +121,15 @@ describe(`${dialectId} vectors`, () => {
         if (e.kind && isMotionKind(e.kind)) {
           expect(s.zDu).toBe(e.zDu)
           expect(s.xDu).toBe(e.xDu)
+        }
+        if (e.kind === "set-position") {
+          expect(s.axes).toBe(e.axes)
+          if (e.zDu !== undefined) {
+            expect(s.zDu).toBe(e.zDu)
+          }
+          if (e.xDu !== undefined) {
+            expect(s.xDu).toBe(e.xDu)
+          }
         }
         if (e.kind && hasFeedField(e.kind)) {
           expect(s.feed).toBe(e.feed)

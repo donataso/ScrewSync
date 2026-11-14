@@ -28,6 +28,11 @@
 // main's fraction of progress. Targets are work coordinates.
 namespace Mode::Detail
 {
+    bool isMotion(Gcode::StepKind kind);
+
+    // SetPosition, Motors, SpindleAngle.
+    void applyMachineStep(const Gcode::Step &s);
+
     struct StepMotion
     {
         Stepper::Axis mainAxis;

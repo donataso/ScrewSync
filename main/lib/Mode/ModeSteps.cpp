@@ -18,11 +18,13 @@
 #include "ModeSteps.hpp"
 #include "ModeInternal.hpp"
 #include "ModeMath.hpp"
+#include "Motion.hpp"
 #include "Rpm.hpp"
 #include "Wcs.hpp"
 #include <math.h>
 #include <stdlib.h>
 #include <zephyr/sys/util.h>
+#include <initializer_list>
 
 namespace
 {
@@ -61,6 +63,31 @@ namespace
 
 namespace Mode::Detail
 {
+    bool isMotion(Gcode::StepKind kind)
+    {
+        return kind == Gcode::StepKind::Rapid || kind == Gcode::StepKind::Feed || kind == Gcode::StepKind::Thread;
+    }
+
+    void applyMachineStep(const Gcode::Step &s)
+    {
+        if (s.kind == Gcode::StepKind::SpindleAngle) {
+            Motion::setSpindleAngle(s.feed / 1000.0);
+            return;
+        }
+        for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
+            bool isZ = axis == Stepper::Axis::Z;
+            if (!(s.axes & (isZ ? Gcode::AXIS_Z : Gcode::AXIS_X))) {
+                continue;
+            }
+            int32_t value = isZ ? s.zDu : s.xDu;
+            if (s.kind == Gcode::StepKind::SetPosition) {
+                Wcs::setPosition(axis, value);
+            } else if (s.kind == Gcode::StepKind::Motors) {
+                Motion::setAxisEnabled(axis, value != 0);
+            }
+        }
+    }
+
     void StepMotion::begin(const Gcode::Step &s, int64_t spindlePos)
     {
         double dz = axisDeltaDu(Stepper::Axis::Z, s.zDu);

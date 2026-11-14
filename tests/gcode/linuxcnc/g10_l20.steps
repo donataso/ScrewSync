@@ -1,0 +1,6 @@
+2 rapid z=50000 x=20000
+3 set-position z=0
+4 rapid z=-10000 x=20000
+6 set-position x=10000
+7 rapid z=-10000 x=20000
+9 set-position z=254000 x=127000

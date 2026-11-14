@@ -81,7 +81,9 @@ namespace Gcode
     const char *Interpreter::line(const Words &words, uint32_t lineNo, StepSink &sink)
     {
         bool hasF = false, hasK = false, hasZ = false, hasX = false, hasM = false, hasG33 = false;
-        double fVal = 0, kVal = 0, zVal = 0, xVal = 0;
+        bool hasMotionG = false, hasG10 = false, hasL = false, hasP = false, hasR = false;
+        bool hasM100 = false, hasM110 = false;
+        double fVal = 0, kVal = 0, zVal = 0, xVal = 0, lVal = 0, pVal = 0, rVal = 0;
         StepKind mKind = StepKind::Pause;
 
         for (size_t i = 0; i < words.count; i++) {
@@ -95,14 +97,22 @@ namespace Gcode
                 switch (code) {
                 case 0:
                     motion_ = Motion::Rapid;
+                    hasMotionG = true;
                     break;
                 case 10:
                     motion_ = Motion::Feed;
+                    hasMotionG = true;
                     break;
                 case 330:
                     motion_ = Motion::Thread;
+                    hasMotionG = true;
                     hasG33 = true;
                     break;
+                case 100:
+                    hasG10 = true;
+                    break;
+                case 70:
+                    return "G7 not supported, X is radius";
                 case 200:
                     unitScaleDu_ = DU_PER_INCH;
                     break;
@@ -117,6 +127,8 @@ namespace Gcode
                     break;
                 case 940:
                 case 180:
+                case 80:
+                case 540:
                     break;
                 default:
                     return "unsupported command";
@@ -129,54 +141,73 @@ namespace Gcode
                 switch (code) {
                 case 0:
                     mKind = StepKind::Pause;
+                    hasM = true;
                     break;
                 case 10:
                     mKind = StepKind::OptionalPause;
+                    hasM = true;
                     break;
                 case 20:
                 case 300:
                     mKind = StepKind::End;
+                    hasM = true;
+                    break;
+                case 1000:
+                case 1100:
+                    if (!mdi_) {
+                        return "only in MDI";
+                    }
+                    (code == 1000 ? hasM100 : hasM110) = true;
                     break;
                 default:
                     return "unsupported command";
                 }
-                hasM = true;
                 break;
             case 'T':
                 break;
             case 'F':
-                if (hasF) {
-                    return "duplicate word";
-                }
-                hasF = true;
-                fVal = w.value;
-                break;
             case 'K':
-                if (hasK) {
-                    return "duplicate word";
-                }
-                hasK = true;
-                kVal = w.value;
-                break;
             case 'Z':
-                if (hasZ) {
-                    return "duplicate word";
-                }
-                hasZ = true;
-                zVal = w.value;
-                break;
             case 'X':
-                if (hasX) {
+            case 'L':
+            case 'P':
+            case 'R':
+            {
+                bool &has = w.letter == 'F'   ? hasF
+                            : w.letter == 'K' ? hasK
+                            : w.letter == 'Z' ? hasZ
+                            : w.letter == 'X' ? hasX
+                            : w.letter == 'L' ? hasL
+                            : w.letter == 'P' ? hasP
+                                              : hasR;
+                double &val = w.letter == 'F'   ? fVal
+                              : w.letter == 'K' ? kVal
+                              : w.letter == 'Z' ? zVal
+                              : w.letter == 'X' ? xVal
+                              : w.letter == 'L' ? lVal
+                              : w.letter == 'P' ? pVal
+                                                : rVal;
+                if (has) {
                     return "duplicate word";
                 }
-                hasX = true;
-                xVal = w.value;
+                has = true;
+                val = w.value;
                 break;
+            }
             default:
                 return "unsupported axis";
             }
         }
 
+        if ((hasL || hasP) && !hasG10) {
+            return "L/P requires G10";
+        }
+        if (hasR && !hasM110) {
+            return "R requires M110";
+        }
+        if ((hasG10 || hasM100) && (hasMotionG || (hasG10 && hasM100))) {
+            return "axis words conflict";
+        }
         if (hasG33 && !hasZ && !hasX) {
             return "G33 requires axis move";
         }
@@ -198,7 +229,44 @@ namespace Gcode
             return "value out of range";
         }
 
-        if (hasZ || hasX) {
+        Step step{};
+        step.line = lineNo;
+        uint8_t axes = (hasZ ? AXIS_Z : 0) | (hasX ? AXIS_X : 0);
+
+        if (hasG10) {
+            if (!hasL || lVal != 20 || !hasP || pVal != 1) {
+                return "only G10 L20 P1";
+            }
+            if (!axes) {
+                return "G10 requires axis";
+            }
+            int32_t newZDu = zDu_, newXDu = xDu_;
+            if (hasZ && !scaledValueToDu(zVal, unitScaleDu_, newZDu)) {
+                return "value out of range";
+            }
+            if (hasX && !scaledValueToDu(xVal, unitScaleDu_, newXDu)) {
+                return "value out of range";
+            }
+            zDu_ = newZDu;
+            xDu_ = newXDu;
+            step.kind = StepKind::SetPosition;
+            step.zDu = zDu_;
+            step.xDu = xDu_;
+            step.axes = axes;
+            sink.emit(step);
+        } else if (hasM100) {
+            if (!axes) {
+                return "M100 requires axis";
+            }
+            if ((hasZ && zVal != 0 && zVal != 1) || (hasX && xVal != 0 && xVal != 1)) {
+                return "value out of range";
+            }
+            step.kind = StepKind::Motors;
+            step.zDu = (int32_t)zVal;
+            step.xDu = (int32_t)xVal;
+            step.axes = axes;
+            sink.emit(step);
+        } else if (axes) {
             if (motion_ == Motion::None) {
                 return "no motion mode";
             }
@@ -211,8 +279,6 @@ namespace Gcode
             }
 
             if (newZDu != zDu_ || newXDu != xDu_) {
-                Step step{};
-                step.line = lineNo;
                 step.zDu = newZDu;
                 step.xDu = newXDu;
                 if (motion_ == Motion::Rapid) {
@@ -239,14 +305,25 @@ namespace Gcode
             }
         }
 
+        if (hasM110) {
+            int32_t milliDeg;
+            if (!scaledValueToDu(rVal, 1000, milliDeg)) {
+                return "value out of range";
+            }
+            Step angle{};
+            angle.line = lineNo;
+            angle.kind = StepKind::SpindleAngle;
+            angle.feed = milliDeg;
+            sink.emit(angle);
+        }
+
         if (hasM) {
-            Step step{};
-            step.line = lineNo;
-            step.zDu = zDu_;
-            step.xDu = xDu_;
-            step.feed = 0;
-            step.kind = mKind;
-            sink.emit(step);
+            Step m{};
+            m.line = lineNo;
+            m.zDu = zDu_;
+            m.xDu = xDu_;
+            m.kind = mKind;
+            sink.emit(m);
         }
 
         return nullptr;

@@ -55,6 +55,13 @@ namespace
     {
         for (size_t i = 0; i < line.count; i++) {
             const Gcode::Step &s = line.steps[i];
+            if (s.kind == Gcode::StepKind::SetPosition) {
+                z = s.zDu;
+                x = s.xDu;
+            }
+            if (!isMotion(s.kind)) {
+                continue;
+            }
             const char *refusal = nullptr;
             if (s.zDu != z) {
                 refusal = claim(Stepper::Axis::Z);
@@ -69,6 +76,13 @@ namespace
             x = s.xDu;
         }
         return nullptr;
+    }
+
+    void pop()
+    {
+        g_head = (g_head + 1) % QUEUE_LEN;
+        g_count--;
+        g_moving = false;
     }
 
     void fail(const char *reason)
@@ -98,6 +112,16 @@ namespace Mode::Detail
     void mdiTick(int64_t spindlePos)
     {
         const Gcode::Step &s = g_queue[g_head];
+        if (!isMotion(s.kind)) {
+            Gcode::Step step = s;
+            pop();
+            // M100 off on a held axis stops and clears MDI, as "enable off" does.
+            applyMachineStep(step);
+            if (!g_count) {
+                releaseAxes();
+            }
+            return;
+        }
         if (!g_moving) {
             g_motion.begin(s, spindlePos);
             g_moving = true;
@@ -111,9 +135,7 @@ namespace Mode::Detail
         if (!done) {
             return;
         }
-        g_head = (g_head + 1) % QUEUE_LEN;
-        g_count--;
-        g_moving = false;
+        pop();
         if (!g_count) {
             releaseAxes();
         }

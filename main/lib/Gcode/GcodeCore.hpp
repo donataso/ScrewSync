@@ -55,11 +55,17 @@ namespace Gcode
         Thread,
         Pause,
         OptionalPause,
-        End
+        End,
+        SetPosition,  // G10 L20: the axes in mask read zDu/xDu
+        Motors,       // M100: the axes in mask on (1) or off (0) in zDu/xDu
+        SpindleAngle, // M110: the current angle becomes feed millidegrees
     };
 
-    // One interpreted motion/control action. zDu/xDu are absolute targets,
-    // meaningful for the motion kinds only.
+    constexpr uint8_t AXIS_Z = 1;
+    constexpr uint8_t AXIS_X = 2;
+
+    // One interpreted motion/control action. For the motion kinds zDu/xDu
+    // are absolute targets.
     struct Step
     {
         StepKind kind;
@@ -67,6 +73,7 @@ namespace Gcode
         int32_t xDu;
         int32_t feed; // du/min for Feed, lead du per spindle rev for Thread
         uint32_t line;
+        uint8_t axes;
     };
 
     struct StepSink

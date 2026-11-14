@@ -34,9 +34,9 @@ namespace
         }
     };
 
-    bool isMotion(StepKind kind)
+    bool isProgramFlow(StepKind kind)
     {
-        return kind == StepKind::Rapid || kind == StepKind::Feed || kind == StepKind::Thread;
+        return kind == StepKind::Pause || kind == StepKind::OptionalPause || kind == StepKind::End;
     }
 }
 
@@ -52,6 +52,7 @@ namespace Gcode
         dialect_ = &dialect;
         lineNo_ = 0;
         dialect.begin(interp_, zDu, xDu);
+        interp_.setMdi(true);
     }
 
     void Mdi::setPosition(int32_t zDu, int32_t xDu)
@@ -70,11 +71,11 @@ namespace Gcode
         if (err) {
             return err;
         }
-        size_t motionCount = 0;
+        size_t stepCount = 0;
         for (size_t i = 0; i < buf.count; i++) {
-            motionCount += isMotion(buf.steps[i].kind);
+            stepCount += !isProgramFlow(buf.steps[i].kind);
         }
-        if (motionCount > room) {
+        if (stepCount > room) {
             return "queue full";
         }
         if (ui) {
@@ -83,7 +84,7 @@ namespace Gcode
             interp_ = work;
         }
         for (size_t i = 0; i < buf.count; i++) {
-            if (isMotion(buf.steps[i].kind)) {
+            if (!isProgramFlow(buf.steps[i].kind)) {
                 sink.emit(buf.steps[i]);
             }
         }

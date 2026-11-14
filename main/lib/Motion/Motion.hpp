@@ -42,6 +42,8 @@ namespace Motion
 
     // The current spindle angle becomes 0 deg; returns the count it was taken at.
     int64_t zeroSpindle();
+    // The current spindle angle becomes deg.
+    void setSpindleAngle(double deg);
     float spindleAngleDeg();
 }
 
