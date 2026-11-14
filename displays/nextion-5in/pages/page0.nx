@@ -86,4 +86,4 @@ on tmToast.timer:
   hideToast()
 
 on angle.up:
-  send("zero spindle")
+  send("@M110")

@@ -235,7 +235,8 @@ const PLUS_LABEL: Record<Axis, string> = { Z: "toward the tailstock", X: "away f
 const MINUS_LABEL: Record<Axis, string> = { Z: "toward the chuck", X: "toward the centerline" }
 
 async function move(axis: Axis, du: number, duPerMin?: number): Promise<CmdOutcome> {
-  return sendCommand(`move ${axis.toLowerCase()} by ${du}${duPerMin ? ` ${duPerMin}` : ""}`)
+  const motion = duPerMin ? `G1 F${duPerMin / DU_PER_MM}` : "G0"
+  return sendCommand(`@G21 G91 ${motion} ${axis}${du / DU_PER_MM}`)
 }
 
 function AxisDirectionRow({ axis, raw, apply, canConfigure }: CheckProps & { axis: Axis }) {

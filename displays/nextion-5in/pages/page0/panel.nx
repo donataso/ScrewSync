@@ -187,9 +187,9 @@ on startStop.up:
 on zeroYes.up:
   setZeroAsk(0)
   if (zeroFor.val == ZERO_FOR_Z) {
-    send("move z to 0")
+    send("@G90 G0 Z0")
   } else if (zeroFor.val == ZERO_FOR_X) {
-    send("move x to 0")
+    send("@G90 G0 X0")
   } else {
     send("start zero")
   }
@@ -197,9 +197,9 @@ on zeroYes.up:
 on zeroNo.up:
   setZeroAsk(0)
   if (zeroFor.val == ZERO_FOR_Z) {
-    send("zero z")
+    send("@G10 L20 P1 Z0")
   } else if (zeroFor.val == ZERO_FOR_X) {
-    send("zero x")
+    send("@G10 L20 P1 X0")
   } else {
     send("start")
   }

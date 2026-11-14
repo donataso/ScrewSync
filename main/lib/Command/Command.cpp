@@ -70,7 +70,6 @@ namespace
         {"settings", "settings get | set <field> <value> | set-all <json> | reset", "machine config storage", settings},
         {"jog", "jog step [<deci-microns>|next] | z|x +|- [hold|release] | resolution <multiplier> | speed <steps/sec|0> | status",
          "jog buttons (tap = one step, repeated hold = continuous, release = stop), handwheel resolution/speed", jog},
-        {"move", "move z|x to|by <deci-microns> [<du/min>] | stop | zero", "manual positioning; zero = rapid Z then X to 0", move},
         {"mode", "mode [<name>|status]", "selects the operating mode (refused while running)", mode},
         {"start", "start [zero]", "starts the selected mode; zero = rapid Z then X to 0 first", start},
         {"stop", "stop", "stops the mode and decelerates both axes", stop},
@@ -110,9 +109,6 @@ namespace
          pins},
         {"units", "units [mm|inch]", "display units", units},
         {"ws", "ws list | kill <n>", "web UI WebSocket clients: numbered list / closes one", ws},
-        {"zero", "zero z|x [<deci-microns>] | spindle",
-         "sets the current position to 0 or the given value / current angle to 0 deg", zero},
-        {"enable", "enable z|x on|off|status", "manual per-axis motor enable/disable switch", enable},
         {"commands", "commands", "list the command set", commands},
     };
 
@@ -165,9 +161,6 @@ namespace Command::Detail
         args = skipSpaces(args);
         if (tokLen == 5 && !strncmp(token, "start", 5)) {
             return true;
-        }
-        if (tokLen == 4 && !strncmp(token, "move", 4)) {
-            return strcmp(args, "stop") != 0;
         }
         if (tokLen == 3 && !strncmp(token, "cal", 3)) {
             return !strncmp(args, "backlash", 8);

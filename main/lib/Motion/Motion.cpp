@@ -17,15 +17,11 @@
  */
 #include "Motion.hpp"
 #include "Encoder.hpp"
-#include "Events.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
-#include "ModeMath.hpp"
 #include "RunSettings.hpp"
 #include "Settings.hpp"
-#include "Wcs.hpp"
 #include <math.h>
-#include <zephyr/kernel.h>
 
 namespace
 {
@@ -33,54 +29,7 @@ namespace
     {
         return axis == Stepper::Axis::Z ? Settings::g_active.z : Settings::g_active.x;
     }
-
-    const char *moveToSteps(Stepper::Axis axis, int64_t target, int32_t maxSpeed = 0)
-    {
-        if (Mode::owns(axis)) {
-            return "mode running, stop first";
-        }
-        Stepper::moveTo(axis, target, maxSpeed);
-        return nullptr;
-    }
-
-    int32_t rapidSpeed(Stepper::Axis axis, int32_t duPerMin)
-    {
-        if (duPerMin <= 0) {
-            return 0;
-        }
-        const Settings::Axis &cfg = cfgOf(axis);
-        return Mode::Detail::feedStepsPerSec(duPerMin, cfg.motorSteps, cfg.screwPitchDu, cfg.speedRapid);
-    }
-
-    atomic_t g_zeroThenX = ATOMIC_INIT(0);
-
-    int64_t workZeroSteps(Stepper::Axis axis)
-    {
-        return Motion::duToSteps(axis, (double)Wcs::toMachine(axis, 0));
-    }
-
-    // Starts X once Z is at 0. Gives up if Z stopped elsewhere or the machine is not idle.
-    void startXIfZAtZero()
-    {
-        if (!Stepper::arrived(Stepper::Axis::Z) || !atomic_cas(&g_zeroThenX, 1, 0)) {
-            return;
-        }
-        if (Motion::idle() && Wcs::position(Stepper::Axis::Z) == 0) {
-            moveToSteps(Stepper::Axis::X, workZeroSteps(Stepper::Axis::X));
-        }
-    }
-
-    void onAxisArrived(const struct zbus_channel *chan)
-    {
-        const auto *msg = static_cast<const Events::AxisArrived *>(zbus_chan_const_msg(chan));
-        if (msg->axis == (uint8_t)Stepper::Axis::Z) {
-            startXIfZAtZero();
-        }
-    }
 }
-
-ZBUS_LISTENER_DEFINE(MOTION_ARRIVED_LIS, onAxisArrived);
-ZBUS_CHAN_ADD_OBS(AXIS_ARRIVED_CHAN, MOTION_ARRIVED_LIS, 3);
 
 namespace Motion
 {
@@ -106,58 +55,12 @@ namespace Motion
         return Machine::state() == Machine::State::Idle && !Mode::busy();
     }
 
-    const char *moveTo(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin)
-    {
-        targetSteps = duToSteps(axis, (double)Wcs::toMachine(axis, du));
-        return moveToSteps(axis, targetSteps, rapidSpeed(axis, duPerMin));
-    }
-
-    const char *moveBy(Stepper::Axis axis, int64_t du, int64_t &targetSteps, int32_t duPerMin)
-    {
-        targetSteps = Stepper::position(axis) + duToSteps(axis, (double)du);
-        return moveToSteps(axis, targetSteps, rapidSpeed(axis, duPerMin));
-    }
-
-    const char *moveToZero()
-    {
-        atomic_set(&g_zeroThenX, 1);
-        const char *refusal = moveToSteps(Stepper::Axis::Z, workZeroSteps(Stepper::Axis::Z));
-        if (refusal) {
-            atomic_set(&g_zeroThenX, 0);
-            return refusal;
-        }
-        startXIfZAtZero();
-        return nullptr;
-    }
-
-    const char *zero(Stepper::Axis axis, int64_t du)
-    {
-        if (Mode::owns(axis)) {
-            return "mode running, stop first";
-        }
-        Wcs::setPosition(axis, du);
-        return nullptr;
-    }
-
-    void stop(Stepper::Axis axis)
-    {
-        atomic_set(&g_zeroThenX, 0);
-        Stepper::moveTo(axis, Stepper::position(axis));
-    }
-
     void setAxisEnabled(Stepper::Axis axis, bool enabled)
     {
         if (!enabled) {
             Mode::onAxisDisabled(axis);
         }
         RunSettings::setAxisDisabled(axis, !enabled);
-    }
-
-    int64_t zeroSpindle()
-    {
-        int64_t pos = Encoder::position();
-        Encoder::setOrigin(pos % spindleCountsPerRev());
-        return pos;
     }
 
     void setSpindleAngle(double deg)

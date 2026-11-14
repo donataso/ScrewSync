@@ -90,10 +90,10 @@ on xZero.up:
   }
 
 on zEnable.up:
-  send(zOn.val ? "enable z off" : "enable z on")
+  send(zOn.val ? "@M100 Z0" : "@M100 Z1")
 
 on xEnable.up:
-  send(xOn.val ? "enable x off" : "enable x on")
+  send(xOn.val ? "@M100 X0" : "@M100 X1")
 
 on step0.up:
   send("jog step " + stepDu0.val)

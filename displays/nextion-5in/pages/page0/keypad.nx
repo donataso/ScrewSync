@@ -198,6 +198,14 @@ function sendCell(du: number):
       send(kpCmd.txt + du)
   }
 
+// The axis position becomes the typed value, in the display units.
+function sendPosition(axis: text):
+  if (unitsInch.val) {
+    send("@G20 G10 L20 P1 " + axis + kpValue.txt)
+  } else {
+    send("@G21 G10 L20 P1 " + axis + kpValue.txt)
+  }
+
 function applyKeypad():
   if (kpDigits.txt != "") {
     var scaled = kpScaled()
@@ -210,10 +218,10 @@ function applyKeypad():
         sendCell(du)
         break
       case TARGET_Z_POS:
-        send("zero z " + du)
+        sendPosition("Z")
         break
       case TARGET_X_POS:
-        send("zero x " + du)
+        sendPosition("X")
         break
       case TARGET_STEP:
         if (du > 0) {

@@ -143,6 +143,14 @@ How to operate ScrewSync. For connectors and flashing, see
 - Motion pauses while the spindle is stopped and continues when it turns.
 - M0/M1 pause until START. M2/M30 or STOP end the program.
 
+### MDI
+
+- On the serial console, type G-code lines (LinuxCNC), e.g. `G91 G0 Z-1`.
+  The modes (G90/G91, G20/G21, F) stay between lines. STOP or `stop`
+  stops the move and drops the queued lines.
+- `G10 L20 P1 Z0` sets Z zero at the tool. `M100 X0` turns the X motor
+  off, `M100 X1` on. `M110` sets the spindle angle to 0.
+
 ## Probe
 
 - With a contact plate, the tool must be earthed (usually through the

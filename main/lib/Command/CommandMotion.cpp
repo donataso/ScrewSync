@@ -16,9 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "CommandInternal.hpp"
-#include "Encoder.hpp"
 #include "Jog.hpp"
-#include "Motion.hpp"
 #include "RunSettings.hpp"
 
 namespace
@@ -105,105 +103,6 @@ namespace Command::Detail
             }
         } else {
             snprintf(out, outMax, "err jog '%s'", rest);
-        }
-    }
-
-    void move(const char *args, char *out, size_t outMax)
-    {
-        if (!strcmp(skipSpaces(args), "zero")) {
-            const char *refusal = Motion::moveToZero();
-            if (refusal) {
-                snprintf(out, outMax, "err move zero: %s", refusal);
-            } else {
-                snprintf(out, outMax, "ok zero");
-            }
-            return;
-        }
-        char axisTok[4];
-        Stepper::Axis axis;
-        const char *rest;
-        if (!takeAxis(args, "move", "move zero | z|x to|by <deci-microns> [<du/min>] | stop", axisTok, axis, rest, out, outMax)) {
-            return;
-        }
-        if (!strcmp(rest, "stop")) {
-            Motion::stop(axis);
-            snprintf(out, outMax, "ok %s stop", axisTok);
-            return;
-        }
-
-        bool relative = !strncmp(rest, "by ", 3);
-        if (!relative && strncmp(rest, "to ", 3) != 0) {
-            snprintf(out, outMax, "err move %s to|by <deci-microns> [<du/min>] | stop", axisTok);
-            return;
-        }
-        char *end;
-        long long du = strtoll(rest + 3, &end, 10);
-        long duPerMin = 0;
-        bool bad = end == rest + 3;
-        if (!bad && *end) {
-            const char *speedTok = skipSpaces(end);
-            duPerMin = strtol(speedTok, &end, 10);
-            bad = end == speedTok || *end || duPerMin <= 0 || duPerMin > INT32_MAX;
-        }
-        if (bad) {
-            snprintf(out, outMax, "err move %s %s <deci-microns> [<du/min>]", axisTok, relative ? "by" : "to");
-            return;
-        }
-
-        int64_t target;
-        const char *refusal = relative ? Motion::moveBy(axis, du, target, (int32_t)duPerMin)
-                                       : Motion::moveTo(axis, du, target, (int32_t)duPerMin);
-        if (refusal) {
-            snprintf(out, outMax, "err move %s: %s", axisTok, refusal);
-        } else {
-            snprintf(out, outMax, "ok %s target=%lld", axisTok, (long long)target);
-        }
-    }
-
-    void zero(const char *args, char *out, size_t outMax)
-    {
-        if (!strcmp(skipSpaces(args), "spindle")) {
-            int64_t pos = Motion::zeroSpindle();
-            snprintf(out, outMax, "ok spindle zero pos=%lld origin=%lld", (long long)pos,
-                     (long long)Encoder::origin());
-            return;
-        }
-        char axisTok[4];
-        Stepper::Axis axis;
-        const char *rest;
-        if (!takeAxis(args, "zero", "zero z|x [<deci-microns>] | spindle", axisTok, axis, rest, out, outMax)) {
-            return;
-        }
-        long du = 0;
-        if (*rest && !parseLong(rest, du)) {
-            snprintf(out, outMax, "err zero %s [<deci-microns>]", axisTok);
-            return;
-        }
-        const char *refusal = Motion::zero(axis, du);
-        if (refusal) {
-            snprintf(out, outMax, "err zero %s: %s", axisTok, refusal);
-        } else {
-            snprintf(out, outMax, "ok %s=%ld", axisTok, du);
-        }
-    }
-
-    void enable(const char *args, char *out, size_t outMax)
-    {
-        char axisTok[4];
-        Stepper::Axis axis;
-        const char *rest;
-        if (!takeAxis(args, "enable", "enable z|x on|off|status", axisTok, axis, rest, out, outMax)) {
-            return;
-        }
-        if (!*rest || !strcmp(rest, "status")) {
-            snprintf(out, outMax, "ok %s enabled=%d held=%d", axisTok, (int)!Stepper::isDisabled(axis),
-                     (int)Stepper::isHeld(axis));
-        } else if (!strcmp(rest, "on") || !strcmp(rest, "off")) {
-            bool on = rest[1] == 'n';
-            Motion::setAxisEnabled(axis, on);
-            snprintf(out, outMax, "ok %s %s", axisTok, on ? "enabled" : "disabled");
-        } else {
-            snprintf(out, outMax, "err enable %s on|off|status", axisTok);
         }
     }
 }

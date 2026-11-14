@@ -25,7 +25,8 @@ replies; see `docs/screen.md`.
 
 ## Requests
 
-- `<verb> [args...]` (e.g. `move z by 125000`, `zero X`, `mode thread`).
+- `<verb> [args...]` (e.g. `mode thread`, `jog step next`), or a G-code
+  line (see [MDI](#mdi)).
 - `settings set-all <json>`: applies every field present in one JSON object
   (bulk import, or a settings form saving several fields at once), through
   the same per-field validation as `settings set <field> <value>`, instead
@@ -39,12 +40,29 @@ replies; see `docs/screen.md`.
   instead of running while machine state is `flashing` or `estop`.
 - `jog step [<deci-microns>|next]`: shows or sets the jog step. `next`
   selects the next preset, then the custom step, then the first preset.
-- `move z|x to|by <deci-microns> [<du/min>]`: absolute or relative move.
-  The optional speed is in deci-microns per minute, capped at
-  `speedRapid`; without it the move runs at `speedRapid`.
 - `estop` / `estop ack`: `estop` alone replies `ok state=<name>`. `estop ack`
   is the one command let through while tripped -- it clears the EStop and
   reboots.
+
+## MDI
+
+- A line that starts with G, M, T, F, X or Z, then a digit, sign or dot,
+  is G-code (LinuxCNC dialect), e.g. `G91 G0 Z-1`. Reply: `ok` when queued,
+  else `err <reason>`.
+- The modal state (G90/G91, G20/G21, F, motion mode) stays between lines.
+  When the queue is empty, the next line starts from the current position.
+- `@` before a line marks a UI line (display, switches, web buttons). It
+  runs from a fresh modal state and does not change the MDI one, so it
+  gives every mode it needs, e.g. `@G21 G91 G0 Z1`.
+- Lines queue while a move runs; a full queue gives `err queue full`.
+  Refused while a mode runs. `stop` stops both axes and clears the queue.
+- G0 runs at `speedRapid`. G0/G1 move with the spindle stopped. The feed
+  override applies to G1.
+- `G10 L20 P1 Z… X…`: the current position reads the given values (X is
+  radius). Also in programs.
+- MDI only: `M100 Z<0|1> X<0|1>` turns the motors off or on (an axis not
+  named stays); `M110 [R<deg>]` makes the current spindle angle R (0 if
+  omitted).
 
 ## Modes
 
@@ -52,9 +70,9 @@ replies; see `docs/screen.md`.
   state, phase, pass and the last job error. `start [zero]` (`zero`: rapid Z,
   then X to 0 first), `stop`, `skip` (next
   depth pass of a multi-pass mode).
-- `override [status] | + | - | reset`: feed override of the running job,
-  percent of the set feed, clamped to `Mode::OVERRIDE_*_PCT`. Refused when
-  idle or in thread; back to 100 on each `start`.
+- `override [status] | + | - | reset`: feed override of the running job
+  or MDI move, percent of the set feed, clamped to `Mode::OVERRIDE_*_PCT`.
+  Refused when nothing runs or in thread; back to 100 on each `start`.
 - Parameters, one verb per mode: `<mode> [status]` lists `name=value ...`;
   `<mode> <param> <value>` sets one. Lengths/pitches in deci-microns,
   speeds in deci-microns per minute, tapers as half-angle degrees (+ =
