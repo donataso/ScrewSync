@@ -58,7 +58,7 @@ namespace
             j.raw("null");
             return;
         }
-        j.raw("{\"name\":").str(a.name).raw(",\"flavor\":").str(a.flavor);
+        j.raw("{\"name\":").str(a.name).raw(",\"dialect\":").str(a.dialect);
         j.fmt(",\"size\":%zu,\"steps\":%u,\"id\":", a.size, (unsigned)a.steps).strOrNull(a.savedId);
         j.fmt(",\"version\":%u}", (unsigned)a.version);
     }
@@ -111,7 +111,7 @@ namespace
         for (size_t i = 0; j.ok && i < g_list.count; i++) {
             const GcodeStore::ProgramInfo &p = g_list.programs[i];
             j.raw(i ? ",{\"id\":" : "{\"id\":").str(p.id).raw(",\"name\":").str(p.name);
-            j.raw(",\"flavor\":").str(p.flavor).fmt(",\"size\":%zu}", p.size);
+            j.raw(",\"dialect\":").str(p.dialect).fmt(",\"size\":%zu}", p.size);
         }
         j.fmt("],\"free\":%llu,\"active\":", (unsigned long long)g_list.freeBytes);
         writeActive(j);

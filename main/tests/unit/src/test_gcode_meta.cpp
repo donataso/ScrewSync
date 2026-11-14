@@ -47,8 +47,8 @@ ZTEST(gcode_meta, test_header_round_trip)
 
     Header h;
     zassert_true(decodeHeader(buf, n, h));
-    zassert_equal(h.flavorLen, 9);
-    zassert_mem_equal(h.flavor, "lathecode", h.flavorLen);
+    zassert_equal(h.dialectLen, 9);
+    zassert_mem_equal(h.dialect, "lathecode", h.dialectLen);
     zassert_equal(h.nameLen, 5);
     zassert_mem_equal(h.name, "part1", h.nameLen);
     zassert_equal(h.bodyOffset, (size_t)n);
@@ -65,7 +65,7 @@ ZTEST(gcode_meta, test_decode_header_with_body)
     const char *text = "lathecode\tmy part\nG0 X0 Z0\nG1 X1\n";
     Header h;
     zassert_true(decodeHeader(text, strlen(text), h));
-    zassert_equal(h.flavorLen, 9);
+    zassert_equal(h.dialectLen, 9);
     zassert_equal(h.nameLen, 7);
     zassert_mem_equal(h.name, "my part", h.nameLen);
     zassert_str_equal(text + h.bodyOffset, "G0 X0 Z0\nG1 X1\n");
@@ -76,15 +76,15 @@ ZTEST(gcode_meta, test_decode_header_malformed)
     Header h;
     zassert_false(decodeHeader("no newline here", 16, h)); // no '\n'
     zassert_false(decodeHeader("noheadertab\n", 12, h)); // no tab
-    zassert_false(decodeHeader("\tname\n", 6, h)); // empty flavor
+    zassert_false(decodeHeader("\tname\n", 6, h)); // empty dialect
     zassert_false(decodeHeader("lathecode\t\n", 11, h)); // empty name
 }
 
 ZTEST(gcode_meta, test_validate_program_ok)
 {
-    Gcode::Lathecode flavor;
+    Gcode::Lathecode dialect;
     const char *text = "G0 Z-1 X0\nG1 X1 Z-2 F100\n";
-    ValidateResult r = validateProgram(text, strlen(text), flavor);
+    ValidateResult r = validateProgram(text, strlen(text), dialect);
     zassert_true(r.ok);
     zassert_is_null(r.error);
     zassert_equal(r.steps, 2);
@@ -92,33 +92,33 @@ ZTEST(gcode_meta, test_validate_program_ok)
 
 ZTEST(gcode_meta, test_validate_program_axes_mismatch)
 {
-    Gcode::Lathecode flavor;
+    Gcode::Lathecode dialect;
     const char *text = "; Axes expected: Z+ points left, X+ points up\nG1 X1 Z-2 F100\n";
-    ValidateResult r = validateProgram(text, strlen(text), flavor);
+    ValidateResult r = validateProgram(text, strlen(text), dialect);
     zassert_false(r.ok);
     zassert_not_null(strstr(r.error, "axes mismatch"));
 }
 
 ZTEST(gcode_meta, test_validate_program_empty)
 {
-    Gcode::Lathecode flavor;
-    ValidateResult r = validateProgram("", 0, flavor);
+    Gcode::Lathecode dialect;
+    ValidateResult r = validateProgram("", 0, dialect);
     zassert_false(r.ok);
     zassert_str_equal(r.error, "empty program");
 }
 
 ZTEST(gcode_meta, test_validate_program_embedded_nul)
 {
-    Gcode::Lathecode flavor;
+    Gcode::Lathecode dialect;
     char text[] = {'G', '0', ' ', 'X', '0', '\0', '\n'};
-    ValidateResult r = validateProgram(text, sizeof(text), flavor);
+    ValidateResult r = validateProgram(text, sizeof(text), dialect);
     zassert_false(r.ok);
     zassert_str_equal(r.error, "embedded NUL byte");
 }
 
 ZTEST(gcode_meta, test_validate_program_line_too_long)
 {
-    Gcode::Lathecode flavor;
+    Gcode::Lathecode dialect;
     char text[Gcode::MAX_LINE_LEN + 32];
     size_t n = 0;
     text[n++] = 'G';
@@ -129,7 +129,7 @@ ZTEST(gcode_meta, test_validate_program_line_too_long)
         text[n++] = '0';
     }
     text[n++] = '\n';
-    ValidateResult r = validateProgram(text, n, flavor);
+    ValidateResult r = validateProgram(text, n, dialect);
     zassert_false(r.ok);
     zassert_str_equal(r.error, "line too long");
     zassert_equal(r.line, 1);
@@ -137,9 +137,9 @@ ZTEST(gcode_meta, test_validate_program_line_too_long)
 
 ZTEST(gcode_meta, test_validate_program_syntax_error_reports_line)
 {
-    Gcode::Lathecode flavor;
+    Gcode::Lathecode dialect;
     const char *text = "G0 X0 Z0\nG97\nG1 X1\n";
-    ValidateResult r = validateProgram(text, strlen(text), flavor);
+    ValidateResult r = validateProgram(text, strlen(text), dialect);
     zassert_false(r.ok);
     zassert_not_null(r.error);
     zassert_equal(r.line, 2);
@@ -147,9 +147,9 @@ ZTEST(gcode_meta, test_validate_program_syntax_error_reports_line)
 
 ZTEST(gcode_meta, test_validate_program_no_motion_steps)
 {
-    Gcode::Lathecode flavor;
+    Gcode::Lathecode dialect;
     const char *text = "G20\nG90\n(just comments)\n";
-    ValidateResult r = validateProgram(text, strlen(text), flavor);
+    ValidateResult r = validateProgram(text, strlen(text), dialect);
     zassert_false(r.ok);
     zassert_str_equal(r.error, "no motion steps");
 }

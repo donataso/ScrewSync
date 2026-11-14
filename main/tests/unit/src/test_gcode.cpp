@@ -19,15 +19,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include "GcodeCore.hpp"
-#include "GcodeFlavors.hpp"
-#include "GcodeLathecode.hpp"
+#include "GcodeDialects.hpp"
+#include "GcodeInterpreter.hpp"
 
 using namespace Gcode;
 
 namespace
 {
     const unsigned char VECTORS_BLOB[] = {
-#include "gcode_lathecode_vectors.inc"
+#include "gcode_vectors.inc"
     };
     constexpr size_t VECTORS_BLOB_LEN = sizeof(VECTORS_BLOB);
     constexpr size_t MAX_BLOB_CHARS = 32768;
@@ -304,15 +304,24 @@ namespace
         Expectation expectations[MAX_STEPS_PER_VECTOR];
         size_t expectCount = parseSteps(v.stepsLines, v.stepsLineCount, expectations, MAX_STEPS_PER_VECTOR);
 
-        Lathecode flavor;
-        flavor.begin(0, 0);
+        char dialectId[16];
+        const char *slash = strchr(v.name, '/');
+        zassert_not_null(slash, "%s: no dialect folder", v.name);
+        size_t idLen = MIN((size_t)(slash - v.name), sizeof(dialectId) - 1);
+        memcpy(dialectId, v.name, idLen);
+        dialectId[idLen] = '\0';
+        Dialect *dialect = Gcode::find(dialectId);
+        zassert_not_null(dialect, "%s: unknown dialect", v.name);
+
+        Interpreter interp;
+        dialect->begin(interp, 0, 0);
         CollectSink sink;
 
         const char *errorMsg = nullptr;
         uint32_t errorLine = 0;
         for (size_t i = 0; i < v.gcodeLineCount && !errorMsg; i++) {
             uint32_t lineNo = (uint32_t)(i + 1);
-            const char *err = interpretLine(flavor, v.gcodeLines[i], lineNo, sink);
+            const char *err = interpretLine(*dialect, interp, v.gcodeLines[i], lineNo, sink);
             if (err) {
                 errorMsg = err;
                 errorLine = lineNo;
@@ -447,15 +456,16 @@ ZTEST(gcode, test_tokenize_number_forms)
     zassert_within(words.words[0].value, -0.5, 1e-9);
 }
 
-ZTEST(gcode, test_flavor_registry)
+ZTEST(gcode, test_dialect_registry)
 {
     zassert_true(Gcode::count() > 0);
     for (size_t i = 0; i < Gcode::count(); i++) {
-        Flavor *flavor = Gcode::at(i);
-        zassert_not_null(flavor);
-        zassert_equal(Gcode::find(flavor->id()), flavor, "flavor ids are not unique");
+        Dialect *dialect = Gcode::at(i);
+        zassert_not_null(dialect);
+        zassert_equal(Gcode::find(dialect->id()), dialect, "dialect ids are not unique");
     }
     zassert_not_null(Gcode::find("lathecode"));
+    zassert_not_null(Gcode::find("linuxcnc"));
     zassert_is_null(Gcode::find("nope"));
     zassert_is_null(Gcode::find(""));
 }

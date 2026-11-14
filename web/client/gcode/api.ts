@@ -3,13 +3,13 @@ import type { Mapping } from "./preview"
 export interface GcodeProgramInfo {
   id: string
   name: string
-  flavor: string
+  dialect: string
   size: number
 }
 
 export interface GcodeActiveInfo {
   name: string
-  flavor: string
+  dialect: string
   size: number
   steps: number
   id: string | null
@@ -74,13 +74,13 @@ throw new Error(await readError(res))
 export async function uploadGcode(
   text: string,
   name: string,
-  flavor: string,
+  dialect: string,
   target: "save" | "run",
 ): Promise<GcodeUploadResult> {
   const res = await fetch(`/gcode/${target}`, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
-    body: `${flavor}\t${name}\n${text}`,
+    body: `${dialect}\t${name}\n${text}`,
   })
   if (!res.ok) {
 return { ok: false, error: await readError(res) }
@@ -91,12 +91,12 @@ return { ok: false, error: await readError(res) }
 // Only the fields given are changed; omitted ones are sent empty.
 export async function updateGcode(
   id: string,
-  changes: { name?: string; flavor?: string; text?: string },
+  changes: { name?: string; dialect?: string; text?: string },
 ): Promise<GcodeUploadResult> {
   const res = await fetch(`/gcode/update?id=${encodeURIComponent(id)}`, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
-    body: `${changes.flavor ?? ""}\t${changes.name ?? ""}\n${changes.text ?? ""}`,
+    body: `${changes.dialect ?? ""}\t${changes.name ?? ""}\n${changes.text ?? ""}`,
   })
   if (!res.ok) {
 return { ok: false, error: await readError(res) }

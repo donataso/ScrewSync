@@ -21,7 +21,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// Flavor-neutral G-code pieces: tokenizer, interpreted Step, Flavor
+// Dialect-neutral G-code pieces: tokenizer, interpreted Step, Dialect
 // interface. No Zephyr dependency; no heap allocation.
 namespace Gcode
 {
@@ -76,16 +76,21 @@ namespace Gcode
         {}
     };
 
-    struct Flavor
+    class Interpreter;
+
+    // Turns one dialect's lines into the standard (LinuxCNC) words the
+    // Interpreter runs.
+    struct Dialect
     {
-        virtual void begin(int32_t startZDu, int32_t startXDu) = 0;
-        virtual const char *line(const Words &words, uint32_t lineNo, StepSink &sink) = 0;
         virtual const char *id() const = 0;
-        virtual ~Flavor()
+        // Resets interp and the dialect's own state for a new program.
+        virtual void begin(Interpreter &interp, int32_t startZDu, int32_t startXDu) = 0;
+        virtual const char *translate(Words &words) = 0;
+        virtual ~Dialect()
         {}
     };
 
-    const char *interpretLine(Flavor &flavor, const char *text, uint32_t lineNo, StepSink &sink);
+    const char *interpretLine(Dialect &dialect, Interpreter &interp, const char *text, uint32_t lineNo, StepSink &sink);
 }
 
 #endif

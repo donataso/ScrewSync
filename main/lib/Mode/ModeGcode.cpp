@@ -17,7 +17,8 @@
  */
 #include "ModeInternal.hpp"
 #include "ModeMath.hpp"
-#include "GcodeFlavors.hpp"
+#include "GcodeDialects.hpp"
+#include "GcodeInterpreter.hpp"
 #include "GcodeStore.hpp"
 #include "Rpm.hpp"
 #include "Wcs.hpp"
@@ -29,9 +30,9 @@
 
 // Walks the active G-code program. Z/X are driven together: the axis with
 // the larger du delta is "main" and moves at the computed speed (rapid for
-// G0, feed-derived for G1, phased to the thread helix for G32); "aux"
+// G0, feed-derived for G1, phased to the thread helix for G33); "aux"
 // chases main's fraction of progress, same pattern as a taper's X-follows-Z
-// elsewhere. Positions are absolute from the machine zero, no flavor offset.
+// elsewhere. Positions are absolute from the machine zero, no dialect offset.
 namespace
 {
     using namespace Mode::Detail;
@@ -45,7 +46,8 @@ namespace
 
     struct Job
     {
-        Gcode::Flavor *flavor;
+        Gcode::Dialect *dialect;
+        Gcode::Interpreter interp;
         const char *text;
         size_t len;
         size_t pos;
@@ -102,7 +104,7 @@ namespace
 
             QueueSink sink;
             sink.job = &j;
-            const char *err = Gcode::interpretLine(*j.flavor, buf, j.lineNo, sink);
+            const char *err = Gcode::interpretLine(*j.dialect, j.interp, buf, j.lineNo, sink);
             if (err) {
                 static char reason[48];
                 snprintf(reason, sizeof(reason), "line %lu: %s", (unsigned long)j.lineNo, err);
@@ -213,9 +215,9 @@ namespace
         if (!info.present) {
             return "no program loaded";
         }
-        Gcode::Flavor *flavor = Gcode::find(info.flavor);
-        if (!flavor) {
-            return "unknown flavor";
+        Gcode::Dialect *dialect = Gcode::find(info.dialect);
+        if (!dialect) {
+            return "unknown dialect";
         }
         const char *refusal = claim(Stepper::Axis::Z);
         if (!refusal) {
@@ -231,10 +233,10 @@ namespace
             return "no program loaded";
         }
         g_job = {};
-        g_job.flavor = flavor;
+        g_job.dialect = dialect;
         g_job.text = text;
         g_job.len = len;
-        flavor->begin((int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
+        dialect->begin(g_job.interp, (int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
         return nullptr;
     }
 

@@ -114,18 +114,19 @@ replies; see `docs/screen.md`.
 
 ## G-code (HTTP)
 
-- Upload body: `<flavor>\t<name>\n`, then the program text. Every upload
-  is validated by a dry run through the flavor; a failure replies 400
+- Dialects: `lathecode`, `linuxcnc`.
+- Upload body: `<dialect>\t<name>\n`, then the program text. Every upload
+  is validated by a dry run through the dialect; a failure replies 400
   `{"ok":false,"error","line"}` (line 0 = not tied to a line). A LatheCode
   `; Axes expected:` header other than `Z+ points right, X+ points down` is
   refused.
 - `POST /gcode/save`: stores a new program. `POST /gcode/run`: makes it the
   active program without saving. `POST /gcode/update?id=`: replaces a saved
-  one; an empty flavor, name or program keeps the stored one.
+  one; an empty dialect, name or program keeps the stored one.
   `POST /gcode/select?id=`: loads a saved program as the active one.
   Success replies `{"ok":true,"id","active"}`.
-- `GET /gcode`: `{"programs":[{id, name, flavor, size}], "free", "active"}`.
-  `active` is `null` or `{name, flavor, size, steps, id, version}` (`id`
+- `GET /gcode`: `{"programs":[{id, name, dialect, size}], "free", "active"}`.
+  `active` is `null` or `{name, dialect, size, steps, id, version}` (`id`
   null if unsaved, `steps` = motion moves).
 - `GET /gcode/program?id=` / `GET /gcode/active`: program text.
   `POST /gcode/delete?id=`.

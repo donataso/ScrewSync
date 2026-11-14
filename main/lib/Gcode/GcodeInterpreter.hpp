@@ -15,38 +15,38 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "GcodeFlavors.hpp"
-#include "GcodeLathecode.hpp"
-#include <string.h>
+#ifndef GcodeInterpreter_h
+#define GcodeInterpreter_h
 
-namespace
-{
-    using namespace Gcode;
+#include "GcodeCore.hpp"
 
-    Lathecode g_lathecode;
-    Flavor *const FLAVORS[] = {&g_lathecode};
-    constexpr size_t FLAVOR_COUNT = sizeof(FLAVORS) / sizeof(FLAVORS[0]);
-}
-
+// Standard (LinuxCNC) interpreter: G0/G1/G33, G20/G21, G90/G91, G94/G18
+// (no-op), M0/M1/M2/M30, F, K, T (ignored). Z/X axes only, X is radius.
 namespace Gcode
 {
-    Flavor *find(const char *id)
+    class Interpreter
     {
-        for (size_t i = 0; i < FLAVOR_COUNT; i++) {
-            if (strcmp(FLAVORS[i]->id(), id) == 0) {
-                return FLAVORS[i];
-            }
-        }
-        return nullptr;
-    }
+    public:
+        enum class Motion : uint8_t
+        {
+            None,
+            Rapid,
+            Feed,
+            Thread
+        };
 
-    size_t count()
-    {
-        return FLAVOR_COUNT;
-    }
+        void begin(int32_t startZDu, int32_t startXDu, Motion motion = Motion::None);
+        const char *line(const Words &words, uint32_t lineNo, StepSink &sink);
 
-    Flavor *at(size_t i)
-    {
-        return FLAVORS[i];
-    }
+    private:
+        Motion motion_;
+        bool absolute_;
+        int32_t unitScaleDu_;
+        int32_t feedDuPerMin_;
+        bool feedSet_;
+        int32_t zDu_;
+        int32_t xDu_;
+    };
 }
+
+#endif

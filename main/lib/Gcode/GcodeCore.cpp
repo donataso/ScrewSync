@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "GcodeCore.hpp"
+#include "GcodeInterpreter.hpp"
 
 namespace
 {
@@ -157,7 +158,7 @@ namespace Gcode
         return nullptr;
     }
 
-    const char *interpretLine(Flavor &flavor, const char *text, uint32_t lineNo, StepSink &sink)
+    const char *interpretLine(Dialect &dialect, Interpreter &interp, const char *text, uint32_t lineNo, StepSink &sink)
     {
         Words words;
         const char *err = tokenize(text, words);
@@ -167,6 +168,10 @@ namespace Gcode
         if (words.count == 0) {
             return nullptr;
         }
-        return flavor.line(words, lineNo, sink);
+        err = dialect.translate(words);
+        if (err) {
+            return err;
+        }
+        return interp.line(words, lineNo, sink);
     }
 }

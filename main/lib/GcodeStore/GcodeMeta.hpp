@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 // Pure helpers for saved-program metadata: name validation, the one-line
-// file header, and dry-run validation against a flavor. No Zephyr
+// file header, and dry-run validation against a dialect. No Zephyr
 // dependency, so these are unit-testable on native_sim.
 namespace GcodeMeta
 {
@@ -32,23 +32,23 @@ namespace GcodeMeta
     // 1..NAME_MAX_LEN UTF-8 bytes, no ASCII control chars.
     bool validName(const char *name, size_t len);
 
-    // Writes "<flavor>\t<name>\n" to out. Returns the length, or -1 if it
+    // Writes "<dialect>\t<name>\n" to out. Returns the length, or -1 if it
     // doesn't fit outMax.
-    int encodeHeader(const char *flavor, const char *name, char *out, size_t outMax);
+    int encodeHeader(const char *dialect, const char *name, char *out, size_t outMax);
 
     // Points into text; nothing is copied.
     struct Header
     {
-        const char *flavor;
-        size_t flavorLen;
+        const char *dialect;
+        size_t dialectLen;
         const char *name;
         size_t nameLen;
         size_t bodyOffset;
     };
 
-    // Decodes the first line of text as "<flavor>\t<name>\n". False if
-    // there's no header line or it has no tab-separated flavor and name.
-    // With allowEmpty, an empty flavor or name is accepted.
+    // Decodes the first line of text as "<dialect>\t<name>\n". False if
+    // there's no header line or it has no tab-separated dialect and name.
+    // With allowEmpty, an empty dialect or name is accepted.
     bool decodeHeader(const char *text, size_t len, Header &out, bool allowEmpty = false);
 
     struct ValidateResult
@@ -59,11 +59,11 @@ namespace GcodeMeta
         uint32_t steps; // motion steps emitted, valid only if ok
     };
 
-    // Dry-runs text through flavor: begin(0, 0), then interpretLine per
+    // Dry-runs text through dialect: begin at 0, 0, then interpretLine per
     // line with a counting sink. Rejects an empty program, an embedded NUL
-    // byte, an axesMismatch() header, a line at or over Gcode::MAX_LINE_LEN, a flavor syntax error
+    // byte, an axesMismatch() header, a line at or over Gcode::MAX_LINE_LEN, a dialect syntax error
     // (first one wins), and a program with zero motion steps.
-    ValidateResult validateProgram(const char *text, size_t len, Gcode::Flavor &flavor);
+    ValidateResult validateProgram(const char *text, size_t len, Gcode::Dialect &dialect);
 
     // True if text carries the LatheCode generator's
     // "; Axes expected: Z+ points <left|right>, X+ points <up|down>"

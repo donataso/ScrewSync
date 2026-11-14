@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef GcodeFlavors_h
-#define GcodeFlavors_h
+#ifndef GcodeDialects_h
+#define GcodeDialects_h
 
 #include "GcodeCore.hpp"
 #include <stddef.h>
@@ -24,10 +24,10 @@
 namespace Gcode
 {
     // nullptr if id is not registered.
-    Flavor *find(const char *id);
+    Dialect *find(const char *id);
 
     size_t count();
-    Flavor *at(size_t i);
+    Dialect *at(size_t i);
 }
 
 #endif

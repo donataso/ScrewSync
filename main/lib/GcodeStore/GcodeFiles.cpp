@@ -81,7 +81,7 @@ namespace
     void fillInfo(GcodeStore::ProgramInfo &info, const GcodeMeta::Header &h, size_t fileSize)
     {
         copyField(info.name, h.name, h.nameLen);
-        copyField(info.flavor, h.flavor, h.flavorLen);
+        copyField(info.dialect, h.dialect, h.dialectLen);
         info.size = fileSize - h.bodyOffset;
     }
 }
@@ -125,15 +125,15 @@ namespace GcodeFiles
         snprintf(out, sizeof(out), "%08x", maxId + 1);
     }
 
-    bool save(const char *id, const char *flavor, const char *name, const char *text, size_t len)
+    bool save(const char *id, const char *dialect, const char *name, const char *text, size_t len)
     {
         char tmpPath[PATH_MAX_LEN];
         char finalPath[PATH_MAX_LEN];
         path(id, "tmp", tmpPath, sizeof(tmpPath));
         path(id, "gc", finalPath, sizeof(finalPath));
 
-        char header[GcodeMeta::NAME_MAX_LEN + GcodeStore::FLAVOR_MAX_LEN + 3];
-        int headerLen = GcodeMeta::encodeHeader(flavor, name, header, sizeof(header));
+        char header[GcodeMeta::NAME_MAX_LEN + GcodeStore::DIALECT_MAX_LEN + 3];
+        int headerLen = GcodeMeta::encodeHeader(dialect, name, header, sizeof(header));
         if (headerLen < 0) {
             return false;
         }

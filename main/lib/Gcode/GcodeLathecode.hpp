@@ -20,38 +20,25 @@
 
 #include "GcodeCore.hpp"
 
-// Flavor for https://kachurovskiy.com/lathecode/ output: G0/G1/G32,
-// G20/G21, G90/G91, G94/G18 (no-op), M0/M1/M2/M30, F, T. Z/X axes only,
-// X is radius from the centreline.
+// Dialect for https://kachurovskiy.com/lathecode/ output: the standard set
+// with G32 instead of G33, its F as the modal thread lead. Starts in G1.
 namespace Gcode
 {
-    class Lathecode : public Flavor
+    class Lathecode : public Dialect
     {
     public:
-        void begin(int32_t startZDu, int32_t startXDu) override;
-        const char *line(const Words &words, uint32_t lineNo, StepSink &sink) override;
         const char *id() const override
         {
             return "lathecode";
         }
+        void begin(Interpreter &interp, int32_t startZDu, int32_t startXDu) override;
+        const char *translate(Words &words) override;
 
     private:
-        enum class Motion : uint8_t
-        {
-            Rapid,
-            Feed,
-            Thread
-        };
-
-        Motion motion_;
-        bool absolute_;
+        bool thread_;
+        bool leadSet_;
+        double leadDu_;
         int32_t unitScaleDu_;
-        int32_t feedDuPerMin_;
-        bool feedSet_;
-        int32_t threadLeadDu_;
-        bool threadLeadSet_;
-        int32_t zDu_;
-        int32_t xDu_;
     };
 }
 

@@ -23,7 +23,7 @@
 #include <stdint.h>
 
 // Program files on the "gcode" LittleFS partition, one "<id>.gc" each:
-// "<flavor>\t<name>\n" then the text. Callers hold GcodeStore's lock.
+// "<dialect>\t<name>\n" then the text. Callers hold GcodeStore's lock.
 namespace GcodeFiles
 {
     bool mount();
@@ -33,7 +33,7 @@ namespace GcodeFiles
     void nextId(char (&out)[GcodeStore::ID_LEN + 1]);
 
     // Written to a temp file then renamed, so an interrupted save leaves no partial file.
-    bool save(const char *id, const char *flavor, const char *name, const char *text, size_t len);
+    bool save(const char *id, const char *dialect, const char *name, const char *text, size_t len);
 
     // A saved program's metadata and body into body (at most bodyMax). nullptr on success, else the reason.
     const char *load(const char *id, GcodeStore::ProgramInfo &info, uint8_t *body, size_t bodyMax);

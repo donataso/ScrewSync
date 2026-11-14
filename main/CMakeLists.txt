@@ -69,8 +69,9 @@ target_sources(app PRIVATE
     lib/Rpm/Rpm.cpp
     lib/Rpm/RpmCalc.cpp
     lib/Gcode/GcodeCore.cpp
+    lib/Gcode/GcodeInterpreter.cpp
     lib/Gcode/GcodeLathecode.cpp
-    lib/Gcode/GcodeFlavors.cpp
+    lib/Gcode/GcodeDialects.cpp
     lib/GcodeStore/GcodeMeta.cpp
     lib/GcodeStore/GcodeFiles.cpp
     lib/GcodeStore/GcodeStore.cpp

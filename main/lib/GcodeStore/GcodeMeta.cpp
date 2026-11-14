@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "GcodeMeta.hpp"
+#include "GcodeInterpreter.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,9 +77,9 @@ namespace GcodeMeta
         return true;
     }
 
-    int encodeHeader(const char *flavor, const char *name, char *out, size_t outMax)
+    int encodeHeader(const char *dialect, const char *name, char *out, size_t outMax)
     {
-        int n = snprintf(out, outMax, "%s\t%s\n", flavor, name);
+        int n = snprintf(out, outMax, "%s\t%s\n", dialect, name);
         if (n < 0 || (size_t)n >= outMax) {
             return -1;
         }
@@ -112,15 +113,15 @@ namespace GcodeMeta
             return false;
         }
 
-        out.flavor = text;
-        out.flavorLen = tab;
+        out.dialect = text;
+        out.dialectLen = tab;
         out.name = text + tab + 1;
         out.nameLen = lineLen - tab - 1;
         out.bodyOffset = i + 1;
-        return allowEmpty || (out.flavorLen > 0 && out.nameLen > 0);
+        return allowEmpty || (out.dialectLen > 0 && out.nameLen > 0);
     }
 
-    ValidateResult validateProgram(const char *text, size_t len, Gcode::Flavor &flavor)
+    ValidateResult validateProgram(const char *text, size_t len, Gcode::Dialect &dialect)
     {
         ValidateResult r = {false, nullptr, 0, 0};
         if (len == 0) {
@@ -138,7 +139,8 @@ namespace GcodeMeta
             return r;
         }
 
-        flavor.begin(0, 0);
+        Gcode::Interpreter interp;
+        dialect.begin(interp, 0, 0);
         CountingSink sink;
         uint32_t lineNo = 0;
         size_t i = 0;
@@ -167,7 +169,7 @@ namespace GcodeMeta
             memcpy(lineBuf, text + lineStart, lineLen);
             lineBuf[lineLen] = '\0';
 
-            const char *err = Gcode::interpretLine(flavor, lineBuf, lineNo, sink);
+            const char *err = Gcode::interpretLine(dialect, interp, lineBuf, lineNo, sink);
             if (err) {
                 r.error = err;
                 r.line = lineNo;

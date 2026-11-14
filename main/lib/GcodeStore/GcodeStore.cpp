@@ -17,7 +17,7 @@
  */
 #include "GcodeStore.hpp"
 #include "GcodeFiles.hpp"
-#include "GcodeFlavors.hpp"
+#include "GcodeDialects.hpp"
 #include "Mode.hpp"
 #include <string.h>
 #include <zephyr/kernel.h>
@@ -67,13 +67,13 @@ namespace
         out[N - 1] = '\0';
     }
 
-    void setActive(const char *text, size_t len, const char *flavor, const char *name, const char *savedId,
+    void setActive(const char *text, size_t len, const char *dialect, const char *name, const char *savedId,
                    uint32_t steps)
     {
         memcpy(g_activeBuf, text, len);
         g_active.present = true;
         g_active.size = len;
-        copyStr(g_active.flavor, flavor);
+        copyStr(g_active.dialect, dialect);
         copyStr(g_active.name, name);
         copyStr(g_active.savedId, savedId ? savedId : "");
         g_active.steps = steps;
@@ -97,24 +97,24 @@ namespace
         return r;
     }
 
-    GcodeStore::Result validate(const char *text, size_t len, const char *flavorId)
+    GcodeStore::Result validate(const char *text, size_t len, const char *dialectId)
     {
-        Gcode::Flavor *flavor = Gcode::find(flavorId);
-        if (!flavor) {
-            return fail("unknown flavor");
+        Gcode::Dialect *dialect = Gcode::find(dialectId);
+        if (!dialect) {
+            return fail("unknown dialect");
         }
-        GcodeMeta::ValidateResult v = GcodeMeta::validateProgram(text, len, *flavor);
+        GcodeMeta::ValidateResult v = GcodeMeta::validateProgram(text, len, *dialect);
         return v.ok ? success(v.steps, "") : fail(v.error, v.line);
     }
 
     bool decode(const char *body, size_t len, bool allowEmpty, GcodeMeta::Header &h,
-                char (&flavor)[GcodeStore::FLAVOR_MAX_LEN + 1])
+                char (&dialect)[GcodeStore::DIALECT_MAX_LEN + 1])
     {
-        if (!GcodeMeta::decodeHeader(body, len, h, allowEmpty) || h.flavorLen > GcodeStore::FLAVOR_MAX_LEN) {
+        if (!GcodeMeta::decodeHeader(body, len, h, allowEmpty) || h.dialectLen > GcodeStore::DIALECT_MAX_LEN) {
             return false;
         }
-        memcpy(flavor, h.flavor, h.flavorLen);
-        flavor[h.flavorLen] = '\0';
+        memcpy(dialect, h.dialect, h.dialectLen);
+        dialect[h.dialectLen] = '\0';
         return true;
     }
 }
@@ -127,7 +127,7 @@ namespace GcodeStore
         return GcodeFiles::list(out);
     }
 
-    Result upload(const char *text, size_t len, const char *name, size_t nameLen, const char *flavorId, bool save,
+    Result upload(const char *text, size_t len, const char *name, size_t nameLen, const char *dialectId, bool save,
                   bool activate)
     {
         Guard guard;
@@ -143,7 +143,7 @@ namespace GcodeStore
         if (!GcodeMeta::validName(name, nameLen)) {
             return fail("bad name");
         }
-        Result r = validate(text, len, flavorId);
+        Result r = validate(text, len, dialectId);
         if (!r.ok) {
             return r;
         }
@@ -157,17 +157,17 @@ namespace GcodeStore
                 return fail("no filesystem");
             }
             GcodeFiles::nextId(r.savedId);
-            if (!GcodeFiles::save(r.savedId, flavorId, nameBuf, text, len)) {
+            if (!GcodeFiles::save(r.savedId, dialectId, nameBuf, text, len)) {
                 return fail("save failed");
             }
         }
         if (activate) {
-            setActive(text, len, flavorId, nameBuf, save ? r.savedId : nullptr, r.steps);
+            setActive(text, len, dialectId, nameBuf, save ? r.savedId : nullptr, r.steps);
         }
         return r;
     }
 
-    Result update(const char *id, const char *name, size_t nameLen, const char *flavorId, const char *text, size_t len)
+    Result update(const char *id, const char *name, size_t nameLen, const char *dialectId, const char *text, size_t len)
     {
         Guard guard;
         if (len > PROGRAM_MAX) {
@@ -189,24 +189,24 @@ namespace GcodeStore
             memcpy(info.name, name, nameLen);
             info.name[nameLen] = '\0';
         }
-        if (flavorId[0]) {
-            if (strlen(flavorId) > FLAVOR_MAX_LEN) {
-                return fail("unknown flavor");
+        if (dialectId[0]) {
+            if (strlen(dialectId) > DIALECT_MAX_LEN) {
+                return fail("unknown dialect");
             }
-            strcpy(info.flavor, flavorId);
+            strcpy(info.dialect, dialectId);
         }
 
         const char *body = len ? text : (const char *)g_stageBuf;
         size_t bodyLen = len ? len : info.size;
-        Result v = validate(body, bodyLen, info.flavor);
+        Result v = validate(body, bodyLen, info.dialect);
         if (!v.ok) {
             return v;
         }
-        if (!GcodeFiles::save(info.id, info.flavor, info.name, body, bodyLen)) {
+        if (!GcodeFiles::save(info.id, info.dialect, info.name, body, bodyLen)) {
             return fail("save failed");
         }
         if (active) {
-            setActive(body, bodyLen, info.flavor, info.name, info.id, v.steps);
+            setActive(body, bodyLen, info.dialect, info.name, info.id, v.steps);
         }
         return success(v.steps, info.id);
     }
@@ -214,21 +214,21 @@ namespace GcodeStore
     Result uploadEncoded(const char *body, size_t len, bool save, bool activate)
     {
         GcodeMeta::Header h;
-        char flavor[FLAVOR_MAX_LEN + 1];
-        if (!decode(body, len, false, h, flavor)) {
-            return fail("missing flavor/name line");
+        char dialect[DIALECT_MAX_LEN + 1];
+        if (!decode(body, len, false, h, dialect)) {
+            return fail("missing dialect/name line");
         }
-        return upload(body + h.bodyOffset, len - h.bodyOffset, h.name, h.nameLen, flavor, save, activate);
+        return upload(body + h.bodyOffset, len - h.bodyOffset, h.name, h.nameLen, dialect, save, activate);
     }
 
     Result updateEncoded(const char *id, const char *body, size_t len)
     {
         GcodeMeta::Header h;
-        char flavor[FLAVOR_MAX_LEN + 1];
-        if (!decode(body, len, true, h, flavor)) {
-            return fail("missing flavor/name line");
+        char dialect[DIALECT_MAX_LEN + 1];
+        if (!decode(body, len, true, h, dialect)) {
+            return fail("missing dialect/name line");
         }
-        return update(id, h.name, h.nameLen, flavor, body + h.bodyOffset, len - h.bodyOffset);
+        return update(id, h.name, h.nameLen, dialect, body + h.bodyOffset, len - h.bodyOffset);
     }
 
     Result select(const char *id)
@@ -242,11 +242,11 @@ namespace GcodeStore
         if (error) {
             return fail(error);
         }
-        Result v = validate((const char *)g_stageBuf, info.size, info.flavor);
+        Result v = validate((const char *)g_stageBuf, info.size, info.dialect);
         if (!v.ok) {
             return v;
         }
-        setActive((const char *)g_stageBuf, info.size, info.flavor, info.name, info.id, v.steps);
+        setActive((const char *)g_stageBuf, info.size, info.dialect, info.name, info.id, v.steps);
         return success(v.steps, info.id);
     }
 
