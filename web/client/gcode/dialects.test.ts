@@ -30,7 +30,7 @@ describe("detectDialect", () => {
     expect(detectDialect("X20 ; zero your tool X on centerline")).toBe("lathecode")
   })
 
-  it("returns null for unrecognized text", () => {
-    expect(detectDialect("G1 X1 Z1")).toBeNull()
+  it("falls back to linuxcnc", () => {
+    expect(detectDialect("G1 X1 Z1")).toBe("linuxcnc")
   })
 })

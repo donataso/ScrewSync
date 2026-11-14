@@ -26,7 +26,8 @@ interface Entry {
 
 const REGISTRY: Entry[] = [
   { dialect: new Lathecode(), detect: detectLathecode },
-  { dialect: new Linuxcnc(), detect: () => false },
+  // Any text not detected as LatheCode.
+  { dialect: new Linuxcnc(), detect: () => true },
 ]
 
 export function find(id: string): Dialect | null {

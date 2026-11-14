@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { DU_PER_MM, type Step, type StepKind } from "./core"
-import { CANVAS_H, CANVAS_W, computeMapping } from "./preview"
+import { CANVAS_H, CANVAS_W, computeMapping, startFrame } from "./preview"
 
 function step(kind: StepKind, zMm: number, xMm: number): Step {
   return { kind, zDu: zMm * DU_PER_MM, xDu: xMm * DU_PER_MM, feed: 0, line: 1 }
@@ -50,5 +50,15 @@ describe("computeMapping", () => {
     const [px, py] = m.toPx(-12, 3)
     expect(m.originX + -12 * m.pxPerMm).toBeCloseTo(px)
     expect(m.originY + 3 * m.pxPerMm).toBeCloseTo(py)
+  })
+})
+
+describe("startFrame", () => {
+  it("shifts moves after a G10 L20 back to the start coordinates", () => {
+    const steps = [step("rapid", 5, 2), step("set-position", 0, 2), step("feed", -1, 2), step("end", 0, 0)]
+    expect(startFrame(steps).map((s) => [s.zDu / DU_PER_MM, s.xDu / DU_PER_MM])).toEqual([
+      [5, 2],
+      [4, 2],
+    ])
   })
 })

@@ -21,6 +21,29 @@ function duToMm(du: number): number {
   return du / DU_PER_MM
 }
 
+// The motion steps in the coordinates the program started in: a G10 L20
+// shifts the later targets back by its change.
+export function startFrame(steps: Step[]): Step[] {
+  let offZ = 0
+  let offX = 0
+  let zDu = 0
+  let xDu = 0
+  const out: Step[] = []
+  for (const s of steps) {
+    if (s.kind === "set-position") {
+      offZ += zDu - s.zDu
+      offX += xDu - s.xDu
+    } else if (s.kind !== "rapid" && s.kind !== "feed" && s.kind !== "thread") {
+      continue
+    } else {
+      out.push({ ...s, zDu: s.zDu + offZ, xDu: s.xDu + offX })
+    }
+    zDu = s.zDu
+    xDu = s.xDu
+  }
+  return out
+}
+
 export interface ToPx {
   (zMm: number, xMm: number): [number, number]
 }
@@ -45,10 +68,7 @@ export function computeMapping(steps: Step[]): Mapping {
   let zMax = 0
   let xMin = 0
   let xMax = 0
-  for (const s of steps) {
-    if (s.kind !== "rapid" && s.kind !== "feed" && s.kind !== "thread") {
-continue
-}
+  for (const s of startFrame(steps)) {
     const zMm = duToMm(s.zDu)
     const xMm = duToMm(s.xDu)
     zMin = Math.min(zMin, zMm)
@@ -111,10 +131,7 @@ export function drawPreview(ctx: CanvasRenderingContext2D, steps: Step[]): Mappi
 
   let zMm = 0
   let xMm = 0
-  for (const s of steps) {
-    if (s.kind !== "rapid" && s.kind !== "feed" && s.kind !== "thread") {
-continue
-}
+  for (const s of startFrame(steps)) {
     const nextZMm = duToMm(s.zDu)
     const nextXMm = duToMm(s.xDu)
     const [x0, y0] = toPx(zMm, xMm)
