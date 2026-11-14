@@ -29,6 +29,8 @@ namespace Stepper
 
     int64_t clampToTravel(int64_t targetSteps, int64_t maxTravelSteps);
 
+    int64_t clampToLag(int64_t targetSteps, int64_t positionSteps, int64_t maxLagSteps);
+
     // Settings::Axis.backlashDu converted to motor steps -- how far the
     // motor must travel to take up lead-screw slack before the reported
     // position starts moving, on a direction reversal.

@@ -65,7 +65,8 @@
 
 /* PCNT units for hardware quadrature decoding. Unit 0 is the spindle
  * (read via the driver's interrupt, main/lib/Encoder); the others are
- * handwheels (polled, main/lib/Handwheel). The pins below are only the
+ * handwheels (polled, main/lib/Handwheel), which count the edges of both
+ * A and B to cancel contact bounce. The pins below are only the
  * boot routing: main/lib/Pins routes the units from the pin map. */
 &pinctrl {
 	pcnt_default: pcnt_default {
@@ -107,7 +108,7 @@
 		reg = <1>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		filter = <1>;
+		filter = <1023>;
 
 		channelA@0 {
 			reg = <0>;
@@ -115,6 +116,14 @@
 			sig-neg-mode = <2>;
 			ctrl-h-mode = <1>;
 			ctrl-l-mode = <0>;
+		};
+
+		channelB@1 {
+			reg = <1>;
+			sig-pos-mode = <1>;
+			sig-neg-mode = <2>;
+			ctrl-h-mode = <0>;
+			ctrl-l-mode = <1>;
 		};
 	};
 
@@ -122,7 +131,7 @@
 		reg = <2>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		filter = <1>;
+		filter = <1023>;
 
 		channelA@0 {
 			reg = <0>;
@@ -131,13 +140,21 @@
 			ctrl-h-mode = <1>;
 			ctrl-l-mode = <0>;
 		};
+
+		channelB@1 {
+			reg = <1>;
+			sig-pos-mode = <1>;
+			sig-neg-mode = <2>;
+			ctrl-h-mode = <0>;
+			ctrl-l-mode = <1>;
+		};
 	};
 
 	unit3@3 {
 		reg = <3>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		filter = <1>;
+		filter = <1023>;
 
 		channelA@0 {
 			reg = <0>;
@@ -145,6 +162,14 @@
 			sig-neg-mode = <2>;
 			ctrl-h-mode = <1>;
 			ctrl-l-mode = <0>;
+		};
+
+		channelB@1 {
+			reg = <1>;
+			sig-pos-mode = <1>;
+			sig-neg-mode = <2>;
+			ctrl-h-mode = <0>;
+			ctrl-l-mode = <1>;
 		};
 	};
 };

@@ -199,17 +199,24 @@ namespace
             used[unit] = true;
             gpio_pin_configure_dt(&a, GPIO_INPUT);
             gpio_pin_configure_dt(&b, GPIO_INPUT);
-            esp_rom_gpio_connect_in_signal(gpioOf(g_board, as, 0), PCNT_SIG_CH0_IN0_IDX + unit * PCNT_SIGNAL_STRIDE,
-                                           as.options[0].invert);
-            esp_rom_gpio_connect_in_signal(gpioOf(g_board, as, 1), PCNT_CTRL_CH0_IN0_IDX + unit * PCNT_SIGNAL_STRIDE,
-                                           as.options[1].invert);
+            uint32_t gpioA = gpioOf(g_board, as, 0);
+            uint32_t gpioB = gpioOf(g_board, as, 1);
+            bool invA = as.options[0].invert;
+            bool invB = as.options[1].invert;
+            uint32_t offset = unit * PCNT_SIGNAL_STRIDE;
+            esp_rom_gpio_connect_in_signal(gpioA, PCNT_SIG_CH0_IN0_IDX + offset, invA);
+            esp_rom_gpio_connect_in_signal(gpioB, PCNT_CTRL_CH0_IN0_IDX + offset, invB);
+            esp_rom_gpio_connect_in_signal(gpioB, PCNT_SIG_CH1_IN0_IDX + offset, invB);
+            esp_rom_gpio_connect_in_signal(gpioA, PCNT_CTRL_CH1_IN0_IDX + offset, invA);
         }
         for (int unit = 0; unit < g_board.pcntUnits && unit < (int)ARRAY_SIZE(used); unit++) {
             if (!used[unit]) {
-                esp_rom_gpio_connect_in_signal(GPIO_MATRIX_CONST_ZERO_INPUT,
-                                               PCNT_SIG_CH0_IN0_IDX + unit * PCNT_SIGNAL_STRIDE, false);
-                esp_rom_gpio_connect_in_signal(GPIO_MATRIX_CONST_ZERO_INPUT,
-                                               PCNT_CTRL_CH0_IN0_IDX + unit * PCNT_SIGNAL_STRIDE, false);
+                const uint32_t sigs[] = {PCNT_SIG_CH0_IN0_IDX, PCNT_CTRL_CH0_IN0_IDX, PCNT_SIG_CH1_IN0_IDX,
+                                         PCNT_CTRL_CH1_IN0_IDX};
+                uint32_t offset = unit * PCNT_SIGNAL_STRIDE;
+                for (uint32_t sig : sigs) {
+                    esp_rom_gpio_connect_in_signal(GPIO_MATRIX_CONST_ZERO_INPUT, sig + offset, false);
+                }
             }
         }
     }

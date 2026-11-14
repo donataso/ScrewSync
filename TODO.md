@@ -14,4 +14,5 @@
 - Hide an absent X motor or DRO everywhere in the UI (display and web),
   with no greyed-out placeholders, including the modes that need X.
 - add joystick support
-
+- Handwheel lag cap setting (how far the target may lead the axis), in
+  place of the fixed HANDWHEEL_LAG_US in Jog.

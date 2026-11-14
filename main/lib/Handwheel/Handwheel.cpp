@@ -27,11 +27,11 @@
 
 LOG_MODULE_REGISTER(handwheel, LOG_LEVEL_INF);
 
-// A handwheel is a PCNT unit (read by polling: a hand-cranked wheel cannot
-// wrap the 16-bit counter between polls, and polling keeps the PCNT
-// interrupt to the spindle), or a software decoder on GPIO interrupts.
-// Both count the edges of A, signed by B, like the PCNT unit setup in the
-// board overlay.
+// A handwheel is a PCNT unit (read on demand, plus a poll so the 16-bit
+// counter cannot wrap unseen; this keeps the PCNT interrupt to the
+// spindle), or a software decoder on GPIO interrupts.
+// A PCNT unit counts the edges of A and B, so bounce on one line cancels,
+// and is halved to match the software decoder, which counts A's edges.
 
 namespace
 {
@@ -43,8 +43,10 @@ namespace
     {
         PinMap::Fn fn;
         int unit = -1;
+        struct k_spinlock lock = {};
         int16_t last = 0;
         atomic_t count = ATOMIC_INIT(0);
+        int shift = 0;
         gpio_dt_spec a = {};
         gpio_dt_spec b = {};
         gpio_callback cb = {};
@@ -61,9 +63,18 @@ namespace
         if (w.unit < 0) {
             return;
         }
+        k_spinlock_key_t key = k_spin_lock(&w.lock);
         int16_t cur = (int16_t)pcnt_ll_get_count(g_hw, w.unit);
         atomic_add(&w.count, (int16_t)(cur - w.last));
         w.last = cur;
+        k_spin_unlock(&w.lock, key);
+    }
+
+    int64_t read(Wheel &w, bool invert)
+    {
+        poll(w);
+        int64_t pos = (int64_t)atomic_get(&w.count) >> w.shift;
+        return invert ? -pos : pos;
     }
 
     void pollLoop(void *, void *, void *)
@@ -86,6 +97,7 @@ namespace
         switch (Pins::encoder(w.fn)) {
         case PinMap::Encoder::Hw:
             w.unit = Pins::pcntUnit(w.fn);
+            w.shift = 1;
             if (w.unit >= 0) {
                 w.last = (int16_t)pcnt_ll_get_count(g_hw, w.unit);
             }
@@ -122,13 +134,11 @@ namespace Handwheel
 
     int64_t z()
     {
-        int64_t pos = atomic_get(&g_z.count);
-        return Settings::g_active.z.invertHandwheel ? -pos : pos;
+        return read(g_z, Settings::g_active.z.invertHandwheel);
     }
 
     int64_t x()
     {
-        int64_t pos = atomic_get(&g_x.count);
-        return Settings::g_active.x.invertHandwheel ? -pos : pos;
+        return read(g_x, Settings::g_active.x.invertHandwheel);
     }
 }

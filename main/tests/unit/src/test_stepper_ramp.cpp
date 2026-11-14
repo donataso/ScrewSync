@@ -18,6 +18,7 @@
 #include <zephyr/ztest.h>
 #include "StepperRamp.hpp"
 
+using Stepper::brakeSpeed;
 using Stepper::nextRampSpeed;
 using Stepper::runAheadDistance;
 using Stepper::stoppingDistance;
@@ -176,4 +177,29 @@ ZTEST(stepper_ramp, test_speed_up_takes_the_kinematic_distance)
         steps++;
     }
     zassert_within(steps, 2016, 20, "took %lld steps", steps);
+}
+
+ZTEST(stepper_ramp, test_brake_slows_at_deceleration)
+{
+    // dt=156us, dv=40000*156/1e6=6.24
+    zassert_equal(brakeSpeed(6400, 40000, 800, g_remainder), 6394);
+    zassert_equal(g_remainder, 240000);
+}
+
+ZTEST(stepper_ramp, test_brake_stops_at_floor)
+{
+    zassert_equal(brakeSpeed(805, 40000, 800, g_remainder), 800);
+    zassert_equal(brakeSpeed(800, 40000, 800, g_remainder), 800);
+}
+
+ZTEST(stepper_ramp, test_brake_takes_the_kinematic_distance)
+{
+    // (6400^2-800^2)/(2*20000)=1008 steps
+    int32_t speed = 6400;
+    int64_t steps = 0;
+    while (speed > 800) {
+        speed = brakeSpeed(speed, 20000, 800, g_remainder);
+        steps++;
+    }
+    zassert_within(steps, 1008, 15, "took %lld steps", steps);
 }
