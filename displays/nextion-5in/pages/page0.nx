@@ -15,6 +15,7 @@ on page0.load:
   // Per-component vis is slow on the panel: hide all, then show the base.
   // Components are global, so the panel lays out from the kept cell kinds.
   vis 255,0
+  setEstopUi(estop.val)
   vis hdrBg,1
   vis rpm,1
   vis rpmUnit,1
@@ -52,7 +53,6 @@ on page0.load:
   linkAge = 0
   blockState.val = BLOCK_NONE
   updateBlock()
-  setEstopUi(estop.val)
   setHomeUi()
 
 on page0.up:
@@ -73,12 +73,13 @@ function setWcs(shown: number):
 
 function setEstopUi(on: number):
   vis estopShade,on
+  vis estopImg,on
+  vis estopMsg,on
   vis estopTouch,on
   if (on) {
-    estopBtn.pic = @pic(icons/estop)
+    estopMsg.txt = "Tap to disarm estop"
+    estopMsg.pco = 65535
     setWcs(0)
-  } else {
-    estopBtn.pic = @pic(icons/estop_ok)
   }
 
 function setHomeUi():
@@ -122,8 +123,11 @@ on estopSync.down:
   jogCancel()
   setEstopUi(estop.val)
 
+on estopTouch.up:
+  send("estop off")
+
 on estopBtn.up:
-  send(estop.val ? "estop off" : "estop on")
+  send("estop on")
 
 on homeBtn.up:
   send("home")

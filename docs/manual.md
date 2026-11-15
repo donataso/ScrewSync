@@ -71,8 +71,9 @@ How to operate ScrewSync. For connectors and flashing, see
 
 - The machine starts in estop. An estop stops all motion and turns both
   motors off. It does not restart the controller.
-- Estop icon in the header: tap it to trip the estop, tap it again to
-  clear it. Then turn the motors on again.
+- Estop icon in the header: tap it to trip the estop. In estop the display
+  shows a big estop icon: tap the screen to clear it. Then turn the motors on
+  again.
 - In estop, start, jog, the handwheels, MDI, routines and motor on are
   refused. The serial and web commands are `estop on`, `estop off`,
   `power on` and `power off`.

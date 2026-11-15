@@ -109,13 +109,13 @@ namespace
     }
 
     // Returns whether the run state or the skip layout (narrow stop + skip) toggled.
-    bool pushRun(Mode::Id current, bool running, bool ready, const Mode::Progress &job)
+    bool pushRun(Mode::Id current, bool running, bool homing, bool ready, const Mode::Progress &job)
     {
-        bool active = running && !job.waiting;
+        bool active = (running && !job.waiting) || homing;
         bool runChanged = pushNum("running.val", active);
         pushNum("ready.val", ready);
         pushNum("needZero.val", (int)Mode::startPrompt());
-        bool passCount = active && job.passes > 1;
+        bool passCount = running && active && job.passes > 1;
         bool canSkip = passCount && Mode::canSkip(current);
         if (canSkip) {
             pushText("stopPass.txt", "STOP %d/%d", (int)job.pass, (int)job.passes);
@@ -231,7 +231,7 @@ namespace
         }
         pushMenu(current);
         bool layoutChanged = pushPanel(current, s.params);
-        layoutChanged |= pushRun(current, s.running, s.ready, s.job);
+        layoutChanged |= pushRun(current, s.running, s.homing, s.ready, s.job);
         layoutChanged |= pushOverride(current, s.running, s.feedOverridePct);
         layoutChanged |= pushNum("picOn.val", current == Mode::Id::Gcode && atomic_get(&g_previewLoaded));
         layoutChanged |= pushGcode(current, s);

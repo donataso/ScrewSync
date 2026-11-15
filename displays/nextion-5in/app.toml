@@ -10,11 +10,11 @@ pages = [
     "threads",
 ]
 pictures = [
-    "icons/estop",
     "icons/estop_ok",
     "icons/home_none",
     "icons/home_all",
     "icons/home_busy",
+    "icons/estop_big",
 ]
 fonts = [
     "NotoSans24",

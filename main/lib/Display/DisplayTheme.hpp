@@ -41,6 +41,7 @@ namespace Display::Theme
     constexpr int COLOR_ZERO = 45763;
     constexpr int COLOR_ZERO_PRESSED = 52069;
     constexpr int COLOR_NOT_SET = 64138;
+    constexpr int COLOR_ERROR = 64138;
     constexpr int COLOR_SETTINGS = 10829; // matches menuSettings's bco
 
     // displays/nextion-5in/app.toml font order; arrows exist only in the symbols font.

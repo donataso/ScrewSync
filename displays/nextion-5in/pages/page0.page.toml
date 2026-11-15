@@ -2235,6 +2235,16 @@ txt_maxl = 4
 font = 6
 
 [[component]]
+name = "estopBtn"
+type = "picture"
+vscope = 1
+x = 8
+y = 12
+w = 48
+h = 48
+pic = "icons/estop_ok"
+
+[[component]]
 name = "estopShade"
 type = "text"
 vscope = 1
@@ -2242,10 +2252,36 @@ x = 0
 y = 0
 w = 800
 h = 480
-bco = 33808
+bco = 2178
 pco = 65535
 txt = ""
-aph = 96
+
+[[component]]
+name = "estopImg"
+type = "picture"
+vscope = 1
+x = 260
+y = 60
+w = 280
+h = 280
+pic = "icons/estop_big"
+
+[[component]]
+name = "estopMsg"
+type = "text"
+vscope = 1
+x = 0
+y = 380
+w = 800
+h = 88
+bco = 2178
+pco = 65535
+txt = "Tap to disarm estop"
+font = 2
+xcen = 1
+ycen = 2
+isbr = 1
+txt_maxl = 60
 
 [[component]]
 name = "estopTouch"
@@ -2254,16 +2290,6 @@ x = 0
 y = 0
 w = 800
 h = 480
-
-[[component]]
-name = "estopBtn"
-type = "picture"
-vscope = 1
-x = 8
-y = 12
-w = 48
-h = 48
-pic = "icons/estop"
 
 [[component]]
 name = "estopSync"
@@ -2809,3 +2835,4 @@ val = 3
 name = "estop"
 type = "variable"
 vscope = 1
+val = 1

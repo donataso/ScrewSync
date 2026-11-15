@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "DisplayInternal.hpp"
+#include "Machine.hpp"
 #include <stdio.h>
 
 namespace Display::Detail
@@ -37,6 +38,13 @@ namespace Display::Detail
         text[n] = '\0';
 
         char cmd[Theme::TOAST_MAX_CHARS + 16];
+        if (Machine::state() == Machine::State::EStop) {
+            snprintf(cmd, sizeof(cmd), "estopMsg.txt=\"%s\"", text);
+            Nextion::writeCommand(cmd);
+            snprintf(cmd, sizeof(cmd), "estopMsg.pco=%d", Theme::COLOR_ERROR);
+            Nextion::writeCommand(cmd);
+            return;
+        }
         snprintf(cmd, sizeof(cmd), "toast.txt=\"%s\"", text);
         Nextion::writeCommand(cmd);
         Nextion::writeCommand("click toastShow,1");

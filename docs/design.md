@@ -131,8 +131,8 @@ User side: [pins.md](pins.md).
     every open WebSocket in `WsCommand`'s client table and refuses new `/ws`
     upgrades until `Flashing` ends.
   - Display: firmware mirrors `state` to it; it shows a blocking toast
-    while `Flashing` or the link is lost, and a tinted overlay with the
-    header estop icon while `EStop` (`docs/screen.md`).
+    while `Flashing` or the link is lost, and the estop cover while
+    `EStop` (`docs/screen.md`).
 
 ## Modes
 
