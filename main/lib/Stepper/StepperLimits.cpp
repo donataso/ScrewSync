@@ -31,13 +31,18 @@ namespace Stepper
         return (int64_t)backlashDu * motorSteps / screwPitchDu;
     }
 
-    int64_t clampToTravel(int64_t targetSteps, int64_t maxTravelSteps)
+    Window travelWindow(int64_t upperSteps, int64_t travelSteps)
     {
-        if (targetSteps > maxTravelSteps) {
-            return maxTravelSteps;
+        return {upperSteps - travelSteps, upperSteps};
+    }
+
+    int64_t clampToWindow(int64_t targetSteps, int64_t minSteps, int64_t maxSteps)
+    {
+        if (targetSteps > maxSteps) {
+            return maxSteps;
         }
-        if (targetSteps < -maxTravelSteps) {
-            return -maxTravelSteps;
+        if (targetSteps < minSteps) {
+            return minSteps;
         }
         return targetSteps;
     }

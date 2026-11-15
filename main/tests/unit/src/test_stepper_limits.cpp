@@ -20,28 +20,46 @@
 
 using Stepper::backlashSteps;
 using Stepper::clampToLag;
-using Stepper::clampToTravel;
+using Stepper::clampToWindow;
 using Stepper::maxTravelSteps;
 using Stepper::trackStep;
+using Stepper::travelWindow;
 
 ZTEST_SUITE(stepper_limits, NULL, NULL, NULL, NULL, NULL);
 
-ZTEST(stepper_limits, test_within_travel_unchanged)
+ZTEST(stepper_limits, test_within_window_unchanged)
 {
-    int64_t target = clampToTravel(500, 60000);
-    zassert_equal(target, 500);
+    zassert_equal(clampToWindow(500, -60000, 1000), 500);
 }
 
-ZTEST(stepper_limits, test_clamps_above_travel)
+ZTEST(stepper_limits, test_clamps_above_window)
 {
-    int64_t target = clampToTravel(90000, 60000);
-    zassert_equal(target, 60000);
+    zassert_equal(clampToWindow(90000, -60000, 1000), 1000);
 }
 
-ZTEST(stepper_limits, test_clamps_below_travel)
+ZTEST(stepper_limits, test_clamps_below_window)
 {
-    int64_t target = clampToTravel(-90000, 60000);
-    zassert_equal(target, -60000);
+    zassert_equal(clampToWindow(-90000, -60000, 1000), -60000);
+}
+
+ZTEST(stepper_limits, test_window_edges_are_allowed)
+{
+    zassert_equal(clampToWindow(1000, -60000, 1000), 1000);
+    zassert_equal(clampToWindow(-60000, -60000, 1000), -60000);
+}
+
+ZTEST(stepper_limits, test_travel_window_upper_at_home_lower_below)
+{
+    Stepper::Window window = travelWindow(1000, 60000);
+    zassert_equal(window.maxSteps, 1000);
+    zassert_equal(window.minSteps, -59000);
+}
+
+ZTEST(stepper_limits, test_travel_window_from_max_travel_mm)
+{
+    Stepper::Window window = travelWindow(-200, maxTravelSteps(300, 800, 40000));
+    zassert_equal(window.maxSteps, -200);
+    zassert_equal(window.minSteps, -60200);
 }
 
 ZTEST(stepper_limits, test_max_travel_steps_default_z_axis)

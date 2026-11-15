@@ -23,11 +23,18 @@
 // No Zephyr/hardware dependency, so it's host/native_sim testable alone.
 namespace Stepper
 {
-    // Settings::Axis.maxTravelMm converted to motor steps -- the hard
-    // sanity bound around machine zero, enforced in moveTo().
+    struct Window
+    {
+        int64_t minSteps;
+        int64_t maxSteps;
+    };
+
+    // Settings::Axis.maxTravelMm converted to motor steps.
     int64_t maxTravelSteps(int32_t maxTravelMm, int32_t motorSteps, int32_t screwPitchDu);
 
-    int64_t clampToTravel(int64_t targetSteps, int64_t maxTravelSteps);
+    Window travelWindow(int64_t upperSteps, int64_t travelSteps);
+
+    int64_t clampToWindow(int64_t targetSteps, int64_t minSteps, int64_t maxSteps);
 
     int64_t clampToLag(int64_t targetSteps, int64_t positionSteps, int64_t maxLagSteps);
 

@@ -150,7 +150,9 @@ User side: [pins.md](pins.md).
   axes while they move.
 - Positions are in du. `Machine::position()` is the machine coordinate,
   from the stepper count. `Wcs` holds the work offset (G54, RAM only);
-  zeroing and the probe set it. The travel clamp is in machine coordinates.
+  zeroing and the probe set it. A homed axis has a travel window in
+  stepper steps: the upper limit at the home position, the lower limit
+  `maxTravelMm` below it. `Homing` sets and clears it with the homed state.
 - Geometry is relative to the engage point; there are no global stops.
   Directions follow the display jog arrows: -X toward the centerline, -Z
   toward the chuck. Spindle counts increase in forward rotation. Pitches

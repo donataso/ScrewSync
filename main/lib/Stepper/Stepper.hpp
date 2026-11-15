@@ -52,8 +52,7 @@ namespace Stepper
     // or both), false while released or manually disabled.
     bool isHeld(Axis axis);
 
-    // Requests the axis move to targetSteps (motor steps from power-on
-    // zero), ramped per Settings::active.{z,x} accelerationSteps/speedStartSteps.
+    // Requests the axis move to targetSteps (motor steps), ramped per Settings::active.{z,x} accelerationSteps/speedStartSteps.
     // maxSpeed caps this move, 0 = speedRapidSteps (or the override).
     // Safe to call again mid-move to redirect the target. Returns the
     // accepted target: differs when travel-clamped or refused.
@@ -83,6 +82,9 @@ namespace Stepper
     // Immediate stop, no decel -- ISR-safe. Returns the halted position,
     // the latch point for the probe's contact interrupt.
     int64_t haltNow(Axis axis);
+
+    void setTravelWindow(Axis axis, int64_t minSteps, int64_t maxSteps);
+    void clearTravelWindow(Axis axis);
 
     int64_t position(Axis axis);
     // Motor shaft position: position() without backlash compensation.

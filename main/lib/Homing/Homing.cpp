@@ -78,10 +78,23 @@ namespace
         Mode::Detail::releaseAxes();
     }
 
+    void setHomed(Axis axis, bool homed)
+    {
+        g_homed[(size_t)axis] = homed;
+        if (!homed) {
+            Stepper::clearTravelWindow(axis);
+            return;
+        }
+        const Settings::Axis &cfg = cfgOf(axis);
+        int64_t travel = Stepper::maxTravelSteps(cfg.maxTravelMm, cfg.motorSteps, cfg.screwPitchDu);
+        Stepper::Window window = Stepper::travelWindow(Stepper::position(axis), travel);
+        Stepper::setTravelWindow(axis, window.minSteps, window.maxSteps);
+    }
+
     void clearAllHomed()
     {
-        g_homed[0] = false;
-        g_homed[1] = false;
+        setHomed(Axis::Z, false);
+        setHomed(Axis::X, false);
     }
 
     void fail(const char *reason)
@@ -97,7 +110,7 @@ namespace
     void axisDone(Axis axis)
     {
         Machine::setOrigin(axis, llround(Motion::stepsToDu(axis, Stepper::position(axis))) - cfgOf(axis).homePositionDu);
-        g_homed[(size_t)axis] = true;
+        setHomed(axis, true);
         if (++g_index == g_count) {
             end();
             return;
@@ -150,7 +163,7 @@ namespace Homing
 
     void clearHomed(Axis axis)
     {
-        g_homed[(size_t)axis] = false;
+        setHomed(axis, false);
     }
 
     void settingsChanged(const Settings::Conf &before, const Settings::Conf &after)
@@ -159,7 +172,7 @@ namespace Homing
             const Settings::Axis &a = axis == Axis::Z ? before.z : before.x;
             const Settings::Axis &b = axis == Axis::Z ? after.z : after.x;
             if (a.screwPitchDu != b.screwPitchDu || a.motorSteps != b.motorSteps || a.invertDirection != b.invertDirection ||
-                a.backlashDu != b.backlashDu) {
+                a.backlashDu != b.backlashDu || a.maxTravelMm != b.maxTravelMm || a.homePositionDu != b.homePositionDu) {
                 clearHomed(axis);
             }
         }

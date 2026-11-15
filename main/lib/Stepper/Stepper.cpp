@@ -69,6 +69,9 @@ namespace
         int32_t speedRemainderMicro = 0;
         bool followMove = false;
         bool braking = false; // follow move slowing down past or away from its target
+        bool windowSet = false;
+        int64_t windowMin = 0;
+        int64_t windowMax = 0;
     };
 
     AxisState g_axisZ = {
@@ -198,8 +201,9 @@ namespace
 
         s.followMove = follow;
         s.moveMaxSpeed = maxSpeed < 0 ? 0 : maxSpeed;
-        int64_t maxSteps = Stepper::maxTravelSteps(s.cfg->maxTravelMm, s.cfg->motorSteps, s.cfg->screwPitchDu);
-        targetSteps = Stepper::clampToTravel(targetSteps, maxSteps);
+        if (s.windowSet) {
+            targetSteps = Stepper::clampToWindow(targetSteps, s.windowMin, s.windowMax);
+        }
         s.targetPos = targetSteps;
         if (!s.running && targetSteps != s.currentPos) {
             s.running = true;
@@ -460,6 +464,24 @@ namespace Stepper
         AxisState &s = stateOf(axis);
         k_spinlock_key_t key = k_spin_lock(&s.lock);
         stopLocked(s);
+        k_spin_unlock(&s.lock, key);
+    }
+
+    void setTravelWindow(Axis axis, int64_t minSteps, int64_t maxSteps)
+    {
+        AxisState &s = stateOf(axis);
+        k_spinlock_key_t key = k_spin_lock(&s.lock);
+        s.windowSet = true;
+        s.windowMin = minSteps;
+        s.windowMax = maxSteps;
+        k_spin_unlock(&s.lock, key);
+    }
+
+    void clearTravelWindow(Axis axis)
+    {
+        AxisState &s = stateOf(axis);
+        k_spinlock_key_t key = k_spin_lock(&s.lock);
+        s.windowSet = false;
         k_spin_unlock(&s.lock, key);
     }
 

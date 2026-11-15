@@ -82,7 +82,8 @@
 
 ## Limits and job geometry
 
-- No global travel stops. Machine protection is the `maxTravelMm` clamp.
+- No global travel stops. A homed axis has travel limits: the home
+  position and `maxTravelMm` below it. An axis that is not homed has none.
 - Each mode defines its own geometry: start = position at engage
   (touch-off) or typed; lengths/depths typed. A [here] helper may fill a
   length from the current position, but is never required.

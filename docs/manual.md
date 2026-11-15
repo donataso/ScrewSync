@@ -84,7 +84,7 @@ How to operate ScrewSync. For connectors and flashing, see
   pulls off. The axis position then reads its home position setting.
 - An axis is not homed after an estop, after its motor is turned off, after
   a reboot, and after a change of screw pitch, motor steps, direction
-  invert or backlash.
+  invert, backlash, `maxTravelMm` or home position.
 - A home switch signal while an axis moves trips the estop. The axes stop at
   once. When no axis moves, a signal does nothing.
 
@@ -211,5 +211,6 @@ How to operate ScrewSync. For connectors and flashing, see
 
 - A job also stops if you disable one of its axes, or if the display link
   is lost.
-- Each axis has a travel clamp around its power-on position
-  (`maxTravelMm`). The axis does not move past it.
+- Travel limits apply only to a homed axis. The upper limit is the home
+  position. The lower limit is `maxTravelMm` below it. The axis does not
+  move past them. Without homing, an axis has no travel limit.
