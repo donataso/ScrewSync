@@ -23,7 +23,7 @@ $(1)-build:
 	$$(NXWRIGHT) compile $$($(1)_OUT)/display.HMI $$($(1)_TFT) --overwrite --no-backup $$(NXWRIGHT_COMPILE_ARGS)
 	rm -rf $(CURDIR)/.build/$(1)_180
 	mkdir -p $$($(1)_180_SRC)
-	cp -r $$($(1)_DIR)/app.toml $$($(1)_DIR)/defaults.toml $$($(1)_DIR)/program.nx $$($(1)_DIR)/pages $$($(1)_DIR)/fonts $$($(1)_180_SRC)
+	cp -r $$($(1)_DIR)/app.toml $$($(1)_DIR)/defaults.toml $$($(1)_DIR)/program.nx $$($(1)_DIR)/pages $$($(1)_DIR)/fonts $$($(1)_DIR)/pictures $$($(1)_180_SRC)
 	sed -i 's/^rotation = .*/rotation = 180/' $$($(1)_180_SRC)/app.toml
 	$$(NXWRIGHT) build $$($(1)_180_SRC) $$($(1)_OUT)/display_180.HMI --overwrite --no-backup
 	$$(NXWRIGHT) compile $$($(1)_OUT)/display_180.HMI $$($(1)_TFT_180) --overwrite --no-backup $$(NXWRIGHT_COMPILE_ARGS)
