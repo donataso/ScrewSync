@@ -17,6 +17,7 @@ interface Expectation {
   xDu?: number
   feed?: number
   axes?: number
+  wcs?: number
 }
 
 function isMotionKind(kind: StepKind): boolean {
@@ -49,6 +50,8 @@ e.zDu = parseInt(tok.slice(2), 10)
 e.xDu = parseInt(tok.slice(2), 10)
 } else if (tok.startsWith("f=")) {
 e.feed = parseInt(tok.slice(2), 10)
+} else if (tok.startsWith("w=")) {
+e.wcs = parseInt(tok.slice(2), 10)
 }
     }
     e.axes = (e.zDu !== undefined ? AXIS_Z : 0) | (e.xDu !== undefined ? AXIS_X : 0)
@@ -122,7 +125,13 @@ describe(`${dialectId} vectors`, () => {
           expect(s.zDu).toBe(e.zDu)
           expect(s.xDu).toBe(e.xDu)
         }
+        if (e.kind === "select-wcs") {
+          expect(s.wcs).toBe(e.wcs)
+          expect(s.zDu).toBe(e.zDu)
+          expect(s.xDu).toBe(e.xDu)
+        }
         if (e.kind === "set-position") {
+          expect(s.wcs).toBe(e.wcs ?? 0)
           expect(s.axes).toBe(e.axes)
           if (e.zDu !== undefined) {
             expect(s.zDu).toBe(e.zDu)

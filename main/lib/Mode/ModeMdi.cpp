@@ -63,13 +63,18 @@ namespace
         return axis == Stepper::Axis::Z ? s.zDu : s.xDu;
     }
 
-    // Marks the axes each motion step moves, starting from z/x, and claims
+    // Marks the axes each motion step moves, starting from z/x in system active, and claims
     // both axes. A disabled axis is not claimed; it is refused if it moves.
-    const char *claimMoved(LineSteps &line, int32_t z, int32_t x)
+    const char *claimMoved(LineSteps &line, int32_t z, int32_t x, uint8_t active)
     {
         for (size_t i = 0; i < line.count; i++) {
             Gcode::Step &s = line.steps[i];
-            if (s.kind == Gcode::StepKind::SetPosition) {
+            if (s.kind == Gcode::StepKind::SelectWcs) {
+                active = s.wcs;
+                z = s.zDu;
+                x = s.xDu;
+            }
+            if (s.kind == Gcode::StepKind::SetPosition && s.wcs == active) {
                 z = s.zDu;
                 x = s.xDu;
             }
@@ -145,7 +150,11 @@ namespace Mode::Detail
         if (!isMotion(s.kind)) {
             Gcode::Step step = s;
             pop();
-            applyMachineStep(step);
+            const char *refusal = applyMachineStep(step);
+            if (refusal) {
+                fail(refusal);
+                return;
+            }
             if (!g_count) {
                 releaseAxes();
             }
@@ -209,6 +218,7 @@ namespace Mode
         // Jog, handwheel, modes and programs move the axes between MDI lines.
         if (!g_count) {
             g_session.setPosition((int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
+            g_session.setWcs(wcsState());
         }
         Gcode::Mdi saved = g_session;
         LineSteps steps;
@@ -216,7 +226,13 @@ namespace Mode
         if (err) {
             return err;
         }
-        err = claimMoved(steps, saved.zDu(), saved.xDu());
+        for (size_t i = 0; i < steps.count && Homing::blocked(); i++) {
+            if (Detail::isMotion(steps.steps[i].kind)) {
+                g_session = saved;
+                return "not homed";
+            }
+        }
+        err = claimMoved(steps, saved.zDu(), saved.xDu(), saved.wcsActive());
         if (err) {
             g_session = saved;
             if (!g_count) {

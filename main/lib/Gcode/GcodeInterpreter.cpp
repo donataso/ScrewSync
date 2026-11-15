@@ -35,17 +35,26 @@ namespace
         return true;
     }
 
-    bool axisTargetDu(double value, int32_t currentDu, bool absolute, int32_t unitScaleDu, int32_t &outDu)
+    bool axisTargetDu(double value, int32_t currentDu, bool absolute, int32_t unitScaleDu, int32_t &outDu, int32_t offsetDu = 0)
     {
         int32_t rawDu;
         if (!scaledValueToDu(value, unitScaleDu, rawDu)) {
             return false;
         }
-        int64_t target = absolute ? (int64_t)rawDu : (int64_t)currentDu + (int64_t)rawDu;
+        int64_t target = (absolute ? (int64_t)rawDu : (int64_t)currentDu + (int64_t)rawDu) - offsetDu;
         if (target < INT32_MIN || target > INT32_MAX) {
             return false;
         }
         outDu = (int32_t)target;
+        return true;
+    }
+
+    bool fitsInt32(int64_t value, int32_t &out)
+    {
+        if (value < INT32_MIN || value > INT32_MAX) {
+            return false;
+        }
+        out = (int32_t)value;
         return true;
     }
 
@@ -82,7 +91,8 @@ namespace Gcode
     {
         bool hasF = false, hasK = false, hasZ = false, hasX = false, hasM = false, hasG33 = false;
         bool hasMotionG = false, hasG10 = false, hasL = false, hasP = false, hasR = false;
-        bool hasM110 = false, hasProbe = false;
+        bool hasM110 = false, hasProbe = false, hasG53 = false;
+        int selectWcs = -1;
         uint8_t probeFlags = 0;
         double fVal = 0, kVal = 0, zVal = 0, xVal = 0, lVal = 0, pVal = 0, rVal = 0;
         StepKind mKind = StepKind::Pause;
@@ -149,7 +159,20 @@ namespace Gcode
                 case 940:
                 case 180:
                 case 80:
+                    break;
+                case 530:
+                    hasG53 = true;
+                    break;
                 case 540:
+                case 550:
+                case 560:
+                case 570:
+                case 580:
+                case 590:
+                    if (selectWcs >= 0) {
+                        return "two coordinate systems";
+                    }
+                    selectWcs = (code - 540) / 10;
                     break;
                 default:
                     return "unsupported command";
@@ -241,6 +264,16 @@ namespace Gcode
             return "K requires G33";
         }
 
+        if (hasG53 && (hasG10 || hasProbe || hasG33 || motion_ == Motion::None)) {
+            return "G53 requires G0 or G1";
+        }
+        if (hasG53 && !absolute_) {
+            return "G53 requires G90";
+        }
+        if (hasG53 && !hasZ && !hasX) {
+            return "G53 requires axis move";
+        }
+
         if (hasF) {
             int32_t fDu;
             if (!(fVal > 0) || !scaledValueToDu(fVal, unitScaleDu_, fDu) || fDu <= 0) {
@@ -259,10 +292,30 @@ namespace Gcode
         step.line = lineNo;
         uint8_t axes = (hasZ ? AXIS_Z : 0) | (hasX ? AXIS_X : 0);
 
-        if (hasG10) {
-            if (!hasL || lVal != 20 || !hasP || pVal != 1) {
-                return "only G10 L20 P1";
+        if (selectWcs >= 0) {
+            const int32_t *from = wcs_.offsetDu[wcs_.active];
+            const int32_t *to = wcs_.offsetDu[selectWcs];
+            int32_t newZDu, newXDu;
+            if (!fitsInt32((int64_t)zDu_ + from[0] - to[0], newZDu) || !fitsInt32((int64_t)xDu_ + from[1] - to[1], newXDu)) {
+                return "value out of range";
             }
+            wcs_.active = (uint8_t)selectWcs;
+            zDu_ = newZDu;
+            xDu_ = newXDu;
+            Step select{};
+            select.line = lineNo;
+            select.kind = StepKind::SelectWcs;
+            select.zDu = zDu_;
+            select.xDu = xDu_;
+            select.wcs = wcs_.active;
+            sink.emit(select);
+        }
+
+        if (hasG10) {
+            if (!hasL || lVal != 20 || !hasP || pVal < 0 || pVal > WCS_COUNT || pVal != floor(pVal)) {
+                return "only G10 L20 P0-P6";
+            }
+            size_t system = pVal == 0 ? wcs_.active : (size_t)pVal - 1;
             if (!axes) {
                 return "G10 requires axis";
             }
@@ -273,12 +326,25 @@ namespace Gcode
             if (hasX && !scaledValueToDu(xVal, unitScaleDu_, newXDu)) {
                 return "value out of range";
             }
-            zDu_ = newZDu;
-            xDu_ = newXDu;
+            int32_t zOffsetDu = wcs_.offsetDu[system][0], xOffsetDu = wcs_.offsetDu[system][1];
+            const int32_t *active = wcs_.offsetDu[wcs_.active];
+            if (hasZ && !fitsInt32((int64_t)zDu_ + active[0] - newZDu, zOffsetDu)) {
+                return "value out of range";
+            }
+            if (hasX && !fitsInt32((int64_t)xDu_ + active[1] - newXDu, xOffsetDu)) {
+                return "value out of range";
+            }
+            wcs_.offsetDu[system][0] = zOffsetDu;
+            wcs_.offsetDu[system][1] = xOffsetDu;
+            if (system == wcs_.active) {
+                zDu_ = newZDu;
+                xDu_ = newXDu;
+            }
             step.kind = StepKind::SetPosition;
-            step.zDu = zDu_;
-            step.xDu = xDu_;
+            step.zDu = newZDu;
+            step.xDu = newXDu;
             step.axes = axes;
+            step.wcs = (uint8_t)system;
             sink.emit(step);
         } else if (hasProbe) {
             if (!feedSet_) {
@@ -307,10 +373,12 @@ namespace Gcode
                 return "no motion mode";
             }
             int32_t newZDu = zDu_, newXDu = xDu_;
-            if (hasZ && !axisTargetDu(zVal, zDu_, absolute_, unitScaleDu_, newZDu)) {
+            int32_t zShiftDu = hasG53 ? wcs_.offsetDu[wcs_.active][0] : 0;
+            int32_t xShiftDu = hasG53 ? wcs_.offsetDu[wcs_.active][1] : 0;
+            if (hasZ && !axisTargetDu(zVal, zDu_, absolute_, unitScaleDu_, newZDu, zShiftDu)) {
                 return "value out of range";
             }
-            if (hasX && !axisTargetDu(xVal, xDu_, absolute_, unitScaleDu_, newXDu)) {
+            if (hasX && !axisTargetDu(xVal, xDu_, absolute_, unitScaleDu_, newXDu, xShiftDu)) {
                 return "value out of range";
             }
 

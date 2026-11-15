@@ -20,9 +20,12 @@
 
 #include "GcodeCore.hpp"
 
-// Standard (LinuxCNC) interpreter: G0/G1/G33, G10 L20 P1, G20/G21, G90/G91,
-// G94/G18/G8/G54 (no-op), M0/M1/M2/M30, G38.2-.5, M110 (MDI only),
+// Standard (LinuxCNC) interpreter: G0/G1/G33, G10 L20 P0-P6, G20/G21,
+// G90/G91, G94/G18/G8, G54-G59, G53, M0/M1/M2/M30, G38.2-.5, M110 (MDI only),
 // F, K, T (ignored). Z/X axes only, X is radius. G38.x is not modal.
+// Positions are in the active work system. G53 is not modal: it moves in
+// machine coordinates on its own line (G0/G1, G90). G10 L20 P0 is the active
+// system, P1-P6 are G54-G59.
 namespace Gcode
 {
     class Interpreter
@@ -57,6 +60,14 @@ namespace Gcode
         {
             return unitScaleDu_;
         }
+        const WcsState &wcs() const
+        {
+            return wcs_;
+        }
+        void setWcs(const WcsState &wcs)
+        {
+            wcs_ = wcs;
+        }
         void setMdi(bool mdi)
         {
             mdi_ = mdi;
@@ -71,6 +82,7 @@ namespace Gcode
         int32_t zDu_;
         int32_t xDu_;
         bool mdi_ = false;
+        WcsState wcs_ = {};
     };
 }
 

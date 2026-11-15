@@ -25,6 +25,7 @@ target_sources(app PRIVATE
     lib/Machine/Machine.cpp
     lib/Machine/EstopInput.cpp
     lib/Wcs/Wcs.cpp
+    lib/Wcs/WcsRules.cpp
     lib/Watchdog/Watchdog.cpp
     lib/Mode/Mode.cpp
     lib/Mode/ModeParams.cpp

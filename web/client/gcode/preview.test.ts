@@ -61,4 +61,14 @@ describe("startFrame", () => {
       [4, 2],
     ])
   })
+
+  it("shifts moves after a G54-G59 selection, and ignores a G10 L20 of another system", () => {
+    const other = { ...step("set-position", 9, 9), wcs: 2 }
+    const select = { ...step("select-wcs", 2, 2), wcs: 1 }
+    const steps = [step("rapid", 5, 2), other, select, step("feed", 1, 2)]
+    expect(startFrame(steps).map((s) => [s.zDu / DU_PER_MM, s.xDu / DU_PER_MM])).toEqual([
+      [5, 2],
+      [4, 2],
+    ])
+  })
 })

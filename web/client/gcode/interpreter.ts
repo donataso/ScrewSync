@@ -1,9 +1,11 @@
-// Standard (LinuxCNC) interpreter: G0/G1/G33, G10 L20 P1, G20/G21, G90/G91,
-// G94/G18/G8/G54 (no-op), M0/M1/M2/M30, F, K, T (ignored). Z/X axes only, X
-// is radius. Mirrors main/lib/Gcode/GcodeInterpreter.{hpp,cpp}, which also
-// takes M110 in MDI.
+// Standard (LinuxCNC) interpreter: G0/G1/G33, G10 L20 P0-P6, G20/G21,
+// G90/G91, G94/G18/G8, G54-G59, G53, M0/M1/M2/M30, F, K, T (ignored). Z/X
+// axes only, X is radius. Positions are in the active work system. G53 is
+// not modal: it moves in machine coordinates on its own line (G0/G1, G90).
+// G10 L20 P0 is the active system, P1-P6 are G54-G59. Mirrors
+// main/lib/Gcode/GcodeInterpreter.{hpp,cpp}, which also takes M110 in MDI.
 
-import { AXIS_X, AXIS_Z, DU_PER_INCH, DU_PER_MM, type StepKind, type StepSink, type Word } from "./core"
+import { AXIS_X, AXIS_Z, DU_PER_INCH, DU_PER_MM, WCS_COUNT, type StepKind, type StepSink, type Word } from "./core"
 
 const INT32_MAX = 2147483647
 const INT32_MIN = -2147483648
@@ -19,16 +21,26 @@ return null
   return Math.sign(scaled) * Math.round(Math.abs(scaled))
 }
 
-function axisTargetDu(value: number, currentDu: number, absolute: boolean, unitScaleDu: number): number | null {
+function axisTargetDu(
+  value: number,
+  currentDu: number,
+  absolute: boolean,
+  unitScaleDu: number,
+  offsetDu = 0,
+): number | null {
   const rawDu = scaledValueToDu(value, unitScaleDu)
   if (rawDu === null) {
 return null
 }
-  const target = absolute ? rawDu : currentDu + rawDu
+  const target = (absolute ? rawDu : currentDu + rawDu) - offsetDu
   if (target < INT32_MIN || target > INT32_MAX) {
 return null
 }
   return target
+}
+
+function fitsInt32(value: number): number | null {
+  return value < INT32_MIN || value > INT32_MAX ? null : value
 }
 
 // G/M numbers in tenths (G38.2 = 382); anything finer is refused.
@@ -59,6 +71,8 @@ export class Interpreter {
   private feedSet = false
   private zDu = 0
   private xDu = 0
+  private active = 0
+  private offsetDu: number[][] = Array.from({ length: WCS_COUNT }, () => [0, 0])
 
   begin(startZDu: number, startXDu: number, motion: Motion = Motion.None): void {
     this.motion = motion
@@ -68,6 +82,8 @@ export class Interpreter {
     this.feedSet = false
     this.zDu = startZDu
     this.xDu = startXDu
+    this.active = 0
+    this.offsetDu = Array.from({ length: WCS_COUNT }, () => [0, 0])
   }
 
   line(words: Word[], lineNo: number, sink: StepSink): string | null {
@@ -77,6 +93,8 @@ export class Interpreter {
     let hasG33 = false
     let hasMotionG = false
     let hasG10 = false
+    let hasG53 = false
+    let selectWcs = -1
     let mKind: StepKind = "pause"
 
     for (const w of words) {
@@ -131,7 +149,20 @@ export class Interpreter {
             case 940:
             case 180:
             case 80:
+              break
+            case 530:
+              hasG53 = true
+              break
             case 540:
+            case 550:
+            case 560:
+            case 570:
+            case 580:
+            case 590:
+              if (selectWcs >= 0) {
+                return "two coordinate systems"
+              }
+              selectWcs = (code - 540) / 10
               break
             default:
               return "unsupported command"
@@ -204,6 +235,16 @@ export class Interpreter {
       return "K requires G33"
     }
 
+    if (hasG53 && (hasG10 || hasG33 || this.motion === Motion.None)) {
+      return "G53 requires G0 or G1"
+    }
+    if (hasG53 && !this.absolute) {
+      return "G53 requires G90"
+    }
+    if (hasG53 && !hasZ && !hasX) {
+      return "G53 requires axis move"
+    }
+
     if (hasF) {
       const fDu = fVal > 0 ? scaledValueToDu(fVal, this.unitScaleDu) : null
       if (fDu === null || fDu <= 0) {
@@ -224,10 +265,26 @@ export class Interpreter {
 
     const axes = (hasZ ? AXIS_Z : 0) | (hasX ? AXIS_X : 0)
 
-    if (hasG10) {
-      if (val.L !== 20 || val.P !== 1) {
-        return "only G10 L20 P1"
+    if (selectWcs >= 0) {
+      const from = this.offsetDu[this.active]
+      const to = this.offsetDu[selectWcs]
+      const z = fitsInt32(this.zDu + from[0] - to[0])
+      const x = fitsInt32(this.xDu + from[1] - to[1])
+      if (z === null || x === null) {
+        return "value out of range"
       }
+      this.active = selectWcs
+      this.zDu = z
+      this.xDu = x
+      sink.emit({ kind: "select-wcs", zDu: z, xDu: x, feed: 0, line: lineNo, wcs: selectWcs })
+    }
+
+    if (hasG10) {
+      const p = val.P
+      if (val.L !== 20 || p === undefined || !Number.isInteger(p) || p < 0 || p > WCS_COUNT) {
+        return "only G10 L20 P0-P6"
+      }
+      const system = p === 0 ? this.active : p - 1
       if (!axes) {
         return "G10 requires axis"
       }
@@ -247,24 +304,45 @@ export class Interpreter {
         }
         newXDu = x
       }
-      this.zDu = newZDu
-      this.xDu = newXDu
-      sink.emit({ kind: "set-position", zDu: newZDu, xDu: newXDu, feed: 0, line: lineNo, axes })
+      const activeOffset = this.offsetDu[this.active]
+      let zOffsetDu = this.offsetDu[system][0]
+      let xOffsetDu = this.offsetDu[system][1]
+      if (hasZ) {
+        const o = fitsInt32(this.zDu + activeOffset[0] - newZDu)
+        if (o === null) {
+          return "value out of range"
+        }
+        zOffsetDu = o
+      }
+      if (hasX) {
+        const o = fitsInt32(this.xDu + activeOffset[1] - newXDu)
+        if (o === null) {
+          return "value out of range"
+        }
+        xOffsetDu = o
+      }
+      this.offsetDu[system] = [zOffsetDu, xOffsetDu]
+      if (system === this.active) {
+        this.zDu = newZDu
+        this.xDu = newXDu
+      }
+      sink.emit({ kind: "set-position", zDu: newZDu, xDu: newXDu, feed: 0, line: lineNo, axes, wcs: system })
     } else if (axes) {
       if (this.motion === Motion.None) {
         return "no motion mode"
       }
       let newZDu = this.zDu
       let newXDu = this.xDu
+      const shift = hasG53 ? this.offsetDu[this.active] : [0, 0]
       if (hasZ) {
-        const z = axisTargetDu(zVal, this.zDu, this.absolute, this.unitScaleDu)
+        const z = axisTargetDu(zVal, this.zDu, this.absolute, this.unitScaleDu, shift[0])
         if (z === null) {
           return "value out of range"
         }
         newZDu = z
       }
       if (hasX) {
-        const x = axisTargetDu(xVal, this.xDu, this.absolute, this.unitScaleDu)
+        const x = axisTargetDu(xVal, this.xDu, this.absolute, this.unitScaleDu, shift[1])
         if (x === null) {
           return "value out of range"
         }

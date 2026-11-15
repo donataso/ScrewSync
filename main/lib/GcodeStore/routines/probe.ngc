@@ -33,8 +33,8 @@ o104 if [#<_probe_contact>]
 o104 endif
 G90
 o105 if [#1 EQ 0]
-  G10 L20 P1 Z[-#2 * [#<back> + #<_probe_offset>]]
+  G10 L20 P0 Z[-#2 * [#<back> + #<_probe_offset>]]
 o105 else
-  G10 L20 P1 X[-#2 * [#<back> + #<_probe_offset>]]
+  G10 L20 P0 X[-#2 * [#<back> + #<_probe_offset>]]
 o105 endif
 o<probe> endsub

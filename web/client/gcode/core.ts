@@ -14,8 +14,18 @@ export interface Word {
   value: number
 }
 
-// set-position: G10 L20, the axes in mask read zDu/xDu.
-export type StepKind = "rapid" | "feed" | "thread" | "pause" | "optional-pause" | "end" | "set-position"
+// set-position: G10 L20, the axes in mask read zDu/xDu in system wcs.
+export type StepKind =
+  | "rapid"
+  | "feed"
+  | "thread"
+  | "pause"
+  | "optional-pause"
+  | "end"
+  | "set-position"
+  | "select-wcs"
+
+export const WCS_COUNT = 6
 
 export const AXIS_Z = 1
 export const AXIS_X = 2
@@ -29,6 +39,7 @@ export interface Step {
   feed: number // du/min for Feed, lead du per spindle rev for Thread
   line: number
   axes?: number
+  wcs?: number
 }
 
 export interface StepSink {

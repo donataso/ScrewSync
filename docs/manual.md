@@ -88,6 +88,24 @@ How to operate ScrewSync. For connectors and flashing, see
 - A home switch signal while an axis moves trips the estop. The axes stop at
   once. When no axis moves, a signal does nothing.
 
+## Work coordinates
+
+- The display and the web client show positions in the active work
+  coordinate system. G54 is active at boot. `G10 L20 P0 Z0` sets zero in the
+  active system, `P1`–`P6` in G54–G59. The Set zero switches and the probe
+  set the active system.
+- With home switches, select G54–G59 on the web MDI page or with `G55` etc.
+  Also before homing. The offsets are saved.
+- Without home switches, only G54 exists. Its offset is lost at reboot.
+- `G53 G0 Z… X…` moves in machine coordinates, for that line only.
+
+## Require homing
+
+- With home switches and the setting on, start, jog, routines and G-code
+  moves are refused with "not homed" until the axes are homed. Homing,
+  estop, settings and motor on or off still work, and so do G-code lines
+  that do not move.
+
 ## Running a job
 
 1. Touch the tool off on the work, or probe it, and set zero on Z and X
@@ -173,7 +191,7 @@ How to operate ScrewSync. For connectors and flashing, see
 - G1 feed is per minute along the path. G33 (LatheCode: G32) is
   synchronized to the spindle; K is the lead. The feed override applies to
   G1 only.
-- `G10 L20 P1 Z… X…` makes the current position read the given values.
+- `G10 L20 P0 Z… X…` makes the current position read the given values in the active work system (`P1`–`P6`: G54–G59).
 - Motion pauses while the spindle is stopped and continues when it turns.
 - M0/M1 pause until START. M2/M30 or STOP end the program.
 - LinuxCNC programs can use NGC parameters, expressions, O-words and
@@ -195,7 +213,7 @@ How to operate ScrewSync. For connectors and flashing, see
   (LinuxCNC), e.g. `G91 G0 Z-1`.
   The modes (G90/G91, G20/G21, F) stay between lines. STOP or `stop`
   stops the move and drops the queued lines.
-- `G10 L20 P1 Z0` sets Z zero at the tool. `M110` sets the spindle angle
+- `G10 L20 P0 Z0` sets Z zero at the tool. `M110` sets the spindle angle
   to 0.
 
 ## Probe

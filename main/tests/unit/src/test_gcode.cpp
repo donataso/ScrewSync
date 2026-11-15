@@ -210,6 +210,8 @@ namespace
             return "end";
         case StepKind::SetPosition:
             return "set-position";
+        case StepKind::SelectWcs:
+            return "select-wcs";
         case StepKind::SpindleAngle:
             return "spindle-angle";
         case StepKind::Probe:
@@ -237,6 +239,7 @@ namespace
         int32_t xDu;
         int32_t feed;
         uint8_t axes;
+        uint8_t wcs;
     };
 
     bool parseKind(const char *text, StepKind &kind)
@@ -269,6 +272,10 @@ namespace
             kind = StepKind::SetPosition;
             return true;
         }
+        if (strcmp(text, "select-wcs") == 0) {
+            kind = StepKind::SelectWcs;
+            return true;
+        }
         return false;
     }
 
@@ -294,6 +301,7 @@ namespace
             e.zDu = 0;
             e.xDu = 0;
             e.feed = 0;
+            e.wcs = 0;
             e.line = (uint32_t)strtoul(toks[0], nullptr, 10);
 
             if (strcmp(toks[1], "error") == 0) {
@@ -311,6 +319,8 @@ namespace
                     } else if (strncmp(toks[ti], "f=", 2) == 0) {
                         e.feed = atoi(toks[ti] + 2);
                         haveF = true;
+                    } else if (strncmp(toks[ti], "w=", 2) == 0) {
+                        e.wcs = (uint8_t)atoi(toks[ti] + 2);
                     }
                 }
                 e.axes = (haveZ ? AXIS_Z : 0) | (haveX ? AXIS_X : 0);
@@ -381,7 +391,13 @@ namespace
                 zassert_equal(s.zDu, e.zDu, "%s: step %u wrong zDu", v.name, (unsigned)stepIndex);
                 zassert_equal(s.xDu, e.xDu, "%s: step %u wrong xDu", v.name, (unsigned)stepIndex);
             }
+            if (e.kind == StepKind::SelectWcs) {
+                zassert_equal(s.wcs, e.wcs, "%s: step %u wrong wcs", v.name, (unsigned)stepIndex);
+                zassert_equal(s.zDu, e.zDu, "%s: step %u wrong zDu", v.name, (unsigned)stepIndex);
+                zassert_equal(s.xDu, e.xDu, "%s: step %u wrong xDu", v.name, (unsigned)stepIndex);
+            }
             if (e.kind == StepKind::SetPosition) {
+                zassert_equal(s.wcs, e.wcs, "%s: step %u wrong wcs", v.name, (unsigned)stepIndex);
                 zassert_equal(s.axes, e.axes, "%s: step %u wrong axes", v.name, (unsigned)stepIndex);
                 zassert_true(!(e.axes & AXIS_Z) || s.zDu == e.zDu, "%s: step %u wrong zDu", v.name, (unsigned)stepIndex);
                 zassert_true(!(e.axes & AXIS_X) || s.xDu == e.xDu, "%s: step %u wrong xDu", v.name, (unsigned)stepIndex);

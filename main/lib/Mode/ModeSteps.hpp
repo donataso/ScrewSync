@@ -33,8 +33,10 @@ namespace Mode::Detail
 {
     bool isMotion(Gcode::StepKind kind);
 
-    // SetPosition, SpindleAngle.
-    void applyMachineStep(const Gcode::Step &s);
+    // SetPosition, SelectWcs, SpindleAngle. The reason if refused, else nullptr.
+    const char *applyMachineStep(const Gcode::Step &s);
+
+    Gcode::WcsState wcsState();
 
     // The probe interrupt halts no axis after this.
     void probeDisarm();

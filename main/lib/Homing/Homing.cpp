@@ -78,9 +78,19 @@ namespace
         Mode::Detail::releaseAxes();
     }
 
+    bool gateClosed(bool requireHoming)
+    {
+        if (!requireHoming || !HomeInput::sensors()) {
+            return false;
+        }
+        bool xPresent = Pins::count(PinMap::Fn::XMotor) > 0;
+        return !g_homed[(size_t)Axis::Z] || (xPresent && !g_homed[(size_t)Axis::X]);
+    }
+
     void setHomed(Axis axis, bool homed)
     {
         g_homed[(size_t)axis] = homed;
+        Stepper::setHomingOnly(gateClosed(Settings::g_active.requireHoming));
         if (!homed) {
             Stepper::clearTravelWindow(axis);
             return;
@@ -176,6 +186,17 @@ namespace Homing
                 clearHomed(axis);
             }
         }
+        Stepper::setHomingOnly(gateClosed(after.requireHoming));
+    }
+
+    bool blocked()
+    {
+        return gateClosed(Settings::g_active.requireHoming);
+    }
+
+    void refreshGate()
+    {
+        Stepper::setHomingOnly(blocked());
     }
 
     void tick()
@@ -191,7 +212,7 @@ namespace Homing
         if (out.move) {
             g_latched = false;
             g_watch = out.watch;
-            Stepper::moveTo(axis, out.target, out.speed);
+            Stepper::moveTo(axis, out.target, out.speed, true);
         }
         if (g_sequence.state() == HomingSeq::State::Done) {
             axisDone(axis);

@@ -177,11 +177,26 @@ namespace Mode::Detail
         return g_source;
     }
 
-    void applyMachineStep(const Gcode::Step &s)
+    Gcode::WcsState wcsState()
+    {
+        static_assert(Wcs::COUNT == Gcode::WCS_COUNT);
+        Gcode::WcsState state = {};
+        state.active = (uint8_t)Wcs::active();
+        for (size_t i = 0; i < Wcs::COUNT; i++) {
+            state.offsetDu[i][0] = (int32_t)Wcs::offset(i, Stepper::Axis::Z);
+            state.offsetDu[i][1] = (int32_t)Wcs::offset(i, Stepper::Axis::X);
+        }
+        return state;
+    }
+
+    const char *applyMachineStep(const Gcode::Step &s)
     {
         if (s.kind == Gcode::StepKind::SpindleAngle) {
             Motion::setSpindleAngle(s.feed / 1000.0);
-            return;
+            return nullptr;
+        }
+        if (s.kind == Gcode::StepKind::SelectWcs) {
+            return Wcs::select(s.wcs);
         }
         for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
             bool isZ = axis == Stepper::Axis::Z;
@@ -190,9 +205,13 @@ namespace Mode::Detail
             }
             int32_t value = isZ ? s.zDu : s.xDu;
             if (s.kind == Gcode::StepKind::SetPosition) {
-                Wcs::setPosition(axis, value);
+                const char *refusal = Wcs::setPosition(s.wcs, axis, value);
+                if (refusal) {
+                    return refusal;
+                }
             }
         }
+        return nullptr;
     }
 
     void StepMotion::begin(const Gcode::Step &s, int64_t spindlePos)

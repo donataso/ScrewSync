@@ -16,20 +16,45 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Wcs.hpp"
+#include "HomeInput.hpp"
 #include "Machine.hpp"
+#include "PersistBlob.hpp"
+#include <string.h>
 #include <zephyr/kernel.h>
 
 namespace
 {
     constexpr size_t AXES = 2;
+    constexpr const char *NVS_NS = "wcs";
+    constexpr const char *NVS_KEY = "offsets";
 
     struct k_spinlock g_lock;
     int64_t g_offsets[Wcs::COUNT][AXES];
     size_t g_active = 0;
+
+    void save()
+    {
+        k_spinlock_key_t key = k_spin_lock(&g_lock);
+        int64_t copy[Wcs::COUNT][AXES];
+        memcpy(copy, g_offsets, sizeof(copy));
+        k_spin_unlock(&g_lock, key);
+        PersistBlob::save(NVS_NS, NVS_KEY, copy, sizeof(copy));
+    }
 }
 
 namespace Wcs
 {
+    void begin()
+    {
+        if (!HomeInput::sensors()) {
+            return;
+        }
+        int64_t loaded[COUNT][AXES];
+        if (PersistBlob::load(NVS_NS, NVS_KEY, loaded, sizeof(loaded)) == sizeof(loaded)) {
+            memcpy(g_offsets, loaded, sizeof(loaded));
+        }
+    }
+
     size_t active()
     {
         return g_active;
@@ -43,11 +68,13 @@ namespace Wcs
         return du;
     }
 
-    void setOffset(size_t index, Stepper::Axis axis, int64_t du)
+    const char *select(size_t index)
     {
-        k_spinlock_key_t key = k_spin_lock(&g_lock);
-        g_offsets[index][(size_t)axis] = du;
-        k_spin_unlock(&g_lock, key);
+        const char *reason = refusal(index, HomeInput::sensors());
+        if (!reason) {
+            g_active = index;
+        }
+        return reason;
     }
 
     int64_t position(Stepper::Axis axis)
@@ -60,8 +87,19 @@ namespace Wcs
         return workDu + offset(active(), axis);
     }
 
-    void setPosition(Stepper::Axis axis, int64_t workDu)
+    const char *setPosition(size_t index, Stepper::Axis axis, int64_t workDu)
     {
-        setOffset(active(), axis, Machine::position(axis) - workDu);
+        bool sensors = HomeInput::sensors();
+        const char *reason = refusal(index, sensors);
+        if (reason) {
+            return reason;
+        }
+        k_spinlock_key_t key = k_spin_lock(&g_lock);
+        g_offsets[index][(size_t)axis] = Machine::position(axis) - workDu;
+        k_spin_unlock(&g_lock, key);
+        if (sensors) {
+            save();
+        }
+        return nullptr;
     }
 }

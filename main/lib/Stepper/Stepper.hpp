@@ -56,7 +56,9 @@ namespace Stepper
     // maxSpeed caps this move, 0 = speedRapidSteps (or the override).
     // Safe to call again mid-move to redirect the target. Returns the
     // accepted target: differs when travel-clamped or refused.
-    int64_t moveTo(Axis axis, int64_t targetSteps, int32_t maxSpeed = 0);
+    int64_t moveTo(Axis axis, int64_t targetSteps, int32_t maxSpeed = 0, bool homing = false);
+
+    void setHomingOnly(bool on);
 
     // At rest on the last accepted target.
     bool arrived(Axis axis);

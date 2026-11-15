@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react"
 import { sendCommand } from "../api"
 import { addToHistory, freshRecall, loadHistory, saveHistory, stepHistory, type Recall } from "../mdi-history"
+import { useDeviceState } from "../state-provider"
 import type { CmdOutcome } from "../types"
-import { Button, Panel, TextInput } from "../ui/primitives"
+import { Button, Panel, Select, TextInput } from "../ui/primitives"
 
 interface Entry {
   id: number
@@ -24,7 +25,10 @@ function replyText(outcome: CmdOutcome): { reply: string; ok: boolean } {
   return { reply: typeof msg === "string" && msg ? `ok ${msg}` : "ok", ok: true }
 }
 
+const WCS_WORDS = ["G54", "G55", "G56", "G57", "G58", "G59"]
+
 export function MdiScreen() {
+  const { state, capabilities } = useDeviceState()
   const [history, setHistory] = useState<string[]>(() => loadHistory())
   const [recall, setRecall] = useState<Recall>(() => freshRecall(history))
   const [input, setInput] = useState("")
@@ -105,19 +109,36 @@ export function MdiScreen() {
         ))}
         <div ref={logEnd} />
       </div>
-      <TextInput
-        autoFocus
-        className="mt-2 w-full font-mono"
-        value={input}
-        onChange={(e) => {
-          setInput(e.target.value)
-        }}
-        onKeyDown={onKeyDown}
-        placeholder="G-code (LinuxCNC) or a command, e.g. G91 G0 Z-1"
-        spellCheck={false}
-        autoCapitalize="off"
-        autoComplete="off"
-      />
+      <div className="mt-2 flex gap-2">
+        <TextInput
+          autoFocus
+          className="w-full font-mono"
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value)
+          }}
+          onKeyDown={onKeyDown}
+          placeholder="G-code (LinuxCNC) or a command, e.g. G91 G0 Z-1"
+          spellCheck={false}
+          autoCapitalize="off"
+          autoComplete="off"
+        />
+        {capabilities?.has_endstops && (
+          <Select
+            aria-label="Work coordinate system"
+            value={state?.wcs ?? "G54"}
+            onChange={(e) => {
+              send(e.target.value)
+            }}
+          >
+            {WCS_WORDS.map((word) => (
+              <option key={word} value={word}>
+                {word}
+              </option>
+            ))}
+          </Select>
+        )}
+      </div>
       <p className="mt-1 text-xs text-muted-foreground">Enter sends. Up and Down recall earlier lines. Esc clears the line.</p>
     </Panel>
   )

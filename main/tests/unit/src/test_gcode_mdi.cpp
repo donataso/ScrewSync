@@ -161,6 +161,21 @@ ZTEST(gcode_mdi, test_set_position_moves_session)
     zassert_equal(sink.steps[1].zDu, DU_PER_MM);
 }
 
+ZTEST(gcode_mdi, test_wcs_kept_by_ui_line)
+{
+    Mdi mdi = session();
+    Collect sink;
+    WcsState wcs = {};
+    wcs.offsetDu[1][0] = 2 * DU_PER_MM;
+    mdi.setPosition(5 * DU_PER_MM, 0);
+    mdi.setWcs(wcs);
+    zassert_is_null(mdi.line("G55", true, 4, sink));
+    zassert_equal(mdi.wcsActive(), 1);
+    zassert_equal(mdi.zDu(), 3 * DU_PER_MM);
+    zassert_is_null(mdi.line("G53 G0 Z0", false, 4, sink));
+    zassert_equal(sink.steps[1].zDu, -2 * DU_PER_MM);
+}
+
 ZTEST(gcode_mdi, test_program_rejects_mdi_codes)
 {
     Interpreter interp;

@@ -149,8 +149,8 @@ User side: [pins.md](pins.md).
 - MDI lines run on the G-code step runner when no mode runs, and own both
   axes while they move.
 - Positions are in du. `Machine::position()` is the machine coordinate,
-  from the stepper count. `Wcs` holds the work offset (G54, RAM only);
-  zeroing and the probe set it. A homed axis has a travel window in
+  from the stepper count. `Wcs` holds the work offsets (G54–G59, saved
+  only with home switches); zeroing and the probe set the active one. A homed axis has a travel window in
   stepper steps: the upper limit at the home position, the lower limit
   `maxTravelMm` below it. `Homing` sets and clears it with the homed state.
 - Geometry is relative to the engage point; there are no global stops.

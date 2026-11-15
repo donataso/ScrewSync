@@ -1,0 +1,8 @@
+2 rapid z=50000 x=20000
+3 set-position z=0 w=0
+4 select-wcs z=50000 x=20000 w=1
+5 set-position z=10000 x=10000 w=1
+6 select-wcs z=0 x=20000 w=0
+7 set-position z=0 x=0 w=1
+8 select-wcs z=0 x=0 w=1
+8 rapid z=10000 x=0

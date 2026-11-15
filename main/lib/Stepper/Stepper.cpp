@@ -184,16 +184,18 @@ namespace
         k_work_submit(&s == &g_axisZ ? &g_arrivedZ : &g_arrivedX);
     }
 
-    int64_t moveToLocked(AxisState &s, int64_t targetSteps, int32_t maxSpeed, bool follow = false)
+    volatile bool g_homingOnly = false;
+
+    int64_t moveToLocked(AxisState &s, int64_t targetSteps, int32_t maxSpeed, bool follow = false, bool homing = false)
     {
         // The one choke point for every mover (Jog/Sync both drive through
-        // here, same as the travel clamp below) -- while flashing/estopped
-        // or manually disabled, pin the target to the current position
+        // here, same as the travel clamp below) -- while flashing/estopped,
+        // manually disabled or homing-only, pin the target to the current position
         // instead of accepting a new one, so an in-flight ramp sees zero
         // distance remaining and stops on its very next tick.
         Machine::State ms = Machine::state();
         s.braking = false;
-        if (ms == Machine::State::Flashing || ms == Machine::State::EStop || s.disabled || !hasPins(s)) {
+        if (ms == Machine::State::Flashing || ms == Machine::State::EStop || s.disabled || !hasPins(s) || (g_homingOnly && !homing)) {
             s.targetPos = s.currentPos;
             s.followMove = false;
             return s.targetPos;
@@ -234,7 +236,7 @@ namespace
             return;
         }
         int64_t distance = Stepper::stoppingDistance(s.currentSpeed, s.cfg->decelerationSteps);
-        moveToLocked(s, s.currentPos + direction * distance, s.moveMaxSpeed);
+        moveToLocked(s, s.currentPos + direction * distance, s.moveMaxSpeed, false, true);
     }
 
     void armNext(AxisState &s, uint32_t periodUs)
@@ -400,11 +402,16 @@ namespace Stepper
         return held;
     }
 
-    int64_t moveTo(Axis axis, int64_t targetSteps, int32_t maxSpeed)
+    void setHomingOnly(bool on)
+    {
+        g_homingOnly = on;
+    }
+
+    int64_t moveTo(Axis axis, int64_t targetSteps, int32_t maxSpeed, bool homing)
     {
         AxisState &s = stateOf(axis);
         k_spinlock_key_t key = k_spin_lock(&s.lock);
-        int64_t accepted = moveToLocked(s, targetSteps, maxSpeed);
+        int64_t accepted = moveToLocked(s, targetSteps, maxSpeed, false, homing);
         k_spin_unlock(&s.lock, key);
         return accepted;
     }

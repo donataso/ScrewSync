@@ -30,6 +30,9 @@ namespace Homing
     void clearHomed(Stepper::Axis axis);
     void settingsChanged(const Settings::Conf &before, const Settings::Conf &after);
 
+    bool blocked();
+    void refreshGate();
+
     // Mode lock held.
     void tick();
     void stop();

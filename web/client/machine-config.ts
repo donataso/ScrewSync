@@ -300,7 +300,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
         key: "requireHoming",
         label: "Require homing",
         type: "checkbox",
-        help: "Block everything except homing, estop off, settings and motor enable until the axes are homed.",
+        help: "Refuse jog, start, routine calls and G-code moves until the axes are homed.",
       },
     ],
     pairs: [

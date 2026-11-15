@@ -15,6 +15,7 @@
 #include "EstopInput.hpp"
 #include "HomeInput.hpp"
 #include "Homing.hpp"
+#include "Wcs.hpp"
 #include "ThreadStore.hpp"
 #include "Jog.hpp"
 #include "Rpm.hpp"
@@ -38,6 +39,8 @@ int main(void)
     Stepper::begin();
     ProbeInput::begin(Mode::probeEdge);
     HomeInput::begin(Homing::onEdge);
+    Wcs::begin();
+    Homing::refreshGate();
     EstopInput::begin();
     Watchdog::begin();
     RunSettings::load();

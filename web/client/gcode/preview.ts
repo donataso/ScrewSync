@@ -22,15 +22,24 @@ function duToMm(du: number): number {
 }
 
 // The motion steps in the coordinates the program started in: a G10 L20
-// shifts the later targets back by its change.
+// of the active system or a G54-G59 shifts the later targets back by its
+// change.
 export function startFrame(steps: Step[]): Step[] {
   let offZ = 0
   let offX = 0
   let zDu = 0
   let xDu = 0
+  let active = 0
   const out: Step[] = []
   for (const s of steps) {
-    if (s.kind === "set-position") {
+    if (s.kind === "select-wcs") {
+      active = s.wcs ?? 0
+      offZ += zDu - s.zDu
+      offX += xDu - s.xDu
+    } else if (s.kind === "set-position") {
+      if ((s.wcs ?? 0) !== active) {
+        continue
+      }
       offZ += zDu - s.zDu
       offX += xDu - s.xDu
     } else if (s.kind !== "rapid" && s.kind !== "feed" && s.kind !== "thread") {

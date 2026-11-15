@@ -249,6 +249,11 @@ namespace Command
             snprintf(out, outMax, "err busy: estop");
             return;
         }
+        bool isHome = tokLen == 4 && !strncmp(a, "home", 4);
+        if (Homing::blocked() && (isCall || isJog || (startsMotion(a, tokLen, a + tokLen) && !isHome))) {
+            snprintf(out, outMax, "err not homed");
+            return;
+        }
         if (isMdi) {
             const char *refusal = pinsFault ? pinsFault : Mode::mdi(gcode, ui);
             if (refusal) {

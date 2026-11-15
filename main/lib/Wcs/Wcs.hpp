@@ -19,23 +19,26 @@
 #define Wcs_h
 
 #include "Stepper.hpp"
+#include "WcsRules.hpp"
 #include <stddef.h>
 #include <stdint.h>
 
-// Work coordinate systems: work = machine - offset, all in du. RAM only.
+// Work coordinate systems: work = machine - offset, all in du. G54 is active
+// at boot. With home switches the offsets are saved; without, only G54
+// exists and its offset is lost at reboot.
 namespace Wcs
 {
-    constexpr size_t COUNT = 6; // G54..G59
+    void begin();
 
     size_t active();
     int64_t offset(size_t index, Stepper::Axis axis);
-    void setOffset(size_t index, Stepper::Axis axis, int64_t du);
+
+    const char *select(size_t index);
 
     // Work position in the active system.
     int64_t position(Stepper::Axis axis);
     int64_t toMachine(Stepper::Axis axis, int64_t workDu);
-    // The present position reads as workDu in the active system.
-    void setPosition(Stepper::Axis axis, int64_t workDu);
+    const char *setPosition(size_t index, Stepper::Axis axis, int64_t workDu);
 }
 
 #endif

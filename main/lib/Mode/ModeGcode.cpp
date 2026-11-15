@@ -161,7 +161,7 @@ namespace
         g_job.spindleGated = g_call == nullptr;
         GcodeStore::resetRoutines();
         g_program.begin({dialect, &params(), &paramSource(), &g_routines, false, &g_printer}, text, len,
-                        (int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
+                        (int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X), wcsState());
         return nullptr;
     }
 
@@ -243,10 +243,16 @@ namespace
             finish();
             break;
         case Gcode::StepKind::SetPosition:
+        case Gcode::StepKind::SelectWcs:
         case Gcode::StepKind::SpindleAngle:
+        {
             g_job.pendingIndex++;
-            applyMachineStep(s);
+            const char *refusal = applyMachineStep(s);
+            if (refusal) {
+                finish(refusal);
+            }
             break;
+        }
         }
     }
 

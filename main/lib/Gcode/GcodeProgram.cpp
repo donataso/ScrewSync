@@ -172,10 +172,11 @@ namespace Gcode
         return nullptr;
     }
 
-    void Program::begin(const Setup &setup, const char *text, size_t len, int32_t startZDu, int32_t startXDu)
+    void Program::begin(const Setup &setup, const char *text, size_t len, int32_t startZDu, int32_t startXDu, const WcsState &wcs)
     {
         setup_ = setup;
         setup_.dialect->begin(interp_, startZDu, startXDu);
+        interp_.setWcs(wcs);
         setup_.params->resetCalls();
         depth_ = 0;
         blockCount_ = 0;

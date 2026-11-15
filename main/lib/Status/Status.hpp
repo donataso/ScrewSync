@@ -57,6 +57,7 @@ namespace Status
         char params[256];  // current mode's "name=value ..."
         bool probeContact;
         bool homing;
+        const char *wcs;
     };
 
     Snapshot get();

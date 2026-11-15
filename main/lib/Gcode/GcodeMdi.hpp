@@ -36,6 +36,7 @@ namespace Gcode
 
         void begin(Dialect &dialect, int32_t zDu, int32_t xDu, Params &params, ParamSource *source);
         void setPosition(int32_t zDu, int32_t xDu);
+        void setWcs(const WcsState &wcs);
         // After a G38 move: the trip point, work du, and the probed axis's
         // motor position, du.
         void probeDone(int32_t tripZDu, int32_t tripXDu, bool found, int32_t motorDu);
@@ -46,6 +47,10 @@ namespace Gcode
         int32_t xDu() const
         {
             return interp_.xDu();
+        }
+        uint8_t wcsActive() const
+        {
+            return interp_.wcs().active;
         }
 
         // Steps go to sink, all or none, at most room of them; M0/M1/M2/M30 do

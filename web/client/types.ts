@@ -26,6 +26,7 @@ export interface StatusPush {
   gear: GearStatus
   probeContact: boolean
   homing: boolean
+  wcs: string
   job: JobStatus
   error: string
 }

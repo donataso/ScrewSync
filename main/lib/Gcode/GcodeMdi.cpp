@@ -62,6 +62,11 @@ namespace Gcode
         interp_.setPosition(zDu, xDu);
     }
 
+    void Mdi::setWcs(const WcsState &wcs)
+    {
+        interp_.setWcs(wcs);
+    }
+
     void Mdi::probeDone(int32_t tripZDu, int32_t tripXDu, bool found, int32_t motorDu)
     {
         double scale = interp_.unitScaleDu();
@@ -107,6 +112,7 @@ namespace Gcode
         }
         if (ui) {
             interp_.setPosition(work.zDu(), work.xDu());
+            interp_.setWcs(work.wcs());
         } else {
             interp_ = work;
         }

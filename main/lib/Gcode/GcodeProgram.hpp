@@ -63,7 +63,7 @@ namespace Gcode
             PrintSink *printer = nullptr; // (PRINT, ...) lines
         };
 
-        void begin(const Setup &setup, const char *text, size_t len, int32_t startZDu, int32_t startXDu);
+        void begin(const Setup &setup, const char *text, size_t len, int32_t startZDu, int32_t startXDu, const WcsState &wcs = {});
         Status next(StepSink &sink, uint32_t maxLines);
 
         // Error: the reason, the routine ("" = the program) and its line.

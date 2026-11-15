@@ -59,6 +59,9 @@ replies; see `docs/screen.md`.
   machine is idle, without a home input (`err no home switch`) and while an
   axis is off. `stop` ends it. A failure shows in `error` and the axis is not
   homed.
+- While `requireHoming` is on, with home switches, and an axis is not homed:
+  `start`, `jog`, `o<...>` calls and MDI lines with a move get `err not homed`.
+  G-code that does not move (G54–G59, `G10 L20`) runs.
 - `power on|off [z|x]`: turns the motors on or off, both axes without an
   axis. `power on` gets `err busy: estop` in estop.
 
@@ -77,8 +80,16 @@ replies; see `docs/screen.md`.
 - MDI owns both axes while it moves; a jog stops it.
 - G0 runs at the rapid speed setting of the axis. G0/G1 move with the
   spindle stopped. The feed override applies to G1.
-- `G10 L20 P1 Z… X…`: the current position reads the given values (X is
-  radius). Also in programs.
+- `G10 L20 P<n> Z… X…`: the current position reads the given values in
+  system n (X is radius). P0 is the active system, P1–P6 are G54–G59.
+  Also in programs.
+- `G54`–`G59` select the work coordinate system. G54 is active at boot.
+  Selecting is allowed at any time. Also in programs.
+- `G53 G0|G1 Z… X…`: a move in machine coordinates. It is not modal and
+  needs G90. Also in programs.
+- With home switches, the offsets of all systems are saved. Without, only
+  G54 exists, G55–G59 and `G10 L20 P2`–`P6` get `err G54 only without home
+  switches`, and the offset is lost at reboot.
 - `G38.2`–`G38.5 <axis>… F…` moves one axis until the probe
   input changes: `.2`/`.3` until contact, `.4`/`.5` until the contact
   opens. `.2`/`.4` give an error if it does not change before the target;
@@ -256,8 +267,8 @@ right after any command changes that domain:
   mode, `job` (`phase`, `pass`, `passes`), `feedOverride` (percent),
   `error` (why the last job ended
   on its own), `params` (the current mode's `name=value ...`) and
-  `probeContact` (the live probe input state), per axis `homed`, and `homing`
-  (homing runs).
+  `probeContact` (the live probe input state), per axis `homed`, `homing`
+  (homing runs) and `wcs` (the active system, `"G54"`–`"G59"`).
 - `{"type":"capabilities","has_x_motor":bool,"has_endstops":bool,"has_probe":bool}`
   -- sent once on connect, same values as `GET /capabilities`.
 - `{"type":"settings", ...}` -- machine config.
