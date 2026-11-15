@@ -5,9 +5,6 @@
   motor), instead of falling through to a generic unknown-command error.
   Needs compile-time axis/feature gating first -- none exists yet (Stepper/
   Sync/Jog/Command all build Z and X unconditionally).
-- estop: physical trigger (button on some pin) and on-screen ack UI -- the
-  Machine/Command/Stepper-side trip+block+ack logic is done, this is just
-  the missing input/UI
 - DRO from glass scales, per axis: a present scale is the source of truth
   for position, otherwise motor steps. Needs a DRO panel; fixed stops in
   machine coordinates can be revisited then. Scale functions need their

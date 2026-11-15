@@ -12,6 +12,7 @@
 #include "Watchdog.hpp"
 #include "Mode.hpp"
 #include "ProbeInput.hpp"
+#include "EstopInput.hpp"
 #include "HomeInput.hpp"
 #include "Homing.hpp"
 #include "ThreadStore.hpp"
@@ -37,6 +38,7 @@ int main(void)
     Stepper::begin();
     ProbeInput::begin(Mode::probeEdge);
     HomeInput::begin(Homing::onEdge);
+    EstopInput::begin();
     Watchdog::begin();
     RunSettings::load();
     ThreadStore::begin();

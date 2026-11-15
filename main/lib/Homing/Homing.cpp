@@ -24,7 +24,6 @@
 #include "Pins.hpp"
 #include "StepperLimits.hpp"
 #include <math.h>
-#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(homing, LOG_LEVEL_INF);
@@ -47,12 +46,6 @@ namespace
     volatile bool g_latched = false;
     volatile int64_t g_latchPosition = 0;
     volatile Axis g_watchedAxis = Axis::Z;
-
-    void estopWork(struct k_work *)
-    {
-        Machine::tripEstop();
-    }
-    K_WORK_DEFINE(g_estopWork, estopWork);
 
     const Settings::Axis &cfgOf(Axis axis)
     {
@@ -203,23 +196,18 @@ namespace Homing
 
     void onEdge(Axis axis, bool active)
     {
-        if (!g_active) {
-            return;
+        bool moving = Stepper::isMoving(Axis::Z) || Stepper::isMoving(Axis::X);
+        switch (HomingSeq::edgeAction(g_active, axis == g_watchedAxis, active, g_watch, moving)) {
+        case HomingSeq::EdgeAction::Estop:
+            Machine::estopNow();
+            break;
+        case HomingSeq::EdgeAction::Latch:
+            g_latchPosition = Stepper::haltNow(axis);
+            g_watch = HomingSeq::Watch::None;
+            g_latched = true;
+            break;
+        case HomingSeq::EdgeAction::Ignore:
+            break;
         }
-        if (axis != g_watchedAxis) {
-            if (active) {
-                Stepper::haltNow(Axis::Z);
-                Stepper::haltNow(Axis::X);
-                k_work_submit(&g_estopWork);
-            }
-            return;
-        }
-        HomingSeq::Watch watch = g_watch;
-        if (watch == HomingSeq::Watch::None || active != (watch == HomingSeq::Watch::Contact)) {
-            return;
-        }
-        g_latchPosition = Stepper::haltNow(axis);
-        g_watch = HomingSeq::Watch::None;
-        g_latched = true;
     }
 }

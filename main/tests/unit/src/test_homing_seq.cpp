@@ -193,3 +193,30 @@ ZTEST(homing_seq, test_queue_x_first)
     zassert_equal(axes[0], Stepper::Axis::X);
     zassert_equal(axes[1], Stepper::Axis::Z);
 }
+
+ZTEST(homing_seq, test_edge_idle_moving_active_trips)
+{
+    zassert_equal(edgeAction(false, true, true, Watch::None, true), EdgeAction::Estop);
+    zassert_equal(edgeAction(false, false, true, Watch::None, true), EdgeAction::Estop);
+}
+
+ZTEST(homing_seq, test_edge_idle_ignored)
+{
+    zassert_equal(edgeAction(false, true, true, Watch::None, false), EdgeAction::Ignore);
+    zassert_equal(edgeAction(false, true, false, Watch::None, true), EdgeAction::Ignore);
+}
+
+ZTEST(homing_seq, test_edge_homing_other_axis)
+{
+    zassert_equal(edgeAction(true, false, true, Watch::Contact, true), EdgeAction::Estop);
+    zassert_equal(edgeAction(true, false, false, Watch::Contact, true), EdgeAction::Ignore);
+}
+
+ZTEST(homing_seq, test_edge_homing_watched_axis)
+{
+    zassert_equal(edgeAction(true, true, true, Watch::Contact, true), EdgeAction::Latch);
+    zassert_equal(edgeAction(true, true, false, Watch::Release, true), EdgeAction::Latch);
+    zassert_equal(edgeAction(true, true, false, Watch::Contact, true), EdgeAction::Ignore);
+    zassert_equal(edgeAction(true, true, true, Watch::Release, true), EdgeAction::Ignore);
+    zassert_equal(edgeAction(true, true, true, Watch::None, true), EdgeAction::Ignore);
+}

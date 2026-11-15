@@ -52,10 +52,13 @@ namespace
     {
         const char *arg = skipSpaces(args);
         if (!strcmp(arg, "off")) {
-            Machine::estopOff();
-            snprintf(out, outMax, "ok estop off");
+            if (Machine::estopOff()) {
+                snprintf(out, outMax, "ok estop off");
+            } else {
+                snprintf(out, outMax, "err busy: estop input active");
+            }
         } else if (!strcmp(arg, "on")) {
-            Machine::tripEstop();
+            Machine::estopNow();
             snprintf(out, outMax, "ok estop on");
         } else {
             snprintf(out, outMax, "ok state=%s", Machine::stateName());

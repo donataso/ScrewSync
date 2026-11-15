@@ -57,9 +57,10 @@ namespace Machine
     // Idle, EStop, or Flashing for an update already in progress.
     bool allowsUpdate();
 
-    void tripEstop();
+    // ISR-safe. Stops both axes at once, then trips the estop in thread context.
+    void estopNow();
 
-    void estopOff();
+    bool estopOff();
 
     int64_t position(Stepper::Axis axis);
     int64_t positionOf(Stepper::Axis axis, int64_t steps);

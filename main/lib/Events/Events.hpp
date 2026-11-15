@@ -30,6 +30,11 @@ namespace Events
         bool running;
     };
 
+    struct Estop
+    {
+        bool estop;
+    };
+
     // Stepper::Axis
     struct AxisArrived
     {
@@ -72,6 +77,6 @@ namespace Events
     void publishRefusal(const char *reply);
 }
 
-ZBUS_CHAN_DECLARE(RUNNING_CHAN, AXIS_ARRIVED_CHAN, SETTINGS_CHAN, REFUSAL_CHAN, PROBE_CHAN, PRINT_CHAN);
+ZBUS_CHAN_DECLARE(RUNNING_CHAN, ESTOP_CHAN, AXIS_ARRIVED_CHAN, SETTINGS_CHAN, REFUSAL_CHAN, PROBE_CHAN, PRINT_CHAN);
 
 #endif

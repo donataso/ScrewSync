@@ -99,12 +99,14 @@ User side: [pins.md](pins.md).
   `EStop` (sticky, see below) > `Running` if spinning or either axis's mode
   flag is set > else `Idle`.
 - The machine always boots in `EStop`. The flag is not saved.
-- `Machine::tripEstop()` (thread context) sets `EStop`, stops all motion
+- `Machine::estopNow()` is the one estop entry. It is ISR-safe: it halts
+  both axes at once, then a work item sets `EStop`, stops all motion
   (`Mode::stop()`, which also clears the MDI queue) and disables both axes
-  (`Stepper::setDisabled`). It does not reboot. `setFlashing(true)` while
-  spinning or mode-engaged calls it instead of entering `Flashing` -- OTA
-  must never start while the machine is doing something.
-- `estop off` calls `Machine::estopOff()`. It clears `EStop`, does not
+  (`Stepper::setDisabled`). It does not reboot. `estop on`, the home and
+  estop inputs and `setFlashing(true)` while spinning or mode-engaged call
+  it -- OTA must never start while the machine is doing something.
+- `estop off` calls `Machine::estopOff()`. It is refused while an estop
+  input is active. It clears `EStop`, does not
   reboot and does not enable the motors. The axis disabled state is not
   saved, so both axes are disabled at boot. `RunSettings::setAxisDisabled`
   refuses to enable an axis in `EStop`.

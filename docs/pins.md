@@ -65,6 +65,8 @@ Each encoder has a filter, in µs:
   one. Otherwise you cannot save the map.
 - A tailstock switch can share the X home input (wired together). While Z
   homes, X is off its switch, so a signal on this input is the tailstock.
+- A signal on a home input while an axis moves trips the estop. When no axis
+  moves, the signal does nothing.
 - The "Home" switch sends `home`.
 
 ## Feed override encoder
@@ -87,9 +89,19 @@ Each encoder has a filter, in µs:
 - The step encoder counts one per quadrature cycle. To reverse it, invert
   A or B.
 
+## Estop input
+
+- "Estop" is one input each. You can add more than one, for example one
+  button at each end of the lathe. Each edge raises an interrupt.
+- The default is a normally-closed button. Set "invert" to match your
+  button.
+- An active input trips the estop. The axes stop at once.
+- While an estop input is active, `estop off` is refused.
+
 ## Outputs
 
 - "Running" is on while a job runs.
+- "Estop" is on while the machine is in estop.
 
 ## Faults and recovery
 

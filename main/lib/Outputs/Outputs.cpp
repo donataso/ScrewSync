@@ -26,33 +26,58 @@ using PinMap::Fn;
 
 namespace
 {
-    gpio_dt_spec g_running[PinMap::MAX_ASSIGNMENTS];
-    size_t g_runningCount = 0;
+    struct Lamp
+    {
+        Fn fn;
+        gpio_dt_spec pins[PinMap::MAX_ASSIGNMENTS];
+        size_t count;
+        bool initial;
+    };
+
+    Lamp g_running = {Fn::RunningOut, {}, 0, false};
+    Lamp g_estop = {Fn::EstopOut, {}, 0, true};
+
+    void set(const Lamp &lamp, bool on)
+    {
+        for (size_t i = 0; i < lamp.count; i++) {
+            gpio_pin_set_dt(&lamp.pins[i], on);
+        }
+    }
 
     void onRunning(const struct zbus_channel *chan)
     {
-        const auto *msg = static_cast<const Events::Running *>(zbus_chan_const_msg(chan));
-        for (size_t i = 0; i < g_runningCount; i++) {
-            gpio_pin_set_dt(&g_running[i], msg->running);
+        set(g_running, static_cast<const Events::Running *>(zbus_chan_const_msg(chan))->running);
+    }
+
+    void onEstop(const struct zbus_channel *chan)
+    {
+        set(g_estop, static_cast<const Events::Estop *>(zbus_chan_const_msg(chan))->estop);
+    }
+
+    void configure(Lamp &lamp, const char *name)
+    {
+        for (size_t n = 0; n < Pins::count(lamp.fn) && lamp.count < PinMap::MAX_ASSIGNMENTS; n++) {
+            gpio_dt_spec &pin = lamp.pins[lamp.count];
+            if (!Pins::spec(lamp.fn, n, 0, pin) || !gpio_is_ready_dt(&pin)) {
+                LOG_ERR("%s: GPIO not ready", name);
+                continue;
+            }
+            gpio_pin_configure_dt(&pin, lamp.initial ? GPIO_OUTPUT_ACTIVE : GPIO_OUTPUT_INACTIVE);
+            lamp.count++;
         }
     }
 }
 
 ZBUS_LISTENER_DEFINE(OUTPUTS_RUNNING_LIS, onRunning);
 ZBUS_CHAN_ADD_OBS(RUNNING_CHAN, OUTPUTS_RUNNING_LIS, 3);
+ZBUS_LISTENER_DEFINE(OUTPUTS_ESTOP_LIS, onEstop);
+ZBUS_CHAN_ADD_OBS(ESTOP_CHAN, OUTPUTS_ESTOP_LIS, 3);
 
 namespace Outputs
 {
     void begin()
     {
-        for (size_t n = 0; n < Pins::count(Fn::Running) && g_runningCount < PinMap::MAX_ASSIGNMENTS; n++) {
-            gpio_dt_spec &pin = g_running[g_runningCount];
-            if (!Pins::spec(Fn::Running, n, 0, pin) || !gpio_is_ready_dt(&pin)) {
-                LOG_ERR("running: GPIO not ready");
-                continue;
-            }
-            gpio_pin_configure_dt(&pin, GPIO_OUTPUT_INACTIVE);
-            g_runningCount++;
-        }
+        configure(g_running, "running");
+        configure(g_estop, "estop");
     }
 }

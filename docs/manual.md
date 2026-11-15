@@ -73,6 +73,8 @@ How to operate ScrewSync. For connectors and flashing, see
 - In estop, start, jog, the handwheels, MDI, routines and motor on are
   refused. The serial and web commands are `estop on`, `estop off`,
   `power on` and `power off`.
+- An estop button on an Estop input trips the estop at once. While the
+  button is active, you cannot clear the estop.
 
 ## Homing
 
@@ -83,6 +85,8 @@ How to operate ScrewSync. For connectors and flashing, see
 - An axis is not homed after an estop, after its motor is turned off, after
   a reboot, and after a change of screw pitch, motor steps, direction
   invert or backlash.
+- A home switch signal while an axis moves trips the estop. The axes stop at
+  once. When no axis moves, a signal does nothing.
 
 ## Running a job
 

@@ -43,6 +43,13 @@ namespace HomingSeq
         Release,
     };
 
+    enum class EdgeAction : uint8_t
+    {
+        Ignore,
+        Latch,
+        Estop,
+    };
+
     struct Params
     {
         int64_t searchSteps;
@@ -70,6 +77,8 @@ namespace HomingSeq
         Watch watch;
         const char *error;
     };
+
+    EdgeAction edgeAction(bool homing, bool watchedAxis, bool active, Watch watch, bool moving);
 
     size_t queue(bool hasXMotor, Stepper::Axis (&out)[2]);
 

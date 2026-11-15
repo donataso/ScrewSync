@@ -59,6 +59,7 @@ namespace PinMap
         ZHandwheel,
         XHandwheel,
         Probe,
+        Estop,
         ZHome,
         XHome,
         StartHere,
@@ -89,7 +90,8 @@ namespace PinMap
         ModeEllipse,
         ModeGcode,
         ModeProbe,
-        Running,
+        RunningOut,
+        EstopOut,
         Count,
     };
     constexpr size_t FN_COUNT = (size_t)Fn::Count;

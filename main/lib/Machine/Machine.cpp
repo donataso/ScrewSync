@@ -16,6 +16,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Machine.hpp"
+#include "EstopInput.hpp"
+#include "Events.hpp"
 #include "Mode.hpp"
 #include "Homing.hpp"
 #include "Motion.hpp"
@@ -43,6 +45,22 @@ namespace
         k_spin_unlock(&g_originLock, key);
         return du;
     }
+
+    void tripEstop(struct k_work *)
+    {
+        k_mutex_lock(&g_mutex, K_FOREVER);
+        g_estop = true;
+        k_mutex_unlock(&g_mutex);
+        Mode::stop();
+        Stepper::setDisabled(Stepper::Axis::Z, true);
+        Stepper::setDisabled(Stepper::Axis::X, true);
+        Homing::clearHomed(Stepper::Axis::Z);
+        Homing::clearHomed(Stepper::Axis::X);
+        LOG_ERR("machine: estop tripped");
+        Events::Estop msg = {true};
+        Events::publish(&ESTOP_CHAN, &msg);
+    }
+    K_WORK_DEFINE(g_estopWork, tripEstop);
 
     Machine::State stateLocked()
     {
@@ -80,17 +98,11 @@ namespace Machine
         k_mutex_unlock(&g_mutex);
     }
 
-    void tripEstop()
+    void estopNow()
     {
-        k_mutex_lock(&g_mutex, K_FOREVER);
-        g_estop = true;
-        k_mutex_unlock(&g_mutex);
-        Mode::stop();
-        Stepper::setDisabled(Stepper::Axis::Z, true);
-        Stepper::setDisabled(Stepper::Axis::X, true);
-        Homing::clearHomed(Stepper::Axis::Z);
-        Homing::clearHomed(Stepper::Axis::X);
-        LOG_ERR("machine: estop tripped");
+        Stepper::haltNow(Stepper::Axis::Z);
+        Stepper::haltNow(Stepper::Axis::X);
+        k_work_submit(&g_estopWork);
     }
 
     bool setFlashing(bool flashing)
@@ -99,7 +111,7 @@ namespace Machine
         if (flashing) {
             if (g_spinning || g_modeEngagedZ || g_modeEngagedX) {
                 k_mutex_unlock(&g_mutex);
-                tripEstop();
+                estopNow();
                 return false;
             }
             g_flashing = true;
@@ -145,11 +157,17 @@ namespace Machine
         return s == State::Idle || s == State::Flashing || s == State::EStop;
     }
 
-    void estopOff()
+    bool estopOff()
     {
+        if (EstopInput::active()) {
+            return false;
+        }
         k_mutex_lock(&g_mutex, K_FOREVER);
         g_estop = false;
         k_mutex_unlock(&g_mutex);
+        Events::Estop msg = {false};
+        Events::publish(&ESTOP_CHAN, &msg);
+        return true;
     }
 
     int64_t position(Stepper::Axis axis)

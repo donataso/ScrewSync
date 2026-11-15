@@ -26,6 +26,20 @@ namespace
 
 namespace HomingSeq
 {
+    EdgeAction edgeAction(bool homing, bool watchedAxis, bool active, Watch watch, bool moving)
+    {
+        if (!homing) {
+            return active && moving ? EdgeAction::Estop : EdgeAction::Ignore;
+        }
+        if (!watchedAxis) {
+            return active ? EdgeAction::Estop : EdgeAction::Ignore;
+        }
+        if (watch == Watch::None || active != (watch == Watch::Contact)) {
+            return EdgeAction::Ignore;
+        }
+        return EdgeAction::Latch;
+    }
+
     size_t queue(bool hasXMotor, Stepper::Axis (&out)[2])
     {
         size_t count = 0;

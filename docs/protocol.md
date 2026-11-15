@@ -53,7 +53,8 @@ replies; see `docs/screen.md`.
 - `estop` / `estop on` / `estop off`: `estop` alone replies
   `ok state=<name>`. `estop on` trips the EStop. `estop off` clears it. It
   does not enable the motors. While `flashing`, `estop on` gets
-  `err busy: flashing`.
+  `err busy: flashing`. While an estop input is active, `estop off` gets
+  `err busy: estop input active`.
 - `home`: homes X (if the X motor exists), then Z. It is refused unless the
   machine is idle, without a home input (`err no home switch`) and while an
   axis is off. `stop` ends it. A failure shows in `error` and the axis is not
