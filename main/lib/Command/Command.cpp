@@ -215,7 +215,7 @@ namespace Command::Detail
 
     bool refuseUnlessIdle(char *out, size_t outMax)
     {
-        if (Motion::idle()) {
+        if (Motion::configurable()) {
             return false;
         }
         snprintf(out, outMax, "err machine not idle");

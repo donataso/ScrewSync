@@ -30,6 +30,8 @@ namespace Motion
     // No mode or MDI running and the machine is Idle.
     bool idle();
 
+    bool configurable();
+
     void setAxisEnabled(Stepper::Axis axis, bool enabled);
 
     // The current spindle angle becomes deg.

@@ -43,13 +43,13 @@ throw new Error("useDeviceState must be used within StateProvider")
   return ctx
 }
 
-// Mirrors the firmware's refuseUnlessIdle(): Idle state and no mode running.
+// Mirrors the firmware's refuseUnlessIdle(): Idle or estop state and no mode running.
 export function useCanConfigure(): boolean {
   const ctx = useContext(StateContext)
   if (!ctx) {
 throw new Error("useCanConfigure must be used within StateProvider")
 }
-  return ctx.state !== null && ctx.state.state === "idle" && !ctx.state.running
+  return ctx.state !== null && (ctx.state.state === "idle" || ctx.state.state === "estop") && !ctx.state.running
 }
 
 export const CONFIGURE_LOCK_MESSAGE = "Only allowed while the machine is idle."

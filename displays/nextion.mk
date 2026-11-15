@@ -44,6 +44,8 @@ $(1)_BACKUP_REGIONS += $$($(1)_DISPLAY_PARTITION):$$($(1)_DISPLAY_PARTITION_SIZE
 
 .PHONY: $(1)-display-image
 
+$(1)-build $(1)-build-debug-mcuboot: $$($(1)_DISPLAY)-build
+
 $(1)-display-image:
 	python3 scripts/pack_display_image.py $$($$($(1)_DISPLAY)_TFT) $(CURDIR)/.build/$(1)/display.bin
 endef

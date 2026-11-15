@@ -19,7 +19,7 @@
 #include "DisplayImageStore.hpp"
 #include "Display.hpp"
 #include "Machine.hpp"
-#include "Mode.hpp"
+#include "Motion.hpp"
 #include "Nextion.hpp"
 #include "display_config.hpp"
 #include <zephyr/devicetree.h>
@@ -127,7 +127,7 @@ namespace DisplayImage
 
     const char *flashStored()
     {
-        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
+        if (!Motion::configurable()) {
             return "machine not idle";
         }
         if (!info().stored) {

@@ -17,8 +17,7 @@
  */
 #include "Pins.hpp"
 #include "PinMapJson.hpp"
-#include "Machine.hpp"
-#include "Mode.hpp"
+#include "Motion.hpp"
 #include "PersistBlob.hpp"
 #include "Settings.hpp"
 
@@ -319,7 +318,7 @@ namespace Pins
 
     const char *fromJson(char *json, size_t len)
     {
-        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
+        if (!Motion::configurable()) {
             return "machine not idle";
         }
         static Map map;

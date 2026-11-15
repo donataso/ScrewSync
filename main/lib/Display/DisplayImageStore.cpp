@@ -17,8 +17,7 @@
  */
 #include "DisplayImage.hpp"
 #include "DisplayImageStore.hpp"
-#include "Machine.hpp"
-#include "Mode.hpp"
+#include "Motion.hpp"
 #include <string.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -185,7 +184,7 @@ namespace DisplayImage
 
     const char *storeBegin(uint32_t len, uint32_t crc)
     {
-        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
+        if (!Motion::configurable()) {
             return "machine not idle";
         }
         if (!claim()) {

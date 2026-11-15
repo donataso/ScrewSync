@@ -56,6 +56,12 @@ namespace Motion
         return Machine::state() == Machine::State::Idle && !Mode::busy();
     }
 
+    bool configurable()
+    {
+        Machine::State s = Machine::state();
+        return (s == Machine::State::Idle || s == Machine::State::EStop) && !Mode::busy();
+    }
+
     void setAxisEnabled(Stepper::Axis axis, bool enabled)
     {
         if (!enabled) {

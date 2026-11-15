@@ -16,8 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ThreadStore.hpp"
-#include "Machine.hpp"
-#include "Mode.hpp"
+#include "Motion.hpp"
 #include <string.h>
 #include <zephyr/data/json.h>
 #include <zephyr/sys/util.h>
@@ -83,7 +82,7 @@ namespace ThreadStore
 
     const char *fromJson(char *json, size_t len)
     {
-        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
+        if (!Motion::configurable()) {
             return "machine not idle";
         }
         memset(&g_json, 0, sizeof(g_json));

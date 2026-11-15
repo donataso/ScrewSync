@@ -18,7 +18,7 @@
 #include "Backup.hpp"
 #include "Homing.hpp"
 #include "JsonSpan.hpp"
-#include "Machine.hpp"
+#include "Motion.hpp"
 #include "Mode.hpp"
 #include "Pins.hpp"
 #include "RunSettings.hpp"
@@ -179,7 +179,7 @@ namespace Backup
 
     const char *fromJson(char *json, size_t len)
     {
-        if (Machine::state() != Machine::State::Idle || Mode::busy()) {
+        if (!Motion::configurable()) {
             return "machine not idle";
         }
         g_doc.settings = Settings::g_active;
