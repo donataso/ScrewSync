@@ -41,9 +41,20 @@
   (`program.nx` globals). Every page ages the link on a timer and shows a
   non-dismissable blocking toast: blue while flashing, red once the link is
   lost. It starts shown, so it covers boot until the first heartbeat.
-- Estop icon in the page0 header: it shows the machine state. A tap sends
-  `estop on` outside estop and `estop off` in estop. In estop a tinted
-  overlay covers the page, except the icon, and takes all other taps.
+- Header icons at the top left of page0 (icons from the Lucide set, drawn
+  from SVG files in `pictures/icons`):
+  - Estop icon: always red. It has a green dot while the estop is off. A tap
+    sends `estop on` outside estop and `estop off` in estop. In estop a
+    tinted overlay covers the page, except this icon, and takes all other
+    taps.
+  - Home icon: a tap sends `home`. Its colour shows the homed state: grey =
+    not homed, green = homed, blue = homing in progress. Only axes with a
+    home input count.
+  - WCS selector: a button with the active work coordinate system. A tap
+    opens a list of G54 to G59. A pick sends the G-code word as an MDI line.
+    A refusal shows as a toast.
+  - The home icon and the WCS selector show only when the pin map has home
+    inputs. The estop overlay covers both.
 - Axis enable buttons send `power on|off z|x`.
 
 ## Layout

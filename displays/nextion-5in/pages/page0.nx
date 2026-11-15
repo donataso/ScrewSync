@@ -5,6 +5,9 @@ include "page0/keypad.nx"
 include "page0/menu.nx"
 include "page0/panel.nx"
 
+const HOME_ALL = 1
+const HOME_BUSY = 2
+
 // sendme tells the firmware the page changed, so it pushes this page.
 on page0.load:
   sendme
@@ -13,6 +16,7 @@ on page0.load:
   vis 255,0
   vis hdrBg,1
   vis rpm,1
+  vis rpmUnit,1
   vis angle,1
   vis mode,1
   vis leftBg,1
@@ -38,8 +42,10 @@ on page0.load:
   vis toastHide,1
   vis estopBtn,1
   vis estopSync,1
+  vis homeSync,1
   menuOpen.val = 0
   settingsOpen.val = 0
+  wcsOpen.val = 0
   kpRightOpen.val = 0
   kpOpen.val = 0
   layoutPanel(1)
@@ -48,17 +54,49 @@ on page0.load:
   blockState.val = BLOCK_NONE
   updateBlock()
   setEstopUi(estop.val)
+  setHomeUi()
 
 on page0.up:
   jogCancel()
 
-const COLOR_ESTOP_ON = 45316
-const COLOR_ESTOP_OFF = 8485
+function setWcs(shown: number):
+  wcsOpen.val = shown
+  vis wcsDismiss,shown
+  vis wcsBg,shown
+  vis wcs0,shown
+  vis wcs1,shown
+  vis wcs2,shown
+  vis wcs3,shown
+  vis wcs4,shown
+  vis wcs5,shown
+  if (!shown) {
+    ref 0
+  }
 
 function setEstopUi(on: number):
   vis estopShade,on
   vis estopTouch,on
-  estopBtn.bco = on ? COLOR_ESTOP_ON : COLOR_ESTOP_OFF
+  if (on) {
+    estopBtn.pic = @pic(icons/estop)
+    setWcs(0)
+  } else {
+    estopBtn.pic = @pic(icons/estop_ok)
+  }
+
+function setHomeUi():
+  vis homeBtn,sensors.val
+  vis wcsBtn,sensors.val
+  if (homeState.val == HOME_BUSY) {
+    homeBtn.pic = @pic(icons/home_busy)
+  } else if (homeState.val == HOME_ALL) {
+    homeBtn.pic = @pic(icons/home_all)
+  } else {
+    homeBtn.pic = @pic(icons/home_none)
+  }
+
+function pickWcs(name: text):
+  send("@" + name)
+  setWcs(0)
 
 function setToast(shown: number):
   vis toastShade,shown
@@ -85,8 +123,41 @@ on estopSync.down:
   jogCancel()
   setEstopUi(estop.val)
 
+on homeSync.down:
+  setHomeUi()
+
 on estopBtn.up:
   send(estop.val ? "estop off" : "estop on")
+
+on homeBtn.up:
+  send("home")
+
+on wcsBtn.up:
+  if (menuOpen.val) {
+    setMenu(0)
+  }
+  setWcs(1)
+
+on wcsDismiss.up:
+  setWcs(0)
+
+on wcs0.up:
+  pickWcs(wcs0.txt)
+
+on wcs1.up:
+  pickWcs(wcs1.txt)
+
+on wcs2.up:
+  pickWcs(wcs2.txt)
+
+on wcs3.up:
+  pickWcs(wcs3.txt)
+
+on wcs4.up:
+  pickWcs(wcs4.txt)
+
+on wcs5.up:
+  pickWcs(wcs5.txt)
 
 on toastHide.down:
   hideToast()

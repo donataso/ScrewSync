@@ -119,6 +119,7 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Built for the [nanoels](https://github.com/kachurovskiy/nanoels) H5 hardware.
 ScrewSync is licensed under AGPL-3.0-or-later.
+Third-party notices (icons and fonts) are in [NOTICE.md](NOTICE.md).
 
 ### :heart: If this project is useful to you, consider supporting it
 

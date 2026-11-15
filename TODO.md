@@ -20,3 +20,4 @@
 - Printable connector label with the user's connector names.
 - Optional: live view of each input's level, to help identify wiring.
 - G-code: G92, more WCS slots.
+- NOTICE.md: add Zephyr and its modules, and the web client's npm packages.

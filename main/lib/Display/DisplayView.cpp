@@ -18,6 +18,7 @@
 #include "DisplayInternal.hpp"
 #include "GcodeCore.hpp"
 #include "GcodeStore.hpp"
+#include "HomeInput.hpp"
 #include "JogStep.hpp"
 #include "Machine.hpp"
 #include "Wifi.hpp"
@@ -262,6 +263,39 @@ namespace
         writeCommand("click estopSync,1");
     }
 
+    constexpr int HOME_NONE = 0;
+    constexpr int HOME_ALL = 1;
+    constexpr int HOME_BUSY = 2;
+    constexpr int WCS_COUNT = 6;
+
+    int homeState(const Status::Snapshot &s)
+    {
+        if (s.homing) {
+            return HOME_BUSY;
+        }
+        bool zHomed = !HomeInput::present(Stepper::Axis::Z) || s.z.homed;
+        bool xHomed = !HomeInput::present(Stepper::Axis::X) || s.x.homed;
+        return zHomed && xHomed ? HOME_ALL : HOME_NONE;
+    }
+
+    void pushHome(const Status::Snapshot &s)
+    {
+        bool sensors = HomeInput::sensors();
+        bool changed = pushNum("sensors.val", sensors);
+        if (sensors) {
+            changed |= pushNum("homeState.val", homeState(s));
+            pushText("wcsBtn.txt", "%s", s.wcs);
+            for (int i = 0; i < WCS_COUNT; i++) {
+                char key[KEY_MAX];
+                snprintf(key, sizeof(key), "wcs%d", i);
+                pushSelected(key, s.wcs[2] == '4' + i);
+            }
+        }
+        if (changed) {
+            writeCommand("click homeSync,1");
+        }
+    }
+
     void pushWifi()
     {
         Wifi::Mode m = Wifi::mode();
@@ -300,7 +334,7 @@ namespace Display::Detail
         }
 
         Status::Snapshot s = Status::get();
-        pushText("rpm.txt", "%d RPM", (int)s.rpm);
+        pushText("rpm.txt", "%d", (int)s.rpm);
         pushText("angle.txt", "%.1f\xC2\xB0", (double)s.angleDeg);
         pushNum("unitsInch.val", inchUnits());
         pushSelected("unitMm", !inchUnits());
@@ -311,6 +345,7 @@ namespace Display::Detail
         pushMode(s);
         pushJobError(s.error, s.running);
         pushEstop();
+        pushHome(s);
         pushWifi();
     }
 

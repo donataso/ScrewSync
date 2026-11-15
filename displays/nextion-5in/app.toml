@@ -9,7 +9,13 @@ pages = [
     "page0",
     "threads",
 ]
-pictures = []
+pictures = [
+    "icons/estop",
+    "icons/estop_ok",
+    "icons/home_none",
+    "icons/home_all",
+    "icons/home_busy",
+]
 fonts = [
     "NotoSans24",
     "DejaVuSansMonoBook40",

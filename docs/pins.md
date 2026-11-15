@@ -54,6 +54,8 @@ Each encoder has a filter, in µs:
   rules. A refused command shows as a toast on the display.
 - "Start here" starts without the "Go to zero first?" question.
 - "Go to zero" moves Z to 0, then X to 0 (the routine `o<zero>`).
+- "G54" to "G59" select the work coordinate system, like the display's
+  selector. Systems G55 to G59 need home inputs.
 
 ## Home inputs
 

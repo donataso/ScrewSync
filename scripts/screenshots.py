@@ -64,7 +64,7 @@ def angle():
 
 
 def rpm():
-    return 'rpm.txt="%d RPM"' % random.randint(100, 500)
+    return 'rpm.txt="%d"' % random.randint(100, 500)
 
 
 def value(slot, text, kind):

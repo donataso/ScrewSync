@@ -23,24 +23,40 @@ txt = ""
 name = "rpm"
 type = "text"
 vscope = 1
-x = 8
+x = 256
 y = 8
-w = 208
+w = 120
 h = 56
 bco = 6570
 pco = 59262
-txt = "0 RPM"
+txt = "0"
 font = 1
 xcen = 2
 txt_maxl = 12
 
 [[component]]
+name = "rpmUnit"
+type = "text"
+vscope = 1
+x = 380
+y = 8
+w = 68
+h = 45
+bco = 6570
+pco = 59262
+txt = "RPM"
+font = 0
+xcen = 0
+ycen = 2
+txt_maxl = 4
+
+[[component]]
 name = "angle"
 type = "text"
 vscope = 1
-x = 224
+x = 452
 y = 8
-w = 168
+w = 148
 h = 56
 bco = 6570
 pco = 59262
@@ -53,9 +69,9 @@ txt_maxl = 12
 name = "mode"
 type = "button"
 vscope = 1
-x = 552
+x = 624
 y = 12
-w = 240
+w = 168
 h = 48
 style = 0
 bco = 10829
@@ -64,6 +80,33 @@ pco = 59262
 pco2 = 59262
 txt = "GEAR"
 txt_maxl = 20
+font = 6
+
+[[component]]
+name = "homeBtn"
+type = "picture"
+vscope = 1
+x = 72
+y = 12
+w = 48
+h = 48
+pic = "icons/home_none"
+
+[[component]]
+name = "wcsBtn"
+type = "button"
+vscope = 1
+x = 168
+y = 12
+w = 80
+h = 48
+style = 0
+bco = 10829
+bco2 = 15089
+pco = 59262
+pco2 = 59262
+txt = "G54"
+txt_maxl = 4
 font = 6
 
 [[component]]
@@ -2070,6 +2113,128 @@ font = 6
 txt_maxl = 12
 
 [[component]]
+name = "wcsDismiss"
+type = "hotspot"
+x = 0
+y = 0
+w = 800
+h = 480
+
+[[component]]
+name = "wcsBg"
+type = "text"
+vscope = 1
+x = 0
+y = 72
+w = 312
+h = 408
+bco = 2178
+pco = 59262
+txt = ""
+
+[[component]]
+name = "wcs0"
+type = "button"
+vscope = 1
+x = 8
+y = 80
+w = 144
+h = 92
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "G54"
+txt_maxl = 4
+font = 6
+
+[[component]]
+name = "wcs1"
+type = "button"
+vscope = 1
+x = 160
+y = 80
+w = 144
+h = 92
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "G55"
+txt_maxl = 4
+font = 6
+
+[[component]]
+name = "wcs2"
+type = "button"
+vscope = 1
+x = 8
+y = 180
+w = 144
+h = 92
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "G56"
+txt_maxl = 4
+font = 6
+
+[[component]]
+name = "wcs3"
+type = "button"
+vscope = 1
+x = 160
+y = 180
+w = 144
+h = 92
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "G57"
+txt_maxl = 4
+font = 6
+
+[[component]]
+name = "wcs4"
+type = "button"
+vscope = 1
+x = 8
+y = 280
+w = 144
+h = 92
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "G58"
+txt_maxl = 4
+font = 6
+
+[[component]]
+name = "wcs5"
+type = "button"
+vscope = 1
+x = 160
+y = 280
+w = 144
+h = 92
+style = 0
+bco = 8485
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "G59"
+txt_maxl = 4
+font = 6
+
+[[component]]
 name = "estopShade"
 type = "text"
 vscope = 1
@@ -2077,10 +2242,10 @@ x = 0
 y = 0
 w = 800
 h = 480
-bco = 32768
+bco = 33808
 pco = 65535
 txt = ""
-aph = 48
+aph = 96
 
 [[component]]
 name = "estopTouch"
@@ -2092,20 +2257,21 @@ h = 480
 
 [[component]]
 name = "estopBtn"
-type = "button"
+type = "picture"
 vscope = 1
-x = 432
+x = 8
 y = 12
-w = 96
+w = 48
 h = 48
-style = 0
-bco = 8485
-bco2 = 15089
-pco = 59262
-pco2 = 59262
-txt = "ESTOP"
-txt_maxl = 8
-font = 6
+pic = "icons/estop"
+
+[[component]]
+name = "homeSync"
+type = "hotspot"
+x = 786
+y = 478
+w = 2
+h = 2
 
 [[component]]
 name = "estopSync"
@@ -2792,6 +2958,21 @@ name = "blockState"
 type = "variable"
 vscope = 1
 val = 1
+
+[[component]]
+name = "sensors"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "homeState"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "wcsOpen"
+type = "variable"
+vscope = 1
 
 [[component]]
 name = "estop"
