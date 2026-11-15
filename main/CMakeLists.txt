@@ -44,6 +44,8 @@ target_sources(app PRIVATE
     lib/Mode/ModeMdi.cpp
     lib/Probe/ProbeInput.cpp
     lib/Homing/HomeInput.cpp
+    lib/Homing/Homing.cpp
+    lib/Homing/HomingSeq.cpp
     lib/Pins/Pins.cpp
     lib/Pins/PinMap.cpp
     lib/Pins/PinMapJson.cpp

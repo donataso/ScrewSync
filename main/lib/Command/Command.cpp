@@ -18,6 +18,7 @@
 #include "Command.hpp"
 #include "CommandInternal.hpp"
 #include "GcodeMdi.hpp"
+#include "Homing.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
 #include "Motion.hpp"
@@ -90,6 +91,11 @@ namespace
         snprintf(out, outMax, "ok power %s", on ? "on" : "off");
     }
 
+    void home(const char *, char *out, size_t outMax)
+    {
+        reply(out, outMax, Homing::start(), "ok %s", "homing");
+    }
+
     void commands(const char *, char *out, size_t outMax);
 
     const CommandDef COMMANDS[] = {
@@ -106,6 +112,7 @@ namespace
          "jog buttons (tap = one step, repeated hold = continuous, release = stop), handwheel resolution/speed", jog},
         {"mode", "mode [<name>|status]", "selects the operating mode (refused while running)", mode},
         {"start", "start [zero]", "starts the selected mode; zero = rapid Z then X to 0 first", start},
+        {"home", "home", "homes the axes, X then Z", home},
         {"stop", "stop", "stops the mode and decelerates both axes", stop},
         {"skip", "skip", "running multi-pass mode: skips the next pass", skip},
         {"override", "override [status] | + | - | reset", "feed override of the running job, percent", override},
@@ -192,6 +199,9 @@ namespace Command::Detail
     {
         args = skipSpaces(args);
         if (tokLen == 5 && !strncmp(token, "start", 5)) {
+            return true;
+        }
+        if (tokLen == 4 && !strncmp(token, "home", 4)) {
             return true;
         }
         if (tokLen == 3 && !strncmp(token, "jog", 3)) {

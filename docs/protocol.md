@@ -44,7 +44,7 @@ replies; see `docs/screen.md`.
 - Serial/UART replies stay `ok [data]` / `err <reason>` (unchanged).
 - Any command on any transport gets `err busy: flashing` instead of
   running while machine state is `flashing`.
-- While machine state is `estop`, `start`, `jog`, MDI lines and `o<...>`
+- While machine state is `estop`, `start`, `home`, `jog`, MDI lines and `o<...>`
   calls get `err busy: estop`. All other commands run.
 - `jog step [<deci-microns>|next]`: shows or sets the jog step. `next`
   selects the next preset, then the custom step, then the first preset.
@@ -54,6 +54,10 @@ replies; see `docs/screen.md`.
   `ok state=<name>`. `estop on` trips the EStop. `estop off` clears it. It
   does not enable the motors. While `flashing`, `estop on` gets
   `err busy: flashing`.
+- `home`: homes X (if the X motor exists), then Z. It is refused unless the
+  machine is idle, without a home input (`err no home switch`) and while an
+  axis is off. `stop` ends it. A failure shows in `error` and the axis is not
+  homed.
 - `power on|off [z|x]`: turns the motors on or off, both axes without an
   axis. `power on` gets `err busy: estop` in estop.
 
@@ -251,7 +255,8 @@ right after any command changes that domain:
   mode, `job` (`phase`, `pass`, `passes`), `feedOverride` (percent),
   `error` (why the last job ended
   on its own), `params` (the current mode's `name=value ...`) and
-  `probeContact` (the live probe input state).
+  `probeContact` (the live probe input state), per axis `homed`, and `homing`
+  (homing runs).
 - `{"type":"capabilities","has_x_motor":bool,"has_endstops":bool,"has_probe":bool}`
   -- sent once on connect, same values as `GET /capabilities`.
 - `{"type":"settings", ...}` -- machine config.

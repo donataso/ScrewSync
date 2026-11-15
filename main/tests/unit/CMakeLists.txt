@@ -10,6 +10,7 @@ target_sources(app PRIVATE
     src/test_sync_ratio.cpp
     src/test_jog_ratio.cpp
     src/test_stepper_limits.cpp
+    src/test_homing_seq.cpp
     src/test_rpm_calc.cpp
     src/test_thread_table.cpp
     src/test_gcode.cpp
@@ -33,6 +34,7 @@ target_sources(app PRIVATE
     src/test_jog_button.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperRamp.cpp
     ${FIRMWARE_DIR}/lib/Stepper/StepperLimits.cpp
+    ${FIRMWARE_DIR}/lib/Homing/HomingSeq.cpp
     ${FIRMWARE_DIR}/lib/Rpm/RpmCalc.cpp
     ${FIRMWARE_DIR}/lib/Sync/SyncRatio.cpp
     ${FIRMWARE_DIR}/lib/Jog/JogRatio.cpp
@@ -73,6 +75,7 @@ target_include_directories(app PRIVATE
     ${FIRMWARE_DIR}/lib/GcodeStore
     ${FIRMWARE_DIR}/lib/Mode
     ${FIRMWARE_DIR}/lib/Probe
+    ${FIRMWARE_DIR}/lib/Homing
     ${FIRMWARE_DIR}/lib/Display
     ${FIRMWARE_DIR}/lib/Encoder
     ${FIRMWARE_DIR}/lib/WebUi

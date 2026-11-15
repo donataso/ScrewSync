@@ -17,6 +17,7 @@
  */
 #include "Machine.hpp"
 #include "Mode.hpp"
+#include "Homing.hpp"
 #include "Motion.hpp"
 #include <math.h>
 #include <zephyr/kernel.h>
@@ -32,6 +33,16 @@ namespace
     bool g_spinning = false;
     bool g_modeEngagedZ = false;
     bool g_modeEngagedX = false;
+    struct k_spinlock g_originLock;
+    int64_t g_origin[2];
+
+    int64_t originOf(Stepper::Axis axis)
+    {
+        k_spinlock_key_t key = k_spin_lock(&g_originLock);
+        int64_t du = g_origin[(size_t)axis];
+        k_spin_unlock(&g_originLock, key);
+        return du;
+    }
 
     Machine::State stateLocked()
     {
@@ -77,6 +88,8 @@ namespace Machine
         Mode::stop();
         Stepper::setDisabled(Stepper::Axis::Z, true);
         Stepper::setDisabled(Stepper::Axis::X, true);
+        Homing::clearHomed(Stepper::Axis::Z);
+        Homing::clearHomed(Stepper::Axis::X);
         LOG_ERR("machine: estop tripped");
     }
 
@@ -141,6 +154,23 @@ namespace Machine
 
     int64_t position(Stepper::Axis axis)
     {
-        return llround(Motion::stepsToDu(axis, Stepper::position(axis)));
+        return positionOf(axis, Stepper::position(axis));
+    }
+
+    int64_t positionOf(Stepper::Axis axis, int64_t steps)
+    {
+        return llround(Motion::stepsToDu(axis, steps)) - originOf(axis);
+    }
+
+    int64_t toSteps(Stepper::Axis axis, int64_t machineDu)
+    {
+        return Motion::duToSteps(axis, (double)(machineDu + originOf(axis)));
+    }
+
+    void setOrigin(Stepper::Axis axis, int64_t du)
+    {
+        k_spinlock_key_t key = k_spin_lock(&g_originLock);
+        g_origin[(size_t)axis] = du;
+        k_spin_unlock(&g_originLock, key);
     }
 }

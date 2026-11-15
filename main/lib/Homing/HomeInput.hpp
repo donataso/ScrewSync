@@ -29,6 +29,8 @@ namespace HomeInput
 
     void begin(Callback onEdge);
 
+    bool present(Stepper::Axis axis);
+
     bool active(Stepper::Axis axis);
 
     bool sensors();

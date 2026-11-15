@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Backup.hpp"
+#include "Homing.hpp"
 #include "JsonSpan.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
@@ -234,6 +235,7 @@ namespace Backup
             }
         }
         if (hasSettings) {
+            Homing::settingsChanged(Settings::g_active, g_doc.settings);
             Settings::replace(g_doc.settings);
         }
         if (hasRun) {

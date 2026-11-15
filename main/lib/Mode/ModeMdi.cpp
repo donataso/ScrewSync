@@ -19,6 +19,7 @@
 #include "ModeSteps.hpp"
 #include "GcodeDialects.hpp"
 #include "GcodeMdi.hpp"
+#include "Homing.hpp"
 #include "Wcs.hpp"
 #include <zephyr/logging/log.h>
 #include <initializer_list>
@@ -195,6 +196,9 @@ namespace Mode
         Detail::Guard guard;
         if (running()) {
             return "mode running, stop first";
+        }
+        if (Homing::active()) {
+            return "homing";
         }
         // The end position of a G38 move is not known until it ends.
         for (size_t i = 0; i < g_count; i++) {

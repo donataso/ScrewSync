@@ -31,6 +31,7 @@ namespace
         JSON_OBJ_DESCR_PRIM(Status::Axis, posDu, JSON_TOK_INT64),
         JSON_OBJ_DESCR_PRIM(Status::Axis, moving, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM(Status::Axis, enabled, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM(Status::Axis, homed, JSON_TOK_TRUE),
     };
 
     const struct json_obj_descr GEAR_DESCR[] = {
@@ -69,6 +70,7 @@ namespace
         JSON_OBJ_DESCR_PRIM_NAMED(StatusMsg, "error", snap.error, JSON_TOK_STRING),
         JSON_OBJ_DESCR_PRIM(StatusMsg, params, JSON_TOK_STRING),
         JSON_OBJ_DESCR_PRIM_NAMED(StatusMsg, "probeContact", snap.probeContact, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM_NAMED(StatusMsg, "homing", snap.homing, JSON_TOK_TRUE),
     };
 
     struct SettingsMsg

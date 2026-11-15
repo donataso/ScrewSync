@@ -61,8 +61,10 @@ namespace Machine
 
     void estopOff();
 
-    // Machine coordinates in du. From the stepper count until scales exist.
     int64_t position(Stepper::Axis axis);
+    int64_t positionOf(Stepper::Axis axis, int64_t steps);
+    int64_t toSteps(Stepper::Axis axis, int64_t machineDu);
+    void setOrigin(Stepper::Axis axis, int64_t du);
 }
 
 #endif

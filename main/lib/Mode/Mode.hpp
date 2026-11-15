@@ -68,7 +68,7 @@ namespace Mode
 
     Id current();
     bool running();
-    // A mode runs or MDI moves.
+    // A mode runs, MDI moves or homing runs.
     bool busy();
     bool owns(Stepper::Axis axis);
 

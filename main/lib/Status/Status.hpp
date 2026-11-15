@@ -28,6 +28,7 @@ namespace Status
         int64_t posDu; // work coordinates
         bool moving;
         bool enabled;
+        bool homed;
     };
 
     struct Gear
@@ -55,6 +56,7 @@ namespace Status
         const char *error; // why the last job ended on its own, "" if it finished
         char params[256];  // current mode's "name=value ..."
         bool probeContact;
+        bool homing;
     };
 
     Snapshot get();

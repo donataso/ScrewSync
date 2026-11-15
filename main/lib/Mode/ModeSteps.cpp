@@ -19,6 +19,7 @@
 #include "ModeInternal.hpp"
 #include "ModeMath.hpp"
 #include "Events.hpp"
+#include "Machine.hpp"
 #include "Mode.hpp"
 #include "Motion.hpp"
 #include "ProbeInput.hpp"
@@ -43,7 +44,7 @@ namespace
 
     int64_t machineSteps(Stepper::Axis axis, const Gcode::Step &s)
     {
-        return duToSteps(axis, (double)Wcs::toMachine(axis, axis == Stepper::Axis::Z ? s.zDu : s.xDu));
+        return Machine::toSteps(axis, Wcs::toMachine(axis, axis == Stepper::Axis::Z ? s.zDu : s.xDu));
     }
 
     const char *clampReason(Stepper::Axis axis)
@@ -68,9 +69,8 @@ namespace
 
     void publishProbe(StepMotion &m, Stepper::Axis axis, bool found, int64_t pos, int64_t motor)
     {
-        int64_t machineDu = llround(stepsToDu(axis, pos));
-        Events::ProbeResult r = {(uint8_t)axis, found, machineDu - Wcs::offset(Wcs::active(), axis),
-                                 (int64_t)llround(stepsToDu(axis, motor))};
+        Events::ProbeResult r = {(uint8_t)axis, found, Machine::positionOf(axis, pos) - Wcs::offset(Wcs::active(), axis),
+                                 Machine::positionOf(axis, motor)};
         m.probeFound = found;
         m.probeTripDu = (int32_t)r.posDu;
         m.probeMotorDu = (int32_t)r.motorDu;

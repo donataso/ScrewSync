@@ -13,6 +13,7 @@
 #include "Mode.hpp"
 #include "ProbeInput.hpp"
 #include "HomeInput.hpp"
+#include "Homing.hpp"
 #include "ThreadStore.hpp"
 #include "Jog.hpp"
 #include "Rpm.hpp"
@@ -35,7 +36,7 @@ int main(void)
     Handwheel::begin();
     Stepper::begin();
     ProbeInput::begin(Mode::probeEdge);
-    HomeInput::begin(nullptr);
+    HomeInput::begin(Homing::onEdge);
     Watchdog::begin();
     RunSettings::load();
     ThreadStore::begin();

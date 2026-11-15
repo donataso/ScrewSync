@@ -358,8 +358,9 @@ ZTEST(settings_fields, test_home_fields)
     zassert_equal(g_conf.z.homeFastDuPerMin, 100000);
     zassert_true(set("homeSlowDuPerMinX", "20000"));
     zassert_equal(g_conf.x.homeSlowDuPerMin, 20000);
-    zassert_true(set("homeLatchBackOffDuZ", "5000"));
-    zassert_equal(g_conf.z.homeLatchBackOffDu, 5000);
+    zassert_true(set("homeLatchBackOffDuZ", "15000"));
+    zassert_equal(g_conf.z.homeLatchBackOffDu, 15000);
+    zassert_false(set("homeLatchBackOffDuX", "9999"));
     zassert_true(set("homePullOffDuX", "2000"));
     zassert_equal(g_conf.x.homePullOffDu, 2000);
     zassert_true(set("homePositionDuZ", "-1000"));

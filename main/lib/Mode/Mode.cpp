@@ -19,6 +19,7 @@
 #include "RunSettings.hpp"
 #include "Encoder.hpp"
 #include "Events.hpp"
+#include "Homing.hpp"
 #include "Machine.hpp"
 #include "Watchdog.hpp"
 #include "ModeSteps.hpp"
@@ -107,6 +108,9 @@ namespace
         if (Mode::Detail::mdiActive()) {
             return "MDI running";
         }
+        if (Homing::active()) {
+            return "homing";
+        }
         if (!ops) {
             return "mode not implemented";
         }
@@ -149,6 +153,8 @@ namespace
                 }
             } else if (Mode::Detail::mdiActive()) {
                 Mode::Detail::mdiTick(Encoder::filteredPosition());
+            } else if (Homing::active()) {
+                Homing::tick();
             }
             k_mutex_unlock(&g_lock);
             k_sleep(K_MSEC(TICK_PERIOD_MS));
@@ -306,7 +312,7 @@ namespace Mode
     bool busy()
     {
         Detail::Guard guard;
-        return g_active != nullptr || Detail::mdiActive();
+        return g_active != nullptr || Detail::mdiActive() || Homing::active();
     }
 
     bool owns(Stepper::Axis axis)
@@ -458,6 +464,7 @@ namespace Mode
     {
         Detail::Guard guard;
         Detail::mdiClear();
+        Homing::stop();
         releaseAll();
         for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
             Stepper::stop(axis);

@@ -86,6 +86,11 @@ namespace HomeInput
         }
     }
 
+    bool present(Axis axis)
+    {
+        return inputOf(axis).pin.port != nullptr;
+    }
+
     bool active(Axis axis)
     {
         return read(inputOf(axis));

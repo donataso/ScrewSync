@@ -74,6 +74,16 @@ How to operate ScrewSync. For connectors and flashing, see
   refused. The serial and web commands are `estop on`, `estop off`,
   `power on` and `power off`.
 
+## Homing
+
+- With a home switch on each axis, `home` (or the Home switch) homes X, then
+  Z. The machine must be idle and the motors on. `stop` ends it.
+- Each axis moves toward the switch, backs off, finds it again slowly and
+  pulls off. The axis position then reads its home position setting.
+- An axis is not homed after an estop, after its motor is turned off, after
+  a reboot, and after a change of screw pitch, motor steps, direction
+  invert or backlash.
+
 ## Running a job
 
 1. Touch the tool off on the work, or probe it, and set zero on Z and X

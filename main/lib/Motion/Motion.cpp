@@ -17,6 +17,7 @@
  */
 #include "Motion.hpp"
 #include "Encoder.hpp"
+#include "Homing.hpp"
 #include "Machine.hpp"
 #include "Mode.hpp"
 #include "RunSettings.hpp"
@@ -59,6 +60,7 @@ namespace Motion
     {
         if (!enabled) {
             Mode::onAxisDisabled(axis);
+            Homing::clearHomed(axis);
         }
         RunSettings::setAxisDisabled(axis, !enabled);
     }

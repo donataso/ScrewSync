@@ -17,6 +17,7 @@
  */
 #include "CommandInternal.hpp"
 #include "Display.hpp"
+#include "Homing.hpp"
 #ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
 #include "DisplayImage.hpp"
 #endif
@@ -50,6 +51,7 @@ namespace Command::Detail
         }
 
         char reason[48];
+        Settings::Conf before = Settings::g_active;
         if (!strcmp(a, "reset")) {
             Settings::g_active = Settings::Conf{};
             Settings::save();
@@ -74,6 +76,7 @@ namespace Command::Detail
         } else {
             snprintf(out, outMax, "err settings '%s'", a);
         }
+        Homing::settingsChanged(before, Settings::g_active);
     }
 
     void info(const char *, char *out, size_t outMax)

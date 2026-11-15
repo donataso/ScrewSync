@@ -2,6 +2,7 @@ export interface AxisStatus {
   posDu: number
   moving: boolean
   enabled: boolean
+  homed: boolean
 }
 
 export interface GearStatus {
@@ -24,6 +25,7 @@ export interface StatusPush {
   jogStepDu: number
   gear: GearStatus
   probeContact: boolean
+  homing: boolean
   job: JobStatus
   error: string
 }

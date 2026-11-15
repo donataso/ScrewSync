@@ -114,7 +114,7 @@ namespace Settings
         {"handwheelLagMsZ", FieldType::I32, offsetof(Conf, z.handwheelLagMs), 1, 1000},
         {"homeFastDuPerMinZ", FieldType::I32, offsetof(Conf, z.homeFastDuPerMin), 0, 60000000},
         {"homeSlowDuPerMinZ", FieldType::I32, offsetof(Conf, z.homeSlowDuPerMin), 0, 60000000},
-        {"homeLatchBackOffDuZ", FieldType::I32, offsetof(Conf, z.homeLatchBackOffDu), 0, 10000000},
+        {"homeLatchBackOffDuZ", FieldType::I32, offsetof(Conf, z.homeLatchBackOffDu), 10000, 10000000},
         {"homePullOffDuZ", FieldType::I32, offsetof(Conf, z.homePullOffDu), 0, 10000000},
         {"homePositionDuZ", FieldType::I32, offsetof(Conf, z.homePositionDu), -10000000, 10000000},
         {"screwPitchDuX", FieldType::I32, offsetof(Conf, x.screwPitchDu), 1, 10000000},
@@ -132,7 +132,7 @@ namespace Settings
         {"handwheelLagMsX", FieldType::I32, offsetof(Conf, x.handwheelLagMs), 1, 1000},
         {"homeFastDuPerMinX", FieldType::I32, offsetof(Conf, x.homeFastDuPerMin), 0, 60000000},
         {"homeSlowDuPerMinX", FieldType::I32, offsetof(Conf, x.homeSlowDuPerMin), 0, 60000000},
-        {"homeLatchBackOffDuX", FieldType::I32, offsetof(Conf, x.homeLatchBackOffDu), 0, 10000000},
+        {"homeLatchBackOffDuX", FieldType::I32, offsetof(Conf, x.homeLatchBackOffDu), 10000, 10000000},
         {"homePullOffDuX", FieldType::I32, offsetof(Conf, x.homePullOffDu), 0, 10000000},
         {"homePositionDuX", FieldType::I32, offsetof(Conf, x.homePositionDu), -10000000, 10000000},
     };

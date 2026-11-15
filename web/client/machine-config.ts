@@ -176,7 +176,7 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       key: `homeLatchBackOffDu${axis}`,
       label: "Home latch back-off",
       unit: "mm",
-      min: 0,
+      min: 1,
       max: 1000,
       step: 0.0001,
       scale: DU_PER_MM,

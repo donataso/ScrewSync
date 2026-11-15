@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Status.hpp"
+#include "Homing.hpp"
 #include "Machine.hpp"
 #include "Motion.hpp"
 #include "ProbeInput.hpp"
@@ -28,7 +29,7 @@ namespace
 {
     Status::Axis axisStatus(Stepper::Axis axis)
     {
-        return {Wcs::position(axis), Stepper::isMoving(axis), !Stepper::isDisabled(axis)};
+        return {Wcs::position(axis), Stepper::isMoving(axis), !Stepper::isDisabled(axis), Homing::homed(axis)};
     }
 }
 
@@ -52,6 +53,7 @@ namespace Status
         s.params[0] = '\0';
         Mode::describe(Mode::current(), s.params, sizeof(s.params));
         s.probeContact = ProbeInput::contact();
+        s.homing = Homing::active();
         s.rpm = Rpm::value();
         s.state = Machine::stateName();
         s.angleDeg = Motion::spindleAngleDeg();
