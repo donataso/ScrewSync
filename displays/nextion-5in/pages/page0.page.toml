@@ -2266,14 +2266,6 @@ h = 48
 pic = "icons/estop"
 
 [[component]]
-name = "homeSync"
-type = "hotspot"
-x = 786
-y = 478
-w = 2
-h = 2
-
-[[component]]
 name = "estopSync"
 type = "hotspot"
 x = 790
@@ -2424,32 +2416,12 @@ txt = ""
 txt_maxl = 8
 
 [[component]]
-name = "jogTicks"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "menuOpen"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "settingsOpen"
-type = "variable"
-vscope = 1
-
-[[component]]
 name = "modeName"
 type = "variable"
 vscope = 1
 sta = 1
 txt = ""
 txt_maxl = 20
-
-[[component]]
-name = "kpDotUsed"
-type = "variable"
-vscope = 1
 
 [[component]]
 name = "kpLen"
@@ -2465,22 +2437,12 @@ txt = ""
 txt_maxl = 1
 
 [[component]]
-name = "kpTarget"
-type = "variable"
-vscope = 1
-
-[[component]]
 name = "kpDigits"
 type = "variable"
 vscope = 1
 sta = 1
 txt = ""
 txt_maxl = 8
-
-[[component]]
-name = "kpNeg"
-type = "variable"
-vscope = 1
 
 [[component]]
 name = "kpNum"
@@ -2619,22 +2581,12 @@ txt = ""
 txt_maxl = 48
 
 [[component]]
-name = "cKind10"
-type = "variable"
-vscope = 1
-
-[[component]]
 name = "cCmd10"
 type = "variable"
 vscope = 1
 sta = 1
 txt = ""
 txt_maxl = 48
-
-[[component]]
-name = "cKind11"
-type = "variable"
-vscope = 1
 
 [[component]]
 name = "cCmd11"
@@ -2645,22 +2597,12 @@ txt = ""
 txt_maxl = 48
 
 [[component]]
-name = "cKind12"
-type = "variable"
-vscope = 1
-
-[[component]]
 name = "cCmd12"
 type = "variable"
 vscope = 1
 sta = 1
 txt = ""
 txt_maxl = 48
-
-[[component]]
-name = "cKind13"
-type = "variable"
-vscope = 1
 
 [[component]]
 name = "cCmd13"
@@ -2671,11 +2613,6 @@ txt = ""
 txt_maxl = 48
 
 [[component]]
-name = "cKind14"
-type = "variable"
-vscope = 1
-
-[[component]]
 name = "cCmd14"
 type = "variable"
 vscope = 1
@@ -2684,67 +2621,12 @@ txt = ""
 txt_maxl = 48
 
 [[component]]
-name = "cKind15"
-type = "variable"
-vscope = 1
-
-[[component]]
 name = "cCmd15"
 type = "variable"
 vscope = 1
 sta = 1
 txt = ""
 txt_maxl = 48
-
-[[component]]
-name = "cKind0"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "cKind1"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "cKind2"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "cKind3"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "cKind4"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "cKind5"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "cKind6"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "cKind7"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "cKind8"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "cKind9"
-type = "variable"
-vscope = 1
 
 [[component]]
 name = "menuCmd0"
@@ -2870,41 +2752,9 @@ txt = ""
 txt_maxl = 48
 
 [[component]]
-name = "kpKind"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "kpRightOpen"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "kpOpen"
-type = "variable"
-vscope = 1
-
-[[component]]
 name = "needZero"
 type = "variable"
 vscope = 1
-
-[[component]]
-name = "zeroFor"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "menuSel"
-type = "variable"
-vscope = 1
-val = -1
-
-[[component]]
-name = "kpField"
-type = "variable"
-vscope = 1
-val = -1
 
 [[component]]
 name = "choice"
@@ -2916,16 +2766,6 @@ txt_maxl = 48
 
 [[component]]
 name = "ready"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "kpSignOn"
-type = "variable"
-vscope = 1
-
-[[component]]
-name = "kpDotOn"
 type = "variable"
 vscope = 1
 
@@ -2960,19 +2800,10 @@ vscope = 1
 val = 1
 
 [[component]]
-name = "sensors"
-type = "variable"
-vscope = 1
-
-[[component]]
 name = "homeState"
 type = "variable"
 vscope = 1
-
-[[component]]
-name = "wcsOpen"
-type = "variable"
-vscope = 1
+val = 3
 
 [[component]]
 name = "estop"

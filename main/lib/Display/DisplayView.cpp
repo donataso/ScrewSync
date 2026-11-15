@@ -266,6 +266,7 @@ namespace
     constexpr int HOME_NONE = 0;
     constexpr int HOME_ALL = 1;
     constexpr int HOME_BUSY = 2;
+    constexpr int HOME_NO_SENSORS = 3;
     constexpr int WCS_COUNT = 6;
 
     int homeState(const Status::Snapshot &s)
@@ -281,9 +282,8 @@ namespace
     void pushHome(const Status::Snapshot &s)
     {
         bool sensors = HomeInput::sensors();
-        bool changed = pushNum("sensors.val", sensors);
+        bool changed = pushNum("homeState.val", sensors ? homeState(s) : HOME_NO_SENSORS);
         if (sensors) {
-            changed |= pushNum("homeState.val", homeState(s));
             pushText("wcsBtn.txt", "%s", s.wcs);
             for (int i = 0; i < WCS_COUNT; i++) {
                 char key[KEY_MAX];
@@ -292,7 +292,7 @@ namespace
             }
         }
         if (changed) {
-            writeCommand("click homeSync,1");
+            writeCommand("click layoutSync,1");
         }
     }
 

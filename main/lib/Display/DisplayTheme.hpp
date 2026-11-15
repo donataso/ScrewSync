@@ -47,7 +47,7 @@ namespace Display::Theme
     constexpr int FONT_LABEL = 0;
     constexpr int FONT_SYMBOLS = 2;
 
-    // Mode panel cell types (cKindN.val), matching displays/nextion-5in/pages/page0.nx.
+    // Mode panel cell types (cKindN), matching displays/nextion-5in/pages/page0.nx.
     // Value types pick the keypad's conversion; the cell's command gets the
     // typed value appended. Toggle cells hold two commands, "a|b".
     enum class CellType : uint8_t

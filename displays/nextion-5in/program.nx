@@ -2,6 +2,10 @@
 // the first page.
 int sys0=0,sys1=0,sys2=0
 int linkAge=1000,linkFlashing=0
+int menuOpen=0,settingsOpen=0,kpOpen=0,kpNeg=0,kpKind=0,kpTarget=0,kpField=-1,jogTicks=0
+int zeroFor=0,menuSel=-1,kpRightOpen=0,kpDotUsed=0,cKind0=0,cKind1=0,cKind2=0,cKind3=0
+int cKind4=0,cKind5=0,cKind6=0,cKind7=0,cKind8=0,cKind9=0,cKind10=0,cKind11=0
+int cKind12=0,cKind13=0,cKind14=0,cKind15=0
 baud=230400
 dim=100
 recmod=0

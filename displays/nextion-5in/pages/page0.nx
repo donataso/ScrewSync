@@ -7,6 +7,7 @@ include "page0/panel.nx"
 
 const HOME_ALL = 1
 const HOME_BUSY = 2
+const HOME_NO_SENSORS = 3
 
 // sendme tells the firmware the page changed, so it pushes this page.
 on page0.load:
@@ -42,12 +43,10 @@ on page0.load:
   vis toastHide,1
   vis estopBtn,1
   vis estopSync,1
-  vis homeSync,1
-  menuOpen.val = 0
-  settingsOpen.val = 0
-  wcsOpen.val = 0
-  kpRightOpen.val = 0
-  kpOpen.val = 0
+  menuOpen = 0
+  settingsOpen = 0
+  kpRightOpen = 0
+  kpOpen = 0
   layoutPanel(1)
   setTpiEntry(tpiEntry.val)
   linkAge = 0
@@ -60,7 +59,6 @@ on page0.up:
   jogCancel()
 
 function setWcs(shown: number):
-  wcsOpen.val = shown
   vis wcsDismiss,shown
   vis wcsBg,shown
   vis wcs0,shown
@@ -84,8 +82,9 @@ function setEstopUi(on: number):
   }
 
 function setHomeUi():
-  vis homeBtn,sensors.val
-  vis wcsBtn,sensors.val
+  var shown = homeState.val != HOME_NO_SENSORS ? 1 : 0
+  vis homeBtn,shown
+  vis wcsBtn,shown
   if (homeState.val == HOME_BUSY) {
     homeBtn.pic = @pic(icons/home_busy)
   } else if (homeState.val == HOME_ALL) {
@@ -123,9 +122,6 @@ on estopSync.down:
   jogCancel()
   setEstopUi(estop.val)
 
-on homeSync.down:
-  setHomeUi()
-
 on estopBtn.up:
   send(estop.val ? "estop off" : "estop on")
 
@@ -133,7 +129,7 @@ on homeBtn.up:
   send("home")
 
 on wcsBtn.up:
-  if (menuOpen.val) {
+  if (menuOpen) {
     setMenu(0)
   }
   setWcs(1)

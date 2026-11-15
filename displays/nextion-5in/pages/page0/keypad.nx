@@ -11,9 +11,9 @@ const FIELD_Z_POS = 20
 const FIELD_X_POS = 21
 
 function setKeypad(shown: number):
-  kpOpen.val = shown
+  kpOpen = shown
   if (!shown) {
-    kpRightOpen.val = 0
+    kpRightOpen = 0
   }
   vis kpDismiss,shown
   vis kpBgLeft,0
@@ -57,7 +57,7 @@ function placeKeypad(left: number):
 
 // Cells are fields 0-15, by slot.
 function setFieldBorder(color: number):
-  switch (kpField.val) {
+  switch (kpField) {
     case 0:
       c0.borderc = color
       break
@@ -116,21 +116,19 @@ function setFieldBorder(color: number):
 
 // Opens the keypad on the half opposite the field being edited.
 function openKeypad(left: number, target: number, kind: number, field: number):
-  kpField.val = field
+  kpField = field
   setFieldBorder(COLOR_SELECTED)
-  kpTarget.val = target
-  kpKind.val = kind
-  kpRightOpen.val = left == KEYPAD_RIGHT ? 1 : 0
+  kpTarget = target
+  kpKind = kind
+  kpRightOpen = left == KEYPAD_RIGHT ? 1 : 0
   setMenu(0)
   placeKeypad(left)
   kpDigits.txt = ""
-  kpNeg.val = 0
-  kpDotUsed.val = 0
+  kpNeg = 0
+  kpDotUsed = 0
   kpShow()
-  kpSignOn.val = target == TARGET_Z_POS || target == TARGET_X_POS || kind == KIND_ANGLE ? 1 : 0
-  kpDotOn.val = kind != KIND_COUNT ? 1 : 0
-  kpSign.pco = kpSignOn.val ? COLOR_KEY_TEXT : COLOR_KEY_DIM
-  kpDot.pco = kpDotOn.val ? COLOR_KEY_TEXT : COLOR_KEY_DIM
+  kpSign.pco = target == TARGET_Z_POS || target == TARGET_X_POS || kind == KIND_ANGLE ? COLOR_KEY_TEXT : COLOR_KEY_DIM
+  kpDot.pco = kind != KIND_COUNT ? COLOR_KEY_TEXT : COLOR_KEY_DIM
   setKeypad(1)
   if (left == KEYPAD_LEFT) {
     vis kpBgLeft,1
@@ -141,13 +139,13 @@ function openKeypad(left: number, target: number, kind: number, field: number):
 
 function closeKeypad():
   setFieldBorder(COLOR_BUTTON)
-  kpField.val = FIELD_NONE
+  kpField = FIELD_NONE
   setKeypad(0)
   refreshPanel()
   ref 0
 
 function kpShow():
-  if (kpNeg.val) {
+  if (kpNeg) {
     kpValue.txt = "-" + kpDigits.txt
   } else {
     kpValue.txt = kpDigits.txt
@@ -187,7 +185,7 @@ function tpiToDu(scaled: number) -> number:
 
 // Count and angle go as typed; lengths and pitches convert to deci-microns.
 function sendCell(du: number):
-  switch (kpKind.val) {
+  switch (kpKind) {
     case KIND_COUNT:
       send(kpCmd.txt + kpWhole.txt)
       break
@@ -209,11 +207,11 @@ function sendPosition(axis: text):
 function applyKeypad():
   if (kpDigits.txt != "") {
     var scaled = kpScaled()
-    var du = kpKind.val == KIND_PITCH && tpiEntry.val ? tpiToDu(scaled) : toDu(scaled)
-    if (kpNeg.val) {
+    var du = kpKind == KIND_PITCH && tpiEntry.val ? tpiToDu(scaled) : toDu(scaled)
+    if (kpNeg) {
       du = -du
     }
-    switch (kpTarget.val) {
+    switch (kpTarget) {
       case TARGET_CELL:
         sendCell(du)
         break
@@ -262,18 +260,18 @@ on kp9.up:
   kpType("9")
 
 on kpSign.up:
-  if (kpSignOn.val) {
-    kpNeg.val = 1 - kpNeg.val
+  if (kpSign.pco == COLOR_KEY_TEXT) {
+    kpNeg = 1 - kpNeg
     kpShow()
   }
 
 on kpDot.up:
-  if (kpDotOn.val && kpDotUsed.val == 0) {
+  if (kpDot.pco == COLOR_KEY_TEXT && kpDotUsed == 0) {
     if (kpDigits.txt == "") {
       kpType("0")
     }
     kpType(".")
-    kpDotUsed.val = 1
+    kpDotUsed = 1
   }
 
 on kpDel.up:
@@ -282,7 +280,7 @@ on kpDel.up:
     kpLen.val -= 1
     substr kpDigits.txt,kpLast.txt,kpLen.val,1
     if (kpLast.txt == ".") {
-      kpDotUsed.val = 0
+      kpDotUsed = 0
     }
     kpDigits.txt -= 1
     kpShow()
@@ -290,8 +288,8 @@ on kpDel.up:
 
 on kpClr.up:
   kpDigits.txt = ""
-  kpNeg.val = 0
-  kpDotUsed.val = 0
+  kpNeg = 0
+  kpDotUsed = 0
   kpShow()
 
 on kpOk.up:

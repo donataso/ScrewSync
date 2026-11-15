@@ -39,7 +39,7 @@ format-check:
 
 tidy: $(addsuffix -tidy,$(TARGETS))
 
-lint: format-check web-lint tidy
+lint: format-check web-lint tidy $(NEXTION_CHECKS)
 
 clean:
 	rm -rf $(addprefix $(CURDIR)/.build/,$(TARGETS)) $(TEST_ZEPHYR_BUILD)

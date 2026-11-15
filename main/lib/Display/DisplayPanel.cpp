@@ -49,7 +49,7 @@ namespace
     bool pushCellType(size_t slot, CellType type)
     {
         char key[KEY_MAX];
-        snprintf(key, sizeof(key), "cKind%u.val", (unsigned)slot);
+        snprintf(key, sizeof(key), "cKind%u", (unsigned)slot);
         return pushNum(key, (int)type);
     }
 

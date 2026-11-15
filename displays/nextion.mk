@@ -9,7 +9,12 @@ $(1)_TFT := $(CURDIR)/.build/release/$(1)/display.tft
 $(1)_TFT_180 := $(CURDIR)/.build/release/$(1)/display_180.tft
 $(1)_180_SRC := $(CURDIR)/.build/$(1)_180
 
-.PHONY: $(1)-build $(1)-serial $(1)-screenshots
+NEXTION_CHECKS += $(1)-check
+
+.PHONY: $(1)-check $(1)-build $(1)-serial $(1)-screenshots
+
+$(1)-check:
+	$$(NXWRIGHT) check $$($(1)_DIR)
 
 $(1)-build:
 	$$(NXWRIGHT) check $$($(1)_DIR)

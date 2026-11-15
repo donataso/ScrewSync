@@ -3,20 +3,20 @@ const HOLD_DELAY_TICKS = 3
 
 function jogPress(dir: text):
   jogDir.txt = dir
-  jogTicks.val = 0
+  jogTicks = 0
   tmJog.en = 1
 
 // Ends a press without a tap; a running hold stops.
 function jogCancel():
   if (tmJog.en) {
     tmJog.en = 0
-    if (jogTicks.val >= HOLD_DELAY_TICKS) {
+    if (jogTicks >= HOLD_DELAY_TICKS) {
       send("jog " + jogDir.txt + " release")
     }
   }
 
 function jogRelease():
-  if (tmJog.en && jogTicks.val < HOLD_DELAY_TICKS) {
+  if (tmJog.en && jogTicks < HOLD_DELAY_TICKS) {
     send("jog " + jogDir.txt)
   }
   jogCancel()
@@ -54,8 +54,8 @@ on xMinus.up:
   jogRelease()
 
 on tmJog.timer:
-  jogTicks.val += 1
-  if (jogTicks.val >= HOLD_DELAY_TICKS) {
+  jogTicks += 1
+  if (jogTicks >= HOLD_DELAY_TICKS) {
     send("jog " + jogDir.txt + " hold")
   }
 
@@ -80,12 +80,12 @@ on xPosBg.up:
   }
 
 on zZero.up:
-  if (zOn.val && !kpOpen.val) {
+  if (zOn.val && !kpOpen) {
     openZeroAsk(ZERO_FOR_Z)
   }
 
 on xZero.up:
-  if (xOn.val && !kpOpen.val) {
+  if (xOn.val && !kpOpen) {
     openZeroAsk(ZERO_FOR_X)
   }
 

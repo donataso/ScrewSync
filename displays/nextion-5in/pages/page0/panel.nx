@@ -1,4 +1,4 @@
-// cKindN.val, matching CellType in main/lib/Display/Display.cpp.
+// cKindN, matching CellType in main/lib/Display/Display.cpp.
 const KIND_HIDDEN = 0
 const KIND_LENGTH = 1
 const KIND_PITCH = 2
@@ -13,75 +13,75 @@ const ZERO_FOR_X = 2
 const ZERO_FOR_CONFIRM = 3
 
 function overlayOpen() -> number:
-  return menuOpen.val || settingsOpen.val || kpRightOpen.val ? 1 : 0
+  return menuOpen || settingsOpen || kpRightOpen ? 1 : 0
 
 // The mode panel hides under an overlay, so firmware pushes to it can't
 // draw over one.
 function layoutPanel(shown: number):
   var v = 0
-  v = shown && cKind0.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind0 == KIND_TOGGLE ? 1 : 0
   vis c0a,v
   vis c0b,v
-  v = shown && cKind0.val > KIND_HIDDEN && cKind0.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind0 > KIND_HIDDEN && cKind0 != KIND_TOGGLE ? 1 : 0
   vis c0,v
-  v = shown && cKind1.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind1 == KIND_TOGGLE ? 1 : 0
   vis c1a,v
   vis c1b,v
-  v = shown && cKind1.val > KIND_HIDDEN && cKind1.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind1 > KIND_HIDDEN && cKind1 != KIND_TOGGLE ? 1 : 0
   vis c1,v
-  v = shown && cKind2.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind2 == KIND_TOGGLE ? 1 : 0
   vis c2a,v
   vis c2b,v
-  v = shown && cKind2.val > KIND_HIDDEN && cKind2.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind2 > KIND_HIDDEN && cKind2 != KIND_TOGGLE ? 1 : 0
   vis c2,v
-  v = shown && cKind3.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind3 == KIND_TOGGLE ? 1 : 0
   vis c3a,v
   vis c3b,v
-  v = shown && cKind3.val > KIND_HIDDEN && cKind3.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind3 > KIND_HIDDEN && cKind3 != KIND_TOGGLE ? 1 : 0
   vis c3,v
-  v = shown && cKind4.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind4 == KIND_TOGGLE ? 1 : 0
   vis c4a,v
   vis c4b,v
-  v = shown && cKind4.val > KIND_HIDDEN && cKind4.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind4 > KIND_HIDDEN && cKind4 != KIND_TOGGLE ? 1 : 0
   vis c4,v
-  v = shown && cKind5.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind5 == KIND_TOGGLE ? 1 : 0
   vis c5a,v
   vis c5b,v
-  v = shown && cKind5.val > KIND_HIDDEN && cKind5.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind5 > KIND_HIDDEN && cKind5 != KIND_TOGGLE ? 1 : 0
   vis c5,v
-  v = shown && cKind6.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind6 == KIND_TOGGLE ? 1 : 0
   vis c6a,v
   vis c6b,v
-  v = shown && cKind6.val > KIND_HIDDEN && cKind6.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind6 > KIND_HIDDEN && cKind6 != KIND_TOGGLE ? 1 : 0
   vis c6,v
-  v = shown && cKind7.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind7 == KIND_TOGGLE ? 1 : 0
   vis c7a,v
   vis c7b,v
-  v = shown && cKind7.val > KIND_HIDDEN && cKind7.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind7 > KIND_HIDDEN && cKind7 != KIND_TOGGLE ? 1 : 0
   vis c7,v
-  v = shown && cKind8.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind8 == KIND_TOGGLE ? 1 : 0
   vis c8a,v
   vis c8b,v
-  v = shown && cKind8.val > KIND_HIDDEN && cKind8.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind8 > KIND_HIDDEN && cKind8 != KIND_TOGGLE ? 1 : 0
   vis c8,v
-  v = shown && cKind9.val == KIND_TOGGLE ? 1 : 0
+  v = shown && cKind9 == KIND_TOGGLE ? 1 : 0
   vis c9a,v
   vis c9b,v
-  v = shown && cKind9.val > KIND_HIDDEN && cKind9.val != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind9 > KIND_HIDDEN && cKind9 != KIND_TOGGLE ? 1 : 0
   vis c9,v
-  v = shown && cKind10.val > KIND_HIDDEN && cKind10.val != KIND_PICKER ? 1 : 0
+  v = shown && cKind10 > KIND_HIDDEN && cKind10 != KIND_PICKER ? 1 : 0
   vis c10,v
-  v = shown && cKind11.val > KIND_HIDDEN && cKind11.val != KIND_PICKER ? 1 : 0
+  v = shown && cKind11 > KIND_HIDDEN && cKind11 != KIND_PICKER ? 1 : 0
   vis c11,v
-  v = shown && cKind12.val > KIND_HIDDEN && cKind12.val != KIND_PICKER ? 1 : 0
+  v = shown && cKind12 > KIND_HIDDEN && cKind12 != KIND_PICKER ? 1 : 0
   vis c12,v
-  v = shown && cKind13.val > KIND_HIDDEN && cKind13.val != KIND_PICKER ? 1 : 0
+  v = shown && cKind13 > KIND_HIDDEN && cKind13 != KIND_PICKER ? 1 : 0
   vis c13,v
-  v = shown && cKind14.val > KIND_HIDDEN && cKind14.val != KIND_PICKER ? 1 : 0
+  v = shown && cKind14 > KIND_HIDDEN && cKind14 != KIND_PICKER ? 1 : 0
   vis c14,v
-  v = shown && cKind15.val > KIND_HIDDEN && cKind15.val != KIND_PICKER ? 1 : 0
+  v = shown && cKind15 > KIND_HIDDEN && cKind15 != KIND_PICKER ? 1 : 0
   vis c15,v
-  v = shown && cKind15.val == KIND_PICKER ? 1 : 0
+  v = shown && cKind15 == KIND_PICKER ? 1 : 0
   vis picker,v
   v = shown && ovrOn.val ? 1 : 0
   vis ovrMinus,v
@@ -135,12 +135,13 @@ function sendChoice(cmds: text, index: number):
 // Clicked by the firmware after a cell kind or canSkip changes.
 on layoutSync.down:
   refreshPanel()
+  setHomeUi()
 
 on picker.up:
   page threads
 
 function openZeroAsk(target: number):
-  zeroFor.val = target
+  zeroFor = target
   if (target == ZERO_FOR_Z) {
     zeroAsk.txt = "Z axis"
     zeroNo.txt = "Set zero"
@@ -174,7 +175,7 @@ function setZeroAsk(shown: number):
 on startStop.up:
   if (running.val) {
     send("stop")
-  } else if (ready.val && !kpOpen.val) {
+  } else if (ready.val && !kpOpen) {
     if (needZero.val == 2) {
       openZeroAsk(ZERO_FOR_CONFIRM)
     } else if (needZero.val) {
@@ -186,9 +187,9 @@ on startStop.up:
 
 on zeroYes.up:
   setZeroAsk(0)
-  if (zeroFor.val == ZERO_FOR_Z) {
+  if (zeroFor == ZERO_FOR_Z) {
     send("o<zero> call [1] [0]")
-  } else if (zeroFor.val == ZERO_FOR_X) {
+  } else if (zeroFor == ZERO_FOR_X) {
     send("o<zero> call [0] [1]")
   } else {
     send("start zero")
@@ -196,9 +197,9 @@ on zeroYes.up:
 
 on zeroNo.up:
   setZeroAsk(0)
-  if (zeroFor.val == ZERO_FOR_Z) {
+  if (zeroFor == ZERO_FOR_Z) {
     send("@G10 L20 P0 Z0")
-  } else if (zeroFor.val == ZERO_FOR_X) {
+  } else if (zeroFor == ZERO_FOR_X) {
     send("@G10 L20 P0 X0")
   } else {
     send("start")
@@ -258,7 +259,7 @@ on ovrPlus.up:
   }
 
 on c0.up:
-  openCell(cCmd0.txt, cKind0.val, 0)
+  openCell(cCmd0.txt, cKind0, 0)
 
 on c0a.up:
   sendChoice(cCmd0.txt, 0)
@@ -267,7 +268,7 @@ on c0b.up:
   sendChoice(cCmd0.txt, 1)
 
 on c1.up:
-  openCell(cCmd1.txt, cKind1.val, 1)
+  openCell(cCmd1.txt, cKind1, 1)
 
 on c1a.up:
   sendChoice(cCmd1.txt, 0)
@@ -276,7 +277,7 @@ on c1b.up:
   sendChoice(cCmd1.txt, 1)
 
 on c2.up:
-  openCell(cCmd2.txt, cKind2.val, 2)
+  openCell(cCmd2.txt, cKind2, 2)
 
 on c2a.up:
   sendChoice(cCmd2.txt, 0)
@@ -285,7 +286,7 @@ on c2b.up:
   sendChoice(cCmd2.txt, 1)
 
 on c3.up:
-  openCell(cCmd3.txt, cKind3.val, 3)
+  openCell(cCmd3.txt, cKind3, 3)
 
 on c3a.up:
   sendChoice(cCmd3.txt, 0)
@@ -294,7 +295,7 @@ on c3b.up:
   sendChoice(cCmd3.txt, 1)
 
 on c4.up:
-  openCell(cCmd4.txt, cKind4.val, 4)
+  openCell(cCmd4.txt, cKind4, 4)
 
 on c4a.up:
   sendChoice(cCmd4.txt, 0)
@@ -303,7 +304,7 @@ on c4b.up:
   sendChoice(cCmd4.txt, 1)
 
 on c5.up:
-  openCell(cCmd5.txt, cKind5.val, 5)
+  openCell(cCmd5.txt, cKind5, 5)
 
 on c5a.up:
   sendChoice(cCmd5.txt, 0)
@@ -312,7 +313,7 @@ on c5b.up:
   sendChoice(cCmd5.txt, 1)
 
 on c6.up:
-  openCell(cCmd6.txt, cKind6.val, 6)
+  openCell(cCmd6.txt, cKind6, 6)
 
 on c6a.up:
   sendChoice(cCmd6.txt, 0)
@@ -321,7 +322,7 @@ on c6b.up:
   sendChoice(cCmd6.txt, 1)
 
 on c7.up:
-  openCell(cCmd7.txt, cKind7.val, 7)
+  openCell(cCmd7.txt, cKind7, 7)
 
 on c7a.up:
   sendChoice(cCmd7.txt, 0)
@@ -330,7 +331,7 @@ on c7b.up:
   sendChoice(cCmd7.txt, 1)
 
 on c8.up:
-  openCell(cCmd8.txt, cKind8.val, 8)
+  openCell(cCmd8.txt, cKind8, 8)
 
 on c8a.up:
   sendChoice(cCmd8.txt, 0)
@@ -339,7 +340,7 @@ on c8b.up:
   sendChoice(cCmd8.txt, 1)
 
 on c9.up:
-  openCell(cCmd9.txt, cKind9.val, 9)
+  openCell(cCmd9.txt, cKind9, 9)
 
 on c9a.up:
   sendChoice(cCmd9.txt, 0)
@@ -348,19 +349,19 @@ on c9b.up:
   sendChoice(cCmd9.txt, 1)
 
 on c10.up:
-  narrowCell(cCmd10.txt, cKind10.val, 10)
+  narrowCell(cCmd10.txt, cKind10, 10)
 
 on c11.up:
-  narrowCell(cCmd11.txt, cKind11.val, 11)
+  narrowCell(cCmd11.txt, cKind11, 11)
 
 on c12.up:
-  narrowCell(cCmd12.txt, cKind12.val, 12)
+  narrowCell(cCmd12.txt, cKind12, 12)
 
 on c13.up:
-  narrowCell(cCmd13.txt, cKind13.val, 13)
+  narrowCell(cCmd13.txt, cKind13, 13)
 
 on c14.up:
-  narrowCell(cCmd14.txt, cKind14.val, 14)
+  narrowCell(cCmd14.txt, cKind14, 14)
 
 on c15.up:
-  narrowCell(cCmd15.txt, cKind15.val, 15)
+  narrowCell(cCmd15.txt, cKind15, 15)

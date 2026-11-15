@@ -4,48 +4,48 @@ const COLOR_BUTTON = 8485
 // In settings no mode shows as selected; the firmware's pick is put back on close.
 function hideModeSelection():
   if (menu0.bco == COLOR_SELECTED) {
-    menuSel.val = 0
+    menuSel = 0
     menu0.bco = COLOR_BUTTON
   }
   if (menu1.bco == COLOR_SELECTED) {
-    menuSel.val = 1
+    menuSel = 1
     menu1.bco = COLOR_BUTTON
   }
   if (menu2.bco == COLOR_SELECTED) {
-    menuSel.val = 2
+    menuSel = 2
     menu2.bco = COLOR_BUTTON
   }
   if (menu3.bco == COLOR_SELECTED) {
-    menuSel.val = 3
+    menuSel = 3
     menu3.bco = COLOR_BUTTON
   }
   if (menu4.bco == COLOR_SELECTED) {
-    menuSel.val = 4
+    menuSel = 4
     menu4.bco = COLOR_BUTTON
   }
   if (menu5.bco == COLOR_SELECTED) {
-    menuSel.val = 5
+    menuSel = 5
     menu5.bco = COLOR_BUTTON
   }
   if (menu6.bco == COLOR_SELECTED) {
-    menuSel.val = 6
+    menuSel = 6
     menu6.bco = COLOR_BUTTON
   }
   if (menu7.bco == COLOR_SELECTED) {
-    menuSel.val = 7
+    menuSel = 7
     menu7.bco = COLOR_BUTTON
   }
   if (menu8.bco == COLOR_SELECTED) {
-    menuSel.val = 8
+    menuSel = 8
     menu8.bco = COLOR_BUTTON
   }
   if (menu9.bco == COLOR_SELECTED) {
-    menuSel.val = 9
+    menuSel = 9
     menu9.bco = COLOR_BUTTON
   }
 
 function restoreModeSelection():
-  switch (menuSel.val) {
+  switch (menuSel) {
     case 0:
       menu0.bco = COLOR_SELECTED
       break
@@ -77,12 +77,12 @@ function restoreModeSelection():
       menu9.bco = COLOR_SELECTED
       break
   }
-  menuSel.val = -1
+  menuSel = -1
 
 // Slots the firmware left without a mode stay hidden.
 function setMenu(shown: number):
-  menuOpen.val = shown
-  if (shown && settingsOpen.val) {
+  menuOpen = shown
+  if (shown && settingsOpen) {
     hideModeSelection()
   } else if (!shown) {
     restoreModeSelection()
@@ -117,7 +117,7 @@ function setMenu(shown: number):
   }
 
 function setSettings(shown: number):
-  settingsOpen.val = shown
+  settingsOpen = shown
   if (shown) {
     refreshPanel()
   }
@@ -146,7 +146,7 @@ function setSettings(shown: number):
 function pickMode(name: text):
   send("mode " + name)
   setMenu(0)
-  if (settingsOpen.val) {
+  if (settingsOpen) {
     setSettings(0)
     mode.txt = modeName.txt
   }
@@ -159,12 +159,12 @@ function setTpiEntry(on: number):
 
 // Clicked by the firmware after it updates modeName.
 on modeSync.down:
-  if (settingsOpen.val == 0) {
+  if (settingsOpen == 0) {
     mode.txt = modeName.txt
   }
 
 on mode.up:
-  if (menuOpen.val) {
+  if (menuOpen) {
     setMenu(0)
   } else {
     setKeypad(0)
@@ -204,7 +204,7 @@ on menu9.up:
 
 on menuSettings.up:
   setMenu(0)
-  if (settingsOpen.val == 0) {
+  if (settingsOpen == 0) {
     mode.txt = "SETTINGS"
     setSettings(1)
   }
