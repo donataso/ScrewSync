@@ -61,3 +61,9 @@ export interface WifiPush {
   savedCount: number
   saved: SavedNetwork[]
 }
+
+export interface Capabilities {
+  has_x_motor: boolean
+  has_endstops: boolean
+  has_probe: boolean
+}

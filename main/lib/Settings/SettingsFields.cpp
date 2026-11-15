@@ -98,6 +98,7 @@ namespace Settings
         {"probeBackOffDu", FieldType::I32, offsetof(Conf, probeBackOffDu), 1, 10000000},
         {"probeDstDu", FieldType::I32, offsetof(Conf, probeDstDu), 0, 10000000},
         {"probeOffsetDu", FieldType::I32, offsetof(Conf, probeOffsetDu), 0, 10000000},
+        {"requireHoming", FieldType::Bool, offsetof(Conf, requireHoming), 0, 0},
         {"screwPitchDuZ", FieldType::I32, offsetof(Conf, z.screwPitchDu), 1, 10000000},
         {"motorStepsZ", FieldType::I32, offsetof(Conf, z.motorSteps), 1, 1000000},
         {"speedStartDuPerMinZ", FieldType::I32, offsetof(Conf, z.speedStartDuPerMin), 1, 60000000},
@@ -111,6 +112,11 @@ namespace Settings
         {"handwheelPprZ", FieldType::Float, offsetof(Conf, z.handwheelPpr), 1, 100000},
         {"invertHandwheelZ", FieldType::Bool, offsetof(Conf, z.invertHandwheel), 0, 0},
         {"handwheelLagMsZ", FieldType::I32, offsetof(Conf, z.handwheelLagMs), 1, 1000},
+        {"homeFastDuPerMinZ", FieldType::I32, offsetof(Conf, z.homeFastDuPerMin), 0, 60000000},
+        {"homeSlowDuPerMinZ", FieldType::I32, offsetof(Conf, z.homeSlowDuPerMin), 0, 60000000},
+        {"homeLatchBackOffDuZ", FieldType::I32, offsetof(Conf, z.homeLatchBackOffDu), 0, 10000000},
+        {"homePullOffDuZ", FieldType::I32, offsetof(Conf, z.homePullOffDu), 0, 10000000},
+        {"homePositionDuZ", FieldType::I32, offsetof(Conf, z.homePositionDu), -10000000, 10000000},
         {"screwPitchDuX", FieldType::I32, offsetof(Conf, x.screwPitchDu), 1, 10000000},
         {"motorStepsX", FieldType::I32, offsetof(Conf, x.motorSteps), 1, 1000000},
         {"speedStartDuPerMinX", FieldType::I32, offsetof(Conf, x.speedStartDuPerMin), 1, 60000000},
@@ -124,6 +130,11 @@ namespace Settings
         {"handwheelPprX", FieldType::Float, offsetof(Conf, x.handwheelPpr), 1, 100000},
         {"invertHandwheelX", FieldType::Bool, offsetof(Conf, x.invertHandwheel), 0, 0},
         {"handwheelLagMsX", FieldType::I32, offsetof(Conf, x.handwheelLagMs), 1, 1000},
+        {"homeFastDuPerMinX", FieldType::I32, offsetof(Conf, x.homeFastDuPerMin), 0, 60000000},
+        {"homeSlowDuPerMinX", FieldType::I32, offsetof(Conf, x.homeSlowDuPerMin), 0, 60000000},
+        {"homeLatchBackOffDuX", FieldType::I32, offsetof(Conf, x.homeLatchBackOffDu), 0, 10000000},
+        {"homePullOffDuX", FieldType::I32, offsetof(Conf, x.homePullOffDu), 0, 10000000},
+        {"homePositionDuX", FieldType::I32, offsetof(Conf, x.homePositionDu), -10000000, 10000000},
     };
 
     const struct json_obj_descr CONF_JSON_DESCR[] = {
@@ -143,6 +154,7 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM(Settings::Conf, probeBackOffDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, probeDstDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, probeOffsetDu, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM(Settings::Conf, requireHoming, JSON_TOK_TRUE),
 
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "screwPitchDuZ", z.screwPitchDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "motorStepsZ", z.motorSteps, JSON_TOK_NUMBER),
@@ -157,6 +169,11 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelPprZ", z.handwheelPpr, JSON_TOK_FLOAT_FP),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertHandwheelZ", z.invertHandwheel, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelLagMsZ", z.handwheelLagMs, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homeFastDuPerMinZ", z.homeFastDuPerMin, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homeSlowDuPerMinZ", z.homeSlowDuPerMin, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homeLatchBackOffDuZ", z.homeLatchBackOffDu, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homePullOffDuZ", z.homePullOffDu, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homePositionDuZ", z.homePositionDu, JSON_TOK_NUMBER),
 
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "screwPitchDuX", x.screwPitchDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "motorStepsX", x.motorSteps, JSON_TOK_NUMBER),
@@ -171,6 +188,11 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelPprX", x.handwheelPpr, JSON_TOK_FLOAT_FP),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "invertHandwheelX", x.invertHandwheel, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "handwheelLagMsX", x.handwheelLagMs, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homeFastDuPerMinX", x.homeFastDuPerMin, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homeSlowDuPerMinX", x.homeSlowDuPerMin, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homeLatchBackOffDuX", x.homeLatchBackOffDu, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homePullOffDuX", x.homePullOffDu, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "homePositionDuX", x.homePositionDu, JSON_TOK_NUMBER),
     };
 
     const struct json_obj_descr RENAMED_JSON_DESCR[] = {

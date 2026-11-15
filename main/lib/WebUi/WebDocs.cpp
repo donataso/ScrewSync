@@ -26,6 +26,7 @@
 #include "Pins.hpp"
 #include "PinMapJson.hpp"
 #include "ThreadStore.hpp"
+#include "WsMessages.hpp"
 
 using WebHttp::reply;
 
@@ -161,6 +162,12 @@ namespace
         return WebHttp::replyBody(response, HTTP_200_OK, WebHttp::ContentType::Json, g_jsonDoc, (size_t)len);
     }
 
+    int capabilitiesJson(char *out, size_t outMax)
+    {
+        return WsMessages::capabilities(out, outMax, false);
+    }
+
+    const JsonDocument CAPABILITIES_DOC = {capabilitiesJson, nullptr};
     const JsonDocument THREADS_DOC = {ThreadStore::toJson, ThreadStore::fromJson};
     const JsonDocument BACKUP_DOC = {Backup::toJson, Backup::fromJson};
     const JsonDocument LOG_DOC = {LogRing::toJson, nullptr};
@@ -194,6 +201,12 @@ namespace WebRoutes
         .common = {.bitmask_of_supported_http_methods = BIT(HTTP_GET), .type = HTTP_RESOURCE_TYPE_DYNAMIC},
         .cb = handleJsonDoc,
         .user_data = (void *)&PIN_FUNCTIONS_DOC,
+    };
+
+    struct http_resource_detail_dynamic g_capabilities = {
+        .common = {.bitmask_of_supported_http_methods = BIT(HTTP_GET), .type = HTTP_RESOURCE_TYPE_DYNAMIC},
+        .cb = handleJsonDoc,
+        .user_data = (void *)&CAPABILITIES_DOC,
     };
 
     struct http_resource_detail_dynamic g_backup = {

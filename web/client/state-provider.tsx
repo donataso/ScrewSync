@@ -1,13 +1,14 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import type { StatusPush } from "./types"
+import type { Capabilities, StatusPush } from "./types"
 import { wsConnect, wsSubscribe } from "./ws"
 
 interface StateContextValue {
   state: StatusPush | null
   error: string | null
   connected: boolean
+  capabilities: Capabilities | null
 }
 
 const StateContext = createContext<StateContextValue | null>(null)
@@ -16,11 +17,13 @@ export function StateProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<StatusPush | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [connected, setConnected] = useState(false)
+  const [capabilities, setCapabilities] = useState<Capabilities | null>(null)
 
   useEffect(() => {
     wsConnect()
     const unsubscribe = wsSubscribe({
       onStatus: (next) => setState(next),
+      onCapabilities: setCapabilities,
       onConnected: (isConnected, err) => {
         setConnected(isConnected)
         setError(err)
@@ -29,7 +32,7 @@ export function StateProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe
   }, [])
 
-  return <StateContext.Provider value={{ state, error, connected }}>{children}</StateContext.Provider>
+  return <StateContext.Provider value={{ state, error, connected, capabilities }}>{children}</StateContext.Provider>
 }
 
 export function useDeviceState(): StateContextValue {

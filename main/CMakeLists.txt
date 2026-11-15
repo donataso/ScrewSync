@@ -43,6 +43,7 @@ target_sources(app PRIVATE
     lib/Mode/ModeSteps.cpp
     lib/Mode/ModeMdi.cpp
     lib/Probe/ProbeInput.cpp
+    lib/Homing/HomeInput.cpp
     lib/Pins/Pins.cpp
     lib/Pins/PinMap.cpp
     lib/Pins/PinMapJson.cpp
@@ -104,6 +105,7 @@ target_include_directories(app PRIVATE
     lib/Watchdog
     lib/Mode
     lib/Probe
+    lib/Homing
     lib/Pins
     include
     lib/Thread

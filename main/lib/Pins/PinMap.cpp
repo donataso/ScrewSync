@@ -41,8 +41,11 @@ namespace PinMap
         {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
         {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
         {"probe", "Probe", "Cycle", 1, {"SIG"}, Dir::In, false, false, false, false, false, false, nullptr, 0, 0},
+        {"zHome", "Z home", "Homing", 1, {"SIG"}, Dir::In, false, true, false, false, false, true, nullptr, 0, 0},
+        {"xHome", "X home", "Homing", 1, {"SIG"}, Dir::In, false, true, false, false, false, true, nullptr, 0, 0},
         SWITCH("startHere", "Start here", "start"),
         SWITCH("stop", "Stop", "stop"),
+        SWITCH_IN("Homing", "home", "Home", "home"),
         ZERO_SWITCH("setZero", "Set zero", "@G10 L20 P1 Z0 X0"),
         ZERO_SWITCH("setZeroZ", "Set zero Z", "@G10 L20 P1 Z0"),
         ZERO_SWITCH("setZeroX", "Set zero X", "@G10 L20 P1 X0"),
@@ -299,6 +302,22 @@ namespace PinMap
         return nullptr;
     }
 
+    const char *missingHome(const Map &map, char *err, size_t errMax)
+    {
+        const Fn motors[] = {Fn::ZMotor, Fn::XMotor};
+        const Fn homes[] = {Fn::ZHome, Fn::XHome};
+        if (!find(map, homes[0]) && !find(map, homes[1])) {
+            return nullptr;
+        }
+        for (size_t i = 0; i < 2; i++) {
+            if (find(map, motors[i]) && !find(map, homes[i])) {
+                snprintf(err, errMax, "%s has no pins", def(homes[i]).label);
+                return err;
+            }
+        }
+        return nullptr;
+    }
+
     const char *checkEdgeRate(const Board &board, const Assignment &a, char *err, size_t errMax)
     {
         if ((size_t)a.fn >= FN_COUNT || a.encoder == Encoder::None) {
@@ -336,7 +355,7 @@ namespace PinMap
                 return err;
             }
         }
-        if (missingRequired(map, err, errMax)) {
+        if (missingRequired(map, err, errMax) || missingHome(map, err, errMax)) {
             return err;
         }
         for (size_t c = 0; c < MAX_CONNECTORS; c++) {

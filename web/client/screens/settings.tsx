@@ -7,6 +7,7 @@ import { CONFIGURE_LOCK_MESSAGE, useCanConfigure, useDeviceState } from "../stat
 import {
   configFields,
   parseMachineConfig,
+  sectionsForCapabilities,
   sectionsInUnits,
   toDisplayValue,
   toRawValue,
@@ -23,7 +24,8 @@ export function SettingsScreen() {
   const [busy, setBusy] = useState(false)
   const canConfigure = useCanConfigure()
   const toast = useToast()
-  const sections = sectionsInUnits(useDeviceState().state?.units ?? "mm")
+  const { state, capabilities } = useDeviceState()
+  const sections = sectionsForCapabilities(sectionsInUnits(state?.units ?? "mm"), capabilities?.has_endstops ?? false)
 
   async function load() {
     setLoading(true)

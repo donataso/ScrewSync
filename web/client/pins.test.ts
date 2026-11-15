@@ -63,6 +63,17 @@ describe("validate", () => {
     expect(validate(MOCK_BOARD, map).filter((i) => i.level === "error")).toEqual([])
   })
 
+  it("requires a home input for every axis motor once one exists", () => {
+    const home = (id: string, label: string) => ({ ...fn("stop"), id, label, exclusive: true })
+    const board = { ...MOCK_BOARD, functions: [...MOCK_BOARD.functions, home("zHome", "Z home"), home("xHome", "X home")] }
+    const errors = (map: PinMap) => validate(board, map).filter((i) => i.level === "error")
+    const zHome = defaultAssignment(board.functions.find((f) => f.id === "zHome")!, "r1c4", 0)
+    const xHome = defaultAssignment(board.functions.find((f) => f.id === "xHome")!, "r1c4", 2)
+    expect(errors([...MOCK_MAP, zHome]).some((i) => i.fn === "xHome")).toBe(true)
+    expect(errors([...MOCK_MAP, zHome, xHome])).toEqual([])
+    expect(errors([...without("xMotor"), zHome])).toEqual([])
+  })
+
   it("rejects a GPIO used twice", () => {
     const map = replace("probe", { connector: "r3c5", start: 2 })
     expect(validate(MOCK_BOARD, map).some((i) => i.level === "error" && i.gpio === 10)).toBe(true)

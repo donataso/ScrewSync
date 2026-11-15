@@ -351,3 +351,20 @@ ZTEST(settings_fields, test_param_names)
     zassert_true(paramValue("_invert_encoder", g_conf, v, length));
     zassert_false(paramValue("_nope", g_conf, v, length));
 }
+
+ZTEST(settings_fields, test_home_fields)
+{
+    zassert_true(set("homeFastDuPerMinZ", "100000"));
+    zassert_equal(g_conf.z.homeFastDuPerMin, 100000);
+    zassert_true(set("homeSlowDuPerMinX", "20000"));
+    zassert_equal(g_conf.x.homeSlowDuPerMin, 20000);
+    zassert_true(set("homeLatchBackOffDuZ", "5000"));
+    zassert_equal(g_conf.z.homeLatchBackOffDu, 5000);
+    zassert_true(set("homePullOffDuX", "2000"));
+    zassert_equal(g_conf.x.homePullOffDu, 2000);
+    zassert_true(set("homePositionDuZ", "-1000"));
+    zassert_equal(g_conf.z.homePositionDu, -1000);
+    zassert_true(set("requireHoming", "true"));
+    zassert_true(g_conf.requireHoming);
+    zassert_false(set("homeFastDuPerMinZ", "-1"));
+}

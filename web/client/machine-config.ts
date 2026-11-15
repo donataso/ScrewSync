@@ -16,6 +16,7 @@ export interface MachineConfigPair {
   z: MachineConfigField
   x: MachineConfigField
   copy: boolean
+  needsEndstops?: boolean
 }
 
 export interface MachineConfigSection {
@@ -27,6 +28,7 @@ export interface MachineConfigSection {
   commonTitle?: string
   pairs?: MachineConfigPair[]
   pairsTitle?: string
+  needsEndstops?: boolean
 }
 
 const DU_PER_MM = 10000
@@ -149,6 +151,58 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       help: `Toggle if turning the ${axis} handwheel moves the axis the wrong way.`,
     },
     {
+      key: `homeFastDuPerMin${axis}`,
+      label: "Home fast speed",
+      unit: "mm/min",
+      min: 0,
+      max: 6000,
+      step: 0.0001,
+      scale: DU_PER_MM,
+      rate: "speed",
+      help: `Speed of the first pass of ${axis} toward the home switch.`,
+    },
+    {
+      key: `homeSlowDuPerMin${axis}`,
+      label: "Home slow speed",
+      unit: "mm/min",
+      min: 0,
+      max: 6000,
+      step: 0.0001,
+      scale: DU_PER_MM,
+      rate: "speed",
+      help: `Speed of the second pass of ${axis} toward the home switch.`,
+    },
+    {
+      key: `homeLatchBackOffDu${axis}`,
+      label: "Home latch back-off",
+      unit: "mm",
+      min: 0,
+      max: 1000,
+      step: 0.0001,
+      scale: DU_PER_MM,
+      help: `Distance ${axis} backs off after the fast pass, before the slow pass.`,
+    },
+    {
+      key: `homePullOffDu${axis}`,
+      label: "Home pull-off",
+      unit: "mm",
+      min: 0,
+      max: 1000,
+      step: 0.0001,
+      scale: DU_PER_MM,
+      help: `Distance ${axis} moves off the switch after the slow pass.`,
+    },
+    {
+      key: `homePositionDu${axis}`,
+      label: "Home position",
+      unit: "mm",
+      min: -1000,
+      max: 1000,
+      step: 0.0001,
+      scale: DU_PER_MM,
+      help: `Machine coordinate of ${axis} after the pull-off.`,
+    },
+    {
       key: `invertEnable${axis}`,
       label: "Invert enable",
       type: "checkbox",
@@ -160,7 +214,7 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
 const Z_FIELDS = axisFields("Z")
 const X_FIELDS = axisFields("X")
 
-function pair(name: string, copy: boolean): MachineConfigPair {
+function pair(name: string, copy: boolean, needsEndstops = false): MachineConfigPair {
   const find = (fields: MachineConfigField[], key: string) => {
     const f = fields.find((x) => x.key === key)
     if (!f) {
@@ -168,7 +222,7 @@ function pair(name: string, copy: boolean): MachineConfigPair {
     }
     return f
   }
-  return { z: find(Z_FIELDS, `${name}Z`), x: find(X_FIELDS, `${name}X`), copy }
+  return { z: find(Z_FIELDS, `${name}Z`), x: find(X_FIELDS, `${name}X`), copy, needsEndstops }
 }
 
 export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
@@ -223,7 +277,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
       pair("screwPitchDu", false),
       pair("motorSteps", true),
       pair("backlashDu", false),
-      pair("maxTravelMm", false),
+      pair("maxTravelMm", false, true),
       pair("invertDirection", false),
       pair("invertEnable", false),
     ],
@@ -236,6 +290,25 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
       pair("speedRapidDuPerMin", true),
       pair("accelerationDuPerSec2", true),
       pair("decelerationDuPerSec2", true),
+    ],
+  },
+  {
+    title: "Homing",
+    needsEndstops: true,
+    fields: [
+      {
+        key: "requireHoming",
+        label: "Require homing",
+        type: "checkbox",
+        help: "Block everything except homing, estop off, settings and motor enable until the axes are homed.",
+      },
+    ],
+    pairs: [
+      pair("homeFastDuPerMin", true),
+      pair("homeSlowDuPerMin", true),
+      pair("homeLatchBackOffDu", true),
+      pair("homePullOffDu", true),
+      pair("homePositionDu", false),
     ],
   },
   {
@@ -403,4 +476,11 @@ return display ? "1" : "0"
 }
   const n = display as number
   return String(field.scale ? Math.round(n * field.scale) : n)
+}
+
+export function sectionsForCapabilities(sections: MachineConfigSection[], hasEndstops: boolean): MachineConfigSection[] {
+  if (hasEndstops) {
+    return sections
+  }
+  return sections.filter((s) => !s.needsEndstops).map((s) => ({ ...s, pairs: s.pairs?.filter((p) => !p.needsEndstops) }))
 }

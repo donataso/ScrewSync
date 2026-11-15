@@ -55,6 +55,18 @@ Each encoder has a filter, in µs:
 - "Start here" starts without the "Go to zero first?" question.
 - "Go to zero" moves Z to 0, then X to 0 (the routine `o<zero>`).
 
+## Home inputs
+
+- "Z home" and "X home" are one input each. They are not polled: each
+  edge raises an interrupt.
+- The default is a normally-open sensor. Set "invert" to match your
+  sensor.
+- If one axis motor has a home input, each present axis motor must have
+  one. Otherwise you cannot save the map.
+- A tailstock switch can share the X home input (wired together). While Z
+  homes, X is off its switch, so a signal on this input is the tailstock.
+- The "Home" switch sends `home`.
+
 ## Feed override encoder
 
 - Each pulse changes the feed override of the running job by 1%.

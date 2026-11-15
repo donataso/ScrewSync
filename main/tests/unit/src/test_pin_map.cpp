@@ -198,6 +198,28 @@ ZTEST(pin_map, test_rejects_missing_required)
     zassert_is_null(check(), "%s", g_err);
 }
 
+ZTEST(pin_map, test_home_input_needs_every_axis)
+{
+    place(Fn::ZHome, {6});
+    zassert_not_null(check());
+    zassert_not_null(strstr(g_err, "X home"), "%s", g_err);
+    place(Fn::XHome, {5});
+    zassert_is_null(check(), "%s", g_err);
+    remove(Fn::XMotor);
+    remove(Fn::XHome);
+    zassert_is_null(check(), "%s", g_err);
+}
+
+ZTEST(pin_map, test_home_input_defaults)
+{
+    const FnDef &z = def(Fn::ZHome);
+    zassert_true(z.activeLow);
+    zassert_true(z.exclusive);
+    zassert_is_null(z.action);
+    zassert_equal(place(Fn::ZHome, {6}).options[0].invert, true);
+    zassert_str_equal(def(Fn::Home).action, "home");
+}
+
 ZTEST(pin_map, test_exclusive_and_multiple)
 {
     place(Fn::ZMotor, {38, 6, 5});

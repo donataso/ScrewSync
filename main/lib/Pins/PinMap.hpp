@@ -59,8 +59,11 @@ namespace PinMap
         ZHandwheel,
         XHandwheel,
         Probe,
+        ZHome,
+        XHome,
         StartHere,
         Stop,
+        Home,
         SetZero,
         SetZeroZ,
         SetZeroX,
@@ -204,6 +207,7 @@ namespace PinMap
     const char *checkAssignment(const Board &board, const Assignment *kept, size_t keptCount, const Assignment &a,
                                 char *err, size_t errMax);
     const char *missingRequired(const Map &map, char *err, size_t errMax);
+    const char *missingHome(const Map &map, char *err, size_t errMax);
     // nullptr if the encoder filter lets through the edges of the function's top speed.
     const char *checkEdgeRate(const Board &board, const Assignment &a, char *err, size_t errMax);
 

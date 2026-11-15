@@ -28,6 +28,7 @@ namespace WsMessages
     int settings(char *out, size_t outMax);
     int wifi(char *out, size_t outMax);
     int scan(char *out, size_t outMax);
+    int capabilities(char *out, size_t outMax, bool withType);
     int typed(char *out, size_t outMax, const char *type, const char *msg);
 
     // {"type":"cmd","line":...}: line points into json. False if malformed.

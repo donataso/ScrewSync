@@ -263,6 +263,7 @@ namespace
             sendTo(sock, json, WsMessages::status(json, JSON_REPLY_BUF));
             sendTo(sock, bigJson, WsMessages::settings(bigJson, JSON_BIG_BUF));
             sendTo(sock, json, WsMessages::wifi(json, JSON_REPLY_BUF));
+            sendTo(sock, json, WsMessages::capabilities(json, JSON_REPLY_BUF, true));
         }
 
         // Pings and periodic pushes; false once the client should be closed.

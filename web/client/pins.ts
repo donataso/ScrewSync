@@ -289,6 +289,13 @@ export function validate(board: Board, map: PinMap): Issue[] {
       issues.push({ level: "error", fn: fn.id, msg: `${fn.label} has no pins` })
     }
   }
+  const hasHome = map.some((a) => a.fn === "zHome" || a.fn === "xHome")
+  for (const [motor, home] of [["zMotor", "zHome"], ["xMotor", "xHome"]]) {
+    const homeFn = functionDef(board, home)
+    if (hasHome && homeFn && map.some((a) => a.fn === motor) && !map.some((a) => a.fn === home)) {
+      issues.push({ level: "error", fn: home, msg: `${homeFn.label} has no pins` })
+    }
+  }
   map.forEach((a, index) => {
     const fn = functionDef(board, a.fn)
     if (!fn) {

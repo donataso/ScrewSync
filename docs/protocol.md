@@ -34,6 +34,9 @@ replies; see `docs/screen.md`.
 - Speed settings are in du/min (field names with `DuPerMin`). Acceleration
   settings are in du/s² (`DuPerSec2`). The firmware computes the step
   rates from them and the axis `motorSteps` and `screwPitchDu`.
+- Homing settings, per axis (suffix `Z` or `X`): `homeFastDuPerMin`,
+  `homeSlowDuPerMin` (du/min), `homeLatchBackOffDu`, `homePullOffDu`,
+  `homePositionDu` (du). Global: `requireHoming` (bool).
 - A command for a feature not compiled into this build (e.g. X axis, DRO,
   a mode requiring the X motor) responds with a distinct "not compiled"
   error, not a generic unknown-command error -- lets a client tell "this
@@ -182,6 +185,13 @@ replies; see `docs/screen.md`.
 - `POST /pins`: validates and saves a map. Refused unless idle. Applies
   after a reboot.
 
+## Capabilities (HTTP)
+
+- `GET /capabilities`: `{"has_x_motor":bool,"has_endstops":bool,
+  "has_probe":bool}`, from the pin map in use. `has_x_motor`: an X motor is
+  assigned. `has_endstops`: a home input is assigned. `has_probe`: a probe
+  input is assigned.
+
 ## Backup (HTTP)
 
 - `GET /backup`: one JSON file, `{"settings":{...}, "run":{units,
@@ -242,6 +252,8 @@ right after any command changes that domain:
   `error` (why the last job ended
   on its own), `params` (the current mode's `name=value ...`) and
   `probeContact` (the live probe input state).
+- `{"type":"capabilities","has_x_motor":bool,"has_endstops":bool,"has_probe":bool}`
+  -- sent once on connect, same values as `GET /capabilities`.
 - `{"type":"settings", ...}` -- machine config.
 - `{"type":"wifi", ...}` -- WiFi status.
 - `{"type":"scan", ...}` -- WiFi scan results.

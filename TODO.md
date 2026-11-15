@@ -14,6 +14,7 @@
   own default encoder filter, short enough for their fastest edges.
 - Hide an absent X motor or DRO everywhere in the UI (display and web),
   with no greyed-out placeholders, including the modes that need X.
+- Web client: use `has_x_motor` and `has_probe` from `/capabilities` to hide the UI of an absent X motor or probe.
 - add joystick support
 - Pin map: test on the lathe (motors, spindle, probe, switches, output, a
   moved function).

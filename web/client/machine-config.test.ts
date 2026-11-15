@@ -6,6 +6,7 @@ import {
   MACHINE_CONFIG_FIELDS,
   MACHINE_CONFIG_SECTIONS,
   parseMachineConfig,
+  sectionsForCapabilities,
   sectionsInUnits,
   toDisplayValue,
   toRawValue,
@@ -122,6 +123,10 @@ describe("speeds and accelerations", () => {
         expect(keys).toContain(`${name}DuPerSec2${axis}`)
       }
     }
+    for (const axis of ["Z", "X"]) {
+      expect(keys).toContain(`homeFastDuPerMin${axis}`)
+      expect(keys).toContain(`homeSlowDuPerMin${axis}`)
+    }
     expect(keys).toContain("probeFeedDuPerMin")
     expect(keys).toContain("reprobeFeedDuPerMin")
   })
@@ -158,5 +163,24 @@ describe("speeds and accelerations", () => {
       const inch = inUnits(f, "inch")
       expect(Number(toRawValue(inch, inch.max!)), f.key).toBe(Number(toRawValue(f, f.max!)))
     }
+  })
+})
+
+describe("sections without end stops", () => {
+  const keys = (hasEndstops: boolean, units: "mm" | "inch" = "mm") =>
+    configFields(sectionsForCapabilities(sectionsInUnits(units), hasEndstops)).map((f) => f.key)
+
+  it("hide the max travel, the homing fields and require homing", () => {
+    const hidden = keys(false)
+    for (const key of ["maxTravelMmZ", "maxTravelMmX", "requireHoming", "homeFastDuPerMinZ", "homePositionDuX"]) {
+      expect(hidden).not.toContain(key)
+    }
+    expect(hidden).toContain("speedRapidDuPerMinZ")
+    expect(hidden).toContain("probeFeedDuPerMin")
+  })
+
+  it("keep every field with end stops", () => {
+    expect(keys(true)).toEqual(MACHINE_CONFIG_FIELDS.map((f) => f.key))
+    expect(keys(true, "inch")).toEqual(MACHINE_CONFIG_FIELDS.map((f) => f.key))
   })
 })

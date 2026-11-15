@@ -1,5 +1,5 @@
 import { parseProbe, type ProbeResult } from "./probe"
-import type { CmdOutcome, ScanResult, StatusPush, WifiPush } from "./types"
+import type { Capabilities, CmdOutcome, ScanResult, StatusPush, WifiPush } from "./types"
 
 interface StatusMsg extends StatusPush {
   type: "status"
@@ -33,6 +33,7 @@ const SERVER_FULL_CLOSE_CODE = 1013
 
 type Listener = {
   onStatus?: (s: StatusPush) => void
+  onCapabilities?: (c: Capabilities) => void
   onScan?: (s: ScanResult) => void
   onWifi?: (s: WifiPush) => void
   onProbe?: (r: ProbeResult) => void
@@ -137,6 +138,11 @@ ws.close()
       const { type, ...status } = msg
       for (const l of listeners) {
 l.onStatus?.(status as StatusPush)
+}
+    } else if (msg.type === "capabilities") {
+      const { type, ...capabilities } = msg
+      for (const l of listeners) {
+l.onCapabilities?.(capabilities as unknown as Capabilities)
 }
     } else if (msg.type === "scan") {
       const { type, ...scan } = msg
