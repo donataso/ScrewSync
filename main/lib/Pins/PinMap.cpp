@@ -41,7 +41,7 @@ namespace PinMap
         {"zHandwheel", "Z handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
         {"xHandwheel", "X handwheel", "Encoders", 2, {"A", "B"}, Dir::In, false, true, true, true, false, false, nullptr, MAX_HW_FILTER_NS, HANDWHEEL_MAX_RPM},
         {"probe", "Probe", "Cycle", 1, {"SIG"}, Dir::In, false, false, false, false, false, false, nullptr, 0, 0},
-        {"estop", "Estop", "Cycle", 1, {"SIG"}, Dir::In, false, false, false, false, false, true, nullptr, 0, 0},
+        {"estop", "Estop", "Cycle", 1, {"SIG"}, Dir::In, false, false, false, false, false, false, nullptr, 0, 0},
         {"zHome", "Z home", "Homing", 1, {"SIG"}, Dir::In, false, true, false, false, false, true, nullptr, 0, 0},
         {"xHome", "X home", "Homing", 1, {"SIG"}, Dir::In, false, true, false, false, false, true, nullptr, 0, 0},
         SWITCH("startHere", "Start here", "start"),

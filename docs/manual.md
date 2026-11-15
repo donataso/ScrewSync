@@ -43,6 +43,9 @@ How to operate ScrewSync. For connectors and flashing, see
   the screen shows the page of the selected mode.
 - Settings on the display: units (mm/inch), pitch entry (Pitch/TPI), and
   Network (Wi-Fi On/Off, Force AP, status, IP).
+- Header icons: estop, and with home switches, home and the work coordinate
+  selector. See [Estop](#estop), [Homing](#homing) and
+  [Work coordinates](#work-coordinates).
 - Tap a field to edit it on the numpad. Each mode keeps its values.
 - The display and the web client show the same state.
 
@@ -78,8 +81,8 @@ How to operate ScrewSync. For connectors and flashing, see
 
 ## Homing
 
-- With a home switch on each axis, `home` (or the Home switch) homes X, then
-  Z. The machine must be idle and the motors on. `stop` ends it.
+- With a home switch on each axis, the home icon in the header, the `home`
+  command or the Home switch homes X, then Z. The machine must be idle and the motors on. `stop` ends it.
 - Each axis moves toward the switch, backs off, finds it again slowly and
   pulls off. The axis position then reads its home position setting.
 - An axis is not homed after an estop, after its motor is turned off, after
@@ -94,8 +97,8 @@ How to operate ScrewSync. For connectors and flashing, see
   coordinate system. G54 is active at boot. `G10 L20 P0 Z0` sets zero in the
   active system, `P1`–`P6` in G54–G59. The Set zero switches and the probe
   set the active system.
-- With home switches, select G54–G59 on the web MDI page or with `G55` etc.
-  Also before homing. The offsets are saved.
+- With home switches, select G54–G59 with the selector in the header, on the
+  web MDI page, or with `G55` etc. Also before homing. The offsets are saved.
 - Without home switches, only G54 exists. Its offset is lost at reboot.
 - `G53 G0 Z… X…` moves in machine coordinates, for that line only.
 

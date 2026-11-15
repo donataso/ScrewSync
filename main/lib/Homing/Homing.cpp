@@ -25,6 +25,7 @@
 #include "StepperLimits.hpp"
 #include <math.h>
 #include <zephyr/logging/log.h>
+#include <initializer_list>
 
 LOG_MODULE_REGISTER(homing, LOG_LEVEL_INF);
 

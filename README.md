@@ -49,7 +49,7 @@ A spring pass at full depth finishes the thread.
 
 Put any function on any free connector pin, from the web client. Motors,
 encoders, handwheels, a probe, physical buttons for start, stop, zero and
-modes, and a "running" output. Rename the connectors to match your wiring.
+modes, home and estop inputs, and "running" and "estop" outputs. Rename the connectors to match your wiring.
 No rebuild, no soldering of adapters. See [docs/pins.md](docs/pins.md).
 
 <p float="left">

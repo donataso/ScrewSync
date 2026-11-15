@@ -110,7 +110,7 @@ User side: [pins.md](pins.md).
   reboot and does not enable the motors. The axis disabled state is not
   saved, so both axes are disabled at boot. `RunSettings::setAxisDisabled`
   refuses to enable an axis in `EStop`.
-- In `EStop`, `Command::apply()` refuses `start`, jog moves, MDI lines and
+- In `EStop`, `Command::apply()` refuses `start`, `jog`, MDI lines and
   `o<...>` calls. Everything else runs: status, settings, pins, Wi-Fi,
   units, mode select and parameters, threads, G-code files, OTA.
 - `Stepper::moveTo()` -- the one choke point every mover (`Jog`, modes, the
@@ -131,8 +131,8 @@ User side: [pins.md](pins.md).
     every open WebSocket in `WsCommand`'s client table and refuses new `/ws`
     upgrades until `Flashing` ends.
   - Display: firmware mirrors `state` to it; it shows a blocking toast
-    while `Flashing` or the link is lost, and an `estop off` toast while
-    `EStop` (`docs/screen.md`).
+    while `Flashing` or the link is lost, and a tinted overlay with the
+    header estop icon while `EStop` (`docs/screen.md`).
 
 ## Modes
 

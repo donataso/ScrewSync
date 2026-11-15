@@ -37,11 +37,7 @@ replies; see `docs/screen.md`.
 - Homing settings, per axis (suffix `Z` or `X`): `homeFastDuPerMin`,
   `homeSlowDuPerMin` (du/min), `homeLatchBackOffDu`, `homePullOffDu`,
   `homePositionDu` (du). Global: `requireHoming` (bool).
-- A command for a feature not compiled into this build (e.g. X axis, DRO,
-  a mode requiring the X motor) responds with a distinct "not compiled"
-  error, not a generic unknown-command error -- lets a client tell "this
-  firmware build doesn't have this" apart from "typo".
-- Serial/UART replies stay `ok [data]` / `err <reason>` (unchanged).
+- Serial/UART replies are `ok [data]` / `err <reason>`.
 - Any command on any transport gets `err busy: flashing` instead of
   running while machine state is `flashing`.
 - While machine state is `estop`, `start`, `home`, `jog`, MDI lines and `o<...>`
@@ -221,7 +217,8 @@ replies; see `docs/screen.md`.
   after a reboot. Replies `ok` or the reason.
 - In `settings`, the old fields `speedStart`, `speedRapid`,
   `speedManualMove` (steps/s) and `acceleration`, `deceleration`
-  (steps/s²) with the axis suffix are converted to the new fields, with the
+  (steps/s²) with the axis suffix are converted to the `DuPerMin` and
+  `DuPerSec2` fields, with the
   `motorSteps` and `screwPitchDu` of the same file, else of the active
   settings. A new field in the file wins. `speedRapid` wins over `speedManualMove`.
 
@@ -267,8 +264,8 @@ right after any command changes that domain:
   mode, `job` (`phase`, `pass`, `passes`), `feedOverride` (percent),
   `error` (why the last job ended
   on its own), `params` (the current mode's `name=value ...`) and
-  `probeContact` (the live probe input state), per axis `homed`, `homing`
-  (homing runs) and `wcs` (the active system, `"G54"`–`"G59"`).
+  `probeContact` (the live probe input state), `homing` (homing runs) and
+  `wcs` (the active system, `"G54"`–`"G59"`). Each axis object has `homed`.
 - `{"type":"capabilities","has_x_motor":bool,"has_endstops":bool,"has_probe":bool}`
   -- sent once on connect, same values as `GET /capabilities`.
 - `{"type":"settings", ...}` -- machine config.

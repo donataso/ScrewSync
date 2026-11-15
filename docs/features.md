@@ -3,6 +3,8 @@
 ## Display
 
 - One page per mode, with every parameter of that mode visible and editable.
+- Header icons: estop, and with home switches, home and the work coordinate
+  selector.
 - Always visible: Z/X position, axis enable toggles, spindle RPM and angle,
   current mode, start/stop, mm/inch, jog buttons and jog step.
 - Numeric entry on an on-screen keypad with a computer numpad layout.
@@ -66,6 +68,17 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - Programs with the wrong axis directions are refused; the web client
   offers to flip them.
 
+## Homing
+
+- One home switch per axis. `home` homes X, then Z: fast pass, back off,
+  slow pass, pull off. Start it from the display, the Home switch or the
+  protocol.
+- Home inputs use interrupts. A tailstock switch can share the X input.
+- Speeds, back-off, pull-off and home position are settings per axis.
+- Optional "require homing": no moves until the axes are homed.
+- A homed axis has travel limits from its home position.
+- With home switches, work systems G54–G59 and saved offsets.
+
 ## Manual control
 
 - Jog: tap for one step, hold to move continuously with acceleration.
@@ -81,7 +94,10 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
   spindle turns the wrong way.
 - Any jog on an axis a running job drives stops the job.
 - Starting a job off zero asks for confirmation.
-- Travel clamp per axis.
+- The machine starts in estop. Estop stops all motion and turns the motors
+  off, with no restart. Estop icon on the display, estop inputs and an estop
+  output.
+- A home switch signal while an axis moves trips the estop.
 - A lost display link stops any running job or jog.
 - Firmware updates are refused while the machine is running.
 - Live feed override while running, in every cutting mode but Thread.
