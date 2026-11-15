@@ -60,7 +60,7 @@ ZTEST_SUITE(gcode_mdi, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 ZTEST(gcode_mdi, test_detection)
 {
-    for (const char *line : {"G0 Z1", "g91", "M100 Z1", "T1", "F100", "X-1", "Z.5", "z+1"}) {
+    for (const char *line : {"G0 Z1", "g91", "M110", "T1", "F100", "X-1", "Z.5", "z+1"}) {
         zassert_true(isMdiLine(line), "%s", line);
     }
     for (const char *line : {"", "G", "move z to 0", "zero z", "mode turn", "gear", "x", "ping", "@G0 Z1", " G0"}) {
@@ -134,26 +134,6 @@ ZTEST(gcode_mdi, test_program_codes_do_nothing)
     zassert_equal(sink.count, 0);
 }
 
-ZTEST(gcode_mdi, test_motors)
-{
-    Mdi mdi = session();
-    Collect sink;
-    zassert_is_null(mdi.line("M100 Z1 X0", false, 4, sink));
-    zassert_is_null(mdi.line("M100 X1", true, 4, sink));
-    zassert_equal(sink.count, 2);
-    zassert_equal(sink.steps[0].kind, StepKind::Motors);
-    zassert_equal(sink.steps[0].axes, AXIS_Z | AXIS_X);
-    zassert_equal(sink.steps[0].zDu, 1);
-    zassert_equal(sink.steps[0].xDu, 0);
-    zassert_equal(sink.steps[1].axes, AXIS_X);
-    zassert_equal(sink.steps[1].xDu, 1);
-    zassert_not_null(mdi.line("M100", false, 4, sink));
-    zassert_not_null(mdi.line("M100 Z2", false, 4, sink));
-    zassert_not_null(mdi.line("G0 M100 Z1", false, 4, sink));
-    zassert_is_null(mdi.line("G33 Z-1 K1", false, 4, sink));
-    zassert_not_null(mdi.line("M100 Z1 K1", false, 4, sink));
-}
-
 ZTEST(gcode_mdi, test_spindle_angle)
 {
     Mdi mdi = session();
@@ -166,7 +146,6 @@ ZTEST(gcode_mdi, test_spindle_angle)
     zassert_equal(sink.steps[1].feed, 0);
     zassert_not_null(mdi.line("G0 Z1 R5", false, 4, sink));
     zassert_not_null(mdi.line("G0 Z1 M110", false, 4, sink));
-    zassert_is_null(mdi.line("M100 Z1 M110", false, 4, sink));
 }
 
 ZTEST(gcode_mdi, test_set_position_moves_session)
@@ -187,7 +166,6 @@ ZTEST(gcode_mdi, test_program_rejects_mdi_codes)
     Interpreter interp;
     find("linuxcnc")->begin(interp, 0, 0);
     Collect sink;
-    zassert_not_null(interpretLine(interp, "M100 Z1", sink));
     zassert_not_null(interpretLine(interp, "M110", sink));
 }
 

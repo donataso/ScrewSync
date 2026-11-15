@@ -342,8 +342,7 @@ namespace Stepper
             }
             counter_start(s->timer);
 
-            // setDisabled() re-runs this with the state restored from NVS
-            // right after begin(), before any move.
+            // setDisabled() re-runs this right after begin(), before any move.
             reconcile(*s);
         }
     }

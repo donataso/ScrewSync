@@ -36,6 +36,8 @@ on page0.load:
   vis toastShow,1
   vis layoutSync,1
   vis toastHide,1
+  vis estopBtn,1
+  vis estopSync,1
   menuOpen.val = 0
   settingsOpen.val = 0
   kpRightOpen.val = 0
@@ -45,9 +47,18 @@ on page0.load:
   linkAge = 0
   blockState.val = BLOCK_NONE
   updateBlock()
+  setEstopUi(estop.val)
 
 on page0.up:
   jogCancel()
+
+const COLOR_ESTOP_ON = 45316
+const COLOR_ESTOP_OFF = 8485
+
+function setEstopUi(on: number):
+  vis estopShade,on
+  vis estopTouch,on
+  estopBtn.bco = on ? COLOR_ESTOP_ON : COLOR_ESTOP_OFF
 
 function setToast(shown: number):
   vis toastShade,shown
@@ -61,23 +72,21 @@ function hideToast():
   ref 0
 
 // Clicked by the firmware after it sets toast.txt. While shown, a
-// full-screen hotspot takes the next tap so it only dismisses. While
-// tripped (estop.val) it stays up and the tap acknowledges.
+// full-screen hotspot takes the next tap so it only dismisses.
 on toastShow.down:
   jogCancel()
-  toastHint.txt = estop.val ? "tap to acknowledge" : "tap to dismiss"
   setToast(1)
-  tmToast.en = 0
-  if (!estop.val) {
-    tmToast.en = 1
-  }
+  tmToast.en = 1
 
 on toastDismiss.up:
-  if (estop.val) {
-    send("estop ack")
-  } else {
-    hideToast()
-  }
+  hideToast()
+
+on estopSync.down:
+  jogCancel()
+  setEstopUi(estop.val)
+
+on estopBtn.up:
+  send(estop.val ? "estop off" : "estop on")
 
 on toastHide.down:
   hideToast()

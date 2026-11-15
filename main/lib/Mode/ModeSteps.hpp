@@ -33,7 +33,7 @@ namespace Mode::Detail
 {
     bool isMotion(Gcode::StepKind kind);
 
-    // SetPosition, Motors, SpindleAngle.
+    // SetPosition, SpindleAngle.
     void applyMachineStep(const Gcode::Step &s);
 
     // The probe interrupt halts no axis after this.

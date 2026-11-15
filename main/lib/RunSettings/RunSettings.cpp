@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "RunSettings.hpp"
+#include "Machine.hpp"
 #include "PersistBlob.hpp"
 #include "JogStep.hpp"
 #include "config.hpp"
@@ -33,11 +34,6 @@ namespace
     int32_t g_jogStepDu = DEFAULT_JOG_STEP_DU;
     int32_t g_customJogStepDu = 0;
     Mode::Id g_mode = Mode::Id::Gear;
-
-    const char *disabledKey(Stepper::Axis axis)
-    {
-        return axis == Stepper::Axis::Z ? "disabledZ" : "disabledX";
-    }
 
     template <typename T>
     void loadValue(const char *key, T &value)
@@ -72,9 +68,7 @@ namespace RunSettings
     void load()
     {
         for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
-            bool disabled = false;
-            loadValue(disabledKey(axis), disabled);
-            Stepper::setDisabled(axis, disabled);
+            Stepper::setDisabled(axis, true);
         }
 
         loadValue("units", g_units);
@@ -94,8 +88,10 @@ namespace RunSettings
 
     void setAxisDisabled(Stepper::Axis axis, bool disabled)
     {
+        if (!disabled && Machine::state() == Machine::State::EStop) {
+            return;
+        }
         Stepper::setDisabled(axis, disabled);
-        PersistBlob::save(NVS_NS, disabledKey(axis), &disabled, sizeof(disabled));
     }
 
     Units units()

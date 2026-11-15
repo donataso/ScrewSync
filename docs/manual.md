@@ -57,8 +57,20 @@ How to operate ScrewSync. For connectors and flashing, see
 - Tap the spindle angle to zero it.
 - Turn an axis toggle off to de-energize its motor and crank by hand. The
   readout is dimmed and does not count the cranking.
+- Both motors are off at power-on. The setting is not saved.
+- `power on|off [z|x]` turns the motors on or off, both without an axis.
 - A jog on an axis that a running job drives stops the job, then moves the
   axis. This applies to every mode and to the handwheels.
+
+## Estop
+
+- The machine starts in estop. An estop stops all motion and turns both
+  motors off. It does not restart the controller.
+- Estop icon in the header: tap it to trip the estop, tap it again to
+  clear it. Then turn the motors on again.
+- In estop, start, jog, the handwheels, MDI, routines and motor on are
+  refused. The serial and web commands are `estop on`, `estop off`,
+  `power on` and `power off`.
 
 ## Running a job
 
@@ -167,8 +179,8 @@ How to operate ScrewSync. For connectors and flashing, see
   (LinuxCNC), e.g. `G91 G0 Z-1`.
   The modes (G90/G91, G20/G21, F) stay between lines. STOP or `stop`
   stops the move and drops the queued lines.
-- `G10 L20 P1 Z0` sets Z zero at the tool. `M100 X0` turns the X motor
-  off, `M100 X1` on. `M110` sets the spindle angle to 0.
+- `G10 L20 P1 Z0` sets Z zero at the tool. `M110` sets the spindle angle
+  to 0.
 
 ## Probe
 

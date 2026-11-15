@@ -2070,6 +2070,52 @@ font = 6
 txt_maxl = 12
 
 [[component]]
+name = "estopShade"
+type = "text"
+vscope = 1
+x = 0
+y = 0
+w = 800
+h = 480
+bco = 32768
+pco = 65535
+txt = ""
+aph = 48
+
+[[component]]
+name = "estopTouch"
+type = "hotspot"
+x = 0
+y = 0
+w = 800
+h = 480
+
+[[component]]
+name = "estopBtn"
+type = "button"
+vscope = 1
+x = 432
+y = 12
+w = 96
+h = 48
+style = 0
+bco = 8485
+bco2 = 15089
+pco = 59262
+pco2 = 59262
+txt = "ESTOP"
+txt_maxl = 8
+font = 6
+
+[[component]]
+name = "estopSync"
+type = "hotspot"
+x = 790
+y = 478
+w = 2
+h = 2
+
+[[component]]
 name = "toastShade"
 type = "text"
 vscope = 1

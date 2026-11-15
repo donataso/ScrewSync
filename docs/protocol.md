@@ -36,13 +36,18 @@ replies; see `docs/screen.md`.
   error, not a generic unknown-command error -- lets a client tell "this
   firmware build doesn't have this" apart from "typo".
 - Serial/UART replies stay `ok [data]` / `err <reason>` (unchanged).
-- Any command on any transport gets `err busy: flashing`/`err busy: estop`
-  instead of running while machine state is `flashing` or `estop`.
+- Any command on any transport gets `err busy: flashing` instead of
+  running while machine state is `flashing`.
+- While machine state is `estop`, `start`, `jog`, MDI lines and `o<...>`
+  calls get `err busy: estop`. All other commands run.
 - `jog step [<deci-microns>|next]`: shows or sets the jog step. `next`
   selects the next preset, then the custom step, then the first preset.
-- `estop` / `estop ack`: `estop` alone replies `ok state=<name>`. `estop ack`
-  is the one command let through while tripped -- it clears the EStop and
-  reboots.
+- `estop` / `estop on` / `estop off`: `estop` alone replies
+  `ok state=<name>`. `estop on` trips the EStop. `estop off` clears it. It
+  does not enable the motors. While `flashing`, `estop on` gets
+  `err busy: flashing`.
+- `power on|off [z|x]`: turns the motors on or off, both axes without an
+  axis. `power on` gets `err busy: estop` in estop.
 
 ## MDI
 
@@ -69,8 +74,7 @@ replies; see `docs/screen.md`.
   `probe z|x found=0|1 pos=<work du> motor=<du>` on the serial console,
   `{"type":"probe","msg":"z|x found=… pos=… motor=…"}` on the WebSocket.
   `motor` is the motor position without backlash compensation.
-- MDI only: `M100 Z<0|1> X<0|1>` turns the motors off or on (an axis not
-  named stays); `M110 [R<deg>]` makes the current spindle angle R (0 if
+- MDI only: `M110 [R<deg>]` makes the current spindle angle R (0 if
   omitted).
 - Parameters and expressions as in NGC (see "NGC"), evaluated when the
   line is queued. O-words are refused.
@@ -175,7 +179,7 @@ replies; see `docs/screen.md`.
 ## Backup (HTTP)
 
 - `GET /backup`: one JSON file, `{"settings":{...}, "run":{units,
-  jogStepDu, mode, disabledZ, disabledX, "modes":[{mode, params}]},
+  jogStepDu, mode, "modes":[{mode, params}]},
   "threads":{...}, "pins":{...}}`. `settings` is the `settings` push's
   fields, `threads` the `/threads` shape, `params` the `<mode> status`
   line, `pins` the `GET /pins` shape.

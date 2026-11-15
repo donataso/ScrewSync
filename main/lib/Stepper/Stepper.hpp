@@ -31,9 +31,8 @@ namespace Stepper
 
     void begin();
 
-    // Raw ena GPIO write -- used only by reconcile() internally and by
-    // Machine's EStop halt (a deliberate one-way bypass, since EStop always
-    // reboots right after). Everything else goes through setHoldRequested/
+    // Raw ena GPIO write -- used only by reconcile() internally and by the
+    // watchdog. Everything else goes through setHoldRequested/
     // setDisabled below so the two never fight over the pin.
     void setEnabled(Axis axis, bool enabled);
 

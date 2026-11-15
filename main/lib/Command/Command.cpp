@@ -49,12 +49,45 @@ namespace
 
     void estop(const char *args, char *out, size_t outMax)
     {
-        if (!strcmp(skipSpaces(args), "ack")) {
-            snprintf(out, outMax, "ok estop ack, rebooting");
-            Machine::ackEstop();
+        const char *arg = skipSpaces(args);
+        if (!strcmp(arg, "off")) {
+            Machine::estopOff();
+            snprintf(out, outMax, "ok estop off");
+        } else if (!strcmp(arg, "on")) {
+            Machine::tripEstop();
+            snprintf(out, outMax, "ok estop on");
         } else {
             snprintf(out, outMax, "ok state=%s", Machine::stateName());
         }
+    }
+
+    void power(const char *args, char *out, size_t outMax)
+    {
+        const char *a = skipSpaces(args);
+        bool on = !strncmp(a, "on", 2) && (a[2] == '\0' || a[2] == ' ');
+        bool off = !strncmp(a, "off", 3) && (a[3] == '\0' || a[3] == ' ');
+        if (!on && !off) {
+            snprintf(out, outMax, "err power on|off [z|x]");
+            return;
+        }
+        const char *axisTok = skipSpaces(a + (on ? 2 : 3));
+        bool z = !*axisTok || !strcmp(axisTok, "z");
+        bool x = !*axisTok || !strcmp(axisTok, "x");
+        if (!z && !x) {
+            snprintf(out, outMax, "err power on|off [z|x]");
+            return;
+        }
+        if (on && Machine::state() == Machine::State::EStop) {
+            snprintf(out, outMax, "err busy: estop");
+            return;
+        }
+        if (z) {
+            Motion::setAxisEnabled(Stepper::Axis::Z, on);
+        }
+        if (x) {
+            Motion::setAxisEnabled(Stepper::Axis::X, on);
+        }
+        snprintf(out, outMax, "ok power %s", on ? "on" : "off");
     }
 
     void commands(const char *, char *out, size_t outMax);
@@ -62,7 +95,8 @@ namespace
     const CommandDef COMMANDS[] = {
         {"ping", "ping", "replies pong", ping},
         {"reboot", "reboot", "restarts the controller", reboot},
-        {"estop", "estop | estop ack", "machine state query / clears a tripped estop and reboots", estop},
+        {"estop", "estop | estop on | estop off", "machine state query / trips the estop / clears the estop", estop},
+        {"power", "power on|off [z|x]", "motors on or off, both axes without an axis", power},
         {"wifi",
          "wifi status|list|scan|on|off|forget | add <name> [pass] | ssid <name> [pass] | "
          "del <name|idx> | use <name|idx> | ap on|off | fallback on|off",
@@ -186,22 +220,23 @@ namespace Command
         const char *a = skipSpaces(line);
         size_t tokLen = strcspn(a, " ");
 
-        // "estop ack" is the only way out of a trip, on every transport.
         Machine::State st = Machine::state();
-        bool isEstop = tokLen == 5 && !strncmp(a, "estop", 5);
         if (st == Machine::State::Flashing) {
             snprintf(out, outMax, "err busy: flashing");
-            return;
-        }
-        if (st == Machine::State::EStop && !isEstop) {
-            snprintf(out, outMax, "err busy: estop");
             return;
         }
 
         const char *pinsFault = Pins::fault();
         bool ui = *a == Gcode::MDI_UI_MARKER;
         const char *gcode = ui ? a + 1 : a;
-        if (Gcode::isMdiLine(gcode)) {
+        bool isMdi = Gcode::isMdiLine(gcode);
+        bool isCall = (*a == 'o' || *a == 'O') && a[1] == '<';
+        bool isJog = tokLen == 3 && !strncmp(a, "jog", 3);
+        if (st == Machine::State::EStop && (isMdi || isCall || isJog || startsMotion(a, tokLen, a + tokLen))) {
+            snprintf(out, outMax, "err busy: estop");
+            return;
+        }
+        if (isMdi) {
             const char *refusal = pinsFault ? pinsFault : Mode::mdi(gcode, ui);
             if (refusal) {
                 snprintf(out, outMax, "err %s%s", pinsFault ? "pins: " : "", refusal);
@@ -210,7 +245,7 @@ namespace Command
             }
             return;
         }
-        if ((*a == 'o' || *a == 'O') && a[1] == '<') {
+        if (isCall) {
             const char *refusal = pinsFault ? pinsFault : Mode::call(a);
             if (refusal) {
                 snprintf(out, outMax, "err %s%s", pinsFault ? "pins: " : "", refusal);

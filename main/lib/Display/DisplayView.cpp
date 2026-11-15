@@ -259,11 +259,7 @@ namespace
         if (!pushNum("estop.val", tripped)) {
             return;
         }
-        if (tripped) {
-            showToast("EStop tripped");
-        } else {
-            writeCommand("click toastHide,1");
-        }
+        writeCommand("click estopSync,1");
     }
 
     void pushWifi()

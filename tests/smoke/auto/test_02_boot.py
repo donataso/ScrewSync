@@ -8,5 +8,5 @@ def test_reset_cause(dut):
     assert not causes & BAD_RESETS, causes
 
 
-def test_not_in_estop(dut):
-    assert kv(dut.ok("estop"))["state"] != "estop"
+def test_boot_in_estop(dut):
+    assert kv(dut.ok("estop"))["state"] == "estop"

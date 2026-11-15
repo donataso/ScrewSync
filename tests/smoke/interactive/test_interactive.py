@@ -15,6 +15,12 @@ def status(dut):
     s.close()
 
 
+@pytest.fixture(scope="module", autouse=True)
+def motors_on(dut):
+    dut.ok("estop off")
+    dut.ok("power on")
+
+
 def ask(prompt):
     try:
         return input(prompt).strip().lower()

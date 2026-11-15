@@ -41,8 +41,10 @@
   (`program.nx` globals). Every page ages the link on a timer and shows a
   non-dismissable blocking toast: blue while flashing, red once the link is
   lost. It starts shown, so it covers boot until the first heartbeat.
-- Machine state `estop`: the error toast stays up (no timeout); its tap
-  sends `estop ack`.
+- Estop icon in the page0 header: it shows the machine state. A tap sends
+  `estop on` outside estop and `estop off` in estop. In estop a tinted
+  overlay covers the page, except the icon, and takes all other taps.
+- Axis enable buttons send `power on|off z|x`.
 
 ## Layout
 

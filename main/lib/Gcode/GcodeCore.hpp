@@ -52,7 +52,6 @@ namespace Gcode
         OptionalPause,
         End,
         SetPosition,  // G10 L20: the axes in mask read zDu/xDu
-        Motors,       // M100: the axes in mask on (1) or off (0) in zDu/xDu
         SpindleAngle, // M110: the current angle becomes feed millidegrees
         Probe,        // G38.x: one axis toward zDu/xDu at feed, see the probe flags
     };

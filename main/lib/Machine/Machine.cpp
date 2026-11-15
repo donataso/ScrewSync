@@ -16,23 +16,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "Machine.hpp"
+#include "Mode.hpp"
 #include "Motion.hpp"
-#include "PersistBlob.hpp"
 #include <math.h>
-#include <zephyr/drivers/hwinfo.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/sys/reboot.h>
 
 LOG_MODULE_REGISTER(machine, LOG_LEVEL_INF);
 
 namespace
 {
-    constexpr const char *NVS_NS = "machine";
-    constexpr const char *ESTOP_KEY = "estop";
-
     struct k_mutex g_mutex;
-    bool g_estop = false;
+    bool g_estop = true;
     bool g_flashing = false;
     bool g_spinning = false;
     bool g_modeEngagedZ = false;
@@ -40,37 +35,16 @@ namespace
 
     Machine::State stateLocked()
     {
-        if (g_estop) {
-            return Machine::State::EStop;
-        }
         if (g_flashing) {
             return Machine::State::Flashing;
+        }
+        if (g_estop) {
+            return Machine::State::EStop;
         }
         if (g_spinning || g_modeEngagedZ || g_modeEngagedX) {
             return Machine::State::Running;
         }
         return Machine::State::Idle;
-    }
-
-    // Caller holds mutex. De-energizes both axes so nothing already in
-    // motion keeps running once the trip is persisted -- Stepper::moveTo()
-    // also refuses new targets while Flashing/EStop (see Stepper.cpp), this
-    // just cuts the drivers immediately instead of waiting for their next
-    // poll tick.
-    void haltAxesLocked()
-    {
-        Stepper::setEnabled(Stepper::Axis::Z, false);
-        Stepper::setEnabled(Stepper::Axis::X, false);
-    }
-
-    void tripEstopLocked()
-    {
-        g_estop = true;
-        haltAxesLocked();
-        uint8_t v = 1;
-        PersistBlob::save(NVS_NS, ESTOP_KEY, &v, sizeof(v));
-        LOG_ERR("machine: estop tripped, rebooting");
-        sys_reboot(SYS_REBOOT_WARM);
     }
 }
 
@@ -79,16 +53,6 @@ namespace Machine
     void begin()
     {
         k_mutex_init(&g_mutex);
-        uint8_t v = 0;
-        if (PersistBlob::load(NVS_NS, ESTOP_KEY, &v, sizeof(v)) == sizeof(v) && v) {
-            g_estop = true;
-            LOG_ERR("machine: booted into estop, waiting for ack");
-        }
-        uint32_t cause = 0;
-        if (hwinfo_get_reset_cause(&cause) == 0 && (cause & RESET_WATCHDOG)) {
-            g_estop = true;
-            LOG_ERR("machine: watchdog reset, waiting for ack");
-        }
     }
 
     void setSpinning(bool spinning)
@@ -105,16 +69,25 @@ namespace Machine
         k_mutex_unlock(&g_mutex);
     }
 
+    void tripEstop()
+    {
+        k_mutex_lock(&g_mutex, K_FOREVER);
+        g_estop = true;
+        k_mutex_unlock(&g_mutex);
+        Mode::stop();
+        Stepper::setDisabled(Stepper::Axis::Z, true);
+        Stepper::setDisabled(Stepper::Axis::X, true);
+        LOG_ERR("machine: estop tripped");
+    }
+
     bool setFlashing(bool flashing)
     {
         k_mutex_lock(&g_mutex, K_FOREVER);
-        if (g_estop) {
-            k_mutex_unlock(&g_mutex);
-            return false;
-        }
         if (flashing) {
             if (g_spinning || g_modeEngagedZ || g_modeEngagedX) {
-                tripEstopLocked(); // does not return
+                k_mutex_unlock(&g_mutex);
+                tripEstop();
+                return false;
             }
             g_flashing = true;
             k_mutex_unlock(&g_mutex);
@@ -150,23 +123,20 @@ namespace Machine
     bool blocksTraffic()
     {
         State s = state();
-        return s == State::Flashing || s == State::EStop;
+        return s == State::Flashing;
     }
 
     bool allowsUpdate()
     {
         State s = state();
-        return s == State::Idle || s == State::Flashing;
+        return s == State::Idle || s == State::Flashing || s == State::EStop;
     }
 
-    void ackEstop()
+    void estopOff()
     {
         k_mutex_lock(&g_mutex, K_FOREVER);
         g_estop = false;
-        uint8_t v = 0;
-        PersistBlob::save(NVS_NS, ESTOP_KEY, &v, sizeof(v));
         k_mutex_unlock(&g_mutex);
-        sys_reboot(SYS_REBOOT_WARM);
     }
 
     int64_t position(Stepper::Axis axis)

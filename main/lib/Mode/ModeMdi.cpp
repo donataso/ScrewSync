@@ -62,22 +62,8 @@ namespace
         return axis == Stepper::Axis::Z ? s.zDu : s.xDu;
     }
 
-    // The last queued M100 for the axis turns it on.
-    bool enableQueued(Stepper::Axis axis)
-    {
-        bool on = false;
-        for (size_t i = 0; i < g_count; i++) {
-            const Gcode::Step &s = g_queue[(g_head + i) % QUEUE_LEN];
-            if (s.kind == Gcode::StepKind::Motors && (s.axes & bit(axis))) {
-                on = (axis == Stepper::Axis::Z ? s.zDu : s.xDu) != 0;
-            }
-        }
-        return on;
-    }
-
     // Marks the axes each motion step moves, starting from z/x, and claims
-    // both axes. A disabled axis is not claimed; it is refused if it moves
-    // and no queued M100 turns it on.
+    // both axes. A disabled axis is not claimed; it is refused if it moves.
     const char *claimMoved(LineSteps &line, int32_t z, int32_t x)
     {
         for (size_t i = 0; i < line.count; i++) {
@@ -93,7 +79,7 @@ namespace
             for (Stepper::Axis axis : AXES) {
                 if (!Stepper::isDisabled(axis)) {
                     claim(axis);
-                } else if ((s.axes & bit(axis)) && !enableQueued(axis)) {
+                } else if (s.axes & bit(axis)) {
                     return "axis disabled";
                 }
             }
@@ -158,7 +144,6 @@ namespace Mode::Detail
         if (!isMotion(s.kind)) {
             Gcode::Step step = s;
             pop();
-            // M100 off on a held axis stops and clears MDI, as "enable off" does.
             applyMachineStep(step);
             if (!g_count) {
                 releaseAxes();

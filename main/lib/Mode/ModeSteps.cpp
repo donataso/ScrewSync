@@ -191,8 +191,6 @@ namespace Mode::Detail
             int32_t value = isZ ? s.zDu : s.xDu;
             if (s.kind == Gcode::StepKind::SetPosition) {
                 Wcs::setPosition(axis, value);
-            } else if (s.kind == Gcode::StepKind::Motors) {
-                Motion::setAxisEnabled(axis, value != 0);
             }
         }
     }

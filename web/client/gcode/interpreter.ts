@@ -1,7 +1,7 @@
 // Standard (LinuxCNC) interpreter: G0/G1/G33, G10 L20 P1, G20/G21, G90/G91,
 // G94/G18/G8/G54 (no-op), M0/M1/M2/M30, F, K, T (ignored). Z/X axes only, X
 // is radius. Mirrors main/lib/Gcode/GcodeInterpreter.{hpp,cpp}, which also
-// takes M100/M110 in MDI.
+// takes M110 in MDI.
 
 import { AXIS_X, AXIS_Z, DU_PER_INCH, DU_PER_MM, type StepKind, type StepSink, type Word } from "./core"
 
@@ -151,7 +151,6 @@ export class Interpreter {
             case 300:
               mKind = "end"
               break
-            case 1000:
             case 1100:
               return "only in MDI"
             default:

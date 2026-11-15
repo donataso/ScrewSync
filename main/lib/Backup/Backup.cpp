@@ -23,7 +23,6 @@
 #include "RunSettings.hpp"
 #include "Settings.hpp"
 #include "SettingsFields.hpp"
-#include "Stepper.hpp"
 #include "ThreadStore.hpp"
 #include <stdio.h>
 #include <string.h>
@@ -51,8 +50,6 @@ namespace
         const char *units;
         int32_t jogStepDu;
         const char *mode;
-        bool disabledZ;
-        bool disabledX;
         ModeJson modes[Mode::COUNT];
         size_t modeCount;
     };
@@ -80,8 +77,6 @@ namespace
         JSON_OBJ_DESCR_PRIM(RunJson, units, JSON_TOK_STRING),
         JSON_OBJ_DESCR_PRIM(RunJson, jogStepDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(RunJson, mode, JSON_TOK_STRING),
-        JSON_OBJ_DESCR_PRIM(RunJson, disabledZ, JSON_TOK_TRUE),
-        JSON_OBJ_DESCR_PRIM(RunJson, disabledX, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_OBJ_ARRAY(RunJson, modes, Mode::COUNT, modeCount, MODE_DESCR, ARRAY_SIZE(MODE_DESCR)),
     };
 
@@ -103,8 +98,6 @@ namespace
         run.units = RunSettings::unitsName();
         run.jogStepDu = RunSettings::jogStepDu();
         run.mode = Mode::name(Mode::current());
-        run.disabledZ = Stepper::isDisabled(Stepper::Axis::Z);
-        run.disabledX = Stepper::isDisabled(Stepper::Axis::X);
         run.modeCount = 0;
     }
 
@@ -139,8 +132,6 @@ namespace
     {
         RunSettings::setUnits(units);
         RunSettings::setJogStepDu(run.jogStepDu);
-        RunSettings::setAxisDisabled(Stepper::Axis::Z, run.disabledZ);
-        RunSettings::setAxisDisabled(Stepper::Axis::X, run.disabledX);
         for (size_t i = 0; i < run.modeCount; i++) {
             Mode::Id id;
             Mode::parse(run.modes[i].mode, id);

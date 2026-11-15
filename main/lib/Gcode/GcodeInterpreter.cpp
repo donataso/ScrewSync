@@ -82,7 +82,7 @@ namespace Gcode
     {
         bool hasF = false, hasK = false, hasZ = false, hasX = false, hasM = false, hasG33 = false;
         bool hasMotionG = false, hasG10 = false, hasL = false, hasP = false, hasR = false;
-        bool hasM100 = false, hasM110 = false, hasProbe = false;
+        bool hasM110 = false, hasProbe = false;
         uint8_t probeFlags = 0;
         double fVal = 0, kVal = 0, zVal = 0, xVal = 0, lVal = 0, pVal = 0, rVal = 0;
         StepKind mKind = StepKind::Pause;
@@ -173,12 +173,11 @@ namespace Gcode
                     mKind = StepKind::End;
                     hasM = true;
                     break;
-                case 1000:
                 case 1100:
                     if (!mdi_) {
                         return "only in MDI";
                     }
-                    (code == 1000 ? hasM100 : hasM110) = true;
+                    hasM110 = true;
                     break;
                 default:
                     return "unsupported command";
@@ -226,10 +225,10 @@ namespace Gcode
         if (hasR && !hasM110) {
             return "R requires M110";
         }
-        if ((hasG10 || hasM100) && (hasMotionG || (hasG10 && hasM100))) {
+        if (hasG10 && hasMotionG) {
             return "axis words conflict";
         }
-        if (hasM110 && (hasZ || hasX) && !hasG10 && !hasM100) {
+        if (hasM110 && (hasZ || hasX) && !hasG10) {
             return "axis words conflict";
         }
         if (hasG33 && !hasZ && !hasX) {
@@ -238,7 +237,7 @@ namespace Gcode
         if (hasProbe && hasZ == hasX) {
             return "G38 requires one axis";
         }
-        if (hasK && (motion_ != Motion::Thread || hasG10 || hasM100 || hasProbe)) {
+        if (hasK && (motion_ != Motion::Thread || hasG10 || hasProbe)) {
             return "K requires G33";
         }
 
@@ -279,18 +278,6 @@ namespace Gcode
             step.kind = StepKind::SetPosition;
             step.zDu = zDu_;
             step.xDu = xDu_;
-            step.axes = axes;
-            sink.emit(step);
-        } else if (hasM100) {
-            if (!axes) {
-                return "M100 requires axis";
-            }
-            if ((hasZ && zVal != 0 && zVal != 1) || (hasX && xVal != 0 && xVal != 1)) {
-                return "value out of range";
-            }
-            step.kind = StepKind::Motors;
-            step.zDu = (int32_t)zVal;
-            step.xDu = (int32_t)xVal;
             step.axes = axes;
             sink.emit(step);
         } else if (hasProbe) {

@@ -34,16 +34,16 @@ namespace Machine
         EStop,
     };
 
-    // Reads any persisted EStop flag. Call once at startup, before any
-    // motion/OTA/web subsystem begins.
+    // Starts in EStop. Call once at startup, before any motion/OTA/web
+    // subsystem begins.
     void begin();
 
     void setSpinning(bool spinning);
     void setModeEngaged(Stepper::Axis axis, bool engaged);
 
     // Requests entering/leaving Flashing. Entering while the machine is
-    // Running trips EStop instead (persists the flag, reboots) and returns
-    // false -- OTA must never start while the machine is doing something.
+    // Running trips EStop instead and returns false -- OTA must never start
+    // while the machine is doing something.
     bool setFlashing(bool flashing);
 
     State state();
@@ -51,15 +51,15 @@ namespace Machine
     // state() as the wire string: "idle"|"running"|"flashing"|"estop".
     const char *stateName();
 
-    // True while no new web/WS/command traffic should be accepted
-    // (Flashing or EStop).
+    // True while no new web/WS/command traffic should be accepted (Flashing).
     bool blocksTraffic();
 
-    // Idle, or Flashing for an update already in progress.
+    // Idle, EStop, or Flashing for an update already in progress.
     bool allowsUpdate();
 
-    // Clears the persisted EStop flag and reboots into a normal boot.
-    void ackEstop();
+    void tripEstop();
+
+    void estopOff();
 
     // Machine coordinates in du. From the stepper count until scales exist.
     int64_t position(Stepper::Axis axis);

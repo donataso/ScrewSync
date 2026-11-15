@@ -210,8 +210,6 @@ namespace
             return "end";
         case StepKind::SetPosition:
             return "set-position";
-        case StepKind::Motors:
-            return "motors";
         case StepKind::SpindleAngle:
             return "spindle-angle";
         case StepKind::Probe:
