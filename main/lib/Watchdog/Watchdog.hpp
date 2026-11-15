@@ -20,7 +20,7 @@
 
 // Per-thread task watchdog with the hardware watchdog as fallback. A stalled
 // channel de-energizes both axes and lets the hardware watchdog reset the
-// chip; Machine always boots into EStop.
+// chip; Machine boots into EStop after that reset.
 namespace Watchdog
 {
     void begin();

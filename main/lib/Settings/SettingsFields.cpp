@@ -99,6 +99,7 @@ namespace Settings
         {"probeDstDu", FieldType::I32, offsetof(Conf, probeDstDu), 0, 10000000},
         {"probeOffsetDu", FieldType::I32, offsetof(Conf, probeOffsetDu), 0, 10000000},
         {"requireHoming", FieldType::Bool, offsetof(Conf, requireHoming), 0, 0},
+        {"bootState", FieldType::I32, offsetof(Conf, bootState), 0, 2},
         {"screwPitchDuZ", FieldType::I32, offsetof(Conf, z.screwPitchDu), 1, 10000000},
         {"motorStepsZ", FieldType::I32, offsetof(Conf, z.motorSteps), 1, 1000000},
         {"speedStartDuPerMinZ", FieldType::I32, offsetof(Conf, z.speedStartDuPerMin), 1, 60000000},
@@ -155,6 +156,7 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM(Settings::Conf, probeDstDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, probeOffsetDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, requireHoming, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM(Settings::Conf, bootState, JSON_TOK_NUMBER),
 
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "screwPitchDuZ", z.screwPitchDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "motorStepsZ", z.motorSteps, JSON_TOK_NUMBER),

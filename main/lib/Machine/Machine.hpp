@@ -62,6 +62,8 @@ namespace Machine
 
     bool estopOff();
 
+    void applyBootState();
+
     int64_t position(Stepper::Axis axis);
     int64_t positionOf(Stepper::Axis axis, int64_t steps);
     int64_t toSteps(Stepper::Axis axis, int64_t machineDu);

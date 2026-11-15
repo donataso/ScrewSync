@@ -37,6 +37,9 @@ replies; see `docs/screen.md`.
 - Homing settings, per axis (suffix `Z` or `X`): `homeFastDuPerMin`,
   `homeSlowDuPerMin` (du/min), `homeLatchBackOffDu`, `homePullOffDu`,
   `homePositionDu` (du). Global: `requireHoming` (bool).
+- `bootState`: the state at power-on. `0` estop, `1` estop off with motors
+  off, `2` estop off with motors on. Other restarts and an active estop
+  input give estop.
 - Serial/UART replies are `ok [data]` / `err <reason>`.
 - Any command on any transport gets `err busy: flashing` instead of
   running while machine state is `flashing`.

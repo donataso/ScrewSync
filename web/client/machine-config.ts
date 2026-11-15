@@ -9,7 +9,8 @@ export interface MachineConfigField {
   scale?: number
   /** A speed or acceleration: shown in the machine units. */
   rate?: "speed" | "accel"
-  type?: "checkbox"
+  type?: "checkbox" | "select"
+  options?: { value: number; label: string }[]
 }
 
 export interface MachineConfigPair {
@@ -356,6 +357,22 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
         step: 0.0001,
         scale: 10000,
         help: "Shortens each successive slotting pass by this Z distance for blind slots. Set to 0 for full-length passes.",
+      },
+    ],
+  },
+  {
+    title: "Startup",
+    fields: [
+      {
+        key: "bootState",
+        label: "Boot state",
+        type: "select",
+        options: [
+          { value: 0, label: "Estop" },
+          { value: 1, label: "Estop off, motors off" },
+          { value: 2, label: "Estop off, motors on" },
+        ],
+        help: "State after power-up. A watchdog, crash or brownout reset, or an active estop input, always starts in estop.",
       },
     ],
   },

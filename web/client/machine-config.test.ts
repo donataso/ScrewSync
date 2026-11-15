@@ -41,9 +41,9 @@ describe("machine config fields", () => {
     }
   })
 
-  it("have a valid range unless a checkbox", () => {
+  it("have a valid range unless a checkbox or a select", () => {
     for (const f of MACHINE_CONFIG_FIELDS) {
-      if (f.type === "checkbox") {
+      if (f.type) {
         continue
       }
       expect(f.min, f.key).toBeLessThan(f.max!)
@@ -91,6 +91,13 @@ describe("display and raw values", () => {
     expect(toDisplayValue(invert, undefined)).toBe(false)
     expect(toRawValue(invert, true)).toBe("1")
     expect(toRawValue(invert, false)).toBe("0")
+  })
+
+  it("maps selects to their option values", () => {
+    const boot = field("bootState")
+    expect(boot.options!.map((o) => o.value)).toEqual([0, 1, 2])
+    expect(toDisplayValue(boot, "2")).toBe(2)
+    expect(toRawValue(boot, 1)).toBe("1")
   })
 
   it("round-trips every scaled field at its limits", () => {

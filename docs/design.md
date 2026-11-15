@@ -98,7 +98,10 @@ User side: [pins.md](pins.md).
 - `state()` derives on read: `Flashing` if the flashing flag is set >
   `EStop` (sticky, see below) > `Running` if spinning or either axis's mode
   flag is set > else `Idle`.
-- The machine always boots in `EStop`. The flag is not saved.
+- The machine boots in `EStop`. The flag is not saved. Then
+  `Machine::applyBootState()` applies `bootState`, only after a power-on
+  or pin reset (`hwinfo_get_reset_cause()`), through `estopOff()` and the
+  `power on` path.
 - `Machine::estopNow()` is the one estop entry. It is ISR-safe: it halts
   both axes at once, then a work item sets `EStop`, stops all motion
   (`Mode::stop()`, which also clears the MDI queue) and disables both axes

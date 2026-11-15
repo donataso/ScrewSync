@@ -369,3 +369,15 @@ ZTEST(settings_fields, test_home_fields)
     zassert_true(g_conf.requireHoming);
     zassert_false(set("homeFastDuPerMinZ", "-1"));
 }
+
+ZTEST(settings_fields, test_boot_state)
+{
+    zassert_equal(g_conf.bootState, 0);
+    for (const char *v : {"0", "1", "2"}) {
+        zassert_true(set("bootState", v));
+    }
+    zassert_equal(g_conf.bootState, 2);
+    zassert_false(set("bootState", "3"));
+    zassert_false(set("bootState", "-1"));
+    zassert_equal(g_conf.bootState, 2);
+}

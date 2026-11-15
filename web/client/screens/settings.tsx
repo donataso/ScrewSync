@@ -14,7 +14,7 @@ import {
   type MachineConfigField,
   type MachineConfigPair,
 } from "../machine-config"
-import { InfoIcon, LockNotice, Panel, TextInput, Toggle } from "../ui/primitives"
+import { InfoIcon, LockNotice, Panel, Select, TextInput, Toggle } from "../ui/primitives"
 import { useToast } from "../ui/toast"
 
 export function SettingsScreen() {
@@ -173,6 +173,17 @@ function FieldInput({ field, value, onChange }: { field: MachineConfigField; val
       <span className="flex h-[34px] items-center">
         <Toggle checked={value as boolean} onChange={onChange} label={field.label} />
       </span>
+    )
+  }
+  if (field.type === "select") {
+    return (
+      <Select className="w-full min-w-0" value={value as number} onChange={(e) => onChange(Number(e.target.value))}>
+        {field.options!.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </Select>
     )
   }
   return (

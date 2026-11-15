@@ -75,6 +75,7 @@ namespace Settings
         int32_t probeOffsetDu = 0;
 
         bool requireHoming = false;
+        int32_t bootState = 0;
 
         Axis z{20000, 1600, 500000, 100000, 250000, 10000000, true, false, 300, 0, 600, false, 100, 5000000, 250000, 20000, 20000, 0, 0, 0, 0, 0};
         Axis x{20000, 1600, 500000, 100000, 250000, 5000000, false, false, 100, 0, 600, false, 100, 2500000, 250000, 20000, 20000, 0, 0, 0, 0, 0};
@@ -82,7 +83,7 @@ namespace Settings
 
     extern Conf g_active;
 
-    constexpr size_t CONF_JSON_FIELDS = 52;
+    constexpr size_t CONF_JSON_FIELDS = 53;
     extern const struct json_obj_descr CONF_JSON_DESCR[CONF_JSON_FIELDS];
 
     void load();

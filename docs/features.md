@@ -94,8 +94,9 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
   spindle turns the wrong way.
 - Any jog on an axis a running job drives stops the job.
 - Starting a job off zero asks for confirmation.
-- The machine starts in estop. Estop stops all motion and turns the motors
-  off, with no restart. Estop icon on the display, estop inputs and an estop
+- Boot state setting: start in estop, with estop off, or with estop off and
+  motors on. Estop stops all motion and turns the motors off, with no
+  restart. Estop icon on the display, estop inputs and an estop
   output.
 - A home switch signal while an axis moves trips the estop.
 - A lost display link stops any running job or jog.

@@ -21,7 +21,9 @@
 #include "Mode.hpp"
 #include "Homing.hpp"
 #include "Motion.hpp"
+#include "Settings.hpp"
 #include <math.h>
+#include <zephyr/drivers/hwinfo.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
@@ -168,6 +170,22 @@ namespace Machine
         Events::Estop msg = {false};
         Events::publish(&ESTOP_CHAN, &msg);
         return true;
+    }
+
+    void applyBootState()
+    {
+        uint32_t cause = 0;
+        if (hwinfo_get_reset_cause(&cause) != 0 || !(cause & (RESET_POR | RESET_PIN))) {
+            return;
+        }
+        int32_t bootState = Settings::g_active.bootState;
+        if (bootState < 1 || !estopOff()) {
+            return;
+        }
+        if (bootState == 2) {
+            Motion::setAxisEnabled(Stepper::Axis::Z, true);
+            Motion::setAxisEnabled(Stepper::Axis::X, true);
+        }
     }
 
     int64_t position(Stepper::Axis axis)

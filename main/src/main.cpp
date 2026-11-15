@@ -46,6 +46,7 @@ int main(void)
     RunSettings::load();
     ThreadStore::begin();
     Mode::begin();
+    Machine::applyBootState();
     Jog::begin();
     Switches::begin();
     Rpm::begin();

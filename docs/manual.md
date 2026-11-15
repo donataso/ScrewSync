@@ -62,15 +62,21 @@ How to operate ScrewSync. For connectors and flashing, see
 - Tap the spindle angle to zero it.
 - Turn an axis toggle off to de-energize its motor and crank by hand. The
   readout is dimmed and does not count the cranking.
-- Both motors are off at power-on. The setting is not saved.
+- At power-on, the Boot state setting sets the motors (see [Estop](#estop)).
+  The motor on/off state is not saved.
 - `power on|off [z|x]` turns the motors on or off, both without an axis.
 - A jog on an axis that a running job drives stops the job, then moves the
   axis. This applies to every mode and to the handwheels.
 
 ## Estop
 
-- The machine starts in estop. An estop stops all motion and turns both
-  motors off. It does not restart the controller.
+- An estop stops all motion and turns both motors off. It does not restart
+  the controller.
+- The Boot state setting in the web client sets the state at power-on:
+  Estop, Estop off with motors off, or Estop off with motors on. After any
+  other restart (watchdog, crash, brownout, `reboot`, firmware update), the
+  machine starts in estop. An active estop input at start also keeps the
+  estop.
 - Estop icon in the header: tap it to trip the estop. In estop the display
   shows a big estop icon: tap the screen to clear it. Then turn the motors on
   again.
