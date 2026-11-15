@@ -89,7 +89,8 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 
 - Machine settings, with help on every field.
 - Thread table editor.
-- G-code programs.
+- G-code programs and routines.
+- MDI console.
 - Wi-Fi, as an access point and as a station.
 - Settings backup and restore.
 - Device log viewer.

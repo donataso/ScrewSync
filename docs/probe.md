@@ -1,4 +1,4 @@
-# Probe mode
+# Probe
 
 Touch off an axis: move until the probe makes contact, then zero the axis.
 

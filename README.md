@@ -69,8 +69,10 @@ See [docs/calibration.md](docs/calibration.md).
 - **Spindle direction check**: the job stops if the spindle turns the wrong
   way.
 - **Live feed override** while a job runs.
-- **G-code** from [LatheCode](https://kachurovskiy.com/lathecode/), with a
-  toolpath preview on the web and on the display.
+- **G-code**: [LatheCode](https://kachurovskiy.com/lathecode/) and
+  LinuxCNC programs, with a toolpath preview on the web and on the display.
+  NGC parameters, expressions, O-words and saved routines.
+- **MDI**: type G-code lines on the web client or the serial console.
 - **Web client** that stays in sync with the display: settings, thread
   table, G-code, backups, logs and firmware updates.
 

@@ -219,7 +219,7 @@ replies; see `docs/screen.md`.
 Each pushed on connect, periodically where it's live telemetry, and again
 right after any command changes that domain:
 
-- `{"type":"status", ...}` -- axis position/moving, spindle RPM, `state`
+- `{"type":"status", ...}` -- axis work position (`posDu`)/moving, spindle RPM, `state`
   (`"idle"|"running"|"flashing"|"estop"` -- see `docs/design.md` "Machine
   state"). Web reads this field rather than inferring busy/flashing from
   anything else; firmware mirrors the same state to the display. Also the
@@ -231,6 +231,9 @@ right after any command changes that domain:
 - `{"type":"wifi", ...}` -- WiFi status.
 - `{"type":"scan", ...}` -- WiFi scan results.
 - `{"type":"metrics", ...}` -- system load/uptime/heap.
+- `{"type":"probe","msg":"..."}` -- a G38 result; see "MDI".
+- `{"type":"print","msg":"..."}` -- a `(PRINT, ...)` line; see "NGC".
+- `{"type":"cal","msg":"..."}` -- a `cal` reply; see "Calibration".
 - `{"type":"error","msg":"..."}` -- only on a failed command.
 
 ## Introspection
