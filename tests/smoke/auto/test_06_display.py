@@ -50,6 +50,8 @@ def test_flash_stored(dut):
 def test_serial_upload(dut):
     image = TFT.read_bytes()
     assert dut.cmd(f"display upload {len(image)} {zlib.crc32(image):08x}") == "ok upload skipped, already stored"
+    dut.expect(r"^ok display flash started", timeout=5)
+    wait_flashed(dut)
     expect_stored(dut, TFT)
 
 

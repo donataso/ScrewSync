@@ -145,6 +145,12 @@ void consolePoll()
         if (c == '\r') {
             continue;
         }
+        // A host's USB line-state request (21 22 00 ...) can show up in the
+        // RX stream: drop the partial line.
+        if (c < ' ' && c != '\n' && c != '\t') {
+            len = 0;
+            continue;
+        }
         if (c != '\n' && len < sizeof(buf) - 1) {
             buf[len++] = (char)c;
             continue;
