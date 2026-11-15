@@ -6,6 +6,8 @@ How to operate ScrewSync. For connectors and flashing, see
 ## First setup
 
 - Machine settings are on the web client only. See [Wi-Fi](#wi-fi).
+- The settings show speeds in mm/min and accelerations in mm/s². With
+  inch units, they show in/min and in/s².
 - Axis directions: -Z moves toward the chuck, -X moves toward the
   centerline (ISO 841). If an axis moves the wrong way, toggle
   `invertDirectionZ` or `invertDirectionX`.

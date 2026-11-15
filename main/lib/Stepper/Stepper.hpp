@@ -53,8 +53,8 @@ namespace Stepper
     bool isHeld(Axis axis);
 
     // Requests the axis move to targetSteps (motor steps from power-on
-    // zero), ramped per Settings::active.{z,x} acceleration/speedStart.
-    // maxSpeed caps this move, 0 = speedRapid (or the override).
+    // zero), ramped per Settings::active.{z,x} accelerationSteps/speedStartSteps.
+    // maxSpeed caps this move, 0 = speedRapidSteps (or the override).
     // Safe to call again mid-move to redirect the target. Returns the
     // accepted target: differs when travel-clamped or refused.
     int64_t moveTo(Axis axis, int64_t targetSteps, int32_t maxSpeed = 0);
@@ -91,7 +91,7 @@ namespace Stepper
 
     // Runtime max-speed override for moveTo() (e.g. a touchscreen jog-speed
     // slider): 0 clears it, falling back to Settings::active.{z,x}'s
-    // configured speedRapid. Not persisted -- deliberately separate
+    // configured speedRapidSteps. Not persisted -- deliberately separate
     // from that configured default rather than overwriting it.
     void setSpeedOverride(Axis axis, int32_t speedStepsPerSec);
 }

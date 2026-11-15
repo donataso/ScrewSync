@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest"
 import {
   axisFields,
+  configFields,
+  inUnits,
   MACHINE_CONFIG_FIELDS,
   MACHINE_CONFIG_SECTIONS,
   parseMachineConfig,
+  sectionsInUnits,
   toDisplayValue,
   toRawValue,
   type MachineConfigField,
@@ -94,6 +97,66 @@ describe("display and raw values", () => {
       for (const display of [f.min!, f.max!]) {
         expect(toDisplayValue(f, toRawValue(f, display)), f.key).toBeCloseTo(display, 4)
       }
+    }
+  })
+})
+
+describe("speeds and accelerations", () => {
+  it("show mm/min and mm/s²", () => {
+    const rapid = field("speedRapidDuPerMinZ")
+    expect(rapid.unit).toBe("mm/min")
+    expect(toDisplayValue(rapid, "9600000")).toBe(960)
+    expect(toRawValue(rapid, 960)).toBe("9600000")
+    const accel = field("accelerationDuPerSec2X")
+    expect(accel.unit).toBe("mm/s²")
+    expect(toDisplayValue(accel, "125000")).toBe(12.5)
+  })
+
+  it("cover every speed and acceleration setting", () => {
+    const keys = MACHINE_CONFIG_FIELDS.filter((f) => f.rate).map((f) => f.key)
+    for (const axis of ["Z", "X"]) {
+      for (const name of ["speedStart", "speedRapid"]) {
+        expect(keys).toContain(`${name}DuPerMin${axis}`)
+      }
+      for (const name of ["acceleration", "deceleration"]) {
+        expect(keys).toContain(`${name}DuPerSec2${axis}`)
+      }
+    }
+    expect(keys).toContain("probeFeedDuPerMin")
+    expect(keys).toContain("reprobeFeedDuPerMin")
+  })
+
+  it("show in/min and in/s² with inch units", () => {
+    const rapid = inUnits(field("speedRapidDuPerMinZ"), "inch")
+    expect(rapid.unit).toBe("in/min")
+    expect(toDisplayValue(rapid, "254000")).toBe(1)
+    expect(toRawValue(rapid, 1)).toBe("254000")
+    expect(inUnits(field("decelerationDuPerSec2Z"), "inch").unit).toBe("in/s²")
+  })
+
+  it("keep every other field with inch units", () => {
+    const pitch = field("screwPitchDuZ")
+    expect(inUnits(pitch, "inch")).toBe(pitch)
+    const rapid = field("speedRapidDuPerMinZ")
+    expect(inUnits(rapid, "mm")).toBe(rapid)
+  })
+
+  it("keep the keys of the sections with inch units", () => {
+    expect(configFields(sectionsInUnits("inch")).map((f) => f.key)).toEqual(MACHINE_CONFIG_FIELDS.map((f) => f.key))
+  })
+
+  it("round-trip at the limits with inch units", () => {
+    for (const f of configFields(sectionsInUnits("inch")).filter((x) => x.rate)) {
+      for (const display of [f.min!, f.max!]) {
+        expect(toDisplayValue(f, toRawValue(f, display)), f.key).toBeCloseTo(display, 4)
+      }
+    }
+  })
+
+  it("keep the same range in du with inch units", () => {
+    for (const f of MACHINE_CONFIG_FIELDS.filter((x) => x.rate)) {
+      const inch = inUnits(f, "inch")
+      expect(Number(toRawValue(inch, inch.max!)), f.key).toBe(Number(toRawValue(f, f.max!)))
     }
   })
 })

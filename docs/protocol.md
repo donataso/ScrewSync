@@ -31,6 +31,9 @@ replies; see `docs/screen.md`.
   (bulk import, or a settings form saving several fields at once), through
   the same per-field validation as `settings set <field> <value>`, instead
   of one round trip per field.
+- Speed settings are in du/min (field names with `DuPerMin`). Acceleration
+  settings are in du/s² (`DuPerSec2`). The firmware computes the step
+  rates from them and the axis `motorSteps` and `screwPitchDu`.
 - A command for a feature not compiled into this build (e.g. X axis, DRO,
   a mode requiring the X motor) responds with a distinct "not compiled"
   error, not a generic unknown-command error -- lets a client tell "this
@@ -42,6 +45,8 @@ replies; see `docs/screen.md`.
   calls get `err busy: estop`. All other commands run.
 - `jog step [<deci-microns>|next]`: shows or sets the jog step. `next`
   selects the next preset, then the custom step, then the first preset.
+- `jog z|x speed <du/min|0>`: sets the top speed of jogs on that axis. 0
+  clears it, and the rapid speed setting applies again.
 - `estop` / `estop on` / `estop off`: `estop` alone replies
   `ok state=<name>`. `estop on` trips the EStop. `estop off` clears it. It
   does not enable the motors. While `flashing`, `estop on` gets
@@ -62,8 +67,8 @@ replies; see `docs/screen.md`.
 - Lines queue while a move runs; a full queue gives `err queue full`.
   Refused while a mode runs. `stop` stops both axes and clears the queue.
 - MDI owns both axes while it moves; a jog stops it.
-- G0 runs at `speedRapid`. G0/G1 move with the spindle stopped. The feed
-  override applies to G1.
+- G0 runs at the rapid speed setting of the axis. G0/G1 move with the
+  spindle stopped. The feed override applies to G1.
 - `G10 L20 P1 Z… X…`: the current position reads the given values (X is
   radius). Also in programs.
 - `G38.2`–`G38.5 <axis>… F…` moves one axis until the probe
@@ -88,9 +93,10 @@ replies; see `docs/screen.md`.
     in program units and work coordinates. `#<_probe_motor>`: the probed
     axis's motor position there, without backlash compensation (not
     LinuxCNC). Read-only.
-  - Each settings field reads as `#<_name>`: snake case, with `Du` and
-    `DuPerMin` dropped (`probeFeedDuPerMin` is `#<_probe_feed>`). Those
-    values read in program units. `#<_probe_contact>`: the live probe
+  - Each settings field reads as `#<_name>`: snake case, with `Du`,
+    `DuPerMin` and `DuPerSec2` dropped (`probeFeedDuPerMin` is
+    `#<_probe_feed>`).
+    Those values read in program units. `#<_probe_contact>`: the live probe
     input. All read-only.
   - Parameters keep their values until reboot. MDI and jobs share them.
   - `[...]` expressions: `**`, `* / MOD`, `+ -`, `EQ NE GT GE LT LE`,
@@ -187,6 +193,11 @@ replies; see `docs/screen.md`.
   first, then all are applied; absent sections and fields keep their current
   values. `pins` is saved only if it differs from the saved map, and applies
   after a reboot. Replies `ok` or the reason.
+- In `settings`, the old fields `speedStart`, `speedRapid`,
+  `speedManualMove` (steps/s) and `acceleration`, `deceleration`
+  (steps/s²) with the axis suffix are converted to the new fields, with the
+  `motorSteps` and `screwPitchDu` of the same file, else of the active
+  settings. A new field in the file wins. `speedRapid` wins over `speedManualMove`.
 
 ## G-code (HTTP)
 

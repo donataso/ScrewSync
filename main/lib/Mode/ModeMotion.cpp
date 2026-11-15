@@ -52,13 +52,13 @@ namespace Mode::Detail
 
     int32_t rapidSpeed(Stepper::Axis axis)
     {
-        return cfgOf(axis).speedRapid;
+        return cfgOf(axis).speedRapidSteps;
     }
 
     int32_t duPerMinToStepsPerSec(Stepper::Axis axis, int32_t duPerMin)
     {
         const Settings::Axis &cfg = cfgOf(axis);
-        return feedStepsPerSec(duPerMin, cfg.motorSteps, cfg.screwPitchDu, cfg.speedRapid);
+        return feedStepsPerSec(duPerMin, cfg.motorSteps, cfg.screwPitchDu, cfg.speedRapidSteps);
     }
 
     int32_t countsPerRev()

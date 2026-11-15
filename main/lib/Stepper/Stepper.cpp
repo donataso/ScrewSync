@@ -59,8 +59,8 @@ namespace
         int64_t motorPos; // actual stepper shaft position; trails currentPos by
                            // up to backlashSteps right after a direction reversal
         int32_t currentSpeed;  // steps/sec
-        int32_t speedOverride; // steps/sec, 0 = use cfg->speedRapid
-        int32_t moveMaxSpeed;  // steps/sec, 0 = speedOverride/speedRapid
+        int32_t speedOverride; // steps/sec, 0 = use cfg->speedRapidSteps
+        int32_t moveMaxSpeed;  // steps/sec, 0 = speedOverride/speedRapidSteps
         bool dirLevel; // last direction written (true = positive)
         bool dirValid;
         bool running;
@@ -137,7 +137,7 @@ namespace
 
     int32_t rapidSpeedOf(const AxisState &s)
     {
-        return s.speedOverride != 0 ? s.speedOverride : s.cfg->speedRapid;
+        return s.speedOverride != 0 ? s.speedOverride : s.cfg->speedRapidSteps;
     }
 
     int32_t maxSpeedOf(const AxisState &s)
@@ -148,7 +148,7 @@ namespace
     int32_t startSpeedOf(const AxisState &s)
     {
         int32_t maxSpeed = maxSpeedOf(s);
-        return s.cfg->speedStart < maxSpeed ? s.cfg->speedStart : maxSpeed;
+        return s.cfg->speedStartSteps < maxSpeed ? s.cfg->speedStartSteps : maxSpeed;
     }
 
     void armNext(AxisState &s, uint32_t periodUs);
@@ -229,7 +229,7 @@ namespace
         if (direction == 0) {
             return;
         }
-        int64_t distance = Stepper::stoppingDistance(s.currentSpeed, s.cfg->deceleration);
+        int64_t distance = Stepper::stoppingDistance(s.currentSpeed, s.cfg->decelerationSteps);
         moveToLocked(s, s.currentPos + direction * distance, s.moveMaxSpeed);
     }
 
@@ -269,7 +269,7 @@ namespace
 
             if (s.braking) {
                 s.targetPos = s.currentPos;
-                s.currentSpeed = Stepper::brakeSpeed(s.currentSpeed, s.cfg->deceleration, startSpeedOf(s),
+                s.currentSpeed = Stepper::brakeSpeed(s.currentSpeed, s.cfg->decelerationSteps, startSpeedOf(s),
                                                      s.speedRemainderMicro);
                 if (s.currentSpeed <= startSpeedOf(s)) {
                     endMove(s);
@@ -290,12 +290,12 @@ namespace
             }
 
             int32_t brakeRemainder = s.speedRemainderMicro;
-            int32_t speed = Stepper::nextRampSpeed(s.currentSpeed, distRemaining, s.cfg->acceleration,
-                                                   s.cfg->deceleration, s.cfg->speedStart, maxSpeedOf(s),
+            int32_t speed = Stepper::nextRampSpeed(s.currentSpeed, distRemaining, s.cfg->accelerationSteps,
+                                                   s.cfg->decelerationSteps, s.cfg->speedStartSteps, maxSpeedOf(s),
                                                    s.speedRemainderMicro);
             if (s.followMove) {
                 int32_t gentlest =
-                    Stepper::brakeSpeed(s.currentSpeed, s.cfg->deceleration, startSpeedOf(s), brakeRemainder);
+                    Stepper::brakeSpeed(s.currentSpeed, s.cfg->decelerationSteps, startSpeedOf(s), brakeRemainder);
                 if (speed < gentlest) {
                     speed = gentlest;
                     s.speedRemainderMicro = brakeRemainder;
@@ -445,8 +445,8 @@ namespace Stepper
             k_spin_unlock(&s.lock, key);
             return;
         }
-        int32_t speed = moving != 0 ? s.currentSpeed : s.cfg->speedStart;
-        int64_t ahead = s.currentPos + direction * runAheadDistance(speed, s.cfg->acceleration, s.cfg->deceleration,
+        int32_t speed = moving != 0 ? s.currentSpeed : s.cfg->speedStartSteps;
+        int64_t ahead = s.currentPos + direction * runAheadDistance(speed, s.cfg->accelerationSteps, s.cfg->decelerationSteps,
                                                                     maxSpeedOf(s), horizonUs);
         bool alreadyFurther = moving != 0 && (direction > 0 ? s.targetPos >= ahead : s.targetPos <= ahead);
         if (!alreadyFurther) {

@@ -68,14 +68,6 @@ namespace
         return false;
     }
 
-    void loadField(const Field &f)
-    {
-        const char *old = Settings::oldName(f);
-        if (!loadKey(f.name, f) && old) {
-            loadKey(old, f);
-        }
-    }
-
     bool saveField(const Field &f)
     {
         void *ptr = Settings::fieldPtr(f, g_active);
@@ -93,8 +85,24 @@ namespace
         return false;
     }
 
-    void publishChanged()
+    void loadField(const Field &f)
     {
+        if (loadKey(f.name, f)) {
+            return;
+        }
+        const char *old;
+        for (size_t i = 0; (old = Settings::oldName(f, i)); i++) {
+            if (loadKey(old, f)) {
+                Settings::convertLegacy(f, g_active);
+                saveField(f);
+                return;
+            }
+        }
+    }
+
+    void applyChanged()
+    {
+        Settings::deriveSteps(g_active);
         Events::SettingsChanged msg = {};
         Events::publish(&SETTINGS_CHAN, &msg);
     }
@@ -109,6 +117,7 @@ namespace Settings
         for (const Field &f : FIELDS) {
             loadField(f);
         }
+        deriveSteps(g_active);
     }
 
     bool save()
@@ -117,7 +126,7 @@ namespace Settings
         for (const Field &f : FIELDS) {
             ok = saveField(f) && ok;
         }
-        publishChanged();
+        applyChanged();
         return ok;
     }
 
@@ -132,7 +141,7 @@ namespace Settings
             return false;
         }
         bool ok = saveField(*f);
-        publishChanged();
+        applyChanged();
         return ok;
     }
 
@@ -174,7 +183,7 @@ namespace Settings
                 saveField(f);
             }
         }
-        publishChanged();
+        applyChanged();
         return true;
     }
 }

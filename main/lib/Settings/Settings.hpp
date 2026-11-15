@@ -29,10 +29,10 @@ namespace Settings
     {
         int32_t screwPitchDu;
         int32_t motorSteps;
-        int32_t speedStart;
-        int32_t acceleration;
-        int32_t deceleration;
-        int32_t speedRapid;
+        int32_t speedStartDuPerMin;
+        int32_t accelerationDuPerSec2;
+        int32_t decelerationDuPerSec2;
+        int32_t speedRapidDuPerMin;
         bool invertDirection;
         bool invertEnable;
         int32_t maxTravelMm;
@@ -41,6 +41,11 @@ namespace Settings
         bool invertHandwheel;
         // How far the handwheel target may lead the axis, as travel time at the rapid speed.
         int32_t handwheelLagMs;
+
+        int32_t speedStartSteps;
+        int32_t accelerationSteps;
+        int32_t decelerationSteps;
+        int32_t speedRapidSteps;
     };
 
     struct Conf
@@ -64,8 +69,8 @@ namespace Settings
         int32_t probeDstDu = 0;               // 0 = not set
         int32_t probeOffsetDu = 0;
 
-        Axis z{20000, 1600, 800, 10000, 20000, 12800, true, false, 300, 0, 600, false, 100};
-        Axis x{20000, 1600, 800, 10000, 20000, 6400, false, false, 100, 0, 600, false, 100};
+        Axis z{20000, 1600, 500000, 100000, 250000, 10000000, true, false, 300, 0, 600, false, 100, 0, 0, 0, 0};
+        Axis x{20000, 1600, 500000, 100000, 250000, 5000000, false, false, 100, 0, 600, false, 100, 0, 0, 0, 0};
     };
 
     extern Conf g_active;

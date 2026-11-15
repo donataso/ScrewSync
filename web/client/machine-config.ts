@@ -7,6 +7,8 @@ export interface MachineConfigField {
   max?: number
   step?: number
   scale?: number
+  /** A speed or acceleration: shown in the machine units. */
+  rate?: "speed" | "accel"
   type?: "checkbox"
 }
 
@@ -26,6 +28,10 @@ export interface MachineConfigSection {
   pairs?: MachineConfigPair[]
   pairsTitle?: string
 }
+
+const DU_PER_MM = 10000
+const DU_PER_INCH = 254000
+const INCH_STEP = 0.00001
 
 export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
   const a = axis === "Z" ? "the carriage" : "the cross-slide"
@@ -60,22 +66,26 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       help: `Lost ${axis} motion when reversing direction. Measure with a dial indicator: move one way, zero it, reverse until the indicator starts moving.`,
     },
     {
-      key: `speedStart${axis}`,
+      key: `speedStartDuPerMin${axis}`,
       label: "Start speed",
-      unit: "steps/s",
-      min: 1,
-      max: 1000000,
-      step: 1,
-      help: "Initial step pulse rate when motion starts. Use a value the motor can start from reliably without missing steps.",
+      unit: "mm/min",
+      min: 0.0001,
+      max: 6000,
+      step: 0.0001,
+      scale: DU_PER_MM,
+      rate: "speed",
+      help: "Initial speed when motion starts. Use a value the motor can start from reliably without missing steps.",
     },
     {
-      key: `speedRapid${axis}`,
+      key: `speedRapidDuPerMin${axis}`,
       label: "Rapid speed",
-      unit: "steps/s",
-      min: 1,
-      max: 1000000,
-      step: 1,
-      help: `Top speed for rapids, jogs and manual moves on ${axis}. Axis speed depends on both this value and steps per mm.`,
+      unit: "mm/min",
+      min: 0.0001,
+      max: 6000,
+      step: 0.0001,
+      scale: DU_PER_MM,
+      rate: "speed",
+      help: `Top speed for rapids, jogs and manual moves on ${axis}.`,
     },
     {
       key: `maxTravelMm${axis}`,
@@ -87,21 +97,25 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       help: `Maximum single ${axis} move the controller will allow. Set a little above the physically safe travel of ${a}.`,
     },
     {
-      key: `acceleration${axis}`,
+      key: `accelerationDuPerSec2${axis}`,
       label: "Acceleration",
-      unit: "steps/s^2",
-      min: 1,
-      max: 100000000,
-      step: 1,
+      unit: "mm/s²",
+      min: 0.0001,
+      max: 10000,
+      step: 0.0001,
+      scale: DU_PER_MM,
+      rate: "accel",
       help: `Ramp rate for speeding up. Higher feels snappier but can skip steps if the motor or ${a} cannot keep up.`,
     },
     {
-      key: `deceleration${axis}`,
+      key: `decelerationDuPerSec2${axis}`,
       label: "Deceleration",
-      unit: "steps/s^2",
-      min: 1,
-      max: 100000000,
-      step: 1,
+      unit: "mm/s²",
+      min: 0.0001,
+      max: 10000,
+      step: 0.0001,
+      scale: DU_PER_MM,
+      rate: "accel",
       help: `Ramp rate for slowing down. Friction helps the motor stop, so this can be higher than acceleration.`,
     },
     {
@@ -217,7 +231,12 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
   {
     title: "Motion",
     fields: [],
-    pairs: [pair("speedStart", true), pair("speedRapid", true), pair("acceleration", true), pair("deceleration", true)],
+    pairs: [
+      pair("speedStartDuPerMin", true),
+      pair("speedRapidDuPerMin", true),
+      pair("accelerationDuPerSec2", true),
+      pair("decelerationDuPerSec2", true),
+    ],
   },
   {
     title: "Manual movement",
@@ -278,6 +297,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
         max: 6000,
         step: 0.0001,
         scale: 10000,
+        rate: "speed",
         help: "Feed rate for the first touch. Keep slow so the probe stops within its travel after it triggers.",
       },
       {
@@ -288,6 +308,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
         max: 6000,
         step: 0.0001,
         scale: 10000,
+        rate: "speed",
         help: "Feed rate for the back-offs and the reprobe. Slower than the probe feed for a more accurate second touch.",
       },
       {
@@ -330,11 +351,35 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
   },
 ]
 
-export const MACHINE_CONFIG_FIELDS: MachineConfigField[] = MACHINE_CONFIG_SECTIONS.flatMap((s) => [
-  ...s.fields,
-  ...(s.common ?? []),
-  ...(s.pairs ?? []).flatMap((p) => [p.z, p.x]),
-])
+export function configFields(sections: MachineConfigSection[]): MachineConfigField[] {
+  return sections.flatMap((s) => [...s.fields, ...(s.common ?? []), ...(s.pairs ?? []).flatMap((p) => [p.z, p.x])])
+}
+
+export const MACHINE_CONFIG_FIELDS: MachineConfigField[] = configFields(MACHINE_CONFIG_SECTIONS)
+
+export function inUnits(field: MachineConfigField, units: "mm" | "inch"): MachineConfigField {
+  if (!field.rate || units !== "inch") {
+    return field
+  }
+  return {
+    ...field,
+    unit: field.rate === "speed" ? "in/min" : "in/s²",
+    min: INCH_STEP,
+    max: (field.max! * field.scale!) / DU_PER_INCH,
+    step: INCH_STEP,
+    scale: DU_PER_INCH,
+  }
+}
+
+export function sectionsInUnits(units: "mm" | "inch"): MachineConfigSection[] {
+  const convert = (f: MachineConfigField) => inUnits(f, units)
+  return MACHINE_CONFIG_SECTIONS.map((s) => ({
+    ...s,
+    fields: s.fields.map(convert),
+    common: s.common?.map(convert),
+    pairs: s.pairs?.map((p) => ({ ...p, z: convert(p.z), x: convert(p.x) })),
+  }))
+}
 
 export function parseMachineConfig(data: unknown): Record<string, string> {
   const out: Record<string, string> = {}

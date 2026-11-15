@@ -17,7 +17,9 @@
  */
 #include "CommandInternal.hpp"
 #include "Jog.hpp"
+#include "Motion.hpp"
 #include "RunSettings.hpp"
+#include <zephyr/sys/util.h>
 
 namespace
 {
@@ -75,7 +77,7 @@ namespace Command::Detail
         const char *rest;
         if (!takeAxis(a, "jog",
                       "jog step [<deci-microns>|next] | z|x +|- [hold|release] | resolution <multiplier> | "
-                      "speed <steps/sec|0> | status",
+                      "speed <du/min|0> | status",
                       axisTok, axis, rest, out, outMax)) {
             return;
         }
@@ -96,9 +98,10 @@ namespace Command::Detail
         } else if (!strncmp(rest, "speed ", 6)) {
             long v = strtol(rest + 6, &end, 10);
             if (end == rest + 6 || *end || v < 0) {
-                snprintf(out, outMax, "err jog %s speed <steps/sec|0>", axisTok);
+                snprintf(out, outMax, "err jog %s speed <du/min|0>", axisTok);
             } else {
-                Stepper::setSpeedOverride(axis, (int32_t)v);
+                int64_t steps = v == 0 ? 0 : MAX(Motion::duToSteps(axis, (double)v / 60.0), 1);
+                Stepper::setSpeedOverride(axis, (int32_t)MIN(steps, INT32_MAX));
                 snprintf(out, outMax, "ok %s speed=%ld", axisTok, v);
             }
         } else {
