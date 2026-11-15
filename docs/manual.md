@@ -72,7 +72,7 @@ How to operate ScrewSync. For connectors and flashing, see
 - Multi-pass modes show the phase and the pass number. SKIP goes to the
   next pass.
 - During a job, the feed override changes all feeds of the job, but not
-  rapids. Thread and Probe have no override. Each start resets it to 100%.
+  rapids. Thread has no override. Each start resets it to 100%.
 - STOP ends the job with a controlled stop.
 
 ## Modes
@@ -133,8 +133,9 @@ How to operate ScrewSync. For connectors and flashing, see
 ## G-code
 
 - Load programs on the web client. Start them on the display.
-- Two dialects: LatheCode and LinuxCNC. The web client finds LatheCode by
-  its header and takes any other text as LinuxCNC. You can change it.
+- Dialects: LatheCode, LinuxCNC and NGC routines. The web client finds
+  LatheCode by its header and a routine by its `o<name> sub`, and takes
+  any other text as LinuxCNC. You can change it.
 - Program zero is the tool zero: X0 on the centerline (X is radius), Z0
   where the program expects it (LatheCode: the right edge of the stock).
 - If the tool is not at zero, START asks you to confirm. The first move
@@ -147,6 +148,18 @@ How to operate ScrewSync. For connectors and flashing, see
 - `G10 L20 P1 Z… X…` makes the current position read the given values.
 - Motion pauses while the spindle is stopped and continues when it turns.
 - M0/M1 pause until START. M2/M30 or STOP end the program.
+- LinuxCNC programs can use NGC parameters, expressions, O-words and
+  routine calls ([protocol.md](protocol.md), "NGC"). The web client shows
+  no preview for them, and the step count is unknown when it depends on
+  a probe result or a routine.
+
+### Routines
+
+- Save a program with the NGC dialect. Its name is its call:
+  `probe` is `o<probe> call`. It must define `o<probe> sub` ...
+  `o<probe> endsub`.
+- The web client lists routines apart from programs. A routine can not be
+  run as a program.
 
 ### MDI
 
@@ -162,6 +175,9 @@ How to operate ScrewSync. For connectors and flashing, see
 - With a contact plate, the tool must be earthed (usually through the
   machine frame). Before you probe, touch the plate to the tool: the
   contact light must turn green.
+- Set the probe distance and offset on the Probe panel or in the web
+  settings. The cycle is a routine you can replace; see
+  [probe.md](probe.md).
 
 ## Stops
 

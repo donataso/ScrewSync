@@ -60,10 +60,18 @@ namespace Events
     // "z found=1 pos=<du> motor=<du>"
     void formatProbe(const ProbeResult &r, char *out, size_t outMax);
 
+    constexpr size_t PRINT_MAX = 128;
+
+    // A G-code (PRINT, ...) line, parameters filled in.
+    struct Print
+    {
+        char text[PRINT_MAX];
+    };
+
     void publish(const struct zbus_channel *chan, const void *msg);
     void publishRefusal(const char *reply);
 }
 
-ZBUS_CHAN_DECLARE(RUNNING_CHAN, AXIS_ARRIVED_CHAN, SETTINGS_CHAN, REFUSAL_CHAN, PROBE_CHAN);
+ZBUS_CHAN_DECLARE(RUNNING_CHAN, AXIS_ARRIVED_CHAN, SETTINGS_CHAN, REFUSAL_CHAN, PROBE_CHAN, PRINT_CHAN);
 
 #endif

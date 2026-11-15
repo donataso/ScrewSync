@@ -36,6 +36,8 @@ type Listener = {
   onScan?: (s: ScanResult) => void
   onWifi?: (s: WifiPush) => void
   onProbe?: (r: ProbeResult) => void
+  // A G-code (PRINT, ...) line.
+  onPrint?: (text: string) => void
   onConnected?: (connected: boolean, error: string | null) => void
 }
 
@@ -153,6 +155,11 @@ l.onWifi?.(wifi as WifiPush)
 l.onProbe?.(result)
 }
       }
+    } else if (msg.type === "print") {
+      const text = String((msg as OtherMsg).msg ?? "")
+      for (const l of listeners) {
+l.onPrint?.(text)
+}
     }
   }
 

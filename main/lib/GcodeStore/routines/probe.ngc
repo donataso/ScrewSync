@@ -1,0 +1,40 @@
+o<probe> sub
+(Touch-off. #1: axis, 0 = Z, 1 = X. #2: direction, -1 or 1.)
+(Leaves G21 G90 active.)
+o100 if [#<_probe_dst> LE 0]
+  (ABORT, set probe distance)
+o100 endif
+G21
+#<back> = #<_probe_back_off>
+#<z> = [#2 * [#1 EQ 0]]
+#<x> = [#2 * [#1 EQ 1]]
+G91
+(MSG, approach)
+o101 if [#1 EQ 0]
+  G38.2 Z[#2 * #<_probe_dst>] F#<_probe_feed>
+o101 else
+  G38.2 X[#2 * #<_probe_dst>] F#<_probe_feed>
+o101 endif
+(MSG, back off)
+G1 Z[-#<z> * #<back>] X[-#<x> * #<back>] F#<_reprobe_feed>
+o102 if [#<_probe_contact>]
+  (ABORT, contact not lost)
+o102 endif
+(MSG, reprobe)
+o103 if [#1 EQ 0]
+  G38.2 Z[#2 * [#<back> + 0.5]] F#<_reprobe_feed>
+o103 else
+  G38.2 X[#2 * [#<back> + 0.5]] F#<_reprobe_feed>
+o103 endif
+(MSG, back off)
+G1 Z[-#<z> * #<back>] X[-#<x> * #<back>] F#<_reprobe_feed>
+o104 if [#<_probe_contact>]
+  (ABORT, contact not lost)
+o104 endif
+G90
+o105 if [#1 EQ 0]
+  G10 L20 P1 Z[-#2 * [#<back> + #<_probe_offset>]]
+o105 else
+  G10 L20 P1 X[-#2 * [#<back> + #<_probe_offset>]]
+o105 endif
+o<probe> endsub

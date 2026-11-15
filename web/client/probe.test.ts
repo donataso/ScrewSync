@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { median, parseProbe } from "./probe"
+import { parseProbe } from "./probe"
 
 describe("parseProbe", () => {
   it("reads a result", () => {
@@ -10,12 +10,5 @@ describe("parseProbe", () => {
   it("refuses other text", () => {
     expect(parseProbe("z found=1 pos=1")).toBeNull()
     expect(parseProbe("")).toBeNull()
-  })
-})
-
-describe("median", () => {
-  it("takes the middle value", () => {
-    expect(median([5, 1, 3])).toBe(3)
-    expect(median([4, 1, 3, 2])).toBe(2.5)
   })
 })

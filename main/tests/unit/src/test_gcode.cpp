@@ -21,11 +21,22 @@
 #include "GcodeCore.hpp"
 #include "GcodeDialects.hpp"
 #include "GcodeInterpreter.hpp"
+#include "GcodeProgram.hpp"
 
 using namespace Gcode;
 
 namespace
 {
+    const char *tokenize(const char *text, Words &out)
+    {
+        static Params params;
+        static Line line;
+        Context ctx{&params, nullptr, DU_PER_MM};
+        const char *err = parseLine(text, ctx, line);
+        out = line.words;
+        return err;
+    }
+
     const unsigned char VECTORS_BLOB[] = {
 #include "gcode_vectors.inc"
     };
@@ -327,18 +338,31 @@ namespace
         Dialect *dialect = Gcode::find(dialectId);
         zassert_not_null(dialect, "%s: unknown dialect", v.name);
 
-        Interpreter interp;
-        dialect->begin(interp, 0, 0);
+        static char text[MAX_BLOB_CHARS];
+        size_t len = 0;
+        for (size_t i = 0; i < v.gcodeLineCount; i++) {
+            size_t n = strlen(v.gcodeLines[i]);
+            memcpy(text + len, v.gcodeLines[i], n);
+            len += n;
+            text[len++] = '\n';
+        }
+        static Params params;
+        static Program program;
+        params.clear();
+        program.begin({dialect, &params, nullptr, nullptr, false}, text, len, 0, 0);
         CollectSink sink;
 
         const char *errorMsg = nullptr;
         uint32_t errorLine = 0;
-        for (size_t i = 0; i < v.gcodeLineCount && !errorMsg; i++) {
-            uint32_t lineNo = (uint32_t)(i + 1);
-            const char *err = interpretLine(*dialect, interp, v.gcodeLines[i], lineNo, sink);
-            if (err) {
-                errorMsg = err;
-                errorLine = lineNo;
+        while (true) {
+            Program::Status status = program.next(sink, 1000);
+            if (status == Program::Status::Error) {
+                errorMsg = program.error();
+                errorLine = program.errorLine();
+                break;
+            }
+            if (status == Program::Status::End) {
+                break;
             }
         }
 

@@ -61,23 +61,69 @@ replies; see `docs/screen.md`.
   override applies to G1.
 - `G10 L20 P1 Z… X…`: the current position reads the given values (X is
   radius). Also in programs.
-- MDI only: `G38.2`–`G38.5 <axis>… F…` moves one axis until the probe
+- `G38.2`–`G38.5 <axis>… F…` moves one axis until the probe
   input changes: `.2`/`.3` until contact, `.4`/`.5` until the contact
   opens. `.2`/`.4` give an error if it does not change before the target;
-  `.3`/`.5` do not. The axis halts with no deceleration. Not modal. No
-  line queues behind it. The result is a push:
+  `.3`/`.5` do not. The axis halts with no deceleration. Not modal. In
+  MDI, no line queues behind it. The result is a push:
   `probe z|x found=0|1 pos=<work du> motor=<du>` on the serial console,
   `{"type":"probe","msg":"z|x found=… pos=… motor=…"}` on the WebSocket.
   `motor` is the motor position without backlash compensation.
 - MDI only: `M100 Z<0|1> X<0|1>` turns the motors off or on (an axis not
   named stays); `M110 [R<deg>]` makes the current spindle angle R (0 if
   omitted).
+- Parameters and expressions as in NGC (see "NGC"), evaluated when the
+  line is queued. O-words are refused.
+
+## NGC
+
+- LinuxCNC NGC syntax in MDI, programs and routines:
+  - `#1`–`#30`: local to each call level; a call sets them from its
+    arguments. `#<name>`: local to the call level. `#<_name>`: global.
+  - `#5061` (X), `#5063` (Z), `#5070` (1 = tripped): the last G38 move,
+    in program units and work coordinates. `#<_probe_motor>`: the probed
+    axis's motor position there, without backlash compensation (not
+    LinuxCNC). Read-only.
+  - Each settings field reads as `#<_name>`: snake case, with `Du` and
+    `DuPerMin` dropped (`probeFeedDuPerMin` is `#<_probe_feed>`). Those
+    values read in program units. `#<_probe_contact>`: the live probe
+    input. All read-only.
+  - Parameters keep their values until reboot. MDI and jobs share them.
+  - `[...]` expressions: `**`, `* / MOD`, `+ -`, `EQ NE GT GE LT LE`,
+    `AND OR XOR`, in that precedence; `ABS ACOS ASIN COS EXP FIX FUP ROUND
+    LN SIN SQRT TAN [x]` and `ATAN[y]/[x]`, in degrees.
+  - Assignments on a line apply after its words.
+  - O-words: `sub`/`endsub`/`call`, `if`/`else`/`endif`,
+    `while`/`endwhile`, `repeat`/`endrepeat`. Labels are numbers or
+    `<names>`.
+  - `(MSG, text)`: the job phase. `(ABORT, text)`: ends the job with
+    `text` as the error. `(PRINT, text)`: each `#n` / `#<name>` in `text`
+    is replaced by its value; the line is a push, `print <text>` on the
+    serial console, `{"type":"print","msg":"<text>"}` on the WebSocket.
+    Jobs only.
+- Lines run at execution time: a line is read after the moves before it
+  end, so a G38 result is known to the next line.
+- `o<name> call` finds a sub in the same file, then in the program, then
+  a routine (see "G-code (HTTP)"), then a built-in routine
+  (`main/lib/GcodeStore/routines/`). A routine shares the modal state of
+  its caller.
+- `o<name> call [<arg>]...` as a command runs that routine as a G-code
+  job, whatever the selected mode. Refused while a job or MDI runs. Its
+  G0/G1 moves do not wait for the spindle. Claims only the enabled axes.
+- Built-in routines (axis 0 = Z, 1 = X; dir -1 or 1):
+  - `o<probe> call [<axis>] [<dir>]`: the touch-off cycle; see
+    `docs/probe.md`.
+  - `o<zero> call [<z>] [<x>]`: rapid to work zero on each axis given 1,
+    Z first. The display's go-to-zero, the go-to-zero switches and
+    `start zero` use it.
+  - `o<backlash> call [<axis>] [<dir>] [<runs>]`: see
+    `docs/calibration.md`. Prints `backlash <mm>`.
 
 ## Modes
 
 - `mode [<name>]` selects (refused while running) or reports mode, run
-  state, phase, pass and the last job error. `start [zero]` (`zero`: rapid Z,
-  then X to 0 first), `stop`, `skip` (next
+  state, phase, pass and the last job error. `start [zero]` (`zero`: the routine
+  `o<zero>` first, then the mode starts where it ends), `stop`, `skip` (next
   depth pass of a multi-pass mode).
 - `override [status] | + | - | reset`: feed override of the running job
   or MDI move, percent of the set feed, clamped to `Mode::OVERRIDE_*_PCT`.
@@ -98,9 +144,8 @@ replies; see `docs/screen.md`.
 - `threads groups | list <group> [<offset>] | reset`: thread table names,
   paged designations (`next` = offset to continue from), back to the
   built-in defaults.
-- `probe go z-|z+|x-|x+` starts a touch-off cycle on that axis/direction
-  (selects probe mode and starts it in one call); a plain `start` is refused. `probe [status]` adds
-  `contact=0|1`, the live probe input state, to the usual `name=value` line.
+- `probe` is a display panel, not a mode: it has no params, and `start`
+  is refused.
 
 ## Calibration
 
@@ -141,9 +186,15 @@ replies; see `docs/screen.md`.
 
 ## G-code (HTTP)
 
-- Dialects: `lathecode`, `linuxcnc`.
+- Dialects: `lathecode`, `linuxcnc`, `ngc`. An `ngc` program is a
+  routine: its name, lower case without spaces, is its label; it must
+  define `o<label> sub`; labels are unique; it is never active. A saved
+  routine replaces the built-in one of the same label. Routines can not
+  change while a G-code job runs.
 - Upload body: `<dialect>\t<name>\n`, then the program text. Every upload
-  is validated by a dry run through the dialect; a failure replies 400
+  is checked line by line, then dry run to count the steps (not for a
+  routine). The count is unknown past a G38 move, a routine call, or a
+  value known only at run time. A failure replies 400
   `{"ok":false,"error","line"}` (line 0 = not tied to a line). A LatheCode
   `; Axes expected:` header other than `Z+ points right, X+ points down` is
   refused.
@@ -154,7 +205,7 @@ replies; see `docs/screen.md`.
   Success replies `{"ok":true,"id","active"}`.
 - `GET /gcode`: `{"programs":[{id, name, dialect, size}], "free", "active"}`.
   `active` is `null` or `{name, dialect, size, steps, id, version}` (`id`
-  null if unsaved, `steps` = motion moves).
+  null if unsaved, `steps` = motion moves, null if unknown).
 - `GET /gcode/program?id=` / `GET /gcode/active`: program text.
   `POST /gcode/delete?id=`.
 - Anything that would change the active program is refused while a G-code

@@ -37,7 +37,7 @@ namespace Mode
         Slot,
         Ellipse,
         Gcode,
-        Probe,
+        Probe, // a display panel, no job
     };
     constexpr size_t COUNT = 9;
 
@@ -57,6 +57,7 @@ namespace Mode
         int32_t passes;
         bool waiting; // paused until the next start
         uint32_t step; // Gcode: motion steps executed so far
+                       // phase: Gcode: the last (MSG, ...) while it runs
     };
 
     // Loads parameters and starts the runner. After RunSettings::load().
@@ -115,9 +116,11 @@ namespace Mode
 
     const char *threadPreset(const char *group, const char *designation);
 
-    // Selects probe mode and starts its cycle on the given axis/direction
-    // in one call (the display's/protocol's "probe go z-|z+|x-|x+").
-    const char *probeGo(Stepper::Axis axis, bool reverse);
+    // "o<name> call [args]": runs that routine as a G-code job, whatever
+    // the selected mode. G0/G1 do not wait for the spindle.
+    const char *call(const char *line);
+    // A G-code job (program or call) runs.
+    bool gcodeRunning();
     // The probe input's contact ISR; see ProbeInput::begin().
     void probeEdge(bool contactNow);
 

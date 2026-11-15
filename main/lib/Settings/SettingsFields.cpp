@@ -73,6 +73,8 @@ namespace Settings
         {"probeFeedDuPerMin", FieldType::I32, offsetof(Conf, probeFeedDuPerMin), 1, 60000000},
         {"reprobeFeedDuPerMin", FieldType::I32, offsetof(Conf, reprobeFeedDuPerMin), 1, 60000000},
         {"probeBackOffDu", FieldType::I32, offsetof(Conf, probeBackOffDu), 1, 10000000},
+        {"probeDstDu", FieldType::I32, offsetof(Conf, probeDstDu), 0, 10000000},
+        {"probeOffsetDu", FieldType::I32, offsetof(Conf, probeOffsetDu), 0, 10000000},
         {"screwPitchDuZ", FieldType::I32, offsetof(Conf, z.screwPitchDu), 1, 10000000},
         {"motorStepsZ", FieldType::I32, offsetof(Conf, z.motorSteps), 1, 1000000},
         {"speedStartZ", FieldType::I32, offsetof(Conf, z.speedStart), 1, 1000000},
@@ -116,6 +118,8 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM(Settings::Conf, probeFeedDuPerMin, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, reprobeFeedDuPerMin, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, probeBackOffDu, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM(Settings::Conf, probeDstDu, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM(Settings::Conf, probeOffsetDu, JSON_TOK_NUMBER),
 
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "screwPitchDuZ", z.screwPitchDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(Settings::Conf, "motorStepsZ", z.motorSteps, JSON_TOK_NUMBER),
@@ -297,5 +301,67 @@ namespace Settings
             }
         }
         return true;
+    }
+
+    bool paramName(const Field &field, char *out, size_t outMax, bool &length)
+    {
+        static const char *const DROPPED[] = {"DuPerMin", "Du"};
+        size_t n = 0;
+        length = false;
+        if (outMax < 2) {
+            return false;
+        }
+        out[n++] = '_';
+        for (const char *p = field.name; *p;) {
+            bool dropped = false;
+            for (const char *d : DROPPED) {
+                size_t len = strlen(d);
+                char next = p[len];
+                if (!strncmp(p, d, len) && !(next >= 'a' && next <= 'z')) {
+                    p += len;
+                    length = true;
+                    dropped = true;
+                    break;
+                }
+            }
+            if (dropped) {
+                continue;
+            }
+            char c = *p++;
+            bool upper = c >= 'A' && c <= 'Z';
+            if (upper && n > 1 && n + 1 < outMax) {
+                out[n++] = '_';
+            }
+            if (n + 1 >= outMax) {
+                return false;
+            }
+            out[n++] = upper ? (char)(c - 'A' + 'a') : c;
+        }
+        out[n] = '\0';
+        return true;
+    }
+
+    bool paramValue(const char *name, const Conf &conf, double &value, bool &length)
+    {
+        char candidate[40];
+        for (const Field &f : FIELDS) {
+            if (!paramName(f, candidate, sizeof(candidate), length) || strcmp(candidate, name) != 0) {
+                continue;
+            }
+            const void *src = fieldPtr(f, conf);
+            switch (f.type) {
+            case FieldType::I32:
+                value = *(const int32_t *)src;
+                break;
+            case FieldType::Bool:
+                value = *(const bool *)src ? 1 : 0;
+                break;
+            case FieldType::Float:
+                value = *(const float *)src;
+                break;
+            }
+            return true;
+        }
+        return false;
     }
 }

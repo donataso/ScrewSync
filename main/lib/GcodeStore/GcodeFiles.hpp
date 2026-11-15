@@ -40,6 +40,10 @@ namespace GcodeFiles
 
     bool list(GcodeStore::ListResult &out);
 
+    // A saved routine (Gcode::ROUTINE_DIALECT) whose name is label, other
+    // than exceptId. False if none.
+    bool findRoutine(const char *label, const char *exceptId, char (&id)[GcodeStore::ID_LEN + 1]);
+
     // nullptr on success, else the reason.
     const char *remove(const char *id);
 }

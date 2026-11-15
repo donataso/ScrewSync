@@ -88,7 +88,9 @@ namespace Mode::Detail
     extern const Ops SLOT;
     extern const Ops ELLIPSE;
     extern const Ops GCODE;
-    extern const Ops PROBE;
+
+    // The next GCODE start runs this call line instead of the active program.
+    void gcodeSetCall(const char *line);
 
     void lock();
     void unlock();

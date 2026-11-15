@@ -58,7 +58,7 @@ namespace
         &Mode::Detail::SLOT,
         &Mode::Detail::ELLIPSE,
         &Mode::Detail::GCODE,
-        &Mode::Detail::PROBE,
+        nullptr,
     };
 
     K_MUTEX_DEFINE(g_lock);
@@ -70,14 +70,10 @@ namespace
     bool g_spindleReverse = false;
     int32_t g_overridePct = 100;
 
-    // Rapid to 0,0, Z first, before the op starts there.
-    enum class Homing : uint8_t
-    {
-        None,
-        Z,
-        X,
-    };
-    Homing g_homing = Homing::None;
+    // start zero: o<zero> runs first, then this mode starts.
+    constexpr const char *ZERO_CALL = "o<zero> call [1] [1]";
+    bool g_startAfter = false;
+    Mode::Id g_startAfterId = Mode::Id::Gear;
 
     bool &ownedFlag(Stepper::Axis axis)
     {
@@ -97,37 +93,44 @@ namespace
         releaseAxes();
         bool wasRunning = g_active != nullptr;
         g_active = nullptr;
-        g_homing = Homing::None;
+        g_startAfter = false;
         if (wasRunning) {
             publishRunning(false);
         }
     }
 
-    int64_t workZeroSteps(Stepper::Axis axis)
+    const char *startOps(Mode::Id id, const Ops *ops)
     {
-        return Mode::Detail::duToSteps(axis, (double)Wcs::toMachine(axis, 0));
-    }
-
-    void tickHoming(int64_t spindlePos)
-    {
-        if (g_homing == Homing::Z) {
-            if (Mode::Detail::moveAndWait(Stepper::Axis::Z, workZeroSteps(Stepper::Axis::Z))) {
-                g_homing = Homing::X;
-            }
-            return;
+        if (g_active) {
+            return g_active->resume && g_active->resume() ? nullptr : "already running";
         }
-        if (!Mode::Detail::moveAndWait(Stepper::Axis::X, workZeroSteps(Stepper::Axis::X))) {
-            return;
+        if (Mode::Detail::mdiActive()) {
+            return "MDI running";
         }
-        g_homing = Homing::None;
-        releaseAxes();
-        const char *refusal = g_active->start(spindlePos);
+        if (!ops) {
+            return "mode not implemented";
+        }
+        const Mode::Detail::Param *missing = Mode::Detail::firstMissing(*ops);
+        if (missing) {
+            static char reason[32];
+            snprintf(reason, sizeof(reason), "set %s first", missing->name);
+            return reason;
+        }
+        g_activeId = id;
+        g_spindleReverse = ops->spindleReverse && *ops->spindleReverse;
+        g_overridePct = 100;
+        const char *refusal = ops->start(Encoder::filteredPosition());
         if (refusal) {
-            Mode::Detail::finish(refusal);
+            releaseAll();
+            return refusal;
         }
+        g_active = ops;
+        g_lastError = "";
+        publishRunning(true);
+        return nullptr;
     }
 
-    K_THREAD_STACK_DEFINE(g_runnerStack, 2048);
+    K_THREAD_STACK_DEFINE(g_runnerStack, 4096);
     struct k_thread g_runnerThread;
 
     void runnerLoop(void *, void *, void *)
@@ -136,9 +139,7 @@ namespace
         while (true) {
             Watchdog::feed(wdt);
             k_mutex_lock(&g_lock, K_FOREVER);
-            if (g_active && g_homing != Homing::None) {
-                tickHoming(Encoder::filteredPosition());
-            } else if (g_active) {
+            if (g_active) {
                 int64_t spindlePos = Encoder::filteredPosition();
                 Encoder::Direction wrong = g_spindleReverse ? Encoder::Direction::Forward : Encoder::Direction::Reverse;
                 if (g_active->spindleReverse != nullptr && Encoder::direction() == wrong) {
@@ -244,6 +245,19 @@ namespace Mode::Detail
                 Stepper::stop(axis);
             }
         }
+        if (!reason && g_startAfter) {
+            // Running stays on from o<zero> into the mode.
+            Mode::Id next = g_startAfterId;
+            releaseAxes();
+            g_active = nullptr;
+            g_startAfter = false;
+            const char *refusal = startOps(next, OPS[(size_t)next]);
+            if (refusal) {
+                g_lastError = refusal;
+                publishRunning(false);
+            }
+            return;
+        }
         releaseAll();
     }
 }
@@ -314,14 +328,11 @@ namespace Mode
     const char *start(bool fromZero)
     {
         Detail::Guard guard;
-        if (g_active) {
-            return g_active->resume && g_active->resume() ? nullptr : "already running";
-        }
-        if (Detail::mdiActive()) {
-            return "MDI running";
-        }
         Id id = current();
         const Ops *ops = OPS[(size_t)id];
+        if (!fromZero || g_active) {
+            return startOps(id, ops);
+        }
         if (!ops) {
             return "mode not implemented";
         }
@@ -331,32 +342,37 @@ namespace Mode
             snprintf(reason, sizeof(reason), "set %s first", missing->name);
             return reason;
         }
-        g_activeId = id;
-        g_spindleReverse = ops->spindleReverse && *ops->spindleReverse;
-        g_overridePct = 100;
-        const char *refusal = nullptr;
-        if (fromZero) {
-            refusal = Detail::claim(Stepper::Axis::Z);
-            if (!refusal) {
-                refusal = Detail::claim(Stepper::Axis::X);
-            }
-            g_homing = Homing::Z;
-        } else {
-            refusal = ops->start(Encoder::filteredPosition());
+        Detail::gcodeSetCall(ZERO_CALL);
+        const char *err = startOps(Id::Gcode, &Detail::GCODE);
+        Detail::gcodeSetCall(nullptr);
+        if (!err) {
+            g_startAfter = true;
+            g_startAfterId = id;
         }
-        if (refusal) {
-            releaseAll();
-            return refusal;
+        return err;
+    }
+
+    const char *call(const char *line)
+    {
+        Detail::Guard guard;
+        if (g_active) {
+            return "already running";
         }
-        g_active = ops;
-        g_lastError = "";
-        publishRunning(true);
-        return nullptr;
+        Detail::gcodeSetCall(line);
+        const char *err = startOps(Id::Gcode, &Detail::GCODE);
+        Detail::gcodeSetCall(nullptr);
+        return err;
+    }
+
+    bool gcodeRunning()
+    {
+        Detail::Guard guard;
+        return g_active && g_activeId == Id::Gcode;
     }
 
     bool hasFeedOverride(Id id)
     {
-        return OPS[(size_t)id] && id != Id::Thread && id != Id::Probe;
+        return OPS[(size_t)id] && id != Id::Thread;
     }
 
     bool startsAtZero(Id id)
@@ -412,7 +428,7 @@ namespace Mode
         if (!g_active) {
             return "not running";
         }
-        if (!g_active->skip || g_homing != Homing::None) {
+        if (!g_active->skip) {
             return "no passes to skip";
         }
         g_active->skip();
@@ -425,9 +441,7 @@ namespace Mode
         Progress p = {"", 0, 0, false, 0};
         if (g_active) {
             p.phase = "run";
-            if (g_homing != Homing::None) {
-                p.phase = "position";
-            } else if (g_active->progress) {
+            if (g_active->progress) {
                 g_active->progress(p);
             }
         }

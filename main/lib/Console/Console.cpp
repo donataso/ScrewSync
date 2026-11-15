@@ -113,6 +113,16 @@ static void onProbe(const struct zbus_channel *chan)
 ZBUS_LISTENER_DEFINE(CONSOLE_PROBE_LIS, onProbe);
 ZBUS_CHAN_ADD_OBS(PROBE_CHAN, CONSOLE_PROBE_LIS, 3);
 
+K_MSGQ_DEFINE(g_prints, sizeof(Events::Print), 4, 4);
+
+static void onPrint(const struct zbus_channel *chan)
+{
+    k_msgq_put(&g_prints, zbus_chan_const_msg(chan), K_NO_WAIT);
+}
+
+ZBUS_LISTENER_DEFINE(CONSOLE_PRINT_LIS, onPrint);
+ZBUS_CHAN_ADD_OBS(PRINT_CHAN, CONSOLE_PRINT_LIS, 3);
+
 void consolePoll()
 {
     static const struct device *dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
@@ -124,6 +134,10 @@ void consolePoll()
     while (k_msgq_get(&g_probeResults, &probe, K_NO_WAIT) == 0) {
         Events::formatProbe(probe, out, sizeof(out));
         printf("probe %s\n", out);
+    }
+    static Events::Print print;
+    while (k_msgq_get(&g_prints, &print, K_NO_WAIT) == 0) {
+        printf("print %s\n", print.text);
     }
 
     unsigned char c;

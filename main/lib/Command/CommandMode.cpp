@@ -19,7 +19,6 @@
 #include "CommandInternal.hpp"
 #include "Encoder.hpp"
 #include "Mode.hpp"
-#include "ProbeInput.hpp"
 #include "ThreadStore.hpp"
 
 namespace
@@ -140,42 +139,6 @@ namespace Command::Detail
         } else {
             snprintf(out, outMax, "ok override=%ld", (long)Mode::feedOverride());
         }
-    }
-
-    void probe(const char *args, char *out, size_t outMax)
-    {
-        const char *a = skipSpaces(args);
-        if (!strncmp(a, "go ", 3)) {
-            const char *dir = skipSpaces(a + 3);
-            Stepper::Axis axis;
-            bool reverse;
-            if (!strcmp(dir, "z-")) {
-                axis = Stepper::Axis::Z;
-                reverse = false;
-            } else if (!strcmp(dir, "z+")) {
-                axis = Stepper::Axis::Z;
-                reverse = true;
-            } else if (!strcmp(dir, "x-")) {
-                axis = Stepper::Axis::X;
-                reverse = false;
-            } else if (!strcmp(dir, "x+")) {
-                axis = Stepper::Axis::X;
-                reverse = true;
-            } else {
-                snprintf(out, outMax, "err probe go z-|z+|x-|x+");
-                return;
-            }
-            reply(out, outMax, Mode::probeGo(axis, reverse), "ok %s", "probe started");
-            return;
-        }
-        if (!*a || !strcmp(a, "status")) {
-            int n = snprintf(out, outMax, "ok ");
-            Mode::describe(Mode::Id::Probe, out + n, outMax - (size_t)n);
-            n = (int)strlen(out);
-            snprintf(out + n, outMax - (size_t)n, " contact=%d", (int)ProbeInput::contact());
-            return;
-        }
-        modeParams(Mode::Id::Probe, args, out, outMax);
     }
 
     void gear(const char *args, char *out, size_t outMax)

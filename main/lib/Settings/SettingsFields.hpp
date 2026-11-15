@@ -55,6 +55,10 @@ namespace Settings
     bool parseField(const Field &field, const char *value, Conf &conf, char *out, size_t outMax);
     // A JSON object of every field.
     void formatAll(const Conf &conf, char *out, size_t outMax);
+    // The field as a G-code parameter: "_" + snake case, with "Du" and
+    // "DuPerMin" dropped (length: the value is in du).
+    bool paramName(const Field &field, char *out, size_t outMax, bool &length);
+    bool paramValue(const char *name, const Conf &conf, double &value, bool &length);
 }
 
 #endif

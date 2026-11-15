@@ -98,10 +98,10 @@ What each mode does: `docs/features.md`. Display specifics:
   pitch, depth, taper and flank angle from the thread table. The "custom"
   group starts empty. Flank and Spring are latching buttons. Passes,
   starts, taper and the latches use 3-column rows.
-- Probe: `docs/probe.md`.
+- Probe: a panel, not a mode; `docs/probe.md`.
 - Turn, Thread, Part and Ellipse have a spindle Fwd/Rev toggle.
 - Multi-pass modes show phase and pass n/m, and offer skip.
-- Every mode but Thread and Probe has a feed override row above
+- Every mode but Thread has a feed override row above
   start/stop: step down, the current percentage (tap = 100%, orange when
   not 100%), step up. Active only while running; scales every feed of the
   job, not rapids.

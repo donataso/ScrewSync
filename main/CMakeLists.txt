@@ -42,7 +42,6 @@ target_sources(app PRIVATE
     lib/Mode/ModeGcode.cpp
     lib/Mode/ModeSteps.cpp
     lib/Mode/ModeMdi.cpp
-    lib/Mode/ModeProbe.cpp
     lib/Probe/ProbeInput.cpp
     lib/Pins/Pins.cpp
     lib/Pins/PinMap.cpp
@@ -68,7 +67,8 @@ target_sources(app PRIVATE
     lib/Switches/Switches.cpp
     lib/Rpm/Rpm.cpp
     lib/Rpm/RpmCalc.cpp
-    lib/Gcode/GcodeCore.cpp
+    lib/Gcode/GcodeNgc.cpp
+    lib/Gcode/GcodeProgram.cpp
     lib/Gcode/GcodeInterpreter.cpp
     lib/Gcode/GcodeLathecode.cpp
     lib/Gcode/GcodeDialects.cpp
@@ -163,3 +163,7 @@ if(NOT EXISTS ${WEB_BUNDLE})
     message(FATAL_ERROR "${WEB_BUNDLE} is missing -- run `make web-build` first (builds it in Docker, no Node on host)")
 endif()
 generate_inc_file_for_target(app ${WEB_BUNDLE} ${CMAKE_BINARY_DIR}/include/web_index_html_gz.inc --gzip)
+foreach(routine probe zero backlash)
+    generate_inc_file_for_target(app ${CMAKE_CURRENT_LIST_DIR}/lib/GcodeStore/routines/${routine}.ngc
+        ${CMAKE_BINARY_DIR}/include/routine_${routine}.inc)
+endforeach()

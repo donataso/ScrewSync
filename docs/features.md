@@ -44,6 +44,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - Touch off Z or X in either direction with a contact plate or a switch
   probe.
 - Fast first touch, slow reprobe, then the axis is zeroed on the surface.
+- The cycle is an NGC routine; a saved routine can replace it.
 - A contact light shows the probe input live.
 
 ## G-code
@@ -57,6 +58,10 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
   G10 L20 position setting, and M0/M1 pauses.
 - MDI: G-code lines on the web client or the serial console, with modes
   kept between lines. G38 probe moves.
+- LinuxCNC NGC: parameters, expressions, O-word subs, conditions and
+  loops, G38 results, settings as parameters. Run at execution time.
+- NGC routines stored on the device and called by name, also as a
+  command.
 - Programs with the wrong axis directions are refused; the web client
   offers to flip them.
 

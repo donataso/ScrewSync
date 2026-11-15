@@ -23,6 +23,9 @@
 
 namespace Gcode
 {
+    // Saved programs of this dialect are routines, called by name.
+    constexpr const char *ROUTINE_DIALECT = "ngc";
+
     // nullptr if id is not registered.
     Dialect *find(const char *id);
 

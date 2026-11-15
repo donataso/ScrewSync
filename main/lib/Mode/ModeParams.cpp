@@ -77,7 +77,7 @@ namespace Mode
         Detail::Guard guard;
         const Ops *ops = Detail::ops(id);
         if (!ops) {
-            return "mode not implemented";
+            return nullptr; // no params, e.g. probe in an older backup
         }
         if (Detail::isRunning(id)) {
             return "stop first";

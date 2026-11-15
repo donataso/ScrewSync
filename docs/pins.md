@@ -53,7 +53,7 @@ Each encoder has a filter, in µs:
 - A switch sends the same command as the display, with the same refusal
   rules. A refused command shows as a toast on the display.
 - "Start here" starts without the "Go to zero first?" question.
-- "Go to zero" moves Z to 0, then X to 0.
+- "Go to zero" moves Z to 0, then X to 0 (the routine `o<zero>`).
 
 ## Feed override encoder
 

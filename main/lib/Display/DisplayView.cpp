@@ -185,7 +185,11 @@ namespace
         if (info.present) {
             changed |= pushTool(s);
             pushText("gcodeName.txt", "%s", info.name);
-            pushText("gcodeProgress.txt", "%lu/%lu steps", (unsigned long)s.job.step, (unsigned long)info.steps);
+            if (info.stepsKnown) {
+                pushText("gcodeProgress.txt", "%lu/%lu steps", (unsigned long)s.job.step, (unsigned long)info.steps);
+            } else {
+                pushText("gcodeProgress.txt", "%lu steps", (unsigned long)s.job.step);
+            }
         } else {
             const char *ip = Wifi::ip();
             pushText("gcodeEmpty.txt", "Load from web: %s", ip && *ip ? ip : "-");

@@ -94,8 +94,6 @@ namespace
         {"ellipse",
          "ellipse [status] | pitch <du> | dir -|+ | length <du> | depth <du> | passes <n> | concave on|off",
          "half-ellipse mode (dir picks the Z side)", ellipse},
-        {"probe", "probe go z-|z+|x-|x+ | [status] | probe-dst <du> | offset <du>",
-         "touch-off mode: starts a cycle on an axis, and its params/status", probe},
         {"cal", "cal count", "calibration: raw spindle count", cal},
         {"info", "info", "firmware version, target, reset cause, uptime, OTA image confirmed", info},
 #ifdef CONFIG_SCREWSYNC_DISPLAY_IMAGE
@@ -108,6 +106,7 @@ namespace
          pins},
         {"units", "units [mm|inch]", "display units", units},
         {"ws", "ws list | kill <n>", "web UI WebSocket clients: numbered list / closes one", ws},
+        {"o<name>", "o<name> call [<arg>]...", "runs a routine as a G-code job (args: [expressions])", nullptr},
         {"commands", "commands", "list the command set", commands},
     };
 
@@ -211,13 +210,22 @@ namespace Command
             }
             return;
         }
+        if ((*a == 'o' || *a == 'O') && a[1] == '<') {
+            const char *refusal = pinsFault ? pinsFault : Mode::call(a);
+            if (refusal) {
+                snprintf(out, outMax, "err %s%s", pinsFault ? "pins: " : "", refusal);
+            } else {
+                snprintf(out, outMax, "ok");
+            }
+            return;
+        }
         if (pinsFault && startsMotion(a, tokLen, a + tokLen)) {
             snprintf(out, outMax, "err pins: %s", pinsFault);
             return;
         }
 
         for (const CommandDef &c : COMMANDS) {
-            if (strlen(c.token) == tokLen && !strncmp(a, c.token, tokLen)) {
+            if (c.handler && strlen(c.token) == tokLen && !strncmp(a, c.token, tokLen)) {
                 c.handler(a + tokLen, out, outMax);
                 return;
             }

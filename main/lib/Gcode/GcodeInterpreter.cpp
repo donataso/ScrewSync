@@ -122,9 +122,6 @@ namespace Gcode
                 case 383:
                 case 384:
                 case 385:
-                    if (!mdi_) {
-                        return "only in MDI";
-                    }
                     if (hasMotionG) {
                         return "two motion commands";
                     }

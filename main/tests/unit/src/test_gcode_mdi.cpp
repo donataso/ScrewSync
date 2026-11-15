@@ -37,11 +37,22 @@ namespace
         }
     };
 
+    Params g_params;
+
     Mdi session()
     {
+        g_params.clear();
         Mdi mdi;
-        mdi.begin(*find("linuxcnc"), 0, 0);
+        mdi.begin(*find("linuxcnc"), 0, 0, g_params, nullptr);
         return mdi;
+    }
+
+    const char *interpretLine(Interpreter &interp, const char *text, StepSink &sink)
+    {
+        static Line line;
+        Context ctx{&g_params, nullptr, DU_PER_MM};
+        const char *err = parseLine(text, ctx, line);
+        return err ? err : interp.line(line.words, 1, sink);
     }
 }
 
@@ -176,8 +187,8 @@ ZTEST(gcode_mdi, test_program_rejects_mdi_codes)
     Interpreter interp;
     find("linuxcnc")->begin(interp, 0, 0);
     Collect sink;
-    zassert_not_null(interpretLine(*find("linuxcnc"), interp, "M100 Z1", 1, sink));
-    zassert_not_null(interpretLine(*find("linuxcnc"), interp, "M110", 1, sink));
+    zassert_not_null(interpretLine(interp, "M100 Z1", sink));
+    zassert_not_null(interpretLine(interp, "M110", sink));
 }
 
 ZTEST(gcode_mdi, test_probe)
@@ -203,10 +214,19 @@ ZTEST(gcode_mdi, test_probe)
     zassert_not_null(mdi.line("G38.2 Z-1", true, 4, sink));
 }
 
-ZTEST(gcode_mdi, test_program_rejects_probe)
+ZTEST(gcode_mdi, test_parameters)
 {
-    Interpreter interp;
-    find("linuxcnc")->begin(interp, 0, 0);
+    Mdi mdi = session();
     Collect sink;
-    zassert_not_null(interpretLine(*find("linuxcnc"), interp, "G38.2 Z-1 F10", 1, sink));
+    zassert_is_null(mdi.line("#<_d> = 2", false, 4, sink));
+    zassert_is_null(mdi.line("G0 Z[#<_d> * 2]", false, 4, sink));
+    zassert_equal(sink.count, 1);
+    zassert_equal(sink.steps[0].zDu, 4 * DU_PER_MM);
+    zassert_not_null(mdi.line("o<x> call", false, 4, sink));
+    mdi.probeDone(-3 * DU_PER_MM, DU_PER_MM, true, -2 * DU_PER_MM);
+    zassert_is_null(mdi.line("G0 Z#5063 X#5061", false, 4, sink));
+    zassert_equal(sink.steps[1].zDu, -3 * DU_PER_MM);
+    zassert_equal(sink.steps[1].xDu, DU_PER_MM);
+    zassert_is_null(mdi.line("G0 Z#<_probe_motor>", false, 4, sink));
+    zassert_equal(sink.steps[2].zDu, -2 * DU_PER_MM);
 }

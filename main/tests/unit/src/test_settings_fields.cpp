@@ -226,3 +226,26 @@ ZTEST(settings_fields, test_json_invalid)
 {
     zassert_true(parse("{\"speedRapidZ\":") < 0);
 }
+
+ZTEST(settings_fields, test_param_names)
+{
+    char name[40];
+    bool length;
+    zassert_true(paramName(*findField("probeFeedDuPerMin"), name, sizeof(name), length));
+    zassert_str_equal(name, "_probe_feed");
+    zassert_true(length);
+    zassert_true(paramName(*findField("backlashDuZ"), name, sizeof(name), length));
+    zassert_str_equal(name, "_backlash_z");
+    zassert_true(paramName(*findField("maxTravelMmX"), name, sizeof(name), length));
+    zassert_str_equal(name, "_max_travel_mm_x");
+    zassert_false(length);
+    zassert_true(paramName(*findField("probeDstDu"), name, sizeof(name), length));
+    zassert_str_equal(name, "_probe_dst");
+    g_conf.probeOffsetDu = 1234;
+    double v;
+    zassert_true(paramValue("_probe_offset", g_conf, v, length));
+    zassert_within(v, 1234.0, 1e-9);
+    zassert_true(length);
+    zassert_true(paramValue("_invert_encoder", g_conf, v, length));
+    zassert_false(paramValue("_nope", g_conf, v, length));
+}

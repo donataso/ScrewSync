@@ -138,9 +138,10 @@ namespace
         return {label, cells, N};
     }
 
+    // Settings fields: the probe panel is not a mode.
     constexpr Cell PROBE[] = {
-        value(Kind::Length, "probe-dst", "Distance"),
-        value(Kind::Length, "offset", "Offset"),
+        value(Kind::Length, "probeDstDu", "Distance"),
+        value(Kind::Length, "probeOffsetDu", "Offset"),
     };
 
     constexpr ModeLayout LAYOUTS[Mode::COUNT] = {

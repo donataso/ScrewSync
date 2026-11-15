@@ -16,6 +16,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "GcodeFiles.hpp"
+#include "GcodeDialects.hpp"
+#include "GcodeNgc.hpp"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -231,6 +233,36 @@ namespace GcodeFiles
             out.freeBytes = (uint64_t)vfs.f_bfree * vfs.f_frsize;
         }
         return true;
+    }
+
+    bool findRoutine(const char *label, const char *exceptId, char (&id)[GcodeStore::ID_LEN + 1])
+    {
+        if (!mount()) {
+            return false;
+        }
+        struct fs_dir_t dir;
+        fs_dir_t_init(&dir);
+        if (fs_opendir(&dir, MOUNT_POINT) != 0) {
+            return false;
+        }
+        bool found = false;
+        struct fs_dirent entry;
+        while (!found && fs_readdir(&dir, &entry) == 0 && entry.name[0]) {
+            uint32_t value;
+            if (entry.type != FS_DIR_ENTRY_FILE || !isProgramFile(entry.name, value)) {
+                continue;
+            }
+            snprintf(id, sizeof(id), "%08x", value);
+            char filePath[PATH_MAX_LEN];
+            path(id, "gc", filePath, sizeof(filePath));
+            GcodeMeta::Header h;
+            char name[Gcode::LABEL_MAX + 1];
+            found = strcmp(id, exceptId) != 0 && readHeader(filePath, h) && h.dialectLen == strlen(Gcode::ROUTINE_DIALECT) &&
+                    !strncmp(h.dialect, Gcode::ROUTINE_DIALECT, h.dialectLen) &&
+                    Gcode::routineLabel(h.name, h.nameLen, name) && !strcmp(name, label);
+        }
+        fs_closedir(&dir);
+        return found;
     }
 
     const char *remove(const char *id)

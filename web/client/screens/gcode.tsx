@@ -15,7 +15,7 @@ import {
 } from "../gcode/api"
 import { axesMismatched, flipMismatchedAxes, parseAxesHeader } from "../gcode/axes"
 import { interpretLine, type Step, type StepSink } from "../gcode/core"
-import { detectDialect, find, list } from "../gcode/dialects"
+import { detectDialect, find, list, ROUTINE_DIALECT, usesNgc } from "../gcode/dialects"
 import { Interpreter } from "../gcode/interpreter"
 import { markLathecodeTravel } from "../gcode/lathecode"
 import { CANVAS_H, CANVAS_W, canvasToJpeg, computeMapping, drawPreview } from "../gcode/preview"
@@ -37,13 +37,17 @@ function idFromPath(path: string): string | null {
 interface ParseResult {
   steps: Step[]
   error: { line: number; message: string } | null
+  ngc: boolean // only the firmware checks and runs it: no preview
 }
 
 function parseGcode(text: string, dialectId: string): ParseResult {
   const dialect = find(dialectId)
   if (!dialect) {
-return { steps: [], error: { line: 0, message: "unknown dialect" } }
+return { steps: [], error: { line: 0, message: "unknown dialect" }, ngc: false }
 }
+  if (dialectId === ROUTINE_DIALECT || usesNgc(text)) {
+    return { steps: [], error: null, ngc: true }
+  }
   const interp = new Interpreter()
   dialect.begin(interp, 0, 0)
   const steps: Step[] = []
@@ -52,10 +56,10 @@ return { steps: [], error: { line: 0, message: "unknown dialect" } }
   for (let i = 0; i < lines.length; i++) {
     const err = interpretLine(dialect, interp, lines[i], i + 1, sink)
     if (err) {
-return { steps, error: { line: i + 1, message: err } }
+return { steps, error: { line: i + 1, message: err }, ngc: false }
 }
   }
-  return { steps, error: null }
+  return { steps, error: null, ngc: false }
 }
 
 function stripExtension(filename: string): string {
@@ -94,7 +98,7 @@ export function GcodeScreen() {
 
   const text = sourceMode === "file" ? fileText : pasteText
   const parsed = useMemo(() => parseGcode(text, dialectId), [text, dialectId])
-  const extents = useMemo(() => (parsed.error ? null : computeMapping(parsed.steps)), [parsed])
+  const extents = useMemo(() => (parsed.error || parsed.ngc ? null : computeMapping(parsed.steps)), [parsed])
   const axesHeader = useMemo(() => parseAxesHeader(text), [text])
   const axesWrong = !!axesHeader && axesMismatched(axesHeader)
 
@@ -374,7 +378,30 @@ navigate(ROUTE)
   const valid = !!text && !parsed.error && !!name.trim() && !!dialectId
   const changed = text !== savedText || name.trim() !== savedName || dialectId !== savedDialect
   const canSave = canConfigure && !busy && valid && !axesWrong && (openedId === null || changed)
-  const canRun = canConfigure && !busy && valid && !axesWrong
+  const canRun = canConfigure && !busy && valid && !axesWrong && dialectId !== ROUTINE_DIALECT
+  const programs = listResult?.programs.filter((p) => p.dialect !== ROUTINE_DIALECT) ?? []
+  const routines = listResult?.programs.filter((p) => p.dialect === ROUTINE_DIALECT) ?? []
+
+  function programButton(p: GcodeProgramInfo) {
+    return (
+      <button
+        key={p.id}
+        type="button"
+        disabled={busy}
+        onClick={() => openSaved(p)}
+        className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-60 ${
+          p.id === openedId ? "bg-muted font-medium" : ""
+        }`}
+      >
+        <span className="flex-1 truncate">{p.name}</span>
+        {listResult?.active?.id === p.id && (
+          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-500 dark:text-emerald-400">
+            active
+          </span>
+        )}
+      </button>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -393,31 +420,27 @@ navigate(ROUTE)
       {!canConfigure && <LockNotice>{CONFIGURE_LOCK_MESSAGE}</LockNotice>}
 
       <div className="grid items-start gap-4 lg:grid-cols-[16rem_1fr]">
-        <Panel title="Saved programs">
+        <Panel title="Saved">
           {loading && !listResult ? (
             <p className="text-sm text-muted-foreground">Loading...</p>
-          ) : !listResult || listResult.programs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No saved programs.</p>
           ) : (
-            <div className="-mx-2 flex flex-col">
-              {listResult.programs.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  disabled={busy}
-                  onClick={() => openSaved(p)}
-                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-60 ${
-                    p.id === openedId ? "bg-muted font-medium" : ""
-                  }`}
-                >
-                  <span className="flex-1 truncate">{p.name}</span>
-                  {listResult.active?.id === p.id && (
-                    <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-500 dark:text-emerald-400">
-                      active
-                    </span>
-                  )}
-                </button>
-              ))}
+            <div className="flex flex-col gap-3">
+              <div>
+                <h3 className="mb-1 text-xs font-medium uppercase text-muted-foreground">Programs</h3>
+                {programs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">None saved.</p>
+                ) : (
+                  <div className="-mx-2 flex flex-col">{programs.map(programButton)}</div>
+                )}
+              </div>
+              <div>
+                <h3 className="mb-1 text-xs font-medium uppercase text-muted-foreground">NGC routines</h3>
+                {routines.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">None saved.</p>
+                ) : (
+                  <div className="-mx-2 flex flex-col">{routines.map(programButton)}</div>
+                )}
+              </div>
             </div>
           )}
           {listResult && (
@@ -505,7 +528,13 @@ navigate(ROUTE)
               )}
 
               {text &&
-                (parsed.error ? (
+                (parsed.ngc ? (
+                  <p className="text-sm text-muted-foreground">
+                    {dialectId === ROUTINE_DIALECT
+                      ? "NGC routine: called by name, checked by the lathe on save."
+                      : "NGC program: checked by the lathe on save or run. No preview."}
+                  </p>
+                ) : parsed.error ? (
                   <p className="text-sm text-destructive">
                     Line {parsed.error.line}: {parsed.error.message}
                   </p>
@@ -538,7 +567,7 @@ navigate(ROUTE)
           </Panel>
 
           {/* Kept mounted so the canvas can be drawn before it is shown. */}
-          <Panel title="Preview" className={text ? "" : "hidden"}>
+          <Panel title="Preview" className={text && !parsed.ngc ? "" : "hidden"}>
             <canvas
               ref={canvasRef}
               width={CANVAS_W}

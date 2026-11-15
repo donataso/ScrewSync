@@ -19,6 +19,7 @@
 #define ModeSteps_h
 
 #include "GcodeCore.hpp"
+#include "GcodeNgc.hpp"
 #include "Stepper.hpp"
 #include "Sync.hpp"
 
@@ -38,6 +39,11 @@ namespace Mode::Detail
     // The probe interrupt halts no axis after this.
     void probeDisarm();
 
+    // NGC parameters, shared by MDI and jobs; kept until reboot.
+    Gcode::Params &params();
+    // Settings as #<_name>, and #<_probe_contact>.
+    Gcode::ParamSource &paramSource();
+
     struct StepMotion
     {
         Stepper::Axis mainAxis;
@@ -46,6 +52,10 @@ namespace Mode::Detail
         double vectorDu; // Feed only: path length for the per-minute speed split
         Sync::Link thread;
         bool probeStarted;
+        // G38 done: whether it tripped, and where (work du, main axis).
+        bool probeFound;
+        int32_t probeTripDu;
+        int32_t probeMotorDu; // without backlash compensation
 
         void begin(const Gcode::Step &s, int64_t spindlePos);
         // True once done. error is set when a travel clamp or a disabled axis

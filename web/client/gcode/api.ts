@@ -11,7 +11,7 @@ export interface GcodeActiveInfo {
   name: string
   dialect: string
   size: number
-  steps: number
+  steps: number | null // null: known only at run time
   id: string | null
   version: number
 }

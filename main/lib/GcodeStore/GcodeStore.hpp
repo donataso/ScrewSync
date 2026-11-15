@@ -25,6 +25,8 @@
 // Saved G-code programs on the "gcode" LittleFS partition, plus the one
 // active program (PSRAM buffer) that execution and selection both read
 // from. The partition is mounted lazily, on first use, never at boot.
+// Programs of Gcode::ROUTINE_DIALECT are routines: each defines
+// o<its name> sub, names are unique, and they are called, never active.
 namespace GcodeStore
 {
     constexpr size_t PROGRAM_MAX = 512 * 1024;
@@ -53,6 +55,7 @@ namespace GcodeStore
         const char *error;
         uint32_t line; // 1-based, 0 if not tied to a line
         uint32_t steps;
+        bool stepsKnown;
         char savedId[ID_LEN + 1]; // empty if not saved
     };
 
@@ -63,6 +66,7 @@ namespace GcodeStore
         char dialect[DIALECT_MAX_LEN + 1];
         size_t size;
         uint32_t steps;
+        bool stepsKnown;
         char savedId[ID_LEN + 1]; // empty if not saved
         uint32_t version;
     };
@@ -105,6 +109,12 @@ namespace GcodeStore
 
     // The active program's text and length; nullptr/0 if none.
     const char *activeText(size_t &len);
+
+    // A routine by O-word label: the saved one, else the built-in one.
+    // Loaded once per job; valid until resetRoutines(). nullptr if none.
+    const char *routine(const char *label, size_t &len);
+    // At the start of each job.
+    void resetRoutines();
 }
 
 #endif

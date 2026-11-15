@@ -18,16 +18,22 @@
 #include "ModeInternal.hpp"
 #include "ModeSteps.hpp"
 #include "GcodeDialects.hpp"
-#include "GcodeInterpreter.hpp"
+#include "GcodeProgram.hpp"
 #include "GcodeStore.hpp"
+#include "Events.hpp"
 #include "Wcs.hpp"
 #include <stdio.h>
 #include <string.h>
+#include <initializer_list>
 
-// Walks the active G-code program; ModeSteps runs each step.
+// Runs the active G-code program, or one routine call, line by line at
+// execution time; ModeSteps runs each step.
 namespace
 {
     using namespace Mode::Detail;
+
+    constexpr uint32_t LINES_PER_TICK = 64;
+    constexpr size_t QUEUE_LEN = 4;
 
     enum class Phase : uint8_t
     {
@@ -36,100 +42,126 @@ namespace
         Paused, // M0/M1: axes stay claimed until start
     };
 
+    struct Routines : Gcode::RoutineSource
+    {
+        const char *find(const char *label, size_t &len) override
+        {
+            return GcodeStore::routine(label, len);
+        }
+    };
+
+    struct Printer : Gcode::PrintSink
+    {
+        void print(const char *text) override
+        {
+            Events::Print msg = {};
+            strncpy(msg.text, text, sizeof(msg.text) - 1);
+            Events::publish(&PRINT_CHAN, &msg);
+        }
+    };
+
     struct Job
     {
-        Gcode::Dialect *dialect;
-        Gcode::Interpreter interp;
-        const char *text;
-        size_t len;
-        size_t pos;
-        uint32_t lineNo;
-
-        Gcode::Step pending[2];
+        Gcode::Step pending[QUEUE_LEN];
         size_t pendingCount;
         size_t pendingIndex;
 
         Phase phase;
+        bool spindleGated;
         uint32_t executedSteps; // motion steps completed, for display progress
         StepMotion motion;
     };
 
     uint8_t g_dummyParams[1];
+    Gcode::Program g_program;
+    Routines g_routines;
+    Printer g_printer;
     Job g_job;
+    char g_callText[Gcode::MAX_LINE_LEN];
+    const char *g_call = nullptr;
+    char g_error[96];
 
     struct QueueSink : Gcode::StepSink
     {
-        Job *job;
         void emit(const Gcode::Step &step) override
         {
-            if (job->pendingCount < 2) {
-                job->pending[job->pendingCount++] = step;
+            if (g_job.pendingCount < QUEUE_LEN) {
+                g_job.pending[g_job.pendingCount++] = step;
             }
         }
     };
 
-    // Parses lines until a step is queued or the text runs out; pendingCount
-    // stays 0 at end of text (an implicit end, no M2/M30 required).
-    const char *fillPending(Job &j)
+    const char *formatError()
     {
-        while (j.pendingIndex >= j.pendingCount && j.pos < j.len) {
-            j.pendingCount = 0;
-            j.pendingIndex = 0;
-            size_t lineStart = j.pos;
-            size_t lineEnd = lineStart;
-            while (lineEnd < j.len && j.text[lineEnd] != '\n') {
-                lineEnd++;
-            }
-            size_t copyLen = lineEnd - lineStart;
-            if (copyLen >= Gcode::MAX_LINE_LEN) {
-                copyLen = Gcode::MAX_LINE_LEN - 1;
-            }
-            char buf[Gcode::MAX_LINE_LEN];
-            memcpy(buf, j.text + lineStart, copyLen);
-            buf[copyLen] = '\0';
-            j.pos = lineEnd < j.len ? lineEnd + 1 : lineEnd;
-            j.lineNo++;
+        if (!g_program.errorLine()) {
+            snprintf(g_error, sizeof(g_error), "%s", g_program.error());
+        } else if (*g_program.errorRoutine()) {
+            snprintf(g_error, sizeof(g_error), "%s line %lu: %s", g_program.errorRoutine(),
+                     (unsigned long)g_program.errorLine(), g_program.error());
+        } else {
+            snprintf(g_error, sizeof(g_error), "line %lu: %s", (unsigned long)g_program.errorLine(), g_program.error());
+        }
+        return g_error;
+    }
 
-            QueueSink sink;
-            sink.job = &j;
-            const char *err = Gcode::interpretLine(*j.dialect, j.interp, buf, j.lineNo, sink);
-            if (err) {
-                static char reason[48];
-                snprintf(reason, sizeof(reason), "line %lu: %s", (unsigned long)j.lineNo, err);
-                return reason;
+    const char *claimEnabled()
+    {
+        bool any = false;
+        for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
+            if (!Stepper::isDisabled(axis)) {
+                claim(axis);
+                any = true;
             }
         }
-        return nullptr;
+        return any ? nullptr : "axis disabled";
     }
 
     const char *startMode(int64_t)
     {
-        GcodeStore::ActiveInfo info = GcodeStore::active();
-        if (!info.present) {
-            return "no program loaded";
-        }
-        Gcode::Dialect *dialect = Gcode::find(info.dialect);
-        if (!dialect) {
-            return "unknown dialect";
-        }
-        const char *refusal = claim(Stepper::Axis::Z);
-        if (!refusal) {
-            refusal = claim(Stepper::Axis::X);
-        }
-        if (refusal) {
-            return refusal;
-        }
-
+        const char *text;
         size_t len;
-        const char *text = GcodeStore::activeText(len);
-        if (!text) {
-            return "no program loaded";
+        Gcode::Dialect *dialect;
+        if (g_call) {
+            Gcode::OKind kind;
+            char label[Gcode::LABEL_MAX + 1];
+            if (!Gcode::scanOword(g_call, kind, label) || kind != Gcode::OKind::Call) {
+                return "not a call";
+            }
+            const char *refusal = claimEnabled();
+            if (refusal) {
+                return refusal;
+            }
+            strncpy(g_callText, g_call, sizeof(g_callText) - 1);
+            g_callText[sizeof(g_callText) - 1] = '\0';
+            text = g_callText;
+            len = strlen(g_callText);
+            dialect = Gcode::find("linuxcnc");
+        } else {
+            GcodeStore::ActiveInfo info = GcodeStore::active();
+            if (!info.present) {
+                return "no program loaded";
+            }
+            dialect = Gcode::find(info.dialect);
+            if (!dialect) {
+                return "unknown dialect";
+            }
+            const char *refusal = claim(Stepper::Axis::Z);
+            if (!refusal) {
+                refusal = claim(Stepper::Axis::X);
+            }
+            if (refusal) {
+                return refusal;
+            }
+            text = GcodeStore::activeText(len);
+            if (!text) {
+                return "no program loaded";
+            }
         }
         g_job = {};
-        g_job.dialect = dialect;
-        g_job.text = text;
-        g_job.len = len;
-        dialect->begin(g_job.interp, (int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
+        g_job.spindleGated = g_call == nullptr;
+        GcodeStore::resetRoutines();
+        g_program.begin({dialect, &params(), &paramSource(), &g_routines, false, &g_printer}, text, len,
+                        (int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
         return nullptr;
     }
 
@@ -142,6 +174,16 @@ namespace
         return true;
     }
 
+    void probeDone()
+    {
+        int32_t z = (int32_t)Wcs::position(Stepper::Axis::Z);
+        int32_t x = (int32_t)Wcs::position(Stepper::Axis::X);
+        bool onZ = g_job.motion.mainAxis == Stepper::Axis::Z;
+        int32_t tripZ = onZ ? g_job.motion.probeTripDu : z;
+        int32_t tripX = onZ ? x : g_job.motion.probeTripDu;
+        g_program.probeDone(z, x, tripZ, tripX, g_job.motion.probeFound, g_job.motion.probeMotorDu);
+    }
+
     void tickMode(int64_t spindlePos)
     {
         if (g_job.phase == Phase::Paused) {
@@ -150,10 +192,13 @@ namespace
         if (g_job.phase == Phase::Move) {
             const Gcode::Step &s = g_job.pending[g_job.pendingIndex];
             const char *error;
-            bool done = g_job.motion.drive(s, spindlePos, true, error);
+            bool done = g_job.motion.drive(s, spindlePos, g_job.spindleGated, error);
             if (error) {
                 finish(error);
             } else if (done) {
+                if (s.kind == Gcode::StepKind::Probe) {
+                    probeDone();
+                }
                 g_job.pendingIndex++;
                 g_job.executedSteps++;
                 g_job.phase = Phase::Parse;
@@ -161,14 +206,22 @@ namespace
             return;
         }
 
-        const char *err = fillPending(g_job);
-        if (err) {
-            finish(err);
-            return;
-        }
         if (g_job.pendingIndex >= g_job.pendingCount) {
-            finish();
-            return;
+            g_job.pendingCount = 0;
+            g_job.pendingIndex = 0;
+            QueueSink sink;
+            Gcode::Program::Status status = g_program.next(sink, LINES_PER_TICK);
+            if (status == Gcode::Program::Status::Error) {
+                finish(formatError());
+                return;
+            }
+            if (status == Gcode::Program::Status::End) {
+                finish();
+                return;
+            }
+            if (status == Gcode::Program::Status::Busy) {
+                return;
+            }
         }
 
         const Gcode::Step &s = g_job.pending[g_job.pendingIndex];
@@ -200,10 +253,12 @@ namespace
 
     void progressMode(Mode::Progress &out)
     {
-        if (g_job.phase == Phase::Move) {
-            out.phase = "move";
-        } else if (g_job.phase == Phase::Paused) {
+        if (g_job.phase == Phase::Paused) {
             out.phase = "paused";
+        } else if (*g_program.message()) {
+            out.phase = g_program.message();
+        } else if (g_job.phase == Phase::Move) {
+            out.phase = "move";
         } else {
             out.phase = "line";
         }
@@ -216,4 +271,9 @@ namespace Mode::Detail
 {
     const Ops GCODE = {true, g_dummyParams, sizeof(g_dummyParams), nullptr, 0, startMode, tickMode,
                        nullptr, nullptr, progressMode, nullptr, nullptr, resumeMode};
+
+    void gcodeSetCall(const char *line)
+    {
+        g_call = line;
+    }
 }

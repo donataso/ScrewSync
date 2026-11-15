@@ -57,12 +57,15 @@ namespace GcodeMeta
         const char *error;
         uint32_t line; // 1-based, 0 if the error isn't tied to one line
         uint32_t steps; // motion steps emitted, valid only if ok
+        bool stepsKnown;
     };
 
-    // Dry-runs text through dialect: begin at 0, 0, then interpretLine per
-    // line with a counting sink. Rejects an empty program, an embedded NUL
-    // byte, an axesMismatch() header, a line at or over Gcode::MAX_LINE_LEN, a dialect syntax error
-    // (first one wins), and a program with zero motion steps.
+    // Checks every line (Gcode::checkProgram), then dry-runs the program
+    // from 0, 0 to count its motion steps. The count is unknown past a G38
+    // move, a routine call, or a value known only at run time. Rejects an
+    // empty program, an embedded NUL byte, an axesMismatch() header, the
+    // first error, and a program with a known zero count. A routine
+    // (Gcode::ROUTINE_DIALECT) is only checked.
     ValidateResult validateProgram(const char *text, size_t len, Gcode::Dialect &dialect);
 
     // True if text carries the LatheCode generator's

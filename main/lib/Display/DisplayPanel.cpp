@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "DisplayInternal.hpp"
+#include "Settings.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,14 +71,15 @@ namespace
     {
         char text[32];
         bool set = formatCellValue(c, raw, inchUnits(), text, sizeof(text));
-        bool required = Mode::required(id, c.param);
+        bool probe = id == Mode::Id::Probe;
+        bool required = probe ? !strcmp(c.param, "probeDstDu") : Mode::required(id, c.param);
         char key[KEY_MAX];
         snprintf(key, sizeof(key), "c%u.txt", (unsigned)slot);
         pushText(key, "%s: %s", c.label, set || required ? text : "off");
         snprintf(key, sizeof(key), "c%u", (unsigned)slot);
         pushColor(key, "pco", set || !required ? COLOR_TEXT : COLOR_NOT_SET);
         snprintf(key, sizeof(key), "cCmd%u.txt", (unsigned)slot);
-        pushText(key, "%s %s ", Mode::name(id), c.param);
+        pushText(key, "%s %s ", probe ? "settings set" : Mode::name(id), c.param);
         return pushCellType(slot, valueType(c.kind));
     }
 
@@ -136,6 +138,12 @@ namespace Display::Detail
 {
     bool pushPanel(Mode::Id id, const char *params)
     {
+        char probeParams[64];
+        if (id == Mode::Id::Probe) {
+            snprintf(probeParams, sizeof(probeParams), "probeDstDu=%ld probeOffsetDu=%ld",
+                     (long)Settings::g_active.probeDstDu, (long)Settings::g_active.probeOffsetDu);
+            params = probeParams;
+        }
         size_t count;
         const Cell *cells = ModeCells::cells(id, count);
         bool changed = false;

@@ -59,7 +59,13 @@ namespace
             return;
         }
         j.raw("{\"name\":").str(a.name).raw(",\"dialect\":").str(a.dialect);
-        j.fmt(",\"size\":%zu,\"steps\":%u,\"id\":", a.size, (unsigned)a.steps).strOrNull(a.savedId);
+        j.fmt(",\"size\":%zu,\"steps\":", a.size);
+        if (a.stepsKnown) {
+            j.fmt("%u", (unsigned)a.steps);
+        } else {
+            j.raw("null");
+        }
+        j.raw(",\"id\":").strOrNull(a.savedId);
         j.fmt(",\"version\":%u}", (unsigned)a.version);
     }
 

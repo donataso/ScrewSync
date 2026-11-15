@@ -15,6 +15,7 @@ target_sources(app PRIVATE
     src/test_gcode.cpp
     src/test_gcode_meta.cpp
     src/test_gcode_mdi.cpp
+    src/test_gcode_ngc.cpp
     src/test_mode_cells.cpp
     src/test_mode_pass_plan.cpp
     src/test_mode_param_codec.cpp
@@ -37,7 +38,8 @@ target_sources(app PRIVATE
     ${FIRMWARE_DIR}/lib/Jog/JogRatio.cpp
     ${FIRMWARE_DIR}/lib/Jog/JogStep.cpp
     ${FIRMWARE_DIR}/lib/Thread/ThreadTable.cpp
-    ${FIRMWARE_DIR}/lib/Gcode/GcodeCore.cpp
+    ${FIRMWARE_DIR}/lib/Gcode/GcodeNgc.cpp
+    ${FIRMWARE_DIR}/lib/Gcode/GcodeProgram.cpp
     ${FIRMWARE_DIR}/lib/Gcode/GcodeInterpreter.cpp
     ${FIRMWARE_DIR}/lib/Gcode/GcodeLathecode.cpp
     ${FIRMWARE_DIR}/lib/Gcode/GcodeDialects.cpp
@@ -106,3 +108,8 @@ foreach(gcodeFile ${GCODE_GCODE_FILES})
 endforeach()
 string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," GCODE_VECTORS_BYTES "${GCODE_VECTORS_HEX}")
 file(WRITE ${CMAKE_BINARY_DIR}/include/gcode_vectors.inc "${GCODE_VECTORS_BYTES}\n")
+
+foreach(routine probe zero backlash)
+    generate_inc_file_for_target(app ${FIRMWARE_DIR}/lib/GcodeStore/routines/${routine}.ngc
+        ${CMAKE_BINARY_DIR}/include/routine_${routine}.inc)
+endforeach()

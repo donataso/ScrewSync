@@ -144,7 +144,7 @@ namespace Mode::Detail
 {
     void mdiBegin()
     {
-        g_session.begin(*Gcode::find("linuxcnc"), 0, 0);
+        g_session.begin(*Gcode::find("linuxcnc"), 0, 0, params(), &paramSource());
     }
 
     bool mdiActive()
@@ -181,6 +181,13 @@ namespace Mode::Detail
         }
         if (!done) {
             return;
+        }
+        if (s.kind == Gcode::StepKind::Probe) {
+            bool onZ = g_motion.mainAxis == Stepper::Axis::Z;
+            int32_t z = (int32_t)Wcs::position(Stepper::Axis::Z);
+            int32_t x = (int32_t)Wcs::position(Stepper::Axis::X);
+            g_session.probeDone(onZ ? g_motion.probeTripDu : z, onZ ? x : g_motion.probeTripDu, g_motion.probeFound,
+                                g_motion.probeMotorDu);
         }
         pop();
         if (!g_count) {

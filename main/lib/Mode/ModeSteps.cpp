@@ -23,9 +23,12 @@
 #include "Motion.hpp"
 #include "ProbeInput.hpp"
 #include "Rpm.hpp"
+#include "Settings.hpp"
+#include "SettingsFields.hpp"
 #include "Wcs.hpp"
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include <zephyr/sys/util.h>
 #include <initializer_list>
 
@@ -63,13 +66,34 @@ namespace
     volatile int64_t g_latchedMotor = 0;
     Stepper::Axis g_probeAxis = Stepper::Axis::Z;
 
-    void publishProbe(Stepper::Axis axis, bool found, int64_t pos, int64_t motor)
+    void publishProbe(StepMotion &m, Stepper::Axis axis, bool found, int64_t pos, int64_t motor)
     {
         int64_t machineDu = llround(stepsToDu(axis, pos));
         Events::ProbeResult r = {(uint8_t)axis, found, machineDu - Wcs::offset(Wcs::active(), axis),
                                  (int64_t)llround(stepsToDu(axis, motor))};
+        m.probeFound = found;
+        m.probeTripDu = (int32_t)r.posDu;
+        m.probeMotorDu = (int32_t)r.motorDu;
         Events::publish(&PROBE_CHAN, &r);
     }
+
+    struct SettingsSource : Gcode::ParamSource
+    {
+        bool get(const char *name, double &value, bool &length, bool &live) override
+        {
+            live = false;
+            if (!strcmp(name, "_probe_contact")) {
+                value = ProbeInput::contact() ? 1 : 0;
+                length = false;
+                live = true;
+                return true;
+            }
+            return Settings::paramValue(name, Settings::g_active, value, length);
+        }
+    };
+
+    Gcode::Params g_params;
+    SettingsSource g_source;
 
     // True once the move ends. The target is commanded one time: a second
     // moveTo() would undo the halt of the interrupt.
@@ -95,7 +119,7 @@ namespace
                 error = away ? "release glitch" : "contact glitch";
                 return false;
             }
-            publishProbe(axis, true, g_latchedPos, g_latchedMotor);
+            publishProbe(m, axis, true, g_latchedPos, g_latchedMotor);
             return true;
         }
         if (!Stepper::arrived(axis) || Stepper::position(axis) != m.mainTo) {
@@ -106,7 +130,7 @@ namespace
             return false;
         }
         if (s.probe & Gcode::PROBE_NO_ERROR) {
-            publishProbe(axis, false, Stepper::position(axis), Stepper::motorPosition(axis));
+            publishProbe(m, axis, false, Stepper::position(axis), Stepper::motorPosition(axis));
             return true;
         }
         error = away ? "no release" : "no contact";
@@ -141,6 +165,16 @@ namespace Mode::Detail
     {
         g_watch = Watch::None;
         g_latched = false;
+    }
+
+    Gcode::Params &params()
+    {
+        return g_params;
+    }
+
+    Gcode::ParamSource &paramSource()
+    {
+        return g_source;
     }
 
     void applyMachineStep(const Gcode::Step &s)

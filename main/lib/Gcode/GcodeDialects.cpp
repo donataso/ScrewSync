@@ -28,9 +28,11 @@ namespace
     class Linuxcnc : public Dialect
     {
     public:
+        explicit Linuxcnc(const char *id) : id_(id)
+        {}
         const char *id() const override
         {
-            return "linuxcnc";
+            return id_;
         }
         void begin(Interpreter &interp, int32_t startZDu, int32_t startXDu) override
         {
@@ -40,11 +42,15 @@ namespace
         {
             return nullptr;
         }
+
+    private:
+        const char *id_;
     };
 
     Lathecode g_lathecode;
-    Linuxcnc g_linuxcnc;
-    Dialect *const DIALECTS[] = {&g_lathecode, &g_linuxcnc};
+    Linuxcnc g_linuxcnc("linuxcnc");
+    Linuxcnc g_ngc(ROUTINE_DIALECT);
+    Dialect *const DIALECTS[] = {&g_lathecode, &g_linuxcnc, &g_ngc};
     constexpr size_t DIALECT_COUNT = sizeof(DIALECTS) / sizeof(DIALECTS[0]);
 }
 

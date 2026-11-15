@@ -16,25 +16,26 @@ For both types, `offset` is the distance from the trigger point to the workpiece
 - probe polarity: NO or NC
 - probe feed: speed per minute for the first touch
 - reprobe feed: speed per minute for the back-offs and the reprobe
-- `backOff`: retract after each touch
-
-## Mode parameters
-
-These persist in `RunSettings` like the parameters of every other mode:
-
-- `probeDst`: the furthest the first touch may travel
-- `offset`: trigger point to surface
+- back off: retract after each touch
+- distance: the furthest the first touch may travel (0 = not set)
+- offset: trigger point to surface
 
 ## Cycle
 
-A direction button (Z-, Z+, X-, X+) starts the cycle on that axis. The firmware runs it as G-code on the G-code step runner:
+The cycle is the built-in NGC routine `o<probe>`
+(`main/lib/GcodeStore/routines/probe.ngc`). A saved `ngc` routine named
+`probe` replaces it. The display arrows send `o<probe> call [<axis>]
+[<dir>]`; see `docs/protocol.md`, "NGC".
 
-1. Refuse to start if the probe input already shows contact.
-2. `G38.2` toward the workpiece at probe feed, at most `probeDst`. On contact, an interrupt stops the axis immediately, with no decel.
-3. `G1` back off `backOff` at reprobe feed.
-4. `G38.2` at reprobe feed, at most `backOff` plus a small fixed margin.
-5. `G1` back off `backOff` again.
-6. `G10 L20` so that the surface reads 0. The surface is at `contact + dir × offset`, where `dir` is the probe direction (±1).
+1. Refuse to start if the distance is not set, or if the probe input
+   already shows contact.
+2. `G38.2` toward the workpiece at probe feed, at most the distance. On
+   contact, an interrupt stops the axis immediately, with no decel.
+3. `G1` back off at reprobe feed.
+4. `G38.2` at reprobe feed, at most the back-off plus a small margin.
+5. `G1` back off again.
+6. `G10 L20` so that the surface reads 0. The surface is at
+   `contact + dir × offset`, where `dir` is the probe direction (±1).
 
 Distances are carriage positions, so the axis backlash setting is applied on each reversal.
 
@@ -43,21 +44,15 @@ X shows plain position, so `offset` is applied once. To zero X on the centerline
 Errors (shown as the job error) end the cycle with the axis stopped:
 
 - contact present at start
-- no contact within `probeDst` (first touch) or within the reprobe limit
+- no contact within the distance (first touch) or within the reprobe limit
 - contact still present after a back-off
 - a contact interrupt with the contact already gone (noise must be solved at the probe)
 
-A jog on the axis stops the cycle, as it does for any mode.
-
-## Protocol
-
-- `probe <param> <value>` / `probe [status]`, the same as other modes.
-- `probe go z-|z+|x-|x+` starts the cycle.
-- Status carries the live probe input state.
+A jog on the axis stops the cycle, as it does for any job.
 
 ## Display
 
-- In the mode picker, the Probe entry uses the Settings colour, so it stands apart from the cutting modes.
+- In the mode picker, the Probe entry uses the Settings colour, so it stands apart from the cutting modes. It is a panel, not a mode.
 - Triggering the probe by hand before probing confirms the wiring and, for a plate, the tool's earth.
 
 | Row        | Col 1                                        | Col 2         | Col 3                  |

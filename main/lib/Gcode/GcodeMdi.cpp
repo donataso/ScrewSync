@@ -47,9 +47,11 @@ namespace Gcode
         return text[0] && strchr("gmtfxzGMTFXZ", text[0]) && text[1] && strchr("-+.0123456789", text[1]);
     }
 
-    void Mdi::begin(Dialect &dialect, int32_t zDu, int32_t xDu)
+    void Mdi::begin(Dialect &dialect, int32_t zDu, int32_t xDu, Params &params, ParamSource *source)
     {
         dialect_ = &dialect;
+        params_ = &params;
+        source_ = source;
         lineNo_ = 0;
         dialect.begin(interp_, zDu, xDu);
         interp_.setMdi(true);
@@ -60,16 +62,37 @@ namespace Gcode
         interp_.setPosition(zDu, xDu);
     }
 
+    void Mdi::probeDone(int32_t tripZDu, int32_t tripXDu, bool found, int32_t motorDu)
+    {
+        double scale = interp_.unitScaleDu();
+        params_->setProbe(tripZDu / scale, tripXDu / scale, found, motorDu / scale);
+    }
+
     const char *Mdi::line(const char *text, bool ui, size_t room, StepSink &sink)
     {
         Interpreter work = interp_;
         if (ui) {
             work.begin(interp_.zDu(), interp_.xDu());
         }
-        Buffer buf;
-        const char *err = interpretLine(*dialect_, work, text, ++lineNo_, buf);
+        static Line parsed;
+        Context ctx{params_, source_, work.unitScaleDu()};
+        const char *err = parseLine(text, ctx, parsed);
         if (err) {
             return err;
+        }
+        if (parsed.okind != OKind::None) {
+            return "O-word not in MDI";
+        }
+        Buffer buf;
+        ++lineNo_;
+        if (parsed.words.count) {
+            err = dialect_->translate(parsed.words);
+            if (!err) {
+                err = work.line(parsed.words, lineNo_, buf);
+            }
+            if (err) {
+                return err;
+            }
         }
         size_t stepCount = 0;
         for (size_t i = 0; i < buf.count; i++) {
@@ -77,6 +100,10 @@ namespace Gcode
         }
         if (stepCount > room) {
             return "queue full";
+        }
+        err = applyAssigns(parsed, *params_, source_);
+        if (err) {
+            return err;
         }
         if (ui) {
             interp_.setPosition(work.zDu(), work.xDu());

@@ -86,7 +86,6 @@ namespace Command::Detail
     void thread(const char *args, char *out, size_t outMax);
     void cal(const char *args, char *out, size_t outMax);
     void threads(const char *args, char *out, size_t outMax);
-    void probe(const char *args, char *out, size_t outMax);
 }
 
 #endif

@@ -1,0 +1,12 @@
+o<zero> sub
+(Rapid to work zero. #1: Z, #2: X; 1 = move that axis. Z goes first.)
+(Leaves G90 active.)
+(MSG, position)
+G90
+o100 if [#1]
+  G0 Z0
+o100 endif
+o101 if [#2]
+  G0 X0
+o101 endif
+o<zero> endsub

@@ -21,7 +21,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// Dialect-neutral G-code pieces: tokenizer, interpreted Step, Dialect
+// Dialect-neutral G-code pieces: words, interpreted Step, Dialect
 // interface. No Zephyr dependency; no heap allocation.
 namespace Gcode
 {
@@ -42,11 +42,6 @@ namespace Gcode
         Word words[MAX_WORDS];
         size_t count;
     };
-
-    // Splits one source line into words. Strips ';' and '(...)' comments,
-    // drops N<num> words and lines that are just "%". nullptr on success,
-    // else a static error string.
-    const char *tokenize(const char *text, Words &out);
 
     enum class StepKind : uint8_t
     {
@@ -101,8 +96,6 @@ namespace Gcode
         virtual ~Dialect()
         {}
     };
-
-    const char *interpretLine(Dialect &dialect, Interpreter &interp, const char *text, uint32_t lineNo, StepSink &sink);
 }
 
 #endif
