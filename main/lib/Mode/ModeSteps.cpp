@@ -22,6 +22,7 @@
 #include "Machine.hpp"
 #include "Mode.hpp"
 #include "Motion.hpp"
+#include "Pins.hpp"
 #include "ProbeInput.hpp"
 #include "Rpm.hpp"
 #include "Settings.hpp"
@@ -88,6 +89,15 @@ namespace
                 live = true;
                 return true;
             }
+            length = false;
+            if (!strcmp(name, "_has_x")) {
+                value = Stepper::unavailable(Stepper::Axis::X) ? 0 : 1;
+                return true;
+            }
+            if (!strcmp(name, "_has_probe")) {
+                value = Pins::unavailable(PinMap::Feature::Probe) ? 0 : 1;
+                return true;
+            }
             return Settings::paramValue(name, Settings::g_active, value, length);
         }
     };
@@ -105,7 +115,10 @@ namespace
             g_latched = false;
             g_probeAxis = axis;
             g_watch = away ? Watch::Release : Watch::Contact;
-            if (ProbeInput::contact() != away) {
+            const char *unavailable = Pins::unavailable(PinMap::Feature::Probe);
+            if (unavailable) {
+                error = unavailable;
+            } else if (ProbeInput::contact() != away) {
                 error = away ? "no contact" : "contact present";
             } else if (Stepper::moveTo(axis, m.mainTo, duPerMinToStepsPerSec(axis, s.feed)) != m.mainTo) {
                 error = clampReason(axis);

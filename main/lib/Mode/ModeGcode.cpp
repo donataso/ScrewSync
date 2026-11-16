@@ -18,9 +18,11 @@
 #include "ModeInternal.hpp"
 #include "ModeSteps.hpp"
 #include "GcodeDialects.hpp"
+#include "GcodeMeta.hpp"
 #include "GcodeProgram.hpp"
 #include "GcodeStore.hpp"
 #include "Events.hpp"
+#include "Pins.hpp"
 #include "Wcs.hpp"
 #include <stdio.h>
 #include <string.h>
@@ -34,6 +36,7 @@ namespace
 
     constexpr uint32_t LINES_PER_TICK = 64;
     constexpr size_t QUEUE_LEN = 4;
+    constexpr uint32_t PRESCAN_TICKS_MAX = 4096;
 
     enum class Phase : uint8_t
     {
@@ -104,6 +107,69 @@ namespace
         return g_error;
     }
 
+    const char *unavailableMove(const Gcode::Step &s, int32_t fromXDu)
+    {
+        const char *refusal = s.xDu != fromXDu ? Stepper::unavailable(Stepper::Axis::X) : nullptr;
+        if (!refusal && s.kind == Gcode::StepKind::Probe) {
+            refusal = Pins::unavailable(PinMap::Feature::Probe);
+        }
+        return refusal;
+    }
+
+    struct ScanSink : Gcode::StepSink
+    {
+        int32_t xDu;
+        const char *refusal = nullptr;
+
+        void emit(const Gcode::Step &s) override
+        {
+            switch (s.kind) {
+            case Gcode::StepKind::Rapid:
+            case Gcode::StepKind::Feed:
+            case Gcode::StepKind::Thread:
+            case Gcode::StepKind::Probe:
+                if (!refusal) {
+                    refusal = unavailableMove(s, xDu);
+                }
+                xDu = s.xDu;
+                break;
+            case Gcode::StepKind::SelectWcs:
+                xDu = s.xDu;
+                break;
+            case Gcode::StepKind::SetPosition:
+                if (s.axes & Gcode::AXIS_X) {
+                    xDu = s.xDu;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    };
+
+    const char *scanUnavailable(Gcode::Dialect *dialect, const char *text, size_t len, int32_t zDu, int32_t xDu)
+    {
+        const char *xRefusal = Stepper::unavailable(Stepper::Axis::X);
+        if (!xRefusal && !Pins::unavailable(PinMap::Feature::Probe)) {
+            return nullptr;
+        }
+        if (xRefusal && GcodeMeta::hasXWord(text, len)) {
+            return xRefusal;
+        }
+        static Gcode::Params params;
+        params.clear();
+        g_program.begin({dialect, &params, &paramSource(), &g_routines, true}, text, len, zDu, xDu, wcsState());
+        ScanSink sink;
+        sink.xDu = xDu;
+        for (uint32_t i = 0; i < PRESCAN_TICKS_MAX && !sink.refusal; i++) {
+            Gcode::Program::Status status = g_program.next(sink, LINES_PER_TICK);
+            if (status == Gcode::Program::Status::End || status == Gcode::Program::Status::Error) {
+                break;
+            }
+        }
+        return sink.refusal;
+    }
+
     const char *claimEnabled()
     {
         bool any = false;
@@ -157,11 +223,19 @@ namespace
                 return "no program loaded";
             }
         }
+        int32_t zDu = (int32_t)Wcs::position(Stepper::Axis::Z);
+        int32_t xDu = (int32_t)Wcs::position(Stepper::Axis::X);
+        GcodeStore::resetRoutines();
+        const char *refusal = scanUnavailable(dialect, text, len, zDu, xDu);
+        if (refusal) {
+            GcodeStore::resetRoutines();
+            return refusal;
+        }
         g_job = {};
         g_job.spindleGated = g_call == nullptr;
         GcodeStore::resetRoutines();
-        g_program.begin({dialect, &params(), &paramSource(), &g_routines, false, &g_printer}, text, len,
-                        (int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X), wcsState());
+        g_program.begin({dialect, &params(), &paramSource(), &g_routines, false, &g_printer}, text, len, zDu, xDu,
+                        wcsState());
         return nullptr;
     }
 
@@ -230,9 +304,16 @@ namespace
         case Gcode::StepKind::Feed:
         case Gcode::StepKind::Thread:
         case Gcode::StepKind::Probe:
+        {
+            const char *refusal = unavailableMove(s, (int32_t)Wcs::position(Stepper::Axis::X));
+            if (refusal) {
+                finish(refusal);
+                break;
+            }
             g_job.motion.begin(s, spindlePos);
             g_job.phase = Phase::Move;
             break;
+        }
         case Gcode::StepKind::Pause:
         case Gcode::StepKind::OptionalPause:
             g_job.pendingIndex++;

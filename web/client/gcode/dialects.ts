@@ -49,7 +49,7 @@ export function detectDialect(text: string): string | null {
   return REGISTRY.find((e) => e.detect(text))?.dialect.id() ?? null
 }
 
-function stripComments(text: string): string {
+export function stripComments(text: string): string {
   return text.replace(/\([^)\n]*\)?/g, "").replace(/;.*$/gm, "")
 }
 

@@ -102,6 +102,19 @@ namespace PinMap
     };
     constexpr size_t FN_COUNT = (size_t)Fn::Count;
 
+    enum class Feature : uint8_t
+    {
+        XMotor,
+        Homing,
+        Probe,
+        Count,
+    };
+    constexpr size_t FEATURE_COUNT = (size_t)Feature::Count;
+    constexpr uint8_t featureBit(Feature feature)
+    {
+        return (uint8_t)(1u << (uint8_t)feature);
+    }
+
     struct Board
     {
         const char *name;
@@ -198,6 +211,12 @@ namespace PinMap
     // nth assignment of fn, or nullptr.
     const Assignment *find(const Map &map, Fn fn, size_t nth = 0);
     size_t countOf(const Map &map, Fn fn);
+
+    uint8_t featuresOf(Fn fn);
+    const char *featureId(Feature feature);
+    const char *featureLabel(Feature feature);
+    bool wired(const Map &map, Feature feature);
+    bool removeFeatures(Map &map, uint8_t mask);
     bool add(Map &map, const Assignment &a);
 
     // GPIO of one signal, or -1.

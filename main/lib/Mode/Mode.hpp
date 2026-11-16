@@ -64,6 +64,7 @@ namespace Mode
     void begin();
 
     const char *name(Id id);
+    const char *unavailable(Id id);
     bool parse(const char *name, Id &out);
 
     Id current();

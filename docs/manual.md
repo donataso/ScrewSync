@@ -41,13 +41,32 @@ How to operate ScrewSync. For connectors and flashing, see
   its toggle, position, →0 button and jog buttons, and the jog step.
 - Tap the mode name to open the menu: the modes and Settings. The rest of
   the screen shows the page of the selected mode.
-- Settings on the display: units (mm/inch), pitch entry (Pitch/TPI), and
-  Network (Wi-Fi On/Off, Force AP, status, IP).
+- Settings on the display: units (mm/inch), pitch entry (Pitch/TPI),
+  Network (Wi-Fi On/Off, Force AP, status, IP), and the feature switches
+  (see [Features](#features)).
 - Header icons: estop, and with home switches, home and the work coordinate
   selector. See [Estop](#estop), [Homing](#homing) and
   [Work coordinates](#work-coordinates).
 - Tap a field to edit it on the numpad. Each mode keeps its values.
 - The display and the web client show the same state.
+
+## Features
+
+- The switches X motor, Homing and Probe are on the display (Settings) and
+  on the web client (Device page, Features). A feature works when its switch
+  is on and its function has pins (see [pins.md](pins.md)).
+- A change is saved at once and applies after a reboot. Turning a feature
+  off removes its functions from the saved pin map.
+- Without the X motor, the X column stays on the display, but the X toggle
+  stays off and the X jog buttons do nothing. The modes that need X
+  (Turn, Thread, Part, Slot, Ellipse) are hidden on the display and
+  the web client. The web client hides the X settings and checks.
+- Without homing, `home` is refused. Without the probe, the Probe mode is
+  hidden (it works without the X motor, on Z only) and the probe settings and checks are hidden on the web client.
+- A G-code program that has an X word needs the X motor. A program or
+  routine with G38 needs the probe. The web client does not send it, and the
+  lathe refuses to run it. A routine can read `#<_has_x>` and `#<_has_probe>`
+  to skip those parts. The built-in zero routine skips X without the X motor.
 
 ## Axes and jog
 

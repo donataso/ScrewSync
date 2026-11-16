@@ -77,16 +77,29 @@ namespace Settings
         bool requireHoming = false;
         int32_t bootState = 0;
 
+        bool xMotorEnabled = true;
+        bool homingEnabled = false;
+        bool probeEnabled = false;
+
         Axis z{20000, 1600, 500000, 100000, 250000, 10000000, true, false, 300, 0, 600, false, 100, 5000000, 250000, 20000, 20000, 0, 0, 0, 0, 0};
         Axis x{20000, 1600, 500000, 100000, 250000, 5000000, false, false, 100, 0, 600, false, 100, 2500000, 250000, 20000, 20000, 0, 0, 0, 0, 0};
     };
 
     extern Conf g_active;
 
-    constexpr size_t CONF_JSON_FIELDS = 53;
+    constexpr size_t CONF_JSON_FIELDS = 56;
     extern const struct json_obj_descr CONF_JSON_DESCR[CONF_JSON_FIELDS];
 
+    struct Wired
+    {
+        bool homing;
+        bool probe;
+    };
+
     void load();
+    void applyLoadedFeatureDefaults(const Wired &wired);
+    void applyFeatureDefaults(Conf &conf, int64_t mask, const Wired &wired);
+    void resetFeatures(Conf &conf, const Wired &wired);
     bool save();
     bool setByName(const char *name, const char *value, char *out, size_t outMax);
     void formatAll(char *out, size_t outMax);

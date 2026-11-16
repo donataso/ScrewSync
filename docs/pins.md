@@ -18,6 +18,9 @@ connector pin from the web client, Pins page. No rebuild.
 - You can only save when the machine is idle and the map has no errors.
 - Click a connector name to rename it for your wiring. An empty name sets
   the board's name back.
+- The editor hides the functions of a feature that is off (X motor,
+  homing, probe). Saving the settings with a feature off removes its
+  functions from the saved map. See [manual.md](manual.md#features).
 - Some functions can have more than one assignment, for example two Stop
   switches. Contact on any Probe input is contact.
 

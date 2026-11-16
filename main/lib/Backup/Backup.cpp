@@ -191,8 +191,12 @@ namespace Backup
         char *settingsJson;
         size_t settingsLen;
         bool hasSettings = JsonSpan::findObject(json, len, "settings", settingsJson, settingsLen);
-        if (hasSettings && Settings::parseJson(settingsJson, settingsLen, g_doc.settings) < 0) {
-            return "bad json";
+        int64_t settingsMask = 0;
+        if (hasSettings) {
+            settingsMask = Settings::parseJson(settingsJson, settingsLen, g_doc.settings);
+            if (settingsMask < 0) {
+                return "bad json";
+            }
         }
         int64_t mask = json_obj_parse(json, len, PARSE_DESCR, ARRAY_SIZE(PARSE_DESCR), &g_doc);
         if (mask < 0 || (mask == 0 && !hasSettings && !hasPins)) {
@@ -224,6 +228,13 @@ namespace Backup
                 snprintf(reason, sizeof(reason), "pins: %s", refusal);
                 return reason;
             }
+        }
+
+        if (hasSettings) {
+            Settings::Wired wired = hasPins ? Settings::Wired{PinMap::wired(g_pins, PinMap::Feature::Homing),
+                                                              PinMap::wired(g_pins, PinMap::Feature::Probe)}
+                                            : Pins::savedWired();
+            Settings::applyFeatureDefaults(g_doc.settings, settingsMask, wired);
         }
 
         // First, so that a failed save leaves everything unchanged.

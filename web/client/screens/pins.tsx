@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type KeyboardE
 import { fetchPinFunctions, fetchPins, savePins, sendCommand } from "../api"
 import { ArrowRightLeft, MapPinPlus, X } from "lucide-react"
 import { SaveBar, useFooterBar } from "../footer-bar"
+import { disabledFeatures, parseMachineConfig } from "../machine-config"
 import {
   CONNECTOR_NAME_MAX,
   STRAPPING_NOTE,
@@ -100,9 +101,12 @@ export function PinsScreen() {
   const [version, setVersion] = useState(0)
 
   async function load() {
-    const [doc, fns] = await Promise.all([fetchPins(), fetchPinFunctions()])
+    const [doc, fns, config] = await Promise.all([fetchPins(), fetchPinFunctions(), sendCommand("settings get")])
+    const disabled = config.status === "ok" ? disabledFeatures(parseMachineConfig(config.data)) : []
     const next = fromPinsJson(doc, fns)
-    const functions = [...next.board.functions].sort((a, b) => Number(b.id === "spindle") - Number(a.id === "spindle"))
+    const functions = next.board.functions
+      .filter((f) => !f.features?.some((id) => disabled.includes(id)))
+      .sort((a, b) => Number(b.id === "spindle") - Number(a.id === "spindle"))
     setLoaded({ ...next, board: { ...next.board, functions } })
     setVersion((v) => v + 1)
   }

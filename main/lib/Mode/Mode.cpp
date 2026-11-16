@@ -21,6 +21,7 @@
 #include "Events.hpp"
 #include "Homing.hpp"
 #include "Machine.hpp"
+#include "Pins.hpp"
 #include "Watchdog.hpp"
 #include "ModeSteps.hpp"
 #include "Wcs.hpp"
@@ -277,6 +278,9 @@ namespace Mode
                 RunSettings::loadModeParams(NAMES[i], OPS[i]->params, OPS[i]->paramsSize);
             }
         }
+        if (unavailable(current())) {
+            RunSettings::setMode(Id::Gear);
+        }
         Detail::mdiBegin();
         k_thread_create(&g_runnerThread, g_runnerStack, K_THREAD_STACK_SIZEOF(g_runnerStack), runnerLoop, nullptr,
                         nullptr, nullptr, K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
@@ -321,11 +325,25 @@ namespace Mode
         return ownedFlag(axis);
     }
 
+    const char *unavailable(Id id)
+    {
+        bool needsX = id == Id::Turn || id == Id::Thread || id == Id::Part || id == Id::Slot || id == Id::Ellipse;
+        const char *refusal = needsX ? Stepper::unavailable(Stepper::Axis::X) : nullptr;
+        if (!refusal && id == Id::Probe) {
+            refusal = Pins::unavailable(PinMap::Feature::Probe);
+        }
+        return refusal;
+    }
+
     const char *select(Id id)
     {
         Detail::Guard guard;
         if (g_active) {
             return "stop first";
+        }
+        const char *refusal = unavailable(id);
+        if (refusal) {
+            return refusal;
         }
         RunSettings::setMode(id);
         return nullptr;
@@ -335,6 +353,10 @@ namespace Mode
     {
         Detail::Guard guard;
         Id id = current();
+        const char *unavailableReason = unavailable(id);
+        if (unavailableReason) {
+            return unavailableReason;
+        }
         const Ops *ops = OPS[(size_t)id];
         if (!fromZero || g_active) {
             return startOps(id, ops);

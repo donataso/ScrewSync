@@ -140,6 +140,77 @@ namespace PinMap
         return n;
     }
 
+    uint8_t featuresOf(Fn fn)
+    {
+        constexpr uint8_t X = featureBit(Feature::XMotor);
+        constexpr uint8_t HOME = featureBit(Feature::Homing);
+        constexpr uint8_t PROBE = featureBit(Feature::Probe);
+        switch (fn) {
+        case Fn::XMotor:
+        case Fn::XHandwheel:
+        case Fn::SetZeroX:
+        case Fn::GoToZeroX:
+        case Fn::JogXPlus:
+        case Fn::JogXMinus:
+        case Fn::ModeTurn:
+        case Fn::ModeThread:
+        case Fn::ModePart:
+        case Fn::ModeSlot:
+        case Fn::ModeEllipse:
+            return X;
+        case Fn::XHome:
+            return X | HOME;
+        case Fn::ZHome:
+        case Fn::Home:
+            return HOME;
+        case Fn::Probe:
+        case Fn::ModeProbe:
+            return PROBE;
+        default:
+            return 0;
+        }
+    }
+
+    const char *featureId(Feature feature)
+    {
+        static const char *const IDS[FEATURE_COUNT] = {"xMotor", "homing", "probe"};
+        return IDS[(size_t)feature];
+    }
+
+    const char *featureLabel(Feature feature)
+    {
+        static const char *const LABELS[FEATURE_COUNT] = {"X motor", "homing", "probe"};
+        return LABELS[(size_t)feature];
+    }
+
+    bool wired(const Map &map, Feature feature)
+    {
+        switch (feature) {
+        case Feature::XMotor:
+            return find(map, Fn::XMotor) != nullptr;
+        case Feature::Homing:
+            return find(map, Fn::ZHome) || find(map, Fn::XHome);
+        default:
+            return find(map, Fn::Probe) != nullptr;
+        }
+    }
+
+    bool removeFeatures(Map &map, uint8_t mask)
+    {
+        size_t kept = 0;
+        for (size_t i = 0; i < map.count; i++) {
+            if (!(featuresOf(map.list[i].fn) & mask)) {
+                map.list[kept++] = map.list[i];
+            }
+        }
+        bool removed = kept != map.count;
+        for (size_t i = kept; i < map.count; i++) {
+            map.list[i] = {};
+        }
+        map.count = kept;
+        return removed;
+    }
+
     bool add(Map &map, const Assignment &a)
     {
         if (map.count >= MAX_ASSIGNMENTS) {

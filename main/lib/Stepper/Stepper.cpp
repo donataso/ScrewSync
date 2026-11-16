@@ -384,6 +384,11 @@ namespace Stepper
         k_spin_unlock(&s.lock, key);
     }
 
+    const char *unavailable(Axis axis)
+    {
+        return axis == Axis::X ? Pins::unavailable(PinMap::Feature::XMotor) : nullptr;
+    }
+
     bool isDisabled(Axis axis)
     {
         AxisState &s = stateOf(axis);

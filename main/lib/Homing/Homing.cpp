@@ -138,6 +138,10 @@ namespace Homing
         if (!Motion::idle()) {
             return "machine not idle";
         }
+        const char *unavailable = Pins::unavailable(PinMap::Feature::Homing);
+        if (unavailable) {
+            return unavailable;
+        }
         if (!HomeInput::sensors()) {
             return "no home switch";
         }

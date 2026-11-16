@@ -102,8 +102,12 @@ namespace
     const struct device *const GPIO0 = DEVICE_DT_GET(DT_NODELABEL(gpio0));
     const struct device *const GPIO1 = DEVICE_DT_GET(DT_NODELABEL(gpio1));
 
+    constexpr const char *DISABLED_TEXT[FEATURE_COUNT] = {"X motor disabled", "homing disabled", "probe disabled"};
+    constexpr const char *NOT_WIRED_TEXT[FEATURE_COUNT] = {"X motor not wired", "homing not wired", "probe not wired"};
+
     Board g_board;
     Map g_active;
+    uint8_t g_disabledFeatures = 0;
     Stored g_stored;
     bool g_defaults = false;
     char g_err[ERROR_MAX];
@@ -155,6 +159,17 @@ namespace
                 LOG_ERR("default pins of %s are not next to each other in one connector", def(d.fn).id);
             }
         }
+    }
+
+    uint8_t disabledFeatures(const Settings::Conf &conf)
+    {
+        return (conf.xMotorEnabled ? 0 : featureBit(Feature::XMotor)) | (conf.homingEnabled ? 0 : featureBit(Feature::Homing)) |
+               (conf.probeEnabled ? 0 : featureBit(Feature::Probe));
+    }
+
+    Settings::Wired wiredIn(const Map &map)
+    {
+        return {wired(map, Feature::Homing), wired(map, Feature::Probe)};
     }
 
     void warnIgnored(const char *msg)
@@ -247,7 +262,10 @@ namespace Pins
         if (g_defaults) {
             defaults(saved);
         }
+        Settings::applyLoadedFeatureDefaults(wiredIn(saved));
         keepValid(g_board, saved, g_active, warnIgnored);
+        g_disabledFeatures = disabledFeatures(Settings::g_active);
+        removeFeatures(g_active, g_disabledFeatures);
         updatePpr();
         for (size_t i = 0; i < g_active.count; i++) {
             if (checkEdgeRate(g_board, g_active.list[i], g_err, sizeof(g_err))) {
@@ -294,6 +312,39 @@ namespace Pins
     {
         const Assignment *a = find(g_active, fn);
         return a ? a->filterNs : 0;
+    }
+
+    const char *unavailable(Feature feature)
+    {
+        if (wired(g_active, feature)) {
+            return nullptr;
+        }
+        bool disabled = g_disabledFeatures & featureBit(feature);
+        return (disabled ? DISABLED_TEXT : NOT_WIRED_TEXT)[(size_t)feature];
+    }
+
+    void clearDisabledFeatures()
+    {
+        uint8_t disabled = disabledFeatures(Settings::g_active);
+        if (!disabled) {
+            return;
+        }
+        static Map saved;
+        if (!loadSaved(saved)) {
+            defaults(saved);
+        }
+        if (removeFeatures(saved, disabled)) {
+            save(saved);
+        }
+    }
+
+    Settings::Wired savedWired()
+    {
+        static Map saved;
+        if (!loadSaved(saved)) {
+            defaults(saved);
+        }
+        return wiredIn(saved);
     }
 
     bool usingDefaults()

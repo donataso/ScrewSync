@@ -112,6 +112,10 @@ What each mode does: `docs/features.md`. Display specifics:
   group starts empty. Flank and Spring are latching buttons. Passes,
   starts, taper and the latches use 3-column rows.
 - Probe: a panel, not a mode; `docs/probe.md`.
+- A mode that needs a missing feature (X motor, probe) is not in the menu.
+  The X column stays; with no X motor it shows X off, the X power button is refused and the
+  X jog buttons do nothing.
+- The Settings page has a toggle per feature (X motor, Homing, Probe).
 - Turn, Thread, Part and Ellipse have a spindle Fwd/Rev toggle.
 - Multi-pass modes show phase and pass n/m, and offer skip.
 - Every mode but Thread has a feed override row above

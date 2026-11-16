@@ -215,3 +215,20 @@ ZTEST(gcode_meta, test_program_file_id)
     zassert_false(GcodeMeta::programFileId("000001f.gc", 8, id));
     zassert_false(GcodeMeta::programFileId("0000001g.gc", 8, id));
 }
+
+ZTEST(gcode_meta, test_has_x_word)
+{
+    auto has = [](const char *text) {
+        return GcodeMeta::hasXWord(text, strlen(text));
+    };
+    zassert_true(has("G0 X5 Z2"));
+    zassert_true(has("g1 x-1.5"));
+    zassert_true(has("G1 X#1"));
+    zassert_true(has("G1 X [#1+1]"));
+    zassert_false(has("G0 Z5 (X5)"));
+    zassert_false(has("G0 Z5 ; X5"));
+    zassert_false(has("#<x> = 5\nG0 Z[#<x>]"));
+    zassert_false(has("o<xprobe> call [1]"));
+    zassert_false(has("M3 S100\nEXIT"));
+    zassert_true(has("(note)\nG0 X1"));
+}

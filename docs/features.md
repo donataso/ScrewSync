@@ -23,7 +23,7 @@
 - **Slot**: slot cutting with the spindle stopped.
 - **Ellipse**: quarter ellipse on the stock end, convex or concave.
 - **G-code**: see below.
-- **Probe**: see [probe.md](probe.md).
+- **Probe**: see [probe.md](probe.md). Needs only the probe, not the X motor.
 
 Multi-pass modes show the phase and pass number, and can skip a pass.
 
@@ -102,6 +102,16 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - A lost display link stops any running job or jog.
 - Firmware updates are refused while the machine is running.
 - Live feed override while running, in every cutting mode but Thread.
+
+## Feature switches
+
+- X motor, homing and probe can each be turned off, on the display or the
+  web client. A feature needs its switch on and its pins assigned.
+- A missing feature is hidden in the pin editor, the modes that need it and
+  the web client, and its commands are refused. The display keeps the X
+  column, with X off.
+- G-code with an X word (programs) or G38 is refused when that feature is
+  missing. Routines can skip parts with `#<_has_x>` and `#<_has_probe>`.
 
 ## Web client
 

@@ -53,7 +53,10 @@ namespace
 
     const char *startMode(int64_t)
     {
-        const char *refusal = claim(g_params.axis);
+        const char *refusal = Stepper::unavailable(g_params.axis);
+        if (!refusal) {
+            refusal = claim(g_params.axis);
+        }
         if (refusal) {
             return refusal;
         }

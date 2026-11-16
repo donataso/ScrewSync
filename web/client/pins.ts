@@ -47,6 +47,7 @@ export interface FunctionDef {
   filterUs: number
   /** Encoder top speed for the edge rate check. 0 = not checked. */
   maxRpm?: number
+  features?: string[]
 }
 
 export interface SignalOptions {
@@ -396,6 +397,7 @@ export interface PinFunctionsJson {
     encoders: EncoderType[]
     filterUs: number
     maxRpm?: number
+    features?: string[]
   }[]
 }
 
@@ -428,6 +430,7 @@ export function fromPinsJson(doc: PinsJson, fns: PinFunctionsJson): { board: Boa
       encoderTypes: f.encoders.length ? f.encoders : undefined,
       filterUs: f.filterUs,
       maxRpm: f.maxRpm,
+      features: f.features,
     })),
     name: doc.board.name,
     pcntUnits: doc.board.pcntUnits,

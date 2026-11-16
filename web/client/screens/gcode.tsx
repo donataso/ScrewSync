@@ -17,10 +17,11 @@ import { axesMismatched, flipMismatchedAxes, parseAxesHeader } from "../gcode/ax
 import { interpretLine, type Step, type StepSink } from "../gcode/core"
 import { detectDialect, find, list, ROUTINE_DIALECT, usesNgc } from "../gcode/dialects"
 import { Interpreter } from "../gcode/interpreter"
+import { unavailableReason } from "../gcode/needs"
 import { markLathecodeTravel } from "../gcode/lathecode"
 import { CANVAS_H, CANVAS_W, canvasToJpeg, computeMapping, drawPreview } from "../gcode/preview"
 import { useRouter } from "../router"
-import { CONFIGURE_LOCK_MESSAGE, useCanConfigure } from "../state-provider"
+import { CONFIGURE_LOCK_MESSAGE, useCanConfigure, useDeviceState } from "../state-provider"
 import { sendCommand } from "../api"
 import { cmd } from "../commands"
 import { Button, Field, LockNotice, Panel, Select, TextInput } from "../ui/primitives"
@@ -93,6 +94,7 @@ export function GcodeScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const canConfigure = useCanConfigure()
+  const { capabilities } = useDeviceState()
   const toast = useToast()
   const { path, navigate } = useRouter()
 
@@ -101,6 +103,7 @@ export function GcodeScreen() {
   const extents = useMemo(() => (parsed.error || parsed.ngc ? null : computeMapping(parsed.steps)), [parsed])
   const axesHeader = useMemo(() => parseAxesHeader(text), [text])
   const axesWrong = !!axesHeader && axesMismatched(axesHeader)
+  const unavailable = useMemo(() => unavailableReason(text, dialectId, capabilities), [text, dialectId, capabilities])
 
   function openProgram(programText: string, programName: string, programDialectId: string, savedId: string | null) {
     setSourceMode("paste")
@@ -377,8 +380,8 @@ navigate(ROUTE)
   const showDialect = list().length > 1
   const valid = !!text && !parsed.error && !!name.trim() && !!dialectId
   const changed = text !== savedText || name.trim() !== savedName || dialectId !== savedDialect
-  const canSave = canConfigure && !busy && valid && !axesWrong && (openedId === null || changed)
-  const canRun = canConfigure && !busy && valid && !axesWrong && dialectId !== ROUTINE_DIALECT
+  const canSave = canConfigure && !busy && valid && !axesWrong && !unavailable && (openedId === null || changed)
+  const canRun = canConfigure && !busy && valid && !axesWrong && !unavailable && dialectId !== ROUTINE_DIALECT
   const programs = listResult?.programs.filter((p) => p.dialect !== ROUTINE_DIALECT) ?? []
   const routines = listResult?.programs.filter((p) => p.dialect === ROUTINE_DIALECT) ?? []
 
@@ -526,6 +529,8 @@ navigate(ROUTE)
                   </Button>
                 </div>
               )}
+
+              {unavailable && <p className="text-sm text-destructive">{unavailable}</p>}
 
               {text &&
                 (parsed.ngc ? (

@@ -139,6 +139,10 @@ function setSettings(shown: number):
   vis wifiState,shown
   vis ipLabel,shown
   vis wifiIp,shown
+  vis featLabel,shown
+  vis featX,shown
+  vis featHome,shown
+  vis featProbe,shown
   if (!shown) {
     refreshPanel()
   }
@@ -151,6 +155,13 @@ function pickMode(name: text):
     mode.txt = modeName.txt
   }
   ref 0
+
+function toggleFeature(field: text, on: number):
+  if (on) {
+    send("settings set " + field + " off")
+  } else {
+    send("settings set " + field + " on")
+  }
 
 function setTpiEntry(on: number):
   tpiEntry.val = on
@@ -233,3 +244,15 @@ on apOn.up:
 
 on apOff.up:
   send("wifi ap off")
+
+on featX.up:
+  var on = featX.bco == COLOR_SELECTED ? 1 : 0
+  toggleFeature("xMotorEnabled", on)
+
+on featHome.up:
+  var on = featHome.bco == COLOR_SELECTED ? 1 : 0
+  toggleFeature("homingEnabled", on)
+
+on featProbe.up:
+  var on = featProbe.bco == COLOR_SELECTED ? 1 : 0
+  toggleFeature("probeEnabled", on)

@@ -99,6 +99,9 @@ namespace
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "probeOffsetDu", conf.probeOffsetDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "requireHoming", conf.requireHoming, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "bootState", conf.bootState, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "xMotorEnabled", conf.xMotorEnabled, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "homingEnabled", conf.homingEnabled, JSON_TOK_TRUE),
+        JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "probeEnabled", conf.probeEnabled, JSON_TOK_TRUE),
 
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "screwPitchDuZ", conf.z.screwPitchDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "motorStepsZ", conf.z.motorSteps, JSON_TOK_NUMBER),

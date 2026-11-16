@@ -31,7 +31,7 @@ namespace
     Board g_board;
     Map g_map;
     char g_err[ERROR_MAX];
-    char g_json[8192];
+    char g_json[16384];
 
     void addConnector(const char *id, const char *title, uint8_t row, uint8_t col, std::initializer_list<int16_t> pins)
     {
@@ -218,6 +218,22 @@ ZTEST(pin_map, test_home_input_defaults)
     zassert_is_null(z.action);
     zassert_equal(place(Fn::ZHome, {6}).options[0].invert, true);
     zassert_str_equal(def(Fn::Home).action, "home");
+}
+
+ZTEST(pin_map, test_remove_features)
+{
+    place(Fn::ZHome, {6});
+    place(Fn::XHome, {5});
+    zassert_true(wired(g_map, Feature::Homing));
+    zassert_true(removeFeatures(g_map, featureBit(Feature::Homing)));
+    zassert_false(wired(g_map, Feature::Homing));
+    zassert_true(wired(g_map, Feature::XMotor));
+    zassert_true(wired(g_map, Feature::Probe));
+    zassert_true(removeFeatures(g_map, featureBit(Feature::XMotor) | featureBit(Feature::Probe)));
+    zassert_false(wired(g_map, Feature::XMotor));
+    zassert_false(wired(g_map, Feature::Probe));
+    zassert_false(removeFeatures(g_map, featureBit(Feature::XMotor)));
+    zassert_is_null(check(), "%s", g_err);
 }
 
 ZTEST(pin_map, test_exclusive_and_multiple)

@@ -21,6 +21,7 @@
 #include "HomeInput.hpp"
 #include "JogStep.hpp"
 #include "Machine.hpp"
+#include "Settings.hpp"
 #include "Wifi.hpp"
 #include "display_config.hpp"
 #include <ctype.h>
@@ -296,6 +297,14 @@ namespace
         }
     }
 
+    void pushFeatures()
+    {
+        const Settings::Conf &conf = Settings::g_active;
+        pushSelected("featX", conf.xMotorEnabled);
+        pushSelected("featHome", conf.homingEnabled);
+        pushSelected("featProbe", conf.probeEnabled);
+    }
+
     void pushWifi()
     {
         Wifi::Mode m = Wifi::mode();
@@ -347,6 +356,7 @@ namespace Display::Detail
         pushEstop();
         pushHome(s);
         pushWifi();
+        pushFeatures();
     }
 
     void pushSoon()

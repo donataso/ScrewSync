@@ -25,7 +25,11 @@ export function SettingsScreen() {
   const canConfigure = useCanConfigure()
   const toast = useToast()
   const { state, capabilities } = useDeviceState()
-  const sections = sectionsForCapabilities(sectionsInUnits(state?.units ?? "mm"), capabilities?.has_endstops ?? false)
+  const hasX = capabilities?.has_x_motor ?? false
+  const sections = sectionsForCapabilities(sectionsInUnits(state?.units ?? "mm"), {
+    has_endstops: capabilities?.has_endstops ?? false,
+    has_probe: capabilities?.has_probe ?? false,
+  })
 
   async function load() {
     setLoading(true)
@@ -151,7 +155,7 @@ toast.push("Applied and saved to flash.", "good")
                   ))}
                 </div>
               )}
-              {section.pairs && <AxisGrid pairs={section.pairs} title={section.pairsTitle} valueOf={valueOf} onChange={setField} />}
+              {section.pairs && <AxisGrid pairs={section.pairs} title={section.pairsTitle} hasX={hasX} valueOf={valueOf} onChange={setField} />}
             </div>
           </Panel>
           ))}
@@ -205,11 +209,13 @@ const SUBTITLE = "text-xs font-semibold uppercase tracking-wide text-muted-foreg
 function AxisGrid({
   pairs,
   title,
+  hasX,
   valueOf,
   onChange,
 }: {
   pairs: MachineConfigPair[]
   title?: string
+  hasX: boolean
   valueOf: (field: MachineConfigField) => Value
   onChange: (field: MachineConfigField, v: Value) => void
 }) {
@@ -241,15 +247,14 @@ function AxisGrid({
   }
   return (
     <div className="relative">
-      <div className="absolute inset-y-0 left-1/2 hidden border-l border-border md:block" />
+      {hasX && <div className="absolute inset-y-0 left-1/2 hidden border-l border-border md:block" />}
       <div className={GRID}>
         <div className={`col-span-2 hidden md:block ${SUBTITLE}`}>{title ? `Z axis ${title}` : "Z axis"}</div>
-        <div className={`col-span-2 hidden md:block ${SUBTITLE}`}>{title ? `X axis ${title}` : "X axis"}</div>
+        {hasX && <div className={`col-span-2 hidden md:block ${SUBTITLE}`}>{title ? `X axis ${title}` : "X axis"}</div>}
         {rows.flatMap((r, i) => [
           cell(r[0], "Z", `z0-${i}`),
           cell(r[1], "Z", `z1-${i}`),
-          cell(r[0], "X", `x0-${i}`),
-          cell(r[1], "X", `x1-${i}`),
+          ...(hasX ? [cell(r[0], "X", `x0-${i}`), cell(r[1], "X", `x1-${i}`)] : []),
         ])}
       </div>
     </div>

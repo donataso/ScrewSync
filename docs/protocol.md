@@ -37,6 +37,21 @@ replies; see `docs/screen.md`.
 - Homing settings, per axis (suffix `Z` or `X`): `homeFastDuPerMin`,
   `homeSlowDuPerMin` (du/min), `homeLatchBackOffDu`, `homePullOffDu`,
   `homePositionDu` (du). Global: `requireHoming` (bool).
+- Feature switches (bool): `xMotorEnabled`, `homingEnabled`, `probeEnabled`.
+  A capability is its switch on and its function wired. A change applies
+  after a reboot. Saving settings removes the functions of a feature that
+  is off from the saved pin map.
+- A switch that is missing from the saved settings, from a `settings reset`
+  or from a backup is set at load: `xMotorEnabled` on; `homingEnabled` and
+  `probeEnabled` on if their function is wired, else off. In a backup that
+  has `pins`, the wiring is read from those pins, else from the saved pin map.
+- A command that needs a missing capability gets `err <feature> disabled`
+  (switch off) or `err <feature> not wired` (switch on, no function), with
+  `<feature>` = `X motor`, `homing` or `probe`. This covers `power on x`,
+  X jogs, X moves in MDI, `home`, and the modes that need X (`turn`,
+  `thread`, `part`, `slot`, `ellipse`) or the probe (`probe`).
+- At boot, a saved mode that needs a missing capability is replaced by
+  `gear`.
 - `bootState`: the state at power-on. `0` estop, `1` estop off with motors
   off, `2` estop off with motors on. Other restarts and an active estop
   input give estop.
@@ -55,14 +70,17 @@ replies; see `docs/screen.md`.
   `err busy: flashing`. While an estop input is active, `estop off` gets
   `err busy: estop input active`.
 - `home`: homes X (if the X motor exists), then Z. It is refused unless the
-  machine is idle, without a home input (`err no home switch`) and while an
+  machine is idle, without the homing capability, without a home input
+  (`err no home switch`) and while an
   axis is off. `stop` ends it. A failure shows in `error` and the axis is not
   homed.
 - While `requireHoming` is on, with home switches, and an axis is not homed:
   `start`, `jog`, `o<...>` calls and MDI lines with a move get `err not homed`.
   G-code that does not move (G54–G59, `G10 L20`) runs.
 - `power on|off [z|x]`: turns the motors on or off, both axes without an
-  axis. `power on` gets `err busy: estop` in estop.
+  axis. `power on` gets `err busy: estop` in estop. `power on x` gets the
+  X motor error when the X motor capability is missing; the `status` push
+  then has `enabled` false for X.
 
 ## MDI
 
@@ -115,7 +133,8 @@ replies; see `docs/screen.md`.
     `DuPerMin` and `DuPerSec2` dropped (`probeFeedDuPerMin` is
     `#<_probe_feed>`).
     Those values read in program units. `#<_probe_contact>`: the live probe
-    input. All read-only.
+    input. `#<_has_x>` and `#<_has_probe>`: 1 or 0, the X motor and probe
+    capabilities (same as `has_x_motor` and `has_probe`). All read-only.
   - Parameters keep their values until reboot. MDI and jobs share them.
   - `[...]` expressions: `**`, `* / MOD`, `+ -`, `EQ NE GT GE LT LE`,
     `AND OR XOR`, in that precedence; `ABS ACOS ASIN COS EXP FIX FUP ROUND
@@ -138,6 +157,14 @@ replies; see `docs/screen.md`.
 - `o<name> call [<arg>]...` as a command runs that routine as a G-code
   job, whatever the selected mode. Refused while a job or MDI runs. Its
   G0/G1 moves do not wait for the spindle. Claims only the enabled axes.
+  Without the X motor capability, a job is refused before any move if
+  the program text or the call line has an X word (outside comments and
+  `<names>`, any case, moving or not). Stored routines are not checked by
+  text. A dry run of the job, with `#<_has_x>` at 0, refuses an X move in
+  a routine that is not guarded; a guarded part is skipped. A move of X
+  that a run-time value causes stops the job at that move. A job with a
+  G38 move is refused without the probe capability.
+- The built-in `o<zero>` skips its X move without the X motor capability.
 - Built-in routines (axis 0 = Z, 1 = X; dir -1 or 1):
   - `o<probe> call [<axis>] [<dir>]`: the touch-off cycle; see
     `docs/probe.md`.
@@ -196,16 +223,20 @@ replies; see `docs/screen.md`.
 ## Pin map (HTTP)
 
 - `GET /pins`: the board and the saved map.
-- `GET /pins/functions`: the function table.
+- `GET /pins/functions`: the function table. Each function has `features`:
+  the features it belongs to (`xMotor`, `homing`, `probe`). The pin editor
+  hides the functions of a feature that is off.
 - `POST /pins`: validates and saves a map. Refused unless idle. Applies
   after a reboot.
 
 ## Capabilities (HTTP)
 
 - `GET /capabilities`: `{"has_x_motor":bool,"has_endstops":bool,
-  "has_probe":bool}`, from the pin map in use. `has_x_motor`: an X motor is
-  assigned. `has_endstops`: a home input is assigned. `has_probe`: a probe
-  input is assigned.
+  "has_probe":bool}`, from the pin map in use. A capability is its switch on
+  and its function wired. `has_x_motor`: the X motor switch is on and an X
+  motor is assigned. `has_endstops`: the homing switch is on and a home
+  input is assigned. `has_probe`: the probe switch is on and a probe input
+  is assigned.
 
 ## Backup (HTTP)
 
@@ -214,6 +245,8 @@ replies; see `docs/screen.md`.
   "threads":{...}, "pins":{...}}`. `settings` is the `settings` push's
   fields, `threads` the `/threads` shape, `params` the `<mode> status`
   line, `pins` the `GET /pins` shape.
+- A `settings` section without a feature switch gets the default of a
+  missing switch (see "Requests").
 - `POST /backup`: refused unless idle. Every section present is validated
   first, then all are applied; absent sections and fields keep their current
   values. `pins` is saved only if it differs from the saved map, and applies
@@ -249,6 +282,15 @@ replies; see `docs/screen.md`.
   null if unsaved, `steps` = motion moves, null if unknown).
 - `GET /gcode/program?id=` / `GET /gcode/active`: program text.
   `POST /gcode/delete?id=`.
+- The web client does not send or upload a program that has an X word when
+  `has_x_motor` is false, or a program or routine that has G38 when
+  `has_probe` is false. A routine with an X word is sent. It shows the
+  reason instead.
+- `start` and `o<...> call` check the program text or call line, and dry
+  run the job, before any move: an X word or an unguarded X move without
+  the X motor capability gets `err X motor disabled` or `err X motor not wired`; a G38
+  move without the probe capability gets `err probe disabled` or
+  `err probe not wired`.
 - Anything that would change the active program is refused while a G-code
   job runs.
 - `POST /display-preview?ox=&oy=&s=`: baseline JPEG for the display's

@@ -81,6 +81,11 @@ namespace
             snprintf(out, outMax, "err power on|off [z|x]");
             return;
         }
+        const char *unavailable = *axisTok && x ? Stepper::unavailable(Stepper::Axis::X) : nullptr;
+        if (unavailable) {
+            snprintf(out, outMax, "err %s", unavailable);
+            return;
+        }
         if (on && Machine::state() == Machine::State::EStop) {
             snprintf(out, outMax, "err busy: estop");
             return;

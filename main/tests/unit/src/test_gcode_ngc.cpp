@@ -31,6 +31,7 @@ namespace
     struct Source : ParamSource
     {
         double contact = 0;
+        double hasX = 1;
         bool get(const char *name, double &value, bool &length, bool &live) override
         {
             length = false;
@@ -38,6 +39,10 @@ namespace
             if (!strcmp(name, "_probe_feed")) {
                 value = 30 * DU_PER_MM;
                 length = true;
+                return true;
+            }
+            if (!strcmp(name, "_has_x") || !strcmp(name, "_has_probe")) {
+                value = hasX;
                 return true;
             }
             if (!strcmp(name, "_probe_contact")) {
@@ -459,7 +464,8 @@ ZTEST(gcode_ngc, test_builtin_zero)
     Collect sink;
     const char *call = "o<zero> call [1] [1]";
     g_params.clear();
-    program.begin({find("linuxcnc"), &g_params, nullptr, &routines, false}, call, strlen(call), 5 * DU_PER_MM,
+    Source source;
+    program.begin({find("linuxcnc"), &g_params, &source, &routines, false}, call, strlen(call), 5 * DU_PER_MM,
                   2 * DU_PER_MM);
     while (program.next(sink, 1000) == Program::Status::Steps) {
     }
@@ -468,6 +474,15 @@ ZTEST(gcode_ngc, test_builtin_zero)
     zassert_equal(sink.steps[0].xDu, 2 * DU_PER_MM);
     zassert_equal(sink.steps[1].xDu, 0);
     zassert_str_equal(program.message(), "position");
+
+    Collect skipped;
+    source.hasX = 0;
+    g_params.clear();
+    program.begin({find("linuxcnc"), &g_params, &source, &routines, false}, call, strlen(call), 5 * DU_PER_MM,
+                  2 * DU_PER_MM);
+    while (program.next(skipped, 1000) == Program::Status::Steps) {
+    }
+    zassert_equal(skipped.count, 1);
 }
 
 ZTEST(gcode_ngc, test_builtin_backlash)

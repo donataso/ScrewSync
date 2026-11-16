@@ -47,6 +47,7 @@ namespace Stepper
     // persisted/boot-restored form.
     void setDisabled(Axis axis, bool disabled);
     bool isDisabled(Axis axis);
+    const char *unavailable(Axis axis);
 
     // True while the axis is actually energized (held for a mode, mid-move,
     // or both), false while released or manually disabled.

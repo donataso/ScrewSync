@@ -83,6 +83,10 @@ namespace
             }
             s.axes = (s.zDu != z ? Gcode::AXIS_Z : 0) | (s.xDu != x ? Gcode::AXIS_X : 0);
             for (Stepper::Axis axis : AXES) {
+                const char *unavailable = (s.axes & bit(axis)) ? Stepper::unavailable(axis) : nullptr;
+                if (unavailable) {
+                    return unavailable;
+                }
                 if (!Stepper::isDisabled(axis)) {
                     claim(axis);
                 } else if (s.axes & bit(axis)) {

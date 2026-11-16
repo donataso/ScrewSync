@@ -19,6 +19,7 @@
 #define Pins_h
 
 #include "PinMap.hpp"
+#include "Settings.hpp"
 #include <stddef.h>
 #include <zephyr/drivers/gpio.h>
 
@@ -37,6 +38,10 @@ namespace Pins
     PinMap::Encoder encoder(PinMap::Fn fn);
     int pcntUnit(PinMap::Fn fn);
     uint32_t filterNs(PinMap::Fn fn);
+
+    const char *unavailable(PinMap::Feature feature);
+    void clearDisabledFeatures();
+    Settings::Wired savedWired();
 
     bool usingDefaults();
     // Why the active map is missing a required function, or nullptr.

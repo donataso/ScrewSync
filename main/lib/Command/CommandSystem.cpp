@@ -54,6 +54,7 @@ namespace Command::Detail
         Settings::Conf before = Settings::g_active;
         if (!strcmp(a, "reset")) {
             Settings::g_active = Settings::Conf{};
+            Settings::resetFeatures(Settings::g_active, Pins::savedWired());
             Settings::save();
             snprintf(out, outMax, "ok reset");
         } else if (!strncmp(a, "set ", 4)) {

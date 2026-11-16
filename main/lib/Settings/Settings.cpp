@@ -19,6 +19,7 @@
 #include "SettingsFields.hpp"
 #include "PersistBlob.hpp"
 #include "Events.hpp"
+#include "Pins.hpp"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,6 +33,30 @@ namespace
     using Settings::Field;
     using Settings::FieldType;
     using Settings::g_active;
+
+    int64_t g_loadedMask = 0;
+
+    struct Switch
+    {
+        const char *name;
+        bool Settings::Conf::*value;
+    };
+
+    constexpr Switch SWITCHES[] = {
+        {"xMotorEnabled", &Settings::Conf::xMotorEnabled},
+        {"homingEnabled", &Settings::Conf::homingEnabled},
+        {"probeEnabled", &Settings::Conf::probeEnabled},
+    };
+
+    size_t switchIndex(size_t n)
+    {
+        return (size_t)(Settings::findField(SWITCHES[n].name) - Settings::FIELDS);
+    }
+
+    bool switchDefault(size_t n, const Settings::Wired &wired)
+    {
+        return n == 0 || (n == 1 ? wired.homing : wired.probe);
+    }
 
     bool loadKey(const char *key, const Field &f)
     {
@@ -85,24 +110,26 @@ namespace
         return false;
     }
 
-    void loadField(const Field &f)
+    bool loadField(const Field &f)
     {
         if (loadKey(f.name, f)) {
-            return;
+            return true;
         }
         const char *old;
         for (size_t i = 0; (old = Settings::oldName(f, i)); i++) {
             if (loadKey(old, f)) {
                 Settings::convertLegacy(f, g_active);
                 saveField(f);
-                return;
+                return true;
             }
         }
+        return false;
     }
 
     void applyChanged()
     {
         Settings::deriveSteps(g_active);
+        Pins::clearDisabledFeatures();
         Events::SettingsChanged msg = {};
         Events::publish(&SETTINGS_CHAN, &msg);
     }
@@ -114,10 +141,37 @@ namespace Settings
 
     void load()
     {
-        for (const Field &f : FIELDS) {
-            loadField(f);
+        g_loadedMask = 0;
+        for (size_t i = 0; i < CONF_JSON_FIELDS; i++) {
+            if (loadField(FIELDS[i])) {
+                g_loadedMask |= (int64_t)BIT64(i);
+            }
         }
         deriveSteps(g_active);
+    }
+
+    void applyFeatureDefaults(Conf &conf, int64_t mask, const Wired &wired)
+    {
+        for (size_t n = 0; n < ARRAY_SIZE(SWITCHES); n++) {
+            if (!(mask & (int64_t)BIT64(switchIndex(n)))) {
+                conf.*SWITCHES[n].value = switchDefault(n, wired);
+            }
+        }
+    }
+
+    void resetFeatures(Conf &conf, const Wired &wired)
+    {
+        applyFeatureDefaults(conf, 0, wired);
+    }
+
+    void applyLoadedFeatureDefaults(const Wired &wired)
+    {
+        applyFeatureDefaults(g_active, g_loadedMask, wired);
+        for (size_t n = 0; n < ARRAY_SIZE(SWITCHES); n++) {
+            if (!(g_loadedMask & (int64_t)BIT64(switchIndex(n)))) {
+                saveField(FIELDS[switchIndex(n)]);
+            }
+        }
     }
 
     bool save()

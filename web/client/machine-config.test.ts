@@ -174,8 +174,8 @@ describe("speeds and accelerations", () => {
 })
 
 describe("sections without end stops", () => {
-  const keys = (hasEndstops: boolean, units: "mm" | "inch" = "mm") =>
-    configFields(sectionsForCapabilities(sectionsInUnits(units), hasEndstops)).map((f) => f.key)
+  const keys = (hasEndstops: boolean, units: "mm" | "inch" = "mm", hasProbe = true) =>
+    configFields(sectionsForCapabilities(sectionsInUnits(units), { has_endstops: hasEndstops, has_probe: hasProbe })).map((f) => f.key)
 
   it("hide the max travel, the homing fields and require homing", () => {
     const hidden = keys(false)
@@ -184,6 +184,13 @@ describe("sections without end stops", () => {
     }
     expect(hidden).toContain("speedRapidDuPerMinZ")
     expect(hidden).toContain("probeFeedDuPerMin")
+  })
+
+  it("hide the probe fields without a probe", () => {
+    const hidden = keys(true, "mm", false)
+    expect(hidden).not.toContain("probeFeedDuPerMin")
+    expect(hidden).not.toContain("probePolarityNc")
+    expect(hidden).toContain("speedRapidDuPerMinZ")
   })
 
   it("keep every field with end stops", () => {

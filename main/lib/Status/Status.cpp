@@ -31,7 +31,7 @@ namespace
 
     Status::Axis axisStatus(Stepper::Axis axis)
     {
-        return {Wcs::position(axis), Stepper::isMoving(axis), !Stepper::isDisabled(axis), Homing::homed(axis)};
+        return {Wcs::position(axis), Stepper::isMoving(axis), !Stepper::isDisabled(axis) && !Stepper::unavailable(axis), Homing::homed(axis)};
     }
 }
 

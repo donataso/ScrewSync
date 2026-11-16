@@ -1,3 +1,5 @@
+import type { Capabilities } from "./types"
+
 export interface MachineConfigField {
   key: string
   label: string
@@ -30,6 +32,7 @@ export interface MachineConfigSection {
   pairs?: MachineConfigPair[]
   pairsTitle?: string
   needsEndstops?: boolean
+  needsProbe?: boolean
 }
 
 const DU_PER_MM = 10000
@@ -378,6 +381,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
   },
   {
     title: "Probe",
+    needsProbe: true,
     fields: [
       {
         key: "probeFeedDuPerMin",
@@ -495,9 +499,23 @@ return display ? "1" : "0"
   return String(field.scale ? Math.round(n * field.scale) : n)
 }
 
-export function sectionsForCapabilities(sections: MachineConfigSection[], hasEndstops: boolean): MachineConfigSection[] {
-  if (hasEndstops) {
-    return sections
+export function sectionsForCapabilities(
+  sections: MachineConfigSection[],
+  capabilities: Pick<Capabilities, "has_endstops" | "has_probe">,
+): MachineConfigSection[] {
+  const shown = sections.filter((s) => (capabilities.has_endstops || !s.needsEndstops) && (capabilities.has_probe || !s.needsProbe))
+  if (capabilities.has_endstops) {
+    return shown
   }
-  return sections.filter((s) => !s.needsEndstops).map((s) => ({ ...s, pairs: s.pairs?.filter((p) => !p.needsEndstops) }))
+  return shown.map((s) => ({ ...s, pairs: s.pairs?.filter((p) => !p.needsEndstops) }))
+}
+
+export const FEATURES = [
+  { id: "xMotor", key: "xMotorEnabled", label: "X motor", help: "The X axis motor and the modes that need it." },
+  { id: "homing", key: "homingEnabled", label: "Homing", help: "The home inputs and homing." },
+  { id: "probe", key: "probeEnabled", label: "Probe", help: "The probe input and the probe." },
+]
+
+export function disabledFeatures(raw: Record<string, string>): string[] {
+  return FEATURES.filter((f) => raw[f.key] === "false").map((f) => f.id)
 }

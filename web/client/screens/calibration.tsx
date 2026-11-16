@@ -41,6 +41,7 @@ export function CalibrationScreen() {
   const [raw, setRaw] = useState<Raw | null>(null)
   const canConfigure = useCanConfigure()
   const toast = useToast()
+  const { capabilities } = useDeviceState()
 
   async function load() {
     const outcome = await sendCommand("settings get")
@@ -66,7 +67,13 @@ export function CalibrationScreen() {
     }
   }
 
-  const props = { raw, apply, canConfigure }
+  const props = {
+    raw,
+    apply,
+    canConfigure,
+    hasX: capabilities?.has_x_motor ?? false,
+    hasProbe: capabilities?.has_probe ?? false,
+  }
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-lg font-semibold">Calibration</h1>
@@ -77,12 +84,12 @@ export function CalibrationScreen() {
         </Panel>
       ) : (
         <>
-          <ProbePolarity {...props} />
+          {props.hasProbe && <ProbePolarity {...props} />}
           <SpindleDirection {...props} />
           <EncoderPpr {...props} />
           <AxisDirection {...props} />
           <StepsPerMm {...props} />
-          <Backlash {...props} />
+          {props.hasProbe && <Backlash {...props} />}
         </>
       )}
     </div>
@@ -93,6 +100,8 @@ interface CheckProps {
   raw: Raw | null
   apply: (key: string, value: string) => Promise<void>
   canConfigure: boolean
+  hasX: boolean
+  hasProbe: boolean
 }
 
 function Suggestion({
@@ -292,7 +301,7 @@ function AxisDirection(props: CheckProps) {
       <p className="mb-3 text-sm text-muted-foreground">Move each axis, then select which way it moved.</p>
       <div className="flex flex-col gap-4">
         <AxisDirectionRow axis="Z" {...props} />
-        <AxisDirectionRow axis="X" {...props} />
+        {props.hasX && <AxisDirectionRow axis="X" {...props} />}
       </div>
     </Panel>
   )
@@ -360,7 +369,7 @@ function StepsPerMm(props: CheckProps) {
       </p>
       <div className="flex flex-col gap-4">
         <StepsPerMmRow axis="Z" {...props} />
-        <StepsPerMmRow axis="X" {...props} />
+        {props.hasX && <StepsPerMmRow axis="X" {...props} />}
       </div>
     </Panel>
   )
@@ -486,7 +495,7 @@ function Backlash(props: CheckProps) {
       </p>
       <div className="flex flex-col gap-4">
         <BacklashRow axis="Z" {...props} />
-        <BacklashRow axis="X" {...props} />
+        {props.hasX && <BacklashRow axis="X" {...props} />}
       </div>
     </Panel>
   )

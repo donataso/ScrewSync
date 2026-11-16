@@ -73,9 +73,15 @@ namespace
         if (g_tapered && g.axis != Stepper::Axis::Z) {
             return "taper needs axis z";
         }
-        const char *refusal = claim(g.axis);
+        const char *refusal = Stepper::unavailable(g.axis);
+        if (!refusal) {
+            refusal = claim(g.axis);
+        }
         if (!refusal && g_tapered) {
-            refusal = claim(Stepper::Axis::X);
+            refusal = Stepper::unavailable(Stepper::Axis::X);
+            if (!refusal) {
+                refusal = claim(Stepper::Axis::X);
+            }
         }
         if (refusal) {
             return refusal;

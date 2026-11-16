@@ -146,6 +146,10 @@ namespace Jog
 
     const char *tap(Stepper::Axis axis, int direction)
     {
+        const char *unavailable = Stepper::unavailable(axis);
+        if (unavailable) {
+            return unavailable;
+        }
         if (Stepper::isDisabled(axis)) {
             return "axis disabled";
         }
@@ -166,6 +170,10 @@ namespace Jog
 
     const char *hold(Stepper::Axis axis, int direction)
     {
+        const char *unavailable = Stepper::unavailable(axis);
+        if (unavailable) {
+            return unavailable;
+        }
         if (Stepper::isDisabled(axis)) {
             return "axis disabled";
         }

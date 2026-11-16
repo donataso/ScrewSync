@@ -147,6 +147,14 @@ User side: [pins.md](pins.md).
   mode under the mode lock; every mode-driven move goes through
   `Stepper::moveTo()` with a speed cap (synced and rapid moves use the
   axis's rapid speed).
+- A feature (X motor, homing, probe) is available when its settings switch
+  is on and its function is in the active pin map. `Pins::unavailable`,
+  `Stepper::unavailable` and `Mode::unavailable` give the refusal text.
+  `Pins` removes the functions of a switch that is off from the active map
+  at load, and `Settings` removes them from the saved map on save. The G-code
+  runner scans a program or routine call before the first move and checks
+  each move again before it starts. `Status` reports an unavailable axis as
+  not enabled.
 - A running mode owns the axes it drives. Any jog on an owned axis
   (handwheel, display button, `jog` command) stops the mode, then moves.
 - MDI lines run on the G-code step runner when no mode runs, and own both

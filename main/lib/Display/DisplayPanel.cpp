@@ -160,15 +160,20 @@ namespace Display::Detail
     void pushMenu(Mode::Id current)
     {
         char key[KEY_MAX];
+        size_t next = 0;
         for (size_t i = 0; i < MENU_SLOTS; i++) {
-            bool used = i < Mode::COUNT;
+            while (next < Mode::COUNT && Mode::unavailable((Mode::Id)next)) {
+                next++;
+            }
+            bool used = next < Mode::COUNT;
+            Mode::Id id = (Mode::Id)next;
             snprintf(key, sizeof(key), "menu%u.txt", (unsigned)i);
-            pushText(key, "%s", used ? ModeCells::label((Mode::Id)i) : "");
+            pushText(key, "%s", used ? ModeCells::label(id) : "");
             snprintf(key, sizeof(key), "menuCmd%u.txt", (unsigned)i);
-            pushText(key, "%s", used ? Mode::name((Mode::Id)i) : "");
+            pushText(key, "%s", used ? Mode::name(id) : "");
             snprintf(key, sizeof(key), "menu%u", (unsigned)i);
-            bool selected = used && i == (size_t)current;
-            bool probe = used && (Mode::Id)i == Mode::Id::Probe;
+            bool selected = used && id == current;
+            bool probe = used && id == Mode::Id::Probe;
             int color = COLOR_BUTTON;
             if (selected) {
                 color = COLOR_SELECTED;
@@ -176,6 +181,7 @@ namespace Display::Detail
                 color = COLOR_SETTINGS;
             }
             pushColor(key, "bco", color);
+            next += used;
         }
     }
 }

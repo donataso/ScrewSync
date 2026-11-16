@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { downloadBackup, fetchDeviceLog, sendCommand, uploadBackup, uploadDisplay, uploadFirmware } from "../api"
 import { cmd } from "../commands"
+import { FEATURES, parseMachineConfig } from "../machine-config"
 import { CONFIGURE_LOCK_MESSAGE, useCanConfigure } from "../state-provider"
 import { Button, LockNotice, Panel, Toggle } from "../ui/primitives"
 import { useToast } from "../ui/toast"
@@ -36,6 +37,30 @@ export function DeviceScreen() {
   const [displayProgress, setDisplayProgress] = useState<number | null>(null)
   const [storedDisplay, setStoredDisplay] = useState<StoredDisplay | null | undefined>(undefined)
   const displayInputRef = useRef<HTMLInputElement>(null)
+  const [features, setFeatures] = useState<Record<string, boolean> | null>(null)
+
+  async function loadFeatures() {
+    const outcome = await sendCommand("settings get")
+    if (outcome.status === "ok") {
+      const raw = parseMachineConfig(outcome.data)
+      setFeatures(Object.fromEntries(FEATURES.map((f) => [f.key, raw[f.key] !== "false"])))
+    }
+  }
+
+  async function setFeature(key: string, on: boolean) {
+    setBusy(true)
+    try {
+      const outcome = await sendCommand(`settings set ${key} ${on ? "on" : "off"}`)
+      if (outcome.status === "ok") {
+        setFeatures((f) => ({ ...f, [key]: on }))
+        toast.push("Saved. Reboot to apply.", "good")
+      } else {
+        toast.push(outcome.status === "denied" ? `Denied: ${outcome.msg}` : "No reply from device.", "bad")
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function loadDisplayInfo() {
     const outcome = await sendCommand(cmd.displayInfo())
@@ -46,6 +71,7 @@ setStoredDisplay(parseDisplayInfo(String((outcome.data as { msg?: string })?.msg
 
   useEffect(() => {
     loadDisplayInfo()
+    loadFeatures()
   }, [])
 
   async function uploadDisplayFile() {
@@ -189,6 +215,27 @@ toast.push("Reboot requested.", "info")
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-lg font-semibold">Device</h1>
+
+      <Panel title="Features">
+        {!configureOk && <LockNotice>{CONFIGURE_LOCK_MESSAGE}</LockNotice>}
+        <div className="flex flex-col gap-3">
+          {FEATURES.map((f) => (
+            <label key={f.key} className="flex items-center gap-2 text-sm">
+              <Toggle
+                checked={features?.[f.key] ?? false}
+                onChange={(on) => setFeature(f.key, on)}
+                disabled={busy || !configureOk || features === null}
+                label={f.label}
+              />
+              <span>{f.label}</span>
+              <span className="text-muted-foreground">{f.help}</span>
+            </label>
+          ))}
+          <p className="text-xs text-muted-foreground">
+            A change is saved at once and applies after a reboot. Turning a feature off removes its functions from the pin map.
+          </p>
+        </div>
+      </Panel>
 
       <Panel title="Device backup">
         {!configureOk && <LockNotice>{CONFIGURE_LOCK_MESSAGE}</LockNotice>}

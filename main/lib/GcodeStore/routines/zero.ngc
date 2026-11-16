@@ -6,7 +6,7 @@ G90
 o100 if [#1]
   G0 Z0
 o100 endif
-o101 if [#2]
+o101 if [#2 AND #<_has_x>]
   G0 X0
 o101 endif
 o<zero> endsub

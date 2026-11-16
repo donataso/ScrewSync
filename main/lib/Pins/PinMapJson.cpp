@@ -185,6 +185,8 @@ namespace
         size_t encoderCount;
         double filterUs;
         int32_t maxRpm;
+        const char *features[FEATURE_COUNT];
+        size_t featureCount;
     };
 
     struct JFnDoc
@@ -205,6 +207,7 @@ namespace
         JSON_OBJ_DESCR_ARRAY(JFnDef, encoders, 2, encoderCount, JSON_TOK_STRING),
         JSON_OBJ_DESCR_PRIM(JFnDef, filterUs, JSON_TOK_DOUBLE_FP),
         JSON_OBJ_DESCR_PRIM(JFnDef, maxRpm, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_ARRAY(JFnDef, features, FEATURE_COUNT, featureCount, JSON_TOK_STRING),
     };
 
     const struct json_obj_descr FN_DOC_DESCR[] = {
@@ -391,6 +394,11 @@ namespace PinMapJson
             }
             j.filterUs = d.filterNs / 1000.0;
             j.maxRpm = (int32_t)d.maxRpm;
+            for (size_t f = 0; f < FEATURE_COUNT; f++) {
+                if (featuresOf((Fn)i) & featureBit((Feature)f)) {
+                    j.features[j.featureCount++] = featureId((Feature)f);
+                }
+            }
         }
         int rc = json_obj_encode_buf(FN_DOC_DESCR, ARRAY_SIZE(FN_DOC_DESCR), &g_fnDoc, out, outMax);
         return rc == 0 ? (int)strlen(out) : -1;

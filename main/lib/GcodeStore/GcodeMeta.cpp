@@ -18,6 +18,7 @@
 #include "GcodeMeta.hpp"
 #include "GcodeDialects.hpp"
 #include "GcodeProgram.hpp"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -210,6 +211,48 @@ namespace GcodeMeta
         bool zRight = findCI(text, zPos, zEnd, "right") != (size_t)-1;
         bool xDown = findCI(text, xPos, lineEnd, "down") != (size_t)-1;
         return !(zRight && xDown);
+    }
+
+    bool hasXWord(const char *text, size_t len)
+    {
+        bool comment = false;
+        bool paren = false;
+        bool name = false;
+        char prev = '\0';
+        for (size_t i = 0; i < len; i++) {
+            char c = text[i];
+            if (c == '\n') {
+                comment = false;
+                paren = false;
+            }
+            if (comment || paren) {
+                paren = paren && c != ')';
+                continue;
+            }
+            if (name) {
+                name = c != '>';
+                continue;
+            }
+            if (c == ';' || c == '(' || c == '<') {
+                comment = c == ';';
+                paren = c == '(';
+                name = c == '<';
+                continue;
+            }
+            bool wordStart = !(isalnum((unsigned char)prev) || prev == '_');
+            prev = c;
+            if (!wordStart || (c != 'x' && c != 'X')) {
+                continue;
+            }
+            size_t j = i + 1;
+            while (j < len && isspace((unsigned char)text[j])) {
+                j++;
+            }
+            if (j < len && (isdigit((unsigned char)text[j]) || strchr("-+.#[", text[j]))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     bool validId(const char *id, size_t idLen)

@@ -75,6 +75,8 @@ namespace GcodeMeta
     // (no mismatch) when there's no such header.
     bool axesMismatch(const char *text, size_t len);
 
+    bool hasXWord(const char *text, size_t len);
+
     // Lower-case hex of exactly idLen digits.
     bool validId(const char *id, size_t idLen);
     // "<id>.gc" only; the id's value into id.
