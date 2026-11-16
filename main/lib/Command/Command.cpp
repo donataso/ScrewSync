@@ -104,6 +104,20 @@ namespace
         reply(out, outMax, Homing::start(), "ok %s", "homing");
     }
 
+    void unhome(const char *, char *out, size_t outMax)
+    {
+        if (Homing::active()) {
+            snprintf(out, outMax, "err busy: homing");
+            return;
+        }
+        if (refuseUnlessIdle(out, outMax)) {
+            return;
+        }
+        Homing::clearHomed(Stepper::Axis::Z);
+        Homing::clearHomed(Stepper::Axis::X);
+        snprintf(out, outMax, "ok unhomed");
+    }
+
     void commands(const char *, char *out, size_t outMax);
 
     const CommandDef COMMANDS[] = {
@@ -121,6 +135,7 @@ namespace
         {"mode", "mode [<name>|status]", "selects the operating mode (refused while running)", mode},
         {"start", "start [zero]", "starts the selected mode; zero = rapid Z then X to 0 first", start},
         {"home", "home", "homes the axes, X then Z", home},
+        {"unhome", "unhome", "clears the homed state of both axes", unhome},
         {"stop", "stop", "stops the mode and decelerates both axes", stop},
         {"skip", "skip", "running multi-pass mode: skips the next pass", skip},
         {"override", "override [status] | + | - | reset", "feed override of the running job, percent", override},

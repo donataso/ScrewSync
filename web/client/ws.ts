@@ -50,7 +50,8 @@ let reconnectDelay = RECONNECT_MIN_MS
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 let staleTimer: ReturnType<typeof setInterval> | null = null
 let lastRecvMs = 0
-let pending: { expectedType: string; resolve: (o: CmdOutcome) => void; timer: ReturnType<typeof setTimeout> } | null = null
+let nextId = 1
+const pending = new Map<number, { resolve: (o: CmdOutcome) => void; timer: ReturnType<typeof setTimeout> }>()
 const listeners = new Set<Listener>()
 
 function notifyConnected(connected: boolean, error: string | null) {
@@ -59,30 +60,20 @@ l.onConnected?.(connected, error)
 }
 }
 
-function resolvePending(outcome: CmdOutcome) {
-  if (!pending) {
-return
-}
-  clearTimeout(pending.timer)
-  pending.resolve(outcome)
-  pending = null
+function resolvePending(id: number, outcome: CmdOutcome) {
+  const p = pending.get(id)
+  if (!p) {
+    return
+  }
+  clearTimeout(p.timer)
+  pending.delete(id)
+  p.resolve(outcome)
 }
 
-// Pushes also fire unsolicited (periodic telemetry, on connect) -- so the
-// next message isn't necessarily this command's reply. Only resolve pending
-// on the push type this command's domain actually changes.
-export function expectedReplyType(line: string): string {
-  const verb = line.split(" ", 1)[0]
-  if (verb === "settings") {
-return "settings"
-}
-  if (verb === "display" || verb === "cal") {
-return verb
-}
-  if (verb === "wifi") {
-return line.startsWith("wifi scan") ? "scan" : "wifi"
-}
-  return "status"
+function resolveAllPending(outcome: CmdOutcome) {
+  for (const id of [...pending.keys()]) {
+    resolvePending(id, outcome)
+  }
 }
 
 function wsUrl(): string {
@@ -116,23 +107,22 @@ ws.close()
 
   ws.onmessage = (ev) => {
     lastRecvMs = Date.now()
-    let msg: AnyMsg
+    let parsed: AnyMsg & { id?: unknown }
     try {
-      msg = JSON.parse(ev.data)
+      parsed = JSON.parse(ev.data)
     } catch {
       return
     }
+    const { id, ...rest } = parsed
+    const msg = rest as AnyMsg
 
-    // The firmware has no reply envelope/id (docs/protocol.md): a command's
-    // "reply" is the typed push its own domain causes. But pushes (status
-    // especially) also fire unsolicited/periodically, so only a push of the
-    // type this command actually expects may resolve it -- anything else
-    // just goes to listeners below.
-    if (msg.type === "error") {
-      resolvePending({ status: "denied", msg: (msg as ErrorMsg).msg ?? "" })
-    } else if (pending && msg.type === pending.expectedType) {
-      const { type, ...data } = msg
-      resolvePending({ status: "ok", msg: "", data })
+    if (typeof id === "number") {
+      if (msg.type === "error") {
+        resolvePending(id, { status: "denied", msg: (msg as ErrorMsg).msg ?? "" })
+      } else {
+        const { type, ...data } = msg
+        resolvePending(id, { status: "ok", msg: type === "reply" ? String((data as { msg?: unknown }).msg ?? "") : "", data })
+      }
     }
 
     if (msg.type === "status") {
@@ -179,7 +169,7 @@ l.onPrint?.(text)
     if (staleTimer) {
 clearInterval(staleTimer)
 }
-    resolvePending({ status: "unconfirmed" })
+    resolveAllPending({ status: "unconfirmed" })
     const full = ev.code === SERVER_FULL_CLOSE_CODE
     notifyConnected(false, full ? "Server has reached its client limit." : null)
     if (full) {
@@ -208,10 +198,10 @@ reconnectDelay = Math.min(reconnectDelay * 2, RECONNECT_MAX_MS)
 }
 }
 
-function sendRaw(line: string) {
+function sendRaw(line: string, id?: number) {
   if (socket?.readyState === WebSocket.OPEN) {
-socket.send(JSON.stringify({ type: "cmd", line }))
-}
+    socket.send(JSON.stringify({ type: "cmd", line, id }))
+  }
 }
 
 export function wsInputs(on: boolean) {
@@ -257,12 +247,8 @@ export function wsSend(line: string): Promise<CmdOutcome> {
       resolve({ status: "unconfirmed" })
       return
     }
-    resolvePending({ status: "unconfirmed" })
-    pending = {
-      expectedType: expectedReplyType(line),
-      resolve,
-      timer: setTimeout(() => resolvePending({ status: "unconfirmed" }), CMD_TIMEOUT_MS),
-    }
-    sendRaw(line)
+    const id = nextId++
+    pending.set(id, { resolve, timer: setTimeout(() => resolvePending(id, { status: "unconfirmed" }), CMD_TIMEOUT_MS) })
+    sendRaw(line, id)
   })
 }

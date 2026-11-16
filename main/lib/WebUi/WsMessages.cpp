@@ -80,6 +80,7 @@ namespace
     {
         const char *type;
         Settings::Conf conf;
+        int32_t id;
     };
 
     const struct json_obj_descr SETTINGS_MSG_DESCR[] = {
@@ -144,6 +145,7 @@ namespace
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "homeLatchBackOffDuX", conf.x.homeLatchBackOffDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "homePullOffDuX", conf.x.homePullOffDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "homePositionDuX", conf.x.homePositionDu, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM(SettingsMsg, id, JSON_TOK_NUMBER),
     };
 
     struct SavedNet
@@ -170,6 +172,7 @@ namespace
         int32_t savedCount;
         SavedNet saved[WIFI_MAX_APS];
         size_t savedLen;
+        int32_t id;
     };
 
     const struct json_obj_descr WIFI_MSG_DESCR[] = {
@@ -183,6 +186,7 @@ namespace
         JSON_OBJ_DESCR_PRIM(WifiMsg, fallback, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM(WifiMsg, savedCount, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_OBJ_ARRAY(WifiMsg, saved, WIFI_MAX_APS, savedLen, SAVED_NET_DESCR, ARRAY_SIZE(SAVED_NET_DESCR)),
+        JSON_OBJ_DESCR_PRIM(WifiMsg, id, JSON_TOK_NUMBER),
     };
 
     struct ScanAp
@@ -240,29 +244,42 @@ namespace
     {
         const char *type;
         const char *msg;
+        int32_t id;
     };
 
     const struct json_obj_descr TYPED_MSG_DESCR[] = {
         JSON_OBJ_DESCR_PRIM(TypedMsg, type, JSON_TOK_STRING),
         JSON_OBJ_DESCR_PRIM(TypedMsg, msg, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_PRIM(TypedMsg, id, JSON_TOK_NUMBER),
     };
 
     struct CmdRequest
     {
         const char *type;
         const char *line;
+        int32_t id;
     };
 
     const struct json_obj_descr CMD_REQUEST_DESCR[] = {
         JSON_OBJ_DESCR_PRIM(CmdRequest, type, JSON_TOK_STRING),
         JSON_OBJ_DESCR_PRIM(CmdRequest, line, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_PRIM(CmdRequest, id, JSON_TOK_NUMBER),
     };
     constexpr int CMD_REQUEST_LINE_BIT = 1;
+    constexpr int CMD_REQUEST_ID_BIT = 2;
 
     template <size_t N, typename T>
     int encode(const struct json_obj_descr (&descr)[N], const T &msg, char *out, size_t outMax)
     {
         return json_obj_encode_buf(descr, N, &msg, out, outMax) == 0 ? (int)strlen(out) : -1;
+    }
+
+    // The id descriptor is last; without an id it is left out.
+    template <size_t N, typename T>
+    int encodeWithId(const struct json_obj_descr (&descr)[N], const T &msg, char *out, size_t outMax)
+    {
+        size_t count = msg.id == WsMessages::NO_ID ? N - 1 : N;
+        return json_obj_encode_buf(descr, count, &msg, out, outMax) == 0 ? (int)strlen(out) : -1;
     }
 }
 
@@ -275,21 +292,21 @@ namespace WsMessages
         return encode(STATUS_MSG_DESCR, m, out, outMax);
     }
 
-    int settings(char *out, size_t outMax)
+    int settings(char *out, size_t outMax, int32_t id)
     {
-        SettingsMsg m{"settings", Settings::g_active};
-        return encode(SETTINGS_MSG_DESCR, m, out, outMax);
+        SettingsMsg m{"settings", Settings::g_active, id};
+        return encodeWithId(SETTINGS_MSG_DESCR, m, out, outMax);
     }
 
-    int wifi(char *out, size_t outMax)
+    int wifi(char *out, size_t outMax, int32_t id)
     {
-        WifiMsg m{"wifi", Wifi::modeName(), Wifi::ip(), Wifi::rssi(), Wifi::ssid(), Wifi::apName(), Wifi::enabled(), Wifi::apFallback(), (int32_t)Wifi::savedCount(), {}, 0};
+        WifiMsg m{"wifi", Wifi::modeName(), Wifi::ip(), Wifi::rssi(), Wifi::ssid(), Wifi::apName(), Wifi::enabled(), Wifi::apFallback(), (int32_t)Wifi::savedCount(), {}, 0, id};
         uint8_t n = MIN(Wifi::savedCount(), ARRAY_SIZE(m.saved));
         for (uint8_t i = 0; i < n; i++) {
             m.saved[i] = {Wifi::savedSsid(i), Wifi::savedIsPreferred(i)};
         }
         m.savedLen = n;
-        return encode(WIFI_MSG_DESCR, m, out, outMax);
+        return encodeWithId(WIFI_MSG_DESCR, m, out, outMax);
     }
 
     int scan(char *out, size_t outMax)
@@ -321,13 +338,13 @@ namespace WsMessages
         return PinMapJson::encodeInputs(sampled, levels, out, outMax);
     }
 
-    int typed(char *out, size_t outMax, const char *type, const char *msg)
+    int typed(char *out, size_t outMax, const char *type, const char *msg, int32_t id)
     {
-        TypedMsg m{type, msg};
-        return encode(TYPED_MSG_DESCR, m, out, outMax);
+        TypedMsg m{type, msg, id};
+        return encodeWithId(TYPED_MSG_DESCR, m, out, outMax);
     }
 
-    bool parseCommand(char *json, size_t len, const char *&line)
+    bool parseCommand(char *json, size_t len, const char *&line, int32_t &id)
     {
         CmdRequest req = {};
         int64_t mask = json_obj_parse(json, len, CMD_REQUEST_DESCR, ARRAY_SIZE(CMD_REQUEST_DESCR), &req);
@@ -335,6 +352,7 @@ namespace WsMessages
             return false;
         }
         line = req.line;
+        id = (mask & BIT(CMD_REQUEST_ID_BIT)) && req.id >= 0 ? req.id : NO_ID;
         return true;
     }
 }

@@ -260,6 +260,15 @@ namespace
     }
 
     // A change is pushed to every client by the settings event.
+    bool isWifiQuery(const char *line)
+    {
+        const char *args = strstr(line, "wifi") + strlen("wifi");
+        while (*args == ' ') {
+            args++;
+        }
+        return !*args || !strcmp(args, "status");
+    }
+
     bool isSettingsQuery(const char *line)
     {
         const char *args = strstr(line, "settings") + strlen("settings");
@@ -354,20 +363,31 @@ namespace
         }
 
         // Errors and query replies go back to this client; changes are broadcast as fresh state.
-        void answer(const char *line, const char *reply)
+        // With an id, the client gets exactly one message that carries it.
+        void answer(const char *line, const char *reply, int32_t id)
         {
             char verb[16];
             firstToken(line, verb, sizeof(verb));
             const char *sp = strchr(reply, ' ');
+            const char *text = sp ? sp + 1 : "";
             if (strncmp(reply, "ok", 2) != 0) {
-                sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, "error", sp ? sp + 1 : reply));
-            } else if (!strcmp(verb, "commands") || !strcmp(verb, "display") || !strcmp(verb, "ws") ||
-                       !strcmp(verb, "cal")) {
-                sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, verb, sp ? sp + 1 : ""));
-            } else if (!strcmp(verb, "wifi")) {
+                sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, "error", sp ? sp + 1 : reply, id));
+                return;
+            }
+            if (!strcmp(verb, "commands") || !strcmp(verb, "display") || !strcmp(verb, "ws") || !strcmp(verb, "cal")) {
+                sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, verb, text, id));
+                return;
+            }
+            if (!strcmp(verb, "settings") && isSettingsQuery(line)) {
+                sendTo(sock, bigJson, WsMessages::settings(bigJson, JSON_BIG_BUF, id));
+                return;
+            }
+            if (!strcmp(verb, "wifi") && isWifiQuery(line) && id != WsMessages::NO_ID) {
+                sendTo(sock, json, WsMessages::wifi(json, JSON_REPLY_BUF, id));
+                return;
+            }
+            if (!strcmp(verb, "wifi")) {
                 broadcast(json, WsMessages::wifi(json, JSON_REPLY_BUF));
-            } else if (!strcmp(verb, "settings") && isSettingsQuery(line)) {
-                sendTo(sock, bigJson, WsMessages::settings(bigJson, JSON_BIG_BUF));
             } else if (isStatusVerb(verb) || Gcode::isMdiLine(line[0] == Gcode::MDI_UI_MARKER ? line + 1 : line)) {
                 // Same throttle as idle(): a burst of commands must not raise the status rate.
                 uint32_t now = k_uptime_get_32();
@@ -376,13 +396,17 @@ namespace
                     lastStatusMs = now;
                 }
             }
+            if (id != WsMessages::NO_ID) {
+                sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, "reply", text, id));
+            }
         }
 
         void received(uint8_t *rx, int n)
         {
             LOG_INF("ws: slot %d recv %d bytes: %.*s", slot, n, n, (const char *)rx);
             const char *requested;
-            if (!WsMessages::parseCommand((char *)rx, (size_t)n, requested)) {
+            int32_t id;
+            if (!WsMessages::parseCommand((char *)rx, (size_t)n, requested, id)) {
                 LOG_WRN("ws: slot %d bad request", slot);
                 sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, "error", "bad request"));
                 return;
@@ -397,7 +421,7 @@ namespace
             strncpy(line, requested, WS_RX_BUF - 1);
             line[WS_RX_BUF - 1] = '\0';
             Command::apply(line, reply, Command::MAX_REPLY_LEN);
-            answer(line, reply);
+            answer(line, reply, id);
         }
     };
 

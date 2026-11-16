@@ -15,10 +15,14 @@ replies; see `docs/screen.md`.
   frames; the lead byte is one Nextion never starts a return frame with.
   `ok` replies are dropped, `err` is shown as a toast. See `docs/screen.md`.
 - Web (WebSocket, `main/lib/WebUi/WsCommand.cpp`): JSON. Request
-  `{"type":"cmd","line":"<verb> [args...]"}`. No reply envelope, no `id` --
-  only one command in flight per client, so a reply is just whichever typed
-  push below reflects the change; a failure instead gets
-  `{"type":"error","msg":"<reason>"}`.
+  `{"type":"cmd","line":"<verb> [args...]","id":<n>}`. `id` (a non-negative
+  integer) is optional. With an `id`, the client gets exactly one message
+  with the same `id`: `{"type":"error","msg":"<reason>"}` on a failure;
+  the query's own message (`settings`, `wifi` for `wifi status`, `cal`,
+  `display`, `commands`, `ws`) for a query; else
+  `{"type":"reply","msg":"<text after ok>"}`. Changes are still broadcast
+  as the typed pushes below, without an `id`. Without an `id`, a failure
+  gets the `error` message and a success gets no reply of its own.
 - All JSON on the wire -- either direction -- is built with
   `zephyr/data/json.h` (`json_obj_encode_buf`/descriptors), never by hand
   with `snprintf`/string concatenation.
@@ -74,6 +78,8 @@ replies; see `docs/screen.md`.
   (`err no home switch`) and while an
   axis is off. `stop` ends it. A failure shows in `error` and the axis is not
   homed.
+- `unhome`: clears the homed state of both axes. Refused unless the machine
+  is idle.
 - While `requireHoming` is on, with home switches, and an axis is not homed:
   `start`, `jog`, `o<...>` calls and MDI lines with a move get `err not homed`.
   G-code that does not move (G54–G59, `G10 L20`) runs.
@@ -330,6 +336,7 @@ right after any command changes that domain:
 - `{"type":"print","msg":"..."}` -- a `(PRINT, ...)` line; see "NGC".
 - `{"type":"cal","msg":"..."}` -- a `cal` reply; see "Calibration".
 - `{"type":"error","msg":"..."}` -- only on a failed command.
+- `{"type":"reply","msg":"...","id":n}` -- see "Web" above.
 
 ## Introspection
 

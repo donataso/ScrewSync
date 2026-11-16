@@ -19,21 +19,25 @@
 #define WsMessages_h
 
 #include <stddef.h>
+#include <stdint.h>
 
 // JSON messages of the /ws protocol (docs/protocol.md). Each build returns
 // the length written, or -1 if it didn't fit.
 namespace WsMessages
 {
+    // No "id" in the message: a broadcast, or a request without an id.
+    constexpr int32_t NO_ID = -1;
+
     int status(char *out, size_t outMax);
-    int settings(char *out, size_t outMax);
-    int wifi(char *out, size_t outMax);
+    int settings(char *out, size_t outMax, int32_t id = NO_ID);
+    int wifi(char *out, size_t outMax, int32_t id = NO_ID);
     int scan(char *out, size_t outMax);
     int capabilities(char *out, size_t outMax, bool withType);
     int inputs(char *out, size_t outMax);
-    int typed(char *out, size_t outMax, const char *type, const char *msg);
+    int typed(char *out, size_t outMax, const char *type, const char *msg, int32_t id = NO_ID);
 
-    // {"type":"cmd","line":...}: line points into json. False if malformed.
-    bool parseCommand(char *json, size_t len, const char *&line);
+    // {"type":"cmd","line":...[,"id":n]}: line points into json. False if malformed.
+    bool parseCommand(char *json, size_t len, const char *&line, int32_t &id);
 }
 
 #endif

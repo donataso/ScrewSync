@@ -34,9 +34,8 @@ export function MdiScreen() {
   const [input, setInput] = useState("")
   const [log, setLog] = useState<Entry[]>([])
   const nextId = useRef(0)
-  // The firmware's replies carry no id, so lines go one at a time.
-  const queue = useRef<Promise<void>>(Promise.resolve())
   const logEnd = useRef<HTMLDivElement>(null)
+  const homed = !!state && state.z.homed && (!capabilities?.has_x_motor || state.x.homed)
 
   useEffect(() => {
     logEnd.current?.scrollIntoView({ block: "nearest" })
@@ -47,15 +46,10 @@ export function MdiScreen() {
     setLog((l) => l.map((e) => (e.id === id ? { ...e, reply, ok } : e)))
   }
 
-  // queued: after the lines sent before; Stop goes at once.
-  function send(line: string, queued = true) {
+  function send(line: string) {
     const id = nextId.current++
     setLog((l) => [...l, { id, line, reply: null, ok: true }])
-    if (queued) {
-      queue.current = queue.current.then(() => run(id, line))
-    } else {
-      void run(id, line)
-    }
+    void run(id, line)
   }
 
   function submit() {
@@ -94,12 +88,56 @@ export function MdiScreen() {
           <Button onClick={() => setLog([])} disabled={!log.length}>
             Clear
           </Button>
-          <Button variant="danger" onClick={() => send("stop", false)}>
+          <Button variant="danger" onClick={() => send("stop")}>
             Stop
           </Button>
         </div>
       }
     >
+      {state && (
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          {state.state === "estop" ? (
+            <Button variant="danger" onClick={() => send("estop off")}>
+              EStop on
+            </Button>
+          ) : (
+            <Button onClick={() => send("estop on")}>EStop off</Button>
+          )}
+          <Button variant={state.z.enabled ? "primary" : "secondary"} onClick={() => send(`power ${state.z.enabled ? "off" : "on"} z`)}>
+            Z motor {state.z.enabled ? "on" : "off"}
+          </Button>
+          {capabilities?.has_x_motor && (
+            <Button variant={state.x.enabled ? "primary" : "secondary"} onClick={() => send(`power ${state.x.enabled ? "off" : "on"} x`)}>
+              X motor {state.x.enabled ? "on" : "off"}
+            </Button>
+          )}
+          {capabilities?.has_endstops && (
+            <Button
+              variant={homed ? "primary" : "secondary"}
+              disabled={state.homing}
+              onClick={() => send(homed ? "unhome" : "home")}
+            >
+              {state.homing ? "Homing" : homed ? "Homed" : "Not homed"}
+            </Button>
+          )}
+          {capabilities?.has_endstops && (
+            <Select
+              className="ml-auto"
+              aria-label="Work coordinate system"
+              value={state.wcs ?? "G54"}
+              onChange={(e) => {
+                send(e.target.value)
+              }}
+            >
+              {WCS_WORDS.map((word) => (
+                <option key={word} value={word}>
+                  {word}
+                </option>
+              ))}
+            </Select>
+          )}
+        </div>
+      )}
       <div className="h-80 overflow-y-auto rounded-md border border-border bg-muted/30 p-2 font-mono text-sm">
         {log.map((e) => (
           <div key={e.id}>
@@ -123,21 +161,9 @@ export function MdiScreen() {
           autoCapitalize="off"
           autoComplete="off"
         />
-        {capabilities?.has_endstops && (
-          <Select
-            aria-label="Work coordinate system"
-            value={state?.wcs ?? "G54"}
-            onChange={(e) => {
-              send(e.target.value)
-            }}
-          >
-            {WCS_WORDS.map((word) => (
-              <option key={word} value={word}>
-                {word}
-              </option>
-            ))}
-          </Select>
-        )}
+        <Button variant="danger" onClick={() => send("stop")}>
+          Stop
+        </Button>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">Enter sends. Up and Down recall earlier lines. Esc clears the line.</p>
     </Panel>
