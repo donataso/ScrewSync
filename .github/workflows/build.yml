@@ -27,6 +27,8 @@ jobs:
     env:
       SDK_VERSION: 1.0.1
       ZEPHYR_SDK_INSTALL_DIR: /home/runner/zephyr-sdk-1.0.1
+      NXWRIGHT: nxwright
+      NXWRIGHT_COMPILE_ARGS: --download
     steps:
       # Full history, so git describe gives the tag as FW_VERSION.
       - uses: actions/checkout@v7
@@ -82,10 +84,7 @@ jobs:
           path: ~/.cache/nxwright
           key: nxwright-${{ runner.os }}-nextion-1.68.2
 
-      - name: Build display
-        run: |
-          pipx install git+https://github.com/nixiewright/nxwright
-          make nextion-5in-build NXWRIGHT=nxwright NXWRIGHT_COMPILE_ARGS=--download
+      - run: pipx install git+https://github.com/nixiewright/nxwright
 
       - name: Build firmware
         env:

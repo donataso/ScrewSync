@@ -28,4 +28,4 @@
   confirmation.
 - Printable connector label with the user's connector names.
 - G-code: G92.
-- NOTICE.md: add Zephyr and its modules, and the web client's npm packages.
+
