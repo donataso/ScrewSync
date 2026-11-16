@@ -141,7 +141,9 @@ Wiring per target, flashing and first setup:
 Do the steps in [docs/troubleshooting.md](docs/troubleshooting.md) first.
 Then look in the [existing issues](https://github.com/donataso/ScrewSync/issues)
 for the same problem. If there is none, open a new issue, written in
-English, with the data that the troubleshooting doc asks for.
+**English**, with the data that the troubleshooting doc asks for.
+
+If you don't speak English, use automated translation tools.
 
 ## Contributing
 

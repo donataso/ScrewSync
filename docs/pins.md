@@ -71,8 +71,9 @@ Each encoder has a filter, in µs:
 ## Home inputs
 
 - "Z home" and "X home" are one input each.
-- The default is a normally-open sensor. Set "invert" to match your
-  sensor.
+- The default (pull up, invert on) is for a normally-open contact to GND.
+  Set "invert" and "pull" to match your sensor. See
+  [homing.md](homing.md#pin-settings).
 - The "Home" switch sends `home`.
 - Sensors, tailstock and wiring: see [homing.md](homing.md).
 
@@ -100,8 +101,8 @@ Each encoder has a filter, in µs:
 
 - "Estop" is one input each. You can add more than one, for example one
   button at each end of the lathe. Each edge raises an interrupt.
-- The default is a normally-closed button. Set "invert" to match your
-  button.
+- The default (pull up, invert off) is for a normally-closed button to
+  GND. Set "invert" and "pull" to match your button.
 - An active input trips the estop. The axes stop at once.
 - While an estop input is active, `estop off` is refused.
 

@@ -41,12 +41,16 @@ limits, work systems G54–G59 and saved offsets.
 
 - Use normally-closed (NC) sensors. A broken wire or a dead sensor then
   reads as triggered, so a switch cannot fail without a warning.
+- The wiring below is for PNP sensors: OUT switches +V. NPN sensors need
+  other wiring.
+- The sensors run on 5 V. A sensor rated 6 V or more may or may not work
+  at 5 V.
 
 ## Wiring
 
-This is one suggestion: an
-[817 optocoupler module](https://www.aliexpress.com/item/1005006377989607.html)
-(HY-M158 or similar). The module removes the level problem: the ESP32 pin
+This is one suggestion: the
+[817 optocoupler module](https://www.aliexpress.com/item/1005006377989607.html).
+The terminals and jumpers below are for this module. The module removes the level problem: the ESP32 pin
 never sees the sensor voltage. Each output channel is a switch between its
 V and G terminals, closed while its input is active. The jumper of a
 channel connects its G to the module's common GND.
@@ -72,11 +76,11 @@ the chain.
 | ch1 G (next to V1)      | ch2 V2              |
 | Z home pin              | ch3 V3              |
 | input G (any)           | GND                 |
-| X home sensor, black    | IN1                 |
-| tailstock sensor, black | IN2                 |
-| Z home sensor, black    | IN3                 |
-| each sensor, brown      | 5V                  |
-| each sensor, blue       | GND                 |
+| X home sensor, OUT      | IN1                 |
+| tailstock sensor, OUT   | IN2                 |
+| Z home sensor, OUT      | IN3                 |
+| each sensor, +V         | 5V                  |
+| each sensor, 0V         | GND                 |
 
 ### Two sensors: X home, Z home
 
@@ -92,10 +96,10 @@ No tailstock sensor. Simpler, but nothing detects the tailstock.
 | X home pin              | ch1 V1              |
 | Z home pin              | ch2 V2              |
 | input G (any)           | GND                 |
-| X home sensor, black    | IN1                 |
-| Z home sensor, black    | IN2                 |
-| each sensor, brown      | 5V                  |
-| each sensor, blue       | GND                 |
+| X home sensor, OUT      | IN1                 |
+| Z home sensor, OUT      | IN2                 |
+| each sensor, +V         | 5V                  |
+| each sensor, 0V         | GND                 |
 
 ### Pin settings
 
