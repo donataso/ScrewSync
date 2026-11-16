@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useMemo, useState, type KeyboardEvent } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type KeyboardEvent } from "react"
 import { fetchPinFunctions, fetchPins, savePins, sendCommand } from "../api"
 import { ArrowRightLeft, MapPinPlus, X } from "lucide-react"
 import { SaveBar, useFooterBar } from "../footer-bar"
@@ -40,6 +40,7 @@ import {
 import { Badge, Button, IconButton, LockNotice, OptionsButton, Panel, RemoveButton, Select, TextInput, Toggle } from "../ui/primitives"
 import { CONFIGURE_LOCK_MESSAGE, useCanConfigure, useInputLevels } from "../state-provider"
 import { useToast } from "../ui/toast"
+import { PinsSheet } from "./pins-sheet"
 
 const BoardContext = createContext<Board | null>(null)
 
@@ -157,6 +158,8 @@ function PinsEditor({
   const [placingState, setPlacing] = useState<Placing | null>(null)
   const [preview, setPreview] = useState<Span | null>(null)
   const [menuState, setMenu] = useState<{ connector: string; start: number; assigned?: number } | null>(null)
+  const [sheet, setSheet] = useState(false)
+  const closeSheet = useCallback(() => setSheet(false), [])
   const toast = useToast()
   const renaming = canConfigure ? renamingState : null
   const placing = canConfigure ? placingState : null
@@ -413,10 +416,14 @@ function PinsEditor({
       <Panel
         title={`Connectors (${board.name})`}
         action={
-          placingFn && (
+          placingFn ? (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Select the first pin for {placingFn.label}</span>
             </div>
+          ) : (
+            <Button className="py-1!" onClick={() => setSheet(true)}>
+              Print sheet
+            </Button>
           )
         }
       >
@@ -566,6 +573,7 @@ function PinsEditor({
           </ul>
         </Panel>
       )}
+      {sheet && <PinsSheet board={board} map={map} names={names} issues={issues} onClose={closeSheet} />}
     </div>
   )
 }

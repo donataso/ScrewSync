@@ -25,6 +25,4 @@
 - add joystick support
 - Pin map: reset to board defaults from the display menu, with a
   confirmation.
-- Printable connector label with the user's connector names.
 - G-code: G92.
-
