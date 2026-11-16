@@ -124,6 +124,7 @@ connectors. See [docs/install.md](docs/install.md).
 | [Hardware](docs/hardware.md)               | boards, screens, parts and additions    |
 | [Features](docs/features.md)               | everything it does                      |
 | [Manual](docs/manual.md)                   | how to operate it                       |
+| [Homing](docs/homing.md)                   | homing cycle, sensors and wiring        |
 | [Probe](docs/probe.md)                     | probe hardware, settings and cycle      |
 | [Pins](docs/pins.md)                       | pin mapping, encoders, switches         |
 | [Calibration](docs/calibration.md)         | machine setup checks in the web client  |

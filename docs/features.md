@@ -78,6 +78,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - Optional "require homing": no moves until the axes are homed.
 - A homed axis has travel limits from its home position.
 - With home switches, work systems G54–G59 and saved offsets.
+- See [homing.md](homing.md).
 
 ## Manual control
 

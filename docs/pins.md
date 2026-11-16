@@ -68,17 +68,11 @@ Each encoder has a filter, in µs:
 
 ## Home inputs
 
-- "Z home" and "X home" are one input each. They are not polled: each
-  edge raises an interrupt.
+- "Z home" and "X home" are one input each.
 - The default is a normally-open sensor. Set "invert" to match your
   sensor.
-- If one axis motor has a home input, each present axis motor must have
-  one. Otherwise you cannot save the map.
-- A tailstock switch can share the X home input (wired together). While Z
-  homes, X is off its switch, so a signal on this input is the tailstock.
-- A signal on a home input while an axis moves trips the estop. When no axis
-  moves, the signal does nothing.
 - The "Home" switch sends `home`.
+- Sensors, tailstock and wiring: see [homing.md](homing.md).
 
 ## Feed override encoder
 

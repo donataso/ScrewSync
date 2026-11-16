@@ -12,5 +12,6 @@ a web client.
 - [docs/install.md](docs/install.md) — connectors, flashing, first setup
 - [docs/hardware.md](docs/hardware.md) — boards, screens, parts and additions
 - [docs/features.md](docs/features.md) — full feature list
+- [docs/homing.md](docs/homing.md) — homing cycle, sensors and wiring
 - [docs/probe.md](docs/probe.md) — probe hardware, settings and cycle
 - [docs/calibration.md](docs/calibration.md) — calibration checks in the web client
