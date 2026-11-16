@@ -13,13 +13,12 @@ All checks need the machine idle. A check can be stopped at any time.
 | Axis direction    | Jogs Z+/X+, selects which way the carriage moved       | Normal jog                               | `invertDirectionZ`/`X`               |
 | Steps/mm          | Enters the dial indicator reading after a set move     | Moves a set distance                     | `screwPitchDuZ`/`X`                  |
 | Backlash          | Sets the probe against the workpiece                   | `o<backlash>` routine (below)            | `backlashDuZ`/`X`                    |
-| Probe polarity    | Keeps the probe open                                   | Reports the probe input                  | `probePolarityNc`                    |
 
-Without the probe capability, the probe polarity and backlash checks are
+Without the probe capability, the backlash check is
 hidden. Without the X motor capability, the X rows are hidden. See
 `docs/manual.md`, "Features".
 
-Order in the tab: probe polarity, spindle direction, encoder PPR, axis direction, steps/mm, backlash. Each later check depends on the earlier ones.
+Order in the tab: spindle direction, encoder PPR, axis direction, steps/mm, backlash. Each later check depends on the earlier ones.
 
 ### Spindle direction and PPR
 

@@ -94,7 +94,6 @@ namespace
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "safeDistanceDu", conf.safeDistanceDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "slotLeftReductionDu", conf.slotLeftReductionDu, JSON_TOK_NUMBER),
 
-        JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "probePolarityNc", conf.probePolarityNc, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "probeFeedDuPerMin", conf.probeFeedDuPerMin, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "reprobeFeedDuPerMin", conf.reprobeFeedDuPerMin, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM_NAMED(SettingsMsg, "probeBackOffDu", conf.probeBackOffDu, JSON_TOK_NUMBER),

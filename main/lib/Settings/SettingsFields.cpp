@@ -92,7 +92,6 @@ namespace Settings
         {"safeDistanceDu", FieldType::I32, offsetof(Conf, safeDistanceDu), 0, 10000000},
         {"slotLeftReductionDu", FieldType::I32, offsetof(Conf, slotLeftReductionDu), 0, 10000000},
         {"statusPushIntervalMs", FieldType::I32, offsetof(Conf, statusPushIntervalMs), 50, 10000},
-        {"probePolarityNc", FieldType::Bool, offsetof(Conf, probePolarityNc), 0, 0},
         {"probeFeedDuPerMin", FieldType::I32, offsetof(Conf, probeFeedDuPerMin), 1, 60000000},
         {"reprobeFeedDuPerMin", FieldType::I32, offsetof(Conf, reprobeFeedDuPerMin), 1, 60000000},
         {"probeBackOffDu", FieldType::I32, offsetof(Conf, probeBackOffDu), 1, 10000000},
@@ -154,7 +153,6 @@ namespace Settings
         JSON_OBJ_DESCR_PRIM(Settings::Conf, slotLeftReductionDu, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, statusPushIntervalMs, JSON_TOK_NUMBER),
 
-        JSON_OBJ_DESCR_PRIM(Settings::Conf, probePolarityNc, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, probeFeedDuPerMin, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, reprobeFeedDuPerMin, JSON_TOK_NUMBER),
         JSON_OBJ_DESCR_PRIM(Settings::Conf, probeBackOffDu, JSON_TOK_NUMBER),

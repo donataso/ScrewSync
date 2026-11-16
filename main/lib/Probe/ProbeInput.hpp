@@ -18,8 +18,7 @@
 #ifndef ProbeInput_h
 #define ProbeInput_h
 
-// The probe inputs of the pin map, ORed: interrupt-driven,
-// NO/NC polarity from Settings::active.probePolarityNc. onEdge runs
+// The probe inputs of the pin map, ORed: interrupt-driven. onEdge runs
 // synchronously from the GPIO ISR, so it must be ISR-safe (see
 // Stepper::haltNow).
 namespace ProbeInput
@@ -28,13 +27,7 @@ namespace ProbeInput
 
     void begin(Callback onEdge);
 
-    // Logical contact state (polarity-corrected); safe to poll any time.
     bool contact();
-
-    constexpr bool fromRaw(bool raw, bool polarityNc)
-    {
-        return polarityNc ? raw : !raw;
-    }
 }
 
 #endif

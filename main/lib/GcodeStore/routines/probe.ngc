@@ -16,7 +16,7 @@ o101 else
   G38.2 X[#2 * #<_probe_dst>] F#<_probe_feed>
 o101 endif
 (MSG, back off)
-G1 Z[-#<z> * #<back>] X[-#<x> * #<back>] F#<_reprobe_feed>
+G1 Z[-#<z> * #<back>] X[-#<x> * #<back>] F[2 * #<_probe_feed>]
 o102 if [#<_probe_contact>]
   (ABORT, contact not lost)
 o102 endif
@@ -27,7 +27,7 @@ o103 else
   G38.2 X[#2 * [#<back> + 0.5]] F#<_reprobe_feed>
 o103 endif
 (MSG, back off)
-G1 Z[-#<z> * #<back>] X[-#<x> * #<back>] F#<_reprobe_feed>
+G1 Z[-#<z> * #<back>] X[-#<x> * #<back>] F[2 * #<_probe_feed>]
 o104 if [#<_probe_contact>]
   (ABORT, contact not lost)
 o104 endif

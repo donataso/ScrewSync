@@ -16,7 +16,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ProbeInput.hpp"
-#include "Settings.hpp"
 #include "Pins.hpp"
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
@@ -35,9 +34,8 @@ namespace
 
     bool anyContact()
     {
-        bool nc = Settings::g_active.probePolarityNc;
         for (size_t i = 0; i < g_count; i++) {
-            if (ProbeInput::fromRaw(gpio_pin_get_dt(&g_probes[i]) > 0, nc)) {
+            if (gpio_pin_get_dt(&g_probes[i]) > 0) {
                 return true;
             }
         }

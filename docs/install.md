@@ -88,7 +88,7 @@ and `<target>-flash`. See [design.md](design.md).
 - Turn off the features that the machine does not have (X motor, homing,
   probe) on the display (Settings) or the web client (Device page). A
   change applies after a reboot. See [manual.md](manual.md#features).
-- Set the probe polarity (NO/NC) before the first probe. With a contact
+- Set "invert" of the Probe pin so that contact is active. With a contact
   plate, touch the plate to the tool: the contact light must turn green.
 
 If the controller does not start: [troubleshooting.md](troubleshooting.md).

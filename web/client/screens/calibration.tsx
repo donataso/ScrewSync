@@ -84,7 +84,6 @@ export function CalibrationScreen() {
         </Panel>
       ) : (
         <>
-          {props.hasProbe && <ProbePolarity {...props} />}
           <SpindleDirection {...props} />
           <EncoderPpr {...props} />
           <AxisDirection {...props} />
@@ -144,27 +143,6 @@ function useCountReader() {
     }
     return count
   }
-}
-
-function ProbePolarity({ raw, apply, canConfigure }: CheckProps) {
-  const { state } = useDeviceState()
-  const nc = raw?.probePolarityNc === "true"
-  const contact = state?.probeContact ?? false
-  const suggested = contact ? !nc : nc
-  return (
-    <Panel title="Probe polarity">
-      <p className="mb-3 text-sm text-muted-foreground">Keep the probe open. The contact must show open.</p>
-      <div className="mb-3 text-sm">
-        Contact: <Badge tone={contact ? "warn" : "good"}>{contact ? "closed" : "open"}</Badge>
-      </div>
-      <Suggestion
-        current={nc ? "NC" : "NO"}
-        suggested={suggested ? "NC" : "NO"}
-        disabled={!canConfigure}
-        onApply={() => apply("probePolarityNc", String(suggested))}
-      />
-    </Panel>
-  )
 }
 
 function useCountDelta() {

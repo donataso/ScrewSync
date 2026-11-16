@@ -68,7 +68,6 @@ namespace Settings
 
         // Conservative defaults: slow feeds, since a switch probe has only
         // a little travel left after it triggers (docs/probe.md).
-        bool probePolarityNc = false;
         int32_t probeFeedDuPerMin = 300000;   // 30 mm/min
         int32_t reprobeFeedDuPerMin = 100000; // 10 mm/min
         int32_t probeBackOffDu = 5000;        // 0.5 mm
@@ -88,7 +87,7 @@ namespace Settings
 
     extern Conf g_active;
 
-    constexpr size_t CONF_JSON_FIELDS = 58;
+    constexpr size_t CONF_JSON_FIELDS = 57;
     extern const struct json_obj_descr CONF_JSON_DESCR[CONF_JSON_FIELDS];
 
     struct Wired

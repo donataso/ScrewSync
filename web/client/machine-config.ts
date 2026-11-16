@@ -446,12 +446,6 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
         scale: 10000,
         help: "Trigger point to workpiece surface: plate thickness, or measured once for a switch.",
       },
-      {
-        key: "probePolarityNc",
-        label: "Normally closed",
-        type: "checkbox",
-        help: "Toggle for a normally-closed probe (circuit closed until it triggers). Off for normally-open.",
-      },
     ],
   },
 ]

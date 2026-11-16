@@ -4,7 +4,7 @@ Touch off an axis: move until the probe makes contact, then zero the axis.
 
 ## Hardware
 
-The probe is a digital input with a pull-up and an RC filter against stepper noise. Its pin is set in the board overlay (`boards/<board>/board.overlay`), and its polarity (NO/NC) is in settings. Ideas for a simple DIY probe:
+The probe is a digital input with a pull-up and an RC filter against stepper noise. Its pin and its polarity ("invert") are set in the pin map. Contact is the active level. Ideas for a simple DIY probe:
 
 - **Contact plate:** a plastic block with a conductor on one face, wired to the probe pin and held against the workpiece. The tool must be earthed, which it usually is through the machine frame. DC GND should be connected to AC Earth. Contact pulls the pin to ground.
 - **Switch:** a small switch, for example a low-profile keyboard switch, in a holder placed against the workpiece. Both wires go to the switch, so no earthing is needed. After it triggers, the switch has only a little travel left, so the probe feed must be slow enough for the axis to stop within that travel.
@@ -13,16 +13,15 @@ For both types, `offset` is the distance from the trigger point to the workpiece
 
 The probe needs its switch on (display Settings, or the web client Device
 page) and a Probe input in the pin map. Without that, the Probe mode, the
-probe settings and the polarity check are hidden, and G38 moves and
+probe settings are hidden, and G38 moves and
 `o<probe>` are refused with `probe disabled` or `probe not wired`. The X
 probe also needs the X motor. The Probe mode works without the X motor, on
 Z only: an X probe is refused with the X motor error.
 
 ## Settings
 
-- probe polarity: NO or NC
 - probe feed: speed per minute for the first touch
-- reprobe feed: speed per minute for the back-offs and the reprobe
+- reprobe feed: speed per minute for the reprobe
 - back off: retract after each touch
 - distance: the furthest the first touch may travel (0 = not set)
 - offset: trigger point to surface
@@ -38,9 +37,9 @@ The cycle is the built-in NGC routine `o<probe>`
    already shows contact.
 2. `G38.2` toward the workpiece at probe feed, at most the distance. On
    contact, an interrupt stops the axis immediately, with no decel.
-3. `G1` back off at reprobe feed.
+3. `G1` back off at twice the probe feed.
 4. `G38.2` at reprobe feed, at most the back-off plus a small margin.
-5. `G1` back off again.
+5. `G1` back off again, at twice the probe feed.
 6. `G10 L20` so that the surface reads 0. The surface is at
    `contact + dir × offset`, where `dir` is the probe direction (±1).
 

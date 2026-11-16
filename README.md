@@ -60,7 +60,7 @@ probe if the machine has none. See [docs/pins.md](docs/pins.md).
 
 ### Calibration
 
-Guided checks in the web client for machine setup: probe polarity, spindle
+Guided checks in the web client for machine setup: spindle
 direction, encoder PPR, axis direction, steps/mm and backlash. Each check
 shows the measured value next to the current setting. One click applies it.
 See [docs/calibration.md](docs/calibration.md).

@@ -189,7 +189,6 @@ describe("sections without end stops", () => {
   it("hide the probe fields without a probe", () => {
     const hidden = keys(true, "mm", false)
     expect(hidden).not.toContain("probeFeedDuPerMin")
-    expect(hidden).not.toContain("probePolarityNc")
     expect(hidden).toContain("speedRapidDuPerMinZ")
   })
 
