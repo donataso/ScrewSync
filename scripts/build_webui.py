@@ -37,7 +37,8 @@ def _read_device_name():
     return m.group(1)
 
 
-def build_ui():
+def run_in_container(out_dir, script, env=(), mounts=()):
+    """Run `script` in the Node container with `out_dir` as /work/out."""
     if not os.path.isdir(_FIRMWARE_CLIENT):
         sys.stderr.write("build_webui: no web/firmware-client directory\n")
         return False
@@ -47,7 +48,7 @@ def build_ui():
         return False
     os.makedirs(_NODE_MODULES_DIR, exist_ok=True)
     os.makedirs(_NPM_CACHE_DIR, exist_ok=True)
-    os.makedirs(_OUT_DIR, exist_ok=True)
+    os.makedirs(out_dir, exist_ok=True)
     cmd = [
         exe, "run", "--rm",
         "--user", "%d:%d" % (os.getuid(), os.getgid()),
@@ -55,13 +56,19 @@ def build_ui():
         "-e", "npm_config_cache=/work/.npmcache",
         "-e", "OUT_DIR=/work/out",
         "-e", "DEVICE_NAME=%s" % _read_device_name(),
+    ]
+    for e in env:
+        cmd += ["-e", e]
+    cmd += [
         "-v", "%s:/work/firmware-client" % _FIRMWARE_CLIENT,
         "-v", "%s:/work/client" % os.path.join(_WEB, "client"),
         "-v", "%s:/work/firmware-client/node_modules" % _NODE_MODULES_DIR,
         "-v", "%s:/work/.npmcache" % _NPM_CACHE_DIR,
-        "-v", "%s:/work/out" % _OUT_DIR,
-        "-w", "/work/firmware-client", IMAGE, "sh", "-c", _NPM_INSTALL + " && npm run build",
+        "-v", "%s:/work/out" % out_dir,
     ]
+    for m in mounts:
+        cmd += ["-v", m]
+    cmd += ["-w", "/work/firmware-client", IMAGE, "sh", "-c", script]
     print("build_webui: " + " ".join(cmd))
     try:
         rc = subprocess.call(cmd)
@@ -70,6 +77,12 @@ def build_ui():
         return False
     if rc != 0:
         sys.stderr.write("build_webui: container build failed (exit %d)\n" % rc)
+        return False
+    return True
+
+
+def build_ui():
+    if not run_in_container(_OUT_DIR, _NPM_INSTALL + " && npm run build"):
         return False
     out = os.path.join(_OUT_DIR, "index.html")
     if not os.path.exists(out):

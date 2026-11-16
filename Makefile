@@ -1,4 +1,4 @@
-.PHONY: all test format format-check tidy lint clean console monitor
+.PHONY: all test format format-check tidy lint clean console monitor notice notice-check
 
 # Without a key file, MCUboot's default dev key signs the image.
 SIGNING_KEY ?= $(wildcard $(CURDIR)/private/key.pem)
@@ -39,7 +39,28 @@ format-check:
 
 tidy: $(addsuffix -tidy,$(TARGETS))
 
-lint: format-check web-lint tidy $(NEXTION_CHECKS)
+lint: format-check web-lint tidy notice-check $(NEXTION_CHECKS)
+
+NOTICE_BUILD := $(CURDIR)/.build/notice
+NOTICE_IMAGES := main mcuboot
+
+define notice_target
+.PHONY: $(1)-notice-build
+
+$(1)-notice-build: web-build
+	$$(subst -p auto,-p always,$$(subst $$($(1)_BUILD),$(NOTICE_BUILD)/$(1),$$($(1)_WEST_BUILD))) \
+		$$(foreach i,$$(NOTICE_IMAGES),-D$$(i)_CONFIG_BUILD_OUTPUT_META=y)
+	$$(foreach i,$$(NOTICE_IMAGES),$$(ZEPHYR_ENV) west spdx -d $(NOTICE_BUILD)/$(1)/$$(i) &&) true
+endef
+$(foreach t,$(TARGETS),$(eval $(call notice_target,$(t))))
+
+notice: $(addsuffix -notice-build,$(TARGETS))
+	$(ZEPHYR_ENV) west list -f '{name}|{abspath}|{url}' > $(NOTICE_BUILD)/west-list.txt
+	python3 scripts/notice.py generate --west-list $(NOTICE_BUILD)/west-list.txt \
+		$(foreach t,$(TARGETS),$(addprefix $(NOTICE_BUILD)/$(t)/,$(addsuffix /spdx,$(NOTICE_IMAGES))))
+
+notice-check:
+	python3 scripts/notice.py check
 
 clean:
 	rm -rf $(addprefix $(CURDIR)/.build/,$(TARGETS)) $(TEST_ZEPHYR_BUILD)
