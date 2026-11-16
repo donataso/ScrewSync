@@ -1,34 +1,47 @@
 # ScrewSync
 
-A new firmware for the [nanoels H5](https://github.com/kachurovskiy/nanoels)
-electronic leadscrew. Same hardware, a touchscreen UI where every control
-does one thing.
+ScrewSync is an electronic leadscrew and lathe CNC controller for ESP32,
+with an intuitive touchscreen UI and a web client for configuration. It runs
+a subset of LinuxCNC G-code, with MDI, homing, work coordinates and probing.
+Built-in cycles for threading, turning, facing, parting, slotting and
+ellipses: fill in one page and press start.
+
+> `main` has changes that are not released yet, and the docs can describe
+> features that are not in the latest release. For released firmware and
+> its docs, see the
+> [latest release](https://github.com/donataso/ScrewSync/releases/latest)
+> and the docs in its source tag.
 
 <p float="left">
   <img src="docs/images/thread-m12-idle.png" width="400" />
-  <img src="docs/images/gear-feed-keypad.png" width="400" />
+  <img src="docs/images/gcode-running.png" width="400" />
 </p>
 
-*Pick a thread by name and everything fills in. Type numbers on a normal
-numpad.*
+*Pick a thread by name and everything fills in. Run G-code with a live
+toolpath.*
 
-## Why a new firmware
+Boards and screens are separate definitions, and a target combines one
+board with one screen. Current target: nanoels H5 with a 5" Nextion. See
+[docs/hardware.md](docs/hardware.md).
 
-nanoels is a great piece of hardware, and its firmware packs a lot into one
-screen and a PS/2 keyboard. The cost is that buttons change meaning with the
-mode, the numpad state and how long you press, and multi-pass jobs are set
-up through a step-by-step wizard. ScrewSync keeps the hardware and rebuilds
-the rest:
+## Features
 
-| nanoels                                                     | ScrewSync                                  |
-|-------------------------------------------------------------|--------------------------------------------|
-| Buttons change meaning by mode and state                    | One control, one job                       |
-| Setup wizard for passes, external/internal, taper           | One page per mode, every parameter visible |
-| A number typed before a button changes what the button does | Tap a field, type on a numpad              |
-| Left/right stops define the job                             | Touch off, type length and depth, start    |
-| Pitch and depth entered by hand                             | Thread library by designation              |
+### G-code and MDI
 
-## New in ScrewSync
+- [LatheCode](https://kachurovskiy.com/lathecode/) and a subset of LinuxCNC
+  G-code, with a toolpath preview on the web and on the display.
+- NGC parameters, expressions, O-words and routines stored on the device.
+- MDI: type G-code lines on the web client or the serial console.
+
+<img src="docs/images/web-gcode.png" width="400" />
+
+### Homing and work coordinates
+
+Home switches on Z and X, work systems G54–G59 with saved offsets, and
+travel limits from the home position. A tailstock sensor can share the X
+home input. See [docs/hardware.md](docs/hardware.md).
+
+<img src="docs/images/wcs-picker.png" width="400" />
 
 ### Probing
 
@@ -38,12 +51,14 @@ Touch off Z or X against a contact plate or a switch probe. ScrewSync
 touches, backs off, reprobes slowly and zeroes the axis on the surface.
 See [docs/probe.md](docs/probe.md).
 
-### Alternating flank infeed
+### Threading
 
-For threading. Plunging straight in makes both edges of the tool cut at
-once, which chatters and tears on deeper threads. With alternating flank
-infeed, each pass shifts sideways so only one edge cuts, alternating sides.
-A spring pass at full depth finishes the thread.
+A thread library by designation, multiple starts, tapered threads and
+reverse threading. Alternating flank infeed: plunging straight in makes
+both edges of the tool cut at once, which chatters and tears on deeper
+threads. With alternating flank infeed, each pass shifts sideways so only
+one edge cuts, alternating sides. A spring pass at full depth finishes the
+thread.
 
 ### Pin mapping
 
@@ -70,20 +85,31 @@ See [docs/calibration.md](docs/calibration.md).
 - **Spindle direction check**: the job stops if the spindle turns the wrong
   way.
 - **Live feed override** while a job runs.
-- **G-code**: [LatheCode](https://kachurovskiy.com/lathecode/) and
-  LinuxCNC programs, with a toolpath preview on the web and on the display.
-  NGC parameters, expressions, O-words and saved routines.
-- **MDI**: type G-code lines on the web client or the serial console.
 - **Web client** that stays in sync with the display: settings, thread
   table, G-code, backups, logs and firmware updates.
 
-<p float="left">
-  <img src="docs/images/web-gcode.png" width="400" />
-  <img src="docs/images/web-threads.png" width="400" />
-</p>
+<img src="docs/images/web-threads.png" width="400" />
 
-Gear, async, turn, thread, part, slot and ellipse modes are all there.
+Gear and async feed modes are there too.
 Full list: [docs/features.md](docs/features.md).
+
+## Coming from nanoels
+
+nanoels is a great piece of hardware, and its firmware packs a lot into one
+screen and a PS/2 keyboard. The cost is that buttons change meaning with the
+mode, the numpad state and how long you press, and multi-pass jobs are set
+up through a step-by-step wizard. ScrewSync keeps the hardware and rebuilds
+the rest:
+
+| nanoels                                                     | ScrewSync                                  |
+|-------------------------------------------------------------|--------------------------------------------|
+| Buttons change meaning by mode and state                    | One control, one job                       |
+| Setup wizard for passes, external/internal, taper           | One page per mode, every parameter visible |
+| A number typed before a button changes what the button does | Tap a field, type on a numpad              |
+| Left/right stops define the job                             | Touch off, type length and depth, start    |
+| Pitch and depth entered by hand                             | Thread library by designation              |
+
+<img src="docs/images/gear-feed-keypad.png" width="400" />
 
 ## Install
 
@@ -95,6 +121,7 @@ connectors. See [docs/install.md](docs/install.md).
 | Doc                                        | What                                    |
 |--------------------------------------------|-----------------------------------------|
 | [Install](docs/install.md)                 | connectors, flashing, first setup       |
+| [Hardware](docs/hardware.md)               | boards, screens, parts and additions    |
 | [Features](docs/features.md)               | everything it does                      |
 | [Manual](docs/manual.md)                   | how to operate it                       |
 | [Probe](docs/probe.md)                     | probe hardware, settings and cycle      |

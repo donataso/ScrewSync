@@ -10,6 +10,7 @@ a web client.
 - [docs/screen.md](docs/screen.md) — display UI design and tooling
 - [docs/manual.md](docs/manual.md) — operator manual
 - [docs/install.md](docs/install.md) — connectors, flashing, first setup
+- [docs/hardware.md](docs/hardware.md) — boards, screens, parts and additions
 - [docs/features.md](docs/features.md) — full feature list
 - [docs/probe.md](docs/probe.md) — probe hardware, settings and cycle
 - [docs/calibration.md](docs/calibration.md) — calibration checks in the web client

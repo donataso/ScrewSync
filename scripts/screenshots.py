@@ -5,12 +5,14 @@ Run with nxwright's own Python, from anywhere:
     <nxwright>/.venv/bin/python scripts/screenshots.py [shot ...]
 No shot names = all shots. Firmware pushes are emulated as main/lib/Display builds them.
 """
+import io
 import random
 import re
 import sys
 from pathlib import Path
 
 from nxwright.mcp_server.headless import HeadlessSimulation
+from PIL import Image, ImageChops, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "docs" / "images"
@@ -22,6 +24,9 @@ _CELL_ENUM = re.search(r"enum class CellType[^{]*\{(.*?)\};", _DISPLAY_THEME, re
 KIND = {m[1]: int(m[2]) for m in re.finditer(r"(\w+) = (\d+)", _CELL_ENUM)}
 
 _THREAD_TABLE = (ROOT / "main/lib/Thread/ThreadTable.cpp").read_text()
+
+PREVIEW = {m[1]: int(m[2]) for m in re.finditer(r"constexpr int (PREVIEW_[XYWH]|TOOL_SIZE) = (\d+);", _DISPLAY_THEME)}
+_PREVIEW_TS = (ROOT / "web/client/gcode/preview.ts").read_text()
 
 
 def _scaled(value, scale):
@@ -68,7 +73,7 @@ def rpm():
 
 
 def value(slot, text, kind):
-    return ['c%d.txt="%s"' % (slot, text), "cKind%d.val=%d" % (slot, KIND[kind])]
+    return ['c%d.txt="%s"' % (slot, text), "cKind%d=%d" % (slot, KIND[kind])]
 
 
 def toggle(slot, a, b, selected, font=None):
@@ -76,18 +81,22 @@ def toggle(slot, a, b, selected, font=None):
     if font is not None:
         lines += ["c%da.font=%d" % (slot, font), "c%db.font=%d" % (slot, font)]
     return lines + ["c%d%s.bco=%d" % (slot, "ab"[selected], COLOR["SELECTED"]),
-                    "cKind%d.val=%d" % (slot, KIND["Toggle"])]
+                    "cKind%d=%d" % (slot, KIND["Toggle"])]
 
 
 def latch(slot, label):
     return ['c%d.txt="%s"' % (slot, label),
             "c%d.bco=%d" % (slot, COLOR["SELECTED"]),
             "c%d.borderc=%d" % (slot, COLOR["SELECTED"]),
-            "cKind%d.val=%d" % (slot, KIND["Latch"])]
+            "cKind%d=%d" % (slot, KIND["Latch"])]
 
 
 def common():
-    return ["zOn.val=1", "xOn.val=1", 'zPos.txt="12.480"', 'xPos.txt="0.650"', angle()]
+    return ["estop.val=0", "click estopSync,1",
+            "zOn.val=1", "xOn.val=1", 'zPos.txt="12.480"', 'xPos.txt="0.650"', angle()]
+
+
+HOMED = ["homeState.val=1", 'wcsBtn.txt="G54"', "wcs0.bco=%d" % COLOR["SELECTED"], "click layoutSync,1"]
 
 
 MODES = ["Gear", "Async", "Turn", "Thread", "Part", "Slot", "Ellipse", "G-code", "Probe"]
@@ -109,7 +118,7 @@ THREAD = (['modeName.txt="THREAD"']
           + value(12, "Taper: 0°", "Angle")
           + latch(13, "Flank")
           + latch(14, "Spring")
-          + ['picker.txt="Library"', "cKind15.val=%d" % KIND["Picker"], "ready.val=1"]
+          + ['picker.txt="Library"', "cKind15=%d" % KIND["Picker"], "ready.val=1"]
           + SYNC)
 
 DIR_AXIS = (toggle(1, "←", "→", 0, FONT_SYMBOLS)
@@ -143,7 +152,103 @@ def picker(group, selected):
     return lines + ['pickerGroup.txt="%s"' % group, "click pickerSync,1"]
 
 
+def _preview_color(name):
+    r, g, b, *alpha = (float(v) for v in re.search(r'%s = "rgba?\(([^)]*)\)"' % name, _PREVIEW_TS)[1].split(","))
+    if not alpha:
+        return int(r), int(g), int(b)
+    back = _preview_color("BACKGROUND")
+    return tuple(round(c * alpha[0] + bc * (1 - alpha[0])) for c, bc in zip((r, g, b), back))
+
+
+# A roughing and threading program on stock of radius 10, as (kind, Z mm,
+# X mm): X is radius, Z0 is the stock's right edge.
+def toolpath():
+    steps = [("rapid", 2, 0), ("rapid", 2, 10.5)]
+    for x in (9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6):
+        z_end = -30 if x >= 8 else -18
+        steps += [("rapid", 2, x), ("feed", z_end, x), ("feed", z_end, x + 0.5), ("rapid", 2, x + 0.5)]
+    for depth in (0.3, 0.55, 0.75, 0.9):
+        steps += [("rapid", 2, 6 - depth), ("thread", -15, 6 - depth), ("rapid", -15, 7), ("rapid", 2, 7)]
+    return steps
+
+
+# Equal-scale fit of every step and the start point, as computeMapping in preview.ts.
+def preview_mapping(steps, margin=16):
+    zs = [0] + [s[1] for s in steps]
+    xs = [0] + [s[2] for s in steps]
+    w, h = PREVIEW["PREVIEW_W"], PREVIEW["PREVIEW_H"]
+    scale = min((w - 2 * margin) / (max(zs) - min(zs)), (h - 2 * margin) / (max(xs) - min(xs)))
+    origin_x = w / 2 - (min(zs) + max(zs)) / 2 * scale
+    origin_y = h / 2 - (min(xs) + max(xs)) / 2 * scale
+    return origin_x, origin_y, scale, min(zs), max(zs)
+
+
+def _dashed(draw, a, b, fill, on=4, off=3):
+    length = ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** 0.5
+    t = 0
+    while t < length:
+        u, v = t / length, min(t + on, length) / length
+        draw.line([(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u),
+                   (a[0] + (b[0] - a[0]) * v, a[1] + (b[1] - a[1]) * v)], fill=fill, width=2)
+        t += on + off
+
+
+# drawPreview in preview.ts, for the picture the web client sends to the display.
+def preview_picture(steps):
+    origin_x, origin_y, scale, z_min, z_max = preview_mapping(steps)
+    px = lambda z, x: (origin_x + z * scale, origin_y + x * scale)
+    img = Image.new("RGB", (PREVIEW["PREVIEW_W"], PREVIEW["PREVIEW_H"]), _preview_color("BACKGROUND"))
+    draw = ImageDraw.Draw(img)
+    draw.line([px(z_min, 0), px(z_max, 0)], fill=_preview_color("COLOR_CENTERLINE"), width=2)
+    at = px(0, 0)
+    for kind, z, x in steps:
+        to = px(z, x)
+        if kind == "rapid":
+            _dashed(draw, at, to, _preview_color("COLOR_RAPID"))
+        else:
+            draw.line([at, to], fill=_preview_color("COLOR_THREAD" if kind == "thread" else "COLOR_FEED"), width=2)
+        at = to
+    sx, sy = px(0, 0)
+    draw.ellipse([sx - 3, sy - 3, sx + 3, sy + 3], fill=_preview_color("COLOR_START"))
+    return img
+
+
+# The display draws the picture from its RAM, which the headless simulator
+# cannot hold: paste it over the empty picture box, keeping what is drawn on top.
+def paste_preview(png, steps):
+    shot = Image.open(io.BytesIO(png)).convert("RGB")
+    box = (PREVIEW["PREVIEW_X"], PREVIEW["PREVIEW_Y"],
+           PREVIEW["PREVIEW_X"] + PREVIEW["PREVIEW_W"], PREVIEW["PREVIEW_Y"] + PREVIEW["PREVIEW_H"])
+    region = shot.crop(box)
+    empty = max(region.getcolors(region.width * region.height))[1]
+    r, g, b = ImageChops.difference(region, Image.new("RGB", region.size, empty)).split()
+    mask = ImageChops.lighter(ImageChops.lighter(r, g), b).point(lambda v: 255 if v == 0 else 0)
+    region.paste(preview_picture(steps), (0, 0), mask)
+    shot.paste(region, box[:2])
+    out = io.BytesIO()
+    shot.save(out, "PNG")
+    return out.getvalue()
+
+
+def tool_marker(steps, z, x):
+    origin_x, origin_y, scale, _, _ = preview_mapping(steps)
+    half = PREVIEW["TOOL_SIZE"] // 2
+    left = PREVIEW["PREVIEW_X"] + round(origin_x + z * scale) - half
+    top = PREVIEW["PREVIEW_Y"] + round(origin_y + x * scale) - half
+    return ["gcodeTool.x=%d" % left, "gcodeTool.y=%d" % top, "gcodeToolOn.val=1"]
+
+
+GCODE_STEPS = toolpath()
+GCODE_AT = 24
+
+GCODE = (['modeName.txt="G-CODE"', "gcodeOn.val=1", "gcodeLoaded.val=1", "picOn.val=1",
+          'gcodeName.txt="shaft-m12.ngc"',
+          'gcodeProgress.txt="%d/%d steps"' % (GCODE_AT, len(GCODE_STEPS)),
+          'ovrMinus.txt="-10%"', 'ovrPlus.txt="+10%"', 'ovr.txt="100%"', "ovrOn.val=1"]
+         + tool_marker(GCODE_STEPS, -11, GCODE_STEPS[GCODE_AT - 1][2]))
+
 PAGES = {"thread-picker": "threads"}
+OVERLAYS = {"gcode-running": lambda png: paste_preview(png, GCODE_STEPS)}
 
 
 def shots():
@@ -185,6 +290,13 @@ def shots():
         + ["startStop.bco=%d" % COLOR["AXIS_OFF"]]
         + SYNC
         + [tap("c0"), tap("kp0"), tap("kpDot"), tap("kp0"), tap("kp7")],
+        "gcode-running": common() + HOMED + GCODE + RUNNING
+        + [rpm(), 'zPos.txt="-11.000"', 'xPos.txt="%.3f"' % GCODE_STEPS[GCODE_AT - 1][2],
+           'startStop.txt="STOP"', "startStop.bco=%d" % COLOR["STOP"]]
+        + SYNC,
+        "wcs-picker": common() + THREAD + HOMED
+        + ['wcsBtn.txt="G55"', "wcs0.bco=%d" % COLOR["BUTTON"], "wcs1.bco=%d" % COLOR["SELECTED"],
+           tap("wcsBtn")],
     }
 
 
@@ -215,7 +327,8 @@ def take(name, steps):
             else:
                 send(sim, step)
         path = OUT / ("%s.png" % name)
-        path.write_bytes(sim.screen()["png"])
+        png = sim.screen()["png"]
+        path.write_bytes(OVERLAYS[name](png) if name in OVERLAYS else png)
         print(path.relative_to(ROOT))
     finally:
         sim.stop()
