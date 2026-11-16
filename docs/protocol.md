@@ -57,8 +57,10 @@ replies; see `docs/screen.md`.
 - At boot, a saved mode that needs a missing capability is replaced by
   `gear`.
 - `bootState`: the state at power-on. `0` estop, `1` estop off with motors
-  off, `2` estop off with motors on. Other restarts and an active estop
-  input give estop.
+  off, `2` estop off with motors on. A reset pin, USB serial/JTAG reset or
+  software restart (`reboot`, WiFi change, firmware update) counts as
+  power-on. Other restarts (watchdog, brownout) and an active estop input
+  give estop.
 - Serial/UART replies are `ok [data]` / `err <reason>`.
 - Any command on any transport gets `err busy: flashing` instead of
   running while machine state is `flashing`.

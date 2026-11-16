@@ -26,6 +26,9 @@
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#ifdef CONFIG_SOC_FAMILY_ESPRESSIF_ESP32
+#include <esp_system.h>
+#endif
 
 LOG_MODULE_REGISTER(machine, LOG_LEVEL_INF);
 
@@ -63,6 +66,18 @@ namespace
         Events::publish(&ESTOP_CHAN, &msg);
     }
     K_WORK_DEFINE(g_estopWork, tripEstop);
+
+    // A host on USB serial/JTAG resets the chip right after power-on; hwinfo has no cause bit for it.
+    bool bootStateApplies()
+    {
+#ifdef CONFIG_SOC_FAMILY_ESPRESSIF_ESP32
+        if (esp_reset_reason() == ESP_RST_USB) {
+            return true;
+        }
+#endif
+        uint32_t cause = 0;
+        return hwinfo_get_reset_cause(&cause) == 0 && (cause & (RESET_POR | RESET_PIN | RESET_SOFTWARE));
+    }
 
     Machine::State stateLocked()
     {
@@ -174,8 +189,7 @@ namespace Machine
 
     void applyBootState()
     {
-        uint32_t cause = 0;
-        if (hwinfo_get_reset_cause(&cause) != 0 || !(cause & (RESET_POR | RESET_PIN))) {
+        if (!bootStateApplies()) {
             return;
         }
         int32_t bootState = Settings::g_active.bootState;
