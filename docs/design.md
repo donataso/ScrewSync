@@ -2,10 +2,11 @@
 
 ## Hardware
 
-- Target: [nanoels](https://github.com/kachurovskiy/nanoels) H5 hardware.
-  Two separate boards: a generic ESP32-S3 main controller
-  (`esp32-s3-devkitc-1`-class module) and a separate display module, linked
-  over UART. Connector assignments: `docs/install.md`.
+- Boards (`boards/`) and screens (`displays/`) are separate definitions. A
+  target (`targets/`) combines one board with one screen. Targets and
+  their wiring: `docs/hardware.md`, `docs/targets/`.
+- nanoels H5: a generic ESP32-S3 main controller (`esp32-s3-devkitc-1`-class
+  module) and a separate display module, linked over UART.
 - The display is a genuine Nextion Intelligent-series panel running
   Nextion's own closed firmware. It cannot run custom firmware -- see
   `docs/screen.md`.

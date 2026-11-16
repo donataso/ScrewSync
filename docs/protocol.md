@@ -93,13 +93,25 @@ replies; see `docs/screen.md`.
 ## MDI
 
 - A line that starts with G, M, T, F, X or Z, then a digit, sign or dot,
-  is G-code (LinuxCNC dialect), e.g. `G91 G0 Z-1`. Reply: `ok` when queued,
+  or with `#` or `(`, is G-code (LinuxCNC dialect), e.g. `G91 G0 Z-1`,
+  `#<depth> = 0.5`, `(PRINT, hi)`. Reply: `ok free=<n> steps=<k> done=<d>` when queued,
   else `err <reason>`.
 - The modal state (G90/G91, G20/G21, F, motion mode) stays between lines.
   When the queue is empty, the next line starts from the current position.
 - `@` before a line marks a UI line (display, switches, web buttons). It
   runs from a fresh modal state and does not change the MDI one, so it
   gives every mode it needs, e.g. `@G21 G91 G0 Z1`.
+- The reply to an accepted line is `ok free=<n> steps=<k> done=<d>`:
+  `n` is the number of free steps in the MDI queue, `k` the steps this
+  line queued (a PRINT is one step) and `d` the count of completed MDI
+  steps when the line was queued. On WebSocket it is
+  `{"type":"reply","msg":"free=<n> steps=<k> done=<d>"}`. The line is done
+  when the completed count reaches `d` plus the steps queued before it
+  and `k`. One line can make several steps; a line that does not fit gives
+  `err queue full`. The `status` push carries `mdiFree` and `mdiDone` (the
+  completed count; a stop or failure does not count the dropped steps)
+  and goes out when either changes. A client sends the next line only
+  while it has free steps.
 - Lines queue while a move runs; a full queue gives `err queue full`.
   Refused while a mode runs. `stop` stops both axes and clears the queue.
 - MDI owns both axes while it moves; a jog stops it.
@@ -155,7 +167,11 @@ replies; see `docs/screen.md`.
     `text` as the error. `(PRINT, text)`: each `#n` / `#<name>` in `text`
     is replaced by its value; the line is a push, `print <text>` on the
     serial console, `{"type":"print","msg":"<text>"}` on the WebSocket.
-    Jobs only.
+    A parameter that cannot be read (`unsupported parameter`, or
+    `undefined parameter` for an unset name) is an error: the job stops at
+    that line, an MDI line is refused. `MSG` and `ABORT` are for jobs only.
+    In MDI, `PRINT` takes one queue slot, takes the values when the line
+    is accepted and prints when the moves before it end.
 - Lines run at execution time: a line is read after the moves before it
   end, so a G38 result is known to the next line.
 - `o<name> call` finds a sub in the same file, then in the program, then
@@ -317,8 +333,10 @@ right after any command changes that domain:
   mode, `job` (`phase`, `pass`, `passes`), `feedOverride` (percent),
   `error` (why the last job ended
   on its own), `params` (the current mode's `name=value ...`) and
-  `probeContact` (the live probe input state), `homing` (homing runs) and
-  `wcs` (the active system, `"G54"`–`"G59"`). Each axis object has `homed`.
+  `probeContact` (the live probe input state), `homing` (homing runs),
+  `wcs` (the active system, `"G54"`–`"G59"`), `mdiFree` (free steps in
+  the MDI queue) and `mdiDone` (completed MDI steps). Each axis object
+  has `homed`.
 - `{"type":"capabilities","has_x_motor":bool,"has_endstops":bool,"has_probe":bool}`
   -- sent once on connect, same values as `GET /capabilities`.
 - `{"type":"inputs","pins":{"<gpio>":0|1,...}}` -- raw level of each sampled

@@ -18,6 +18,8 @@ connector pin from the web client, Pins page. No rebuild.
 - You can only save when the machine is idle and the map has no errors.
 - Click a connector name to rename it for your wiring. An empty name sets
   the board's name back.
+- "Print sheet": a printable pin map with your connector names,
+  optionally in colour and with details. Keep it with the machine.
 - The editor hides the functions of a feature that is off (X motor,
   homing, probe). Saving the settings with a feature off removes its
   functions from the saved map. See [manual.md](manual.md#features).
@@ -122,8 +124,7 @@ Each encoder has a filter, in µs:
 - The pin map is part of the device backup. A restore applies it after a
   reboot.
 
-## nanoels H5
+## Targets
 
-The handwheel connectors have B before A. Thus the default map has A and B
-swapped compared with the case labels. If a handwheel turns the wrong way,
-toggle `invertHandwheelZ` or `invertHandwheelX`.
+Board-specific pin notes are in the target docs, for example
+[nanoels H5](targets/nanoels-h5.md#handwheels).

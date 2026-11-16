@@ -60,7 +60,8 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
   G10 L20 position setting, work coordinate systems G54–G59 (with home
   switches), G53, and M0/M1 pauses.
 - MDI: G-code lines on the web client or the serial console, with modes
-  kept between lines. G38 probe moves.
+  kept between lines. G38 probe moves. Multiline paste, with a status per
+  line.
 - LinuxCNC NGC: parameters, expressions, O-word subs, conditions and
   loops, G38 results, settings as parameters. Run at execution time.
 - NGC routines stored on the device and called by name, also as a
@@ -120,6 +121,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - Thread table editor.
 - G-code programs and routines.
 - MDI console.
+- Pin map editor, and a printable pin map sheet.
 - Wi-Fi, as an access point and as a station.
 - Settings backup and restore.
 - Device log viewer.

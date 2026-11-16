@@ -9,7 +9,8 @@ a web client.
 - [docs/protocol.md](docs/protocol.md) — command protocol (serial/display/web)
 - [docs/screen.md](docs/screen.md) — display UI design and tooling
 - [docs/manual.md](docs/manual.md) — operator manual
-- [docs/install.md](docs/install.md) — connectors, flashing, first setup
+- [docs/install.md](docs/install.md) — wiring, flashing, first setup
+- [docs/targets/](docs/targets/) — per-target wiring and notes
 - [docs/hardware.md](docs/hardware.md) — boards, screens, parts and additions
 - [docs/features.md](docs/features.md) — full feature list
 - [docs/homing.md](docs/homing.md) — homing cycle, sensors and wiring

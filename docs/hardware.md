@@ -1,14 +1,13 @@
 # Hardware
 
 Boards and screens are separate definitions, and a target combines one
-board with one screen. Current target: nanoels H5 with a 5" Nextion.
+board with one screen.
 
-## nanoels H5
+## Targets
 
-Parts: the
-[nanoels H5 parts list](https://github.com/kachurovskiy/nanoels/tree/main/h5#parts-list).
-Some cables plug into other connectors than on the original firmware. See
-[install.md](install.md).
+| Target                                    | Board      | Screen       |
+|-------------------------------------------|------------|--------------|
+| [nanoels H5](targets/nanoels-h5.md)       | nanoels H5 | 5" Nextion   |
 
 ## Additions
 

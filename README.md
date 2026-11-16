@@ -33,7 +33,10 @@ board with one screen. Current target: nanoels H5 with a 5" Nextion. See
 - NGC parameters, expressions, O-words and routines stored on the device.
 - MDI: type G-code lines on the web client or the serial console.
 
-<img src="docs/images/web-gcode.png" width="400" />
+<p float="left">
+  <img src="docs/images/web-gcode.png" width="400" />
+  <img src="docs/images/web-mdi.png" width="400" />
+</p>
 
 ### Homing and work coordinates
 
@@ -113,14 +116,14 @@ the rest:
 
 ## Install
 
-It runs on unmodified H5 hardware, but some cables move to other
-connectors. See [docs/install.md](docs/install.md).
+Wiring per target, flashing and first setup:
+[docs/install.md](docs/install.md).
 
 ## Docs
 
 | Doc                                        | What                                    |
 |--------------------------------------------|-----------------------------------------|
-| [Install](docs/install.md)                 | connectors, flashing, first setup       |
+| [Install](docs/install.md)                 | wiring, flashing, first setup           |
 | [Hardware](docs/hardware.md)               | boards, screens, parts and additions    |
 | [Features](docs/features.md)               | everything it does                      |
 | [Manual](docs/manual.md)                   | how to operate it                       |
@@ -146,7 +149,7 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits and license
 
-Built for the [nanoels](https://github.com/kachurovskiy/nanoels) H5 hardware.
+First target: the [nanoels](https://github.com/kachurovskiy/nanoels) H5 hardware.
 ScrewSync is licensed under AGPL-3.0-or-later.
 Third-party notices (icons and fonts) are in [NOTICE.md](NOTICE.md).
 

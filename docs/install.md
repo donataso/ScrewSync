@@ -2,37 +2,12 @@
 
 ## Hardware
 
-ScrewSync runs on unmodified nanoels H5 hardware, but several cables plug
-into different connectors than the labels on the case say.
+Wire the board as its target doc says:
 
-The table is laid out like the connectors on the back of the case:
+- [nanoels H5](targets/nanoels-h5.md)
 
-|       |             |             |       |         |
-|-------|-------------|-------------|-------|---------|
-| -     | Z motor     | X motor     | -     | -       |
-| PROBE | Z handwheel | X handwheel | -     | -       |
-| -     | -           | -           | POWER | ENCODER |
-
-* **PROBE** (optional): - GND SIG -
-* **Z motor**: 5V, ENA, DIR, STEP
-* **Z handwheel** (optional): 5V, GND, B, A
-* **X motor** (optional): 5V, ENA, DIR, STEP
-* **X handwheel** (optional): 5V, GND, B, A
-* **ENCODER**: 5V, GND, A, B
-* **POWER**: 5V, 5V, GND, GND
-
-**Why the connections were moved**: the STEP pin of the Z connector is GPIO35, which on
-the ESP32-S3R8 is one of the octal PSRAM data lines, bonded inside the chip
-package. Driving it as a stepper output corrupts the PSRAM bus, which
-breaks Wi-Fi (its driver allocates from PSRAM) with symptoms ranging from
-allocation failures to crashes. So the motors, and their handwheels with
-them, sit one connector to the right, and there is no Y axis.
-
-Other hardware notes:
-
-- **Flip the display 180 degrees** so its viewing angles are correct.
-  Alternatively, flash `display_180.tft` from the release on the web client.
-- Probe wiring and probe types: [probe.md](probe.md).
+Parts and optional additions: [hardware.md](hardware.md). Probe wiring
+and probe types: [probe.md](probe.md).
 
 ## Firmware
 

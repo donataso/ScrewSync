@@ -1,6 +1,6 @@
 # Manual
 
-How to operate ScrewSync. For connectors and flashing, see
+How to operate ScrewSync. For wiring and flashing, see
 [install.md](install.md).
 
 ## First setup
@@ -232,6 +232,14 @@ How to operate ScrewSync. For connectors and flashing, see
   (LinuxCNC), e.g. `G91 G0 Z-1`.
   The modes (G90/G91, G20/G21, F) stay between lines. STOP or `stop`
   stops the move and drops the queued lines.
+- Parameter and comment lines work too, e.g. `#<depth> = 0.5` and
+  `(PRINT, depth #<depth>)`. PRINT output shows in the console.
+- On the web client you can paste several lines at once. Each line shows
+  its status on the right: queued, `ok` (green) or the error. Lines are
+  sent as the queue has room.
+- After an error, the rest of the lines are skipped.
+- Stop, estop and motor power go out at once and skip all unfinished
+  lines.
 - `G10 L20 P0 Z0` sets Z zero at the tool. `M110` sets the spindle angle
   to 0.
 
