@@ -114,7 +114,7 @@ ZTEST(homing_seq, test_normal_run)
     zassert_equal(rig.speeds[0], 1000);
     zassert_equal(rig.speeds[1], 1000);
     zassert_equal(rig.speeds[2], 100);
-    zassert_equal(rig.speeds[3], 100);
+    zassert_equal(rig.speeds[3], PARAMS.fastSpeed / 2);
 }
 
 ZTEST(homing_seq, test_start_on_switch_backs_off_first)
