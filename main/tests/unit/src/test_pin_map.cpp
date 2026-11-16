@@ -409,3 +409,31 @@ ZTEST(pin_map, test_functions_json)
                                     R"("required":false,"exclusive":false,"activeLow":true)"),
                      "%s", g_json);
 }
+
+ZTEST(pin_map, test_sampled_gpios)
+{
+    uint8_t out[MAX_GPIO + 1];
+    size_t n = unusedGpios(g_board, g_map, out, sizeof(out));
+    const uint8_t unused[] = {4, 5, 6, 18, 38, 41, 42};
+    zassert_equal(n, sizeof(unused));
+    zassert_mem_equal(out, unused, sizeof(unused));
+
+    n = sampledGpios(g_board, g_map, out, sizeof(out));
+    const uint8_t sampled[] = {4, 5, 6, 8, 18, 38, 41, 42};
+    zassert_equal(n, sizeof(sampled));
+    zassert_mem_equal(out, sampled, sizeof(sampled));
+
+    remove(Fn::Probe);
+    n = sampledGpios(g_board, g_map, out, sizeof(out));
+    zassert_equal(n, sizeof(unused) + 1);
+}
+
+ZTEST(pin_map, test_inputs_json)
+{
+    uint64_t sampled = ((uint64_t)1 << 4) | ((uint64_t)1 << 48);
+    uint64_t levels = (uint64_t)1 << 48;
+    int len = PinMapJson::encodeInputs(sampled, levels, g_json, sizeof(g_json));
+    zassert_equal(len, (int)strlen(g_json));
+    zassert_str_equal(g_json, R"({"type":"inputs","pins":{"4":0,"48":1}})");
+    zassert_equal(PinMapJson::encodeInputs(sampled, levels, g_json, 20), -1);
+}

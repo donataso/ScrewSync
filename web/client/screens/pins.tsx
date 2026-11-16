@@ -17,6 +17,8 @@ import {
   fromPinsJson,
   functionDef,
   functionsAt,
+  inputStates,
+  isPlainInput,
   maxFilterUs,
   nameIssues,
   pinsOf,
@@ -30,12 +32,13 @@ import {
   type ConnectorNames,
   type EncoderType,
   type FunctionDef,
+  type InputLevels,
   type PinMap,
   type PinUse,
   type Pull,
 } from "../pins"
 import { Badge, Button, IconButton, LockNotice, OptionsButton, Panel, RemoveButton, Select, TextInput, Toggle } from "../ui/primitives"
-import { CONFIGURE_LOCK_MESSAGE, useCanConfigure } from "../state-provider"
+import { CONFIGURE_LOCK_MESSAGE, useCanConfigure, useInputLevels } from "../state-provider"
 import { useToast } from "../ui/toast"
 
 const BoardContext = createContext<Board | null>(null)
@@ -172,6 +175,8 @@ function PinsEditor({
   }, [])
 
   const used = useMemo(() => usage(board, map), [board, map])
+  const inputs = useInputLevels()
+  const states = useMemo(() => inputStates(board, map, inputs), [board, map, inputs])
   const issues = useMemo(() => [...validate(board, map), ...nameIssues(board, names)], [board, map, names])
   const errors = issues.filter((i) => i.level === "error")
   const dirty = JSON.stringify(map) !== JSON.stringify(saved) || JSON.stringify(names) !== JSON.stringify(savedNames)
@@ -439,6 +444,7 @@ function PinsEditor({
                 }
                 pinHighlighted={(p) => pinHighlighted(p) || ("gpio" in p && p.gpio === selected?.gpio)}
                 used={used}
+                states={states}
                 placing={placing}
                 map={map}
                 preview={preview?.connector === c.id ? preview : null}
@@ -513,6 +519,7 @@ function PinsEditor({
                 fn={fn}
                 label={index === undefined ? fn.label : assignmentLabel(board, map, index)}
                 assignment={a}
+                inputs={inputs}
                 connectorLabel={a ? label(a.connector) : ""}
                 highlighted={rowHighlighted(fn, index)}
                 placing={isPlacing}
@@ -572,6 +579,7 @@ function ConnectorView({
   highlighted,
   pinHighlighted,
   used,
+  states,
   placing,
   map,
   preview,
@@ -588,6 +596,7 @@ function ConnectorView({
   highlighted: boolean
   pinHighlighted: (p: BoardPin) => boolean
   used: Map<number, PinUse[]>
+  states: Map<number, boolean>
   placing: Placing | null
   map: PinMap
   preview: Span | null
@@ -642,6 +651,7 @@ function ConnectorView({
           const validStart = !!placing && canStartAt(board, map, placing.fn, c.id, i, placing.moving)
           const inPreview = !!preview && i >= preview.start && i < preview.start + preview.length
           const conflict = uses.length > 1
+          const lit = isGpio ? states.get(p.gpio) : undefined
           const fill = uses.length ? COLORS[colorIndex(board, uses[0].fn)] : ""
           const title = isGpio
             ? [
@@ -680,6 +690,12 @@ function ConnectorView({
             >
               <span className="font-medium">{isGpio ? p.gpio : p.power}</span>
               {uses.length > 0 && <span className="text-[10px] leading-none">{uses[0].signal}</span>}
+              {lit !== undefined && (
+                <span
+                  title={lit ? "active" : "inactive"}
+                  className={`absolute ${strapping ? "right-3" : "right-0.5"} top-0.5 h-2 w-2 rounded-full border border-primary ${lit ? "bg-primary" : "bg-transparent"}`}
+                />
+              )}
               {strapping && <span className="absolute right-0.5 top-0 text-xs font-extrabold text-amber-600 dark:text-amber-400">!</span>}
               {reserved && <span className="absolute right-0.5 top-0 text-xs font-extrabold text-red-600 dark:text-red-400">!</span>}
             </button>
@@ -746,6 +762,7 @@ function FunctionRow({
   fn,
   label,
   assignment: a,
+  inputs,
   connectorLabel: cLabel,
   highlighted,
   placing,
@@ -762,6 +779,7 @@ function FunctionRow({
   fn: FunctionDef
   label: string
   assignment: Assignment | undefined
+  inputs: InputLevels
   connectorLabel: string
   highlighted: boolean
   placing: boolean
@@ -833,7 +851,7 @@ function FunctionRow({
       {a && open && (
         <fieldset disabled={locked} className="min-w-0 mt-2 grid gap-2 border-t border-border pt-2 sm:grid-cols-2">
           {fn.signals.map((s, i) => (
-            <div key={s} className="flex flex-wrap items-center gap-2 text-sm">
+            <div key={s} className={`flex flex-wrap items-center gap-2 text-sm ${isPlainInput(fn) ? "sm:col-span-2" : ""}`}>
               <span className="w-16 font-medium">
                 {s} {pins[i] ?? "?"}
               </span>
@@ -847,6 +865,9 @@ function FunctionRow({
                   <option value="up">pull-up</option>
                   <option value="down">pull-down</option>
                 </Select>
+              )}
+              {isPlainInput(fn) && inputs[pins[i] ?? -1] !== undefined && (
+                <span className="ml-auto text-muted-foreground tabular-nums">raw: {inputs[pins[i] ?? -1] ? "HIGH" : "LOW"}</span>
               )}
             </div>
           ))}

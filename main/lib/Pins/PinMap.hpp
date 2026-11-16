@@ -36,6 +36,7 @@ namespace PinMap
     constexpr size_t CONNECTOR_NAME_MAX = 20;
     constexpr size_t ID_MAX = 15;
     constexpr size_t MAX_ASSIGNMENTS = 32;
+    constexpr size_t MAX_GPIO = 48;
     constexpr size_t ERROR_MAX = 96;
     // PCNT glitch filter limit: 1023 APB cycles at 80 MHz.
     constexpr uint32_t MAX_HW_FILTER_NS = 12787;
@@ -226,6 +227,9 @@ namespace PinMap
     int pcntUnit(const Map &map, Fn fn);
 
     bool isReserved(const Board &board, int gpio);
+
+    size_t unusedGpios(const Board &board, const Map &map, uint8_t *out, size_t outMax);
+    size_t sampledGpios(const Board &board, const Map &map, uint8_t *out, size_t outMax);
 
     // Places fn on the connector whose pins match gpios, with default options.
     bool fromGpios(const Board &board, Fn fn, const int32_t *gpios, size_t count, Assignment &out);

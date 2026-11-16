@@ -30,6 +30,7 @@ target_sources(app PRIVATE
     src/test_settings_fields.cpp
     src/test_json_span.cpp
     src/test_pin_map.cpp
+    src/test_input_subscribers.cpp
     src/test_switch_debounce.cpp
     src/test_jog_step.cpp
     src/test_jog_button.cpp

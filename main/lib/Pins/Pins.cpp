@@ -198,6 +198,11 @@ namespace
         return PersistBlob::save(NVS_NS, NVS_KEY, &g_stored, sizeof(g_stored));
     }
 
+    const struct device *portOf(int gpio)
+    {
+        return gpio < 32 ? GPIO0 : GPIO1;
+    }
+
     gpio_dt_spec specOf(const Assignment &a, size_t signal)
     {
         int gpio = gpioOf(g_board, a, signal);
@@ -209,7 +214,16 @@ namespace
         if (def(a.fn).dir == Dir::In) {
             flags |= o.pull == Pull::Up ? GPIO_PULL_UP : (o.pull == Pull::Down ? GPIO_PULL_DOWN : 0);
         }
-        return {gpio < 32 ? GPIO0 : GPIO1, (gpio_pin_t)(gpio % 32), flags};
+        return {portOf(gpio), (gpio_pin_t)(gpio % 32), flags};
+    }
+
+    void configureUnused()
+    {
+        uint8_t unused[MAX_GPIO + 1];
+        size_t n = unusedGpios(g_board, g_active, unused, sizeof(unused));
+        for (size_t i = 0; i < n; i++) {
+            gpio_pin_configure(portOf(unused[i]), unused[i] % 32, GPIO_INPUT);
+        }
     }
 
     void routePcnt()
@@ -278,6 +292,7 @@ namespace Pins
             g_fault[0] = '\0';
         }
         routePcnt();
+        configureUnused();
     }
 
     size_t count(Fn fn)
@@ -345,6 +360,16 @@ namespace Pins
             defaults(saved);
         }
         return wiredIn(saved);
+    }
+
+    size_t sampledGpios(uint8_t *out, size_t outMax)
+    {
+        return PinMap::sampledGpios(g_board, g_active, out, outMax);
+    }
+
+    int readRaw(int gpio)
+    {
+        return gpio < 0 || gpio > (int)MAX_GPIO ? -1 : gpio_pin_get_raw(portOf(gpio), gpio % 32);
     }
 
     bool usingDefaults()

@@ -43,6 +43,9 @@ namespace Pins
     void clearDisabledFeatures();
     Settings::Wired savedWired();
 
+    size_t sampledGpios(uint8_t *out, size_t outMax);
+    int readRaw(int gpio);
+
     bool usingDefaults();
     // Why the active map is missing a required function, or nullptr.
     const char *fault();

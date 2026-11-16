@@ -12,6 +12,8 @@ import {
   functionDef,
   fromPinsJson,
   functionsAt,
+  inputLevels,
+  inputStates,
   nameIssues,
   pinsOf,
   placements,
@@ -222,5 +224,32 @@ describe("pins JSON", () => {
   it("sends an empty encoder type for non-encoders", () => {
     const probe = toPinsJson(MOCK_MAP, {}).functions.find((f) => f.id === "probe")
     expect(probe?.encoder).toBe("")
+  })
+})
+
+describe("inputStates", () => {
+  const probePin = pinsOf(MOCK_BOARD, fn("probe"), MOCK_MAP[at(MOCK_MAP, "probe")])[0]!
+  const setInvert = (invert: boolean) => MOCK_MAP.map((a) => (a.fn === "probe" ? { ...a, options: [{ ...a.options[0], invert }] } : a))
+
+  it("gives the raw level when not inverted and the opposite when inverted", () => {
+    expect(inputStates(MOCK_BOARD, setInvert(false), { [probePin]: 1 }).get(probePin)).toBe(true)
+    expect(inputStates(MOCK_BOARD, setInvert(true), { [probePin]: 1 }).get(probePin)).toBe(false)
+    expect(inputStates(MOCK_BOARD, setInvert(true), { [probePin]: 0 }).get(probePin)).toBe(true)
+  })
+
+  it("follows the given map", () => {
+    expect(inputStates(MOCK_BOARD, without("probe"), { [probePin]: 1 }).has(probePin)).toBe(false)
+  })
+
+  it("skips outputs, encoders and pins with no reading", () => {
+    const all = Object.fromEntries(Array.from({ length: 49 }, (_, gpio) => [gpio, 1 as const]))
+    expect([...inputStates(MOCK_BOARD, MOCK_MAP, all).keys()]).toEqual([probePin])
+    expect(inputStates(MOCK_BOARD, MOCK_MAP, {}).size).toBe(0)
+  })
+})
+
+describe("inputLevels", () => {
+  it("keys the levels by GPIO number", () => {
+    expect(inputLevels({ pins: { "4": 1, "48": 0 } })).toEqual({ 4: 1, 48: 0 })
   })
 })

@@ -364,6 +364,24 @@ namespace PinMapJson
         return validate(board, out, err, errMax);
     }
 
+    int encodeInputs(uint64_t sampled, uint64_t levels, char *out, size_t outMax)
+    {
+        int n = snprintf(out, outMax, "{\"type\":\"inputs\",\"pins\":{");
+        bool first = true;
+        for (size_t gpio = 0; gpio <= MAX_GPIO && n >= 0 && (size_t)n < outMax; gpio++) {
+            if (sampled >> gpio & 1) {
+                n += snprintf(out + n, outMax - (size_t)n, "%s\"%u\":%u", first ? "" : ",", (unsigned)gpio,
+                              (unsigned)(levels >> gpio & 1));
+                first = false;
+            }
+        }
+        if (n < 0 || (size_t)n >= outMax) {
+            return -1;
+        }
+        n += snprintf(out + n, outMax - (size_t)n, "}}");
+        return (size_t)n < outMax ? n : -1;
+    }
+
     int encodeFunctions(char *out, size_t outMax)
     {
         memset(&g_fnDoc, 0, sizeof(g_fnDoc));

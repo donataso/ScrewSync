@@ -25,6 +25,8 @@
 #include <zephyr/sys/util.h>
 #include "Command.hpp"
 #include "Events.hpp"
+#include "InputSampler.hpp"
+#include "InputSubscribers.hpp"
 #include "GcodeMdi.hpp"
 #include "Settings.hpp"
 #include "Wifi.hpp"
@@ -136,6 +138,7 @@ namespace
     static_assert(WS_MAX_CLIENTS <= ATOMIC_BITS, "one dirty bit per slot");
     atomic_t g_settingsDirty = ATOMIC_INIT(0);
     atomic_t g_statusDirty = ATOMIC_INIT(0);
+    atomic_t g_inputsDirty = ATOMIC_INIT(0);
     atomic_t g_probeDirty = ATOMIC_INIT(0);
     struct k_spinlock g_probeLock;
     Events::ProbeResult g_probeResult;
@@ -151,6 +154,41 @@ namespace
     void onRunning(const struct zbus_channel *)
     {
         atomic_set(&g_statusDirty, ALL_SLOTS);
+    }
+
+    void onInputs()
+    {
+        atomic_set(&g_inputsDirty, ALL_SLOTS);
+    }
+
+    InputSubscribers g_inputSubs;
+
+    void setInputsLocked(int slot, bool on)
+    {
+        InputSubscribers::Change change = g_inputSubs.set(slot, on);
+        if (change == InputSubscribers::Change::Started) {
+            InputSampler::start();
+        } else if (change == InputSubscribers::Change::Stopped) {
+            InputSampler::stop();
+        }
+    }
+
+    void setInputs(int slot, bool on)
+    {
+        k_mutex_lock(&g_clientsLock, K_FOREVER);
+        setInputsLocked(slot, on);
+        k_mutex_unlock(&g_clientsLock);
+        if (on) {
+            atomic_set_bit(&g_inputsDirty, slot);
+        }
+    }
+
+    bool inputsSubscribed(int slot)
+    {
+        k_mutex_lock(&g_clientsLock, K_FOREVER);
+        bool on = g_inputSubs.has(slot);
+        k_mutex_unlock(&g_clientsLock);
+        return on;
     }
 
     void onProbe(const struct zbus_channel *chan)
@@ -258,6 +296,7 @@ namespace
         {
             atomic_clear_bit(&g_settingsDirty, slot);
             atomic_clear_bit(&g_statusDirty, slot);
+            atomic_clear_bit(&g_inputsDirty, slot);
             atomic_clear_bit(&g_probeDirty, slot);
             atomic_clear_bit(&g_printDirty, slot);
             sendTo(sock, json, WsMessages::status(json, JSON_REPLY_BUF));
@@ -284,6 +323,9 @@ namespace
             }
             if (atomic_test_and_clear_bit(&g_settingsDirty, slot)) {
                 sendTo(sock, bigJson, WsMessages::settings(bigJson, JSON_BIG_BUF));
+            }
+            if (atomic_test_and_clear_bit(&g_inputsDirty, slot) && inputsSubscribed(slot)) {
+                sendTo(sock, json, WsMessages::inputs(json, JSON_REPLY_BUF));
             }
             if (atomic_test_and_clear_bit(&g_probeDirty, slot)) {
                 k_spinlock_key_t key = k_spin_lock(&g_probeLock);
@@ -345,6 +387,11 @@ namespace
                 sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, "error", "bad request"));
                 return;
             }
+            bool inputsOn = !strcmp(requested, "inputs on");
+            if (inputsOn || !strcmp(requested, "inputs off")) {
+                setInputs(slot, inputsOn);
+                return;
+            }
             char *line = g_line[slot];
             char *reply = g_reply[slot];
             strncpy(line, requested, WS_RX_BUF - 1);
@@ -395,6 +442,7 @@ namespace
                 websocket_unregister(g_clients[slot].sock);
             }
             g_clients[slot] = WsClient{};
+            setInputsLocked(slot, false);
             k_mutex_unlock(&g_clientsLock);
             LOG_INF("ws: slot %d freed", slot);
         }
@@ -458,6 +506,7 @@ namespace WsCommand
 {
     void begin()
     {
+        InputSampler::onChange(onInputs);
         for (int i = 0; i < WS_MAX_CLIENTS; i++) {
             k_sem_init(&g_wsReady[i], 0, 1);
             k_thread_create(&g_wsThreads[i], g_wsStacks[i], WS_STACK_SIZE, wsWorker,
@@ -506,6 +555,7 @@ namespace WsCommand
             if (g_clients[i].sock >= 0) {
                 socks[count++] = g_clients[i].sock;
                 g_clients[i] = WsClient{};
+                setInputsLocked(i, false);
             }
         }
         k_mutex_unlock(&g_clientsLock);

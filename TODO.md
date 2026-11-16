@@ -18,7 +18,6 @@
   named or positional binding, values of removed fields, pass number and
   skip pass.
 - Full ngc syntax: if/elseif/else, loops (while, do, repeat), subroutines.
-- Configured input pins show their current state.
 - DRO from glass scales, per axis: a present scale is the source of truth
   for position, otherwise motor steps. Needs a DRO panel; fixed stops in
   machine coordinates can be revisited then. Scale functions need their

@@ -20,6 +20,8 @@
 #include <zephyr/data/json.h>
 #include <zephyr/sys/util.h>
 #include "HomeInput.hpp"
+#include "InputSampler.hpp"
+#include "PinMapJson.hpp"
 #include "Pins.hpp"
 #include "Settings.hpp"
 #include "Status.hpp"
@@ -309,6 +311,14 @@ namespace WsMessages
             return encode(CAPABILITIES_MSG_DESCR, CapabilitiesMsg{"capabilities", caps}, out, outMax);
         }
         return encode(CAPABILITIES_DESCR, caps, out, outMax);
+    }
+
+    int inputs(char *out, size_t outMax)
+    {
+        uint64_t sampled;
+        uint64_t levels;
+        InputSampler::published(sampled, levels);
+        return PinMapJson::encodeInputs(sampled, levels, out, outMax);
     }
 
     int typed(char *out, size_t outMax, const char *type, const char *msg)

@@ -37,6 +37,8 @@ namespace PinMapJson
                        size_t errMax);
 
     int encodeFunctions(char *out, size_t outMax);
+
+    int encodeInputs(uint64_t sampled, uint64_t levels, char *out, size_t outMax);
 }
 
 #endif

@@ -256,6 +256,54 @@ namespace PinMap
         return false;
     }
 
+    namespace
+    {
+        size_t collectGpios(const Board &board, const Map &map, bool withInputs, uint8_t *out, size_t outMax)
+        {
+            bool used[MAX_GPIO + 1] = {};
+            bool sampled[MAX_GPIO + 1] = {};
+            for (size_t i = 0; i < map.count; i++) {
+                const Assignment &a = map.list[i];
+                const FnDef &d = def(a.fn);
+                bool plainInput = d.dir == Dir::In && !d.hwEncoder && !d.swEncoder;
+                for (size_t s = 0; s < d.signalCount; s++) {
+                    int gpio = gpioOf(board, a, s);
+                    if (gpio >= 0 && gpio <= (int)MAX_GPIO) {
+                        used[gpio] = true;
+                        sampled[gpio] = plainInput;
+                    }
+                }
+            }
+            bool listed[MAX_GPIO + 1] = {};
+            for (size_t c = 0; c < board.connectorCount; c++) {
+                for (size_t p = 0; p < board.connectors[c].pinCount; p++) {
+                    int gpio = board.connectors[c].pins[p];
+                    if (gpio >= 0 && gpio <= (int)MAX_GPIO && !isReserved(board, gpio) &&
+                        (!used[gpio] || (withInputs && sampled[gpio]))) {
+                        listed[gpio] = true;
+                    }
+                }
+            }
+            size_t n = 0;
+            for (size_t gpio = 0; gpio <= MAX_GPIO && n < outMax; gpio++) {
+                if (listed[gpio]) {
+                    out[n++] = (uint8_t)gpio;
+                }
+            }
+            return n;
+        }
+    }
+
+    size_t unusedGpios(const Board &board, const Map &map, uint8_t *out, size_t outMax)
+    {
+        return collectGpios(board, map, false, out, outMax);
+    }
+
+    size_t sampledGpios(const Board &board, const Map &map, uint8_t *out, size_t outMax)
+    {
+        return collectGpios(board, map, true, out, outMax);
+    }
+
     bool fromGpios(const Board &board, Fn fn, const int32_t *gpios, size_t count, Assignment &out)
     {
         const FnDef &d = def(fn);

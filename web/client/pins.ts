@@ -1,3 +1,5 @@
+import type { InputsPush } from "./types"
+
 export type PowerLabel = "5V" | "GND"
 export type BoardPin = { gpio: number } | { power: PowerLabel }
 
@@ -191,6 +193,32 @@ export function assignmentLabel(board: Board, map: PinMap, index: number): strin
   const label = functionDef(board, a.fn)?.label ?? a.fn
   const same = map.filter((x) => x.fn === a.fn)
   return same.length > 1 ? `${label} ${same.indexOf(a) + 1}` : label
+}
+
+export type InputLevels = Record<number, 0 | 1>
+
+export function inputLevels(push: InputsPush): InputLevels {
+  return Object.fromEntries(Object.entries(push.pins).map(([gpio, level]) => [Number(gpio), level]))
+}
+
+export function isPlainInput(fn: FunctionDef): boolean {
+  return fn.dir === "in" && !fn.encoderTypes?.length
+}
+
+export function inputStates(board: Board, map: PinMap, raw: InputLevels): Map<number, boolean> {
+  const states = new Map<number, boolean>()
+  for (const a of map) {
+    const fn = functionDef(board, a.fn)
+    if (!fn || !isPlainInput(fn)) {
+      continue
+    }
+    pinsOf(board, fn, a).forEach((gpio, i) => {
+      if (gpio !== null && gpio in raw) {
+        states.set(gpio, (raw[gpio] === 1) !== (a.options[i]?.invert ?? false))
+      }
+    })
+  }
+  return states
 }
 
 /** True if one more assignment of the function is allowed. */

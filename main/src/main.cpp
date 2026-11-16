@@ -4,6 +4,7 @@
 #include "PersistBlob.hpp"
 #include "Settings.hpp"
 #include "Pins.hpp"
+#include "InputSampler.hpp"
 #include "Encoder.hpp"
 #include "Handwheel.hpp"
 #include "Stepper.hpp"
@@ -33,6 +34,7 @@ int main(void)
     Machine::begin();
     Settings::load();
     Pins::begin();
+    InputSampler::begin();
     Outputs::begin();
     Encoder::begin();
     Handwheel::begin();

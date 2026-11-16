@@ -1,5 +1,5 @@
 import { parseProbe, type ProbeResult } from "./probe"
-import type { Capabilities, CmdOutcome, ScanResult, StatusPush, WifiPush } from "./types"
+import type { Capabilities, CmdOutcome, InputsPush, ScanResult, StatusPush, WifiPush } from "./types"
 
 interface StatusMsg extends StatusPush {
   type: "status"
@@ -35,6 +35,7 @@ type Listener = {
   onStatus?: (s: StatusPush) => void
   onCapabilities?: (c: Capabilities) => void
   onScan?: (s: ScanResult) => void
+  onInputs?: (s: InputsPush) => void
   onWifi?: (s: WifiPush) => void
   onProbe?: (r: ProbeResult) => void
   // A G-code (PRINT, ...) line.
@@ -144,6 +145,11 @@ l.onStatus?.(status as StatusPush)
       for (const l of listeners) {
 l.onCapabilities?.(capabilities as unknown as Capabilities)
 }
+    } else if (msg.type === "inputs") {
+      const { type, ...inputs } = msg
+      for (const l of listeners) {
+l.onInputs?.(inputs as unknown as InputsPush)
+}
     } else if (msg.type === "scan") {
       const { type, ...scan } = msg
       for (const l of listeners) {
@@ -206,6 +212,10 @@ function sendRaw(line: string) {
   if (socket?.readyState === WebSocket.OPEN) {
 socket.send(JSON.stringify({ type: "cmd", line }))
 }
+}
+
+export function wsInputs(on: boolean) {
+  sendRaw(on ? "inputs on" : "inputs off")
 }
 
 export function wsConnect() {

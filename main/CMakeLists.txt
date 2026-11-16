@@ -51,6 +51,7 @@ target_sources(app PRIVATE
     lib/Pins/Pins.cpp
     lib/Pins/PinMap.cpp
     lib/Pins/PinMapJson.cpp
+    lib/Pins/InputSampler.cpp
     lib/Thread/ThreadTable.cpp
     lib/Thread/ThreadStore.cpp
     lib/Thread/ThreadStoreJson.cpp

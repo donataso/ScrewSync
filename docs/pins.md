@@ -21,6 +21,12 @@ connector pin from the web client, Pins page. No rebuild.
 - The editor hides the functions of a feature that is off (X motor,
   homing, probe). Saving the settings with a feature off removes its
   functions from the saved map. See [manual.md](manual.md#features).
+- The connectors view shows a dot on each pin that has an input function
+  (not an encoder). The dot is lit when the input is active: the raw level
+  with "invert" applied. It follows the edited map, before you save. The
+  function view shows the raw level of each input signal.
+- Pins that no function uses are inputs with no pull. Other inputs keep
+  their own pull setting.
 - Some functions can have more than one assignment, for example two Stop
   switches. Contact on any Probe input is contact.
 

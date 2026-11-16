@@ -65,6 +65,10 @@ export interface WifiPush {
   saved: SavedNetwork[]
 }
 
+export interface InputsPush {
+  pins: Record<string, 0 | 1>
+}
+
 export interface Capabilities {
   has_x_motor: boolean
   has_endstops: boolean

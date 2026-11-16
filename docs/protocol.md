@@ -313,6 +313,15 @@ right after any command changes that domain:
   `wcs` (the active system, `"G54"`–`"G59"`). Each axis object has `homed`.
 - `{"type":"capabilities","has_x_motor":bool,"has_endstops":bool,"has_probe":bool}`
   -- sent once on connect, same values as `GET /capabilities`.
+- `{"type":"inputs","pins":{"<gpio>":0|1,...}}` -- raw level of each sampled
+  connector pin, keyed by GPIO number as in `GET /pins`. Sampled pins: the
+  non-encoder inputs of the active pin map and the unused connector pins.
+  Outputs, encoders and reserved pins are not in it. Pushed only to clients
+  that sent `inputs on`: once on subscribe, then on each change, with a
+  minimum interval between pushes. The level has no invert applied. The
+  firmware samples the pins only while a client is subscribed. `inputs off`
+  or a disconnect ends the subscription. Both commands are handled by the
+  WebSocket session and send no reply.
 - `{"type":"settings", ...}` -- machine config.
 - `{"type":"wifi", ...}` -- WiFi status.
 - `{"type":"scan", ...}` -- WiFi scan results.
