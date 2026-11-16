@@ -25,13 +25,6 @@ namespace Jog
 {
     void begin();
 
-    // Scales the handwheel's steps-per-pulse ratio: 1.0 matches the
-    // mechanical "one handwheel turn = one leadscrew turn" default, >1 for
-    // faster/coarser jogging, <1 for finer control. Any jog on an axis a
-    // running mode owns stops the mode, then moves.
-    void setResolution(Stepper::Axis axis, float multiplier);
-    float resolution(Stepper::Axis axis);
-
     // Jog buttons: tap moves one RunSettings::jogStepDu() step; hold,
     // repeated every JOG_REPEAT_INTERVAL_MS while pressed, keeps the axis
     // accelerating.

@@ -41,6 +41,7 @@ namespace Settings
         bool invertHandwheel;
         // How far the handwheel target may lead the axis, as travel time at the rapid speed.
         int32_t handwheelLagMs;
+        int32_t handwheelTravelDu;
         int32_t homeFastDuPerMin;
         int32_t homeSlowDuPerMin;
         int32_t homeLatchBackOffDu;
@@ -81,13 +82,13 @@ namespace Settings
         bool homingEnabled = false;
         bool probeEnabled = false;
 
-        Axis z{20000, 1600, 500000, 100000, 250000, 10000000, true, false, 300, 0, 600, false, 100, 5000000, 250000, 20000, 20000, 0, 0, 0, 0, 0};
-        Axis x{20000, 1600, 500000, 100000, 250000, 5000000, false, false, 100, 0, 600, false, 100, 2500000, 250000, 20000, 20000, 0, 0, 0, 0, 0};
+        Axis z{20000, 1600, 500000, 100000, 250000, 10000000, true, false, 300, 0, 600, false, 100, 250000, 5000000, 250000, 20000, 20000, 0, 0, 0, 0, 0};
+        Axis x{20000, 1600, 500000, 100000, 250000, 5000000, false, false, 100, 0, 600, false, 100, 20000, 2500000, 250000, 20000, 20000, 0, 0, 0, 0, 0};
     };
 
     extern Conf g_active;
 
-    constexpr size_t CONF_JSON_FIELDS = 56;
+    constexpr size_t CONF_JSON_FIELDS = 58;
     extern const struct json_obj_descr CONF_JSON_DESCR[CONF_JSON_FIELDS];
 
     struct Wired

@@ -22,10 +22,9 @@
 
 namespace Jog
 {
-    // One handwheel turn = one leadscrew turn, scaled by resolutionMultiplier.
     // Whole steps for a count change; the fraction stays in remainder.
-    int64_t jogSteps(int64_t countDelta, int32_t motorSteps, float handwheelPpr, float resolutionMultiplier,
-                     double &remainder);
+    int64_t jogSteps(int64_t countDelta, int32_t motorSteps, float handwheelPpr, int32_t travelDu,
+                     int32_t screwPitchDu, double &remainder);
 }
 
 #endif

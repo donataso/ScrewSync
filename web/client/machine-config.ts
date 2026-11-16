@@ -149,6 +149,16 @@ export function axisFields(axis: "Z" | "X"): MachineConfigField[] {
       help: `How far ${axis} may fall behind a fast handwheel, as time at the rapid speed. Turning beyond that is dropped, so ${axis} stops soon after the handwheel stops.`,
     },
     {
+      key: `handwheelTravelDu${axis}`,
+      label: "Handwheel travel per turn",
+      unit: "mm",
+      min: 0.0001,
+      max: 1000,
+      step: 0.0001,
+      scale: 10000,
+      help: `Distance ${axis} moves for one full turn of the ${axis} handwheel.`,
+    },
+    {
       key: `invertHandwheel${axis}`,
       label: "Invert direction",
       type: "checkbox",
@@ -337,6 +347,7 @@ export const MACHINE_CONFIG_SECTIONS: MachineConfigSection[] = [
         help: "Pause between repeated precision steps while a manual move button is held.",
       },
     ],
+    pairs: [pair("handwheelTravelDu", false)],
   },
   {
     title: "Automated modes",

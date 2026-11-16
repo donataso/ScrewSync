@@ -38,15 +38,14 @@ namespace
         int64_t (*handwheelCount)();
 
         struct k_mutex mutex;
-        float resolutionMultiplier;
         int64_t lastHandwheelCount;
-        bool lastHandwheelCountValid; // false right after boot/resolution change
+        bool lastHandwheelCountValid; // false right after boot
         double stepRemainder;         // poll thread only
         bool holding;
     };
 
-    AxisJog g_jogZ = {&Settings::g_active.z, Handwheel::z, {}, 1.0f, 0, false, 0.0, false};
-    AxisJog g_jogX = {&Settings::g_active.x, Handwheel::x, {}, 1.0f, 0, false, 0.0, false};
+    AxisJog g_jogZ = {&Settings::g_active.z, Handwheel::z, {}, 0, false, 0.0, false};
+    AxisJog g_jogX = {&Settings::g_active.x, Handwheel::x, {}, 0, false, 0.0, false};
 
     AxisJog &stateOf(Stepper::Axis axis)
     {
@@ -77,7 +76,6 @@ namespace
         k_mutex_lock(&s.mutex, K_FOREVER);
         int64_t lastCount = s.lastHandwheelCount;
         bool hadLast = s.lastHandwheelCountValid;
-        float resolutionMultiplier = s.resolutionMultiplier;
         s.lastHandwheelCount = handwheelCount;
         s.lastHandwheelCountValid = true;
         k_mutex_unlock(&s.mutex);
@@ -94,7 +92,7 @@ namespace
         }
 
         int64_t steps = Jog::jogSteps(handwheelCount - lastCount, s.cfg->motorSteps, s.cfg->handwheelPpr,
-                                      resolutionMultiplier, s.stepRemainder);
+                                      s.cfg->handwheelTravelDu, s.cfg->screwPitchDu, s.stepRemainder);
         if (steps != 0) {
             Stepper::followBy(axis, steps, (uint32_t)s.cfg->handwheelLagMs * 1000);
         }
@@ -124,24 +122,6 @@ namespace Jog
         k_thread_create(&g_pollThreadData, g_pollStack, K_THREAD_STACK_SIZEOF(g_pollStack),
                         pollLoop, nullptr, nullptr, nullptr,
                         K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
-    }
-
-    void setResolution(Stepper::Axis axis, float multiplier)
-    {
-        AxisJog &s = stateOf(axis);
-        k_mutex_lock(&s.mutex, K_FOREVER);
-        s.resolutionMultiplier = multiplier;
-        s.lastHandwheelCountValid = false; // next tick re-snaps instead of applying the old ratio retroactively
-        k_mutex_unlock(&s.mutex);
-    }
-
-    float resolution(Stepper::Axis axis)
-    {
-        AxisJog &s = stateOf(axis);
-        k_mutex_lock(&s.mutex, K_FOREVER);
-        float multiplier = s.resolutionMultiplier;
-        k_mutex_unlock(&s.mutex);
-        return multiplier;
     }
 
     const char *tap(Stepper::Axis axis, int direction)

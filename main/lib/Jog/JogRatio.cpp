@@ -20,10 +20,10 @@
 
 namespace Jog
 {
-    int64_t jogSteps(int64_t countDelta, int32_t motorSteps, float handwheelPpr, float resolutionMultiplier,
-                     double &remainder)
+    int64_t jogSteps(int64_t countDelta, int32_t motorSteps, float handwheelPpr, int32_t travelDu,
+                     int32_t screwPitchDu, double &remainder)
     {
-        double stepsPerPulse = (double)motorSteps / (double)handwheelPpr * (double)resolutionMultiplier;
+        double stepsPerPulse = (double)motorSteps * travelDu / ((double)screwPitchDu * (double)handwheelPpr);
         double exact = (double)countDelta * stepsPerPulse + remainder;
         double whole = round(exact);
         remainder = exact - whole;

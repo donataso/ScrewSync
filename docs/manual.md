@@ -72,7 +72,8 @@ How to operate ScrewSync. For connectors and flashing, see
 
 - Tap a jog button to move one step. Hold it to move continuously.
 - The step buttons set the jog step. "..." types a custom step.
-- The handwheels move the axes too.
+- The handwheels move the axes too. The travel for one handwheel turn is
+  a setting for each axis.
 - Physical jog buttons, a step cycle button and a step encoder can be
   added. See [pins.md](pins.md#jog).
 - →0 opens a choice: "Go to zero" moves the axis to 0, "Set zero" makes

@@ -76,7 +76,7 @@ namespace Command::Detail
         Stepper::Axis axis;
         const char *rest;
         if (!takeAxis(a, "jog",
-                      "jog step [<deci-microns>|next] | z|x +|- [hold|release] | resolution <multiplier> | "
+                      "jog step [<deci-microns>|next] | z|x +|- [hold|release] | "
                       "speed <du/min|0> | status",
                       axisTok, axis, rest, out, outMax)) {
             return;
@@ -84,17 +84,9 @@ namespace Command::Detail
 
         char *end;
         if (!*rest || !strcmp(rest, "status")) {
-            snprintf(out, outMax, "ok axis=%s resolution=%g", axisTok, (double)Jog::resolution(axis));
+            snprintf(out, outMax, "ok axis=%s", axisTok);
         } else if (rest[0] == '+' || rest[0] == '-') {
             jogPress(axis, axisTok, rest, out, outMax);
-        } else if (!strncmp(rest, "resolution ", 11)) {
-            float v = strtof(rest + 11, &end);
-            if (end == rest + 11 || *end || v <= 0) {
-                snprintf(out, outMax, "err jog %s resolution <multiplier> (>0)", axisTok);
-            } else {
-                Jog::setResolution(axis, v);
-                snprintf(out, outMax, "ok %s resolution=%g", axisTok, (double)v);
-            }
         } else if (!strncmp(rest, "speed ", 6)) {
             long v = strtol(rest + 6, &end, 10);
             if (end == rest + 6 || *end || v < 0) {
