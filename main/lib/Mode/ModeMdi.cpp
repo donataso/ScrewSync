@@ -16,11 +16,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ModeInternal.hpp"
+#include "ModeMdiQueue.hpp"
 #include "ModeSteps.hpp"
 #include "GcodeDialects.hpp"
 #include "GcodeMdi.hpp"
 #include "Homing.hpp"
 #include "Wcs.hpp"
+#include <string.h>
 #include <zephyr/logging/log.h>
 #include <initializer_list>
 
@@ -30,12 +32,19 @@ namespace
 {
     using namespace Mode::Detail;
 
-    constexpr size_t QUEUE_LEN = 4;
+    struct PendingPrint : Gcode::PrintSink
+    {
+        char text[MdiQueue::TEXT_MAX];
+        void print(const char *line) override
+        {
+            strncpy(text, line, sizeof(text) - 1);
+            text[sizeof(text) - 1] = '\0';
+        }
+    };
 
     Gcode::Mdi g_session;
-    Gcode::Step g_queue[QUEUE_LEN];
-    size_t g_head = 0;
-    size_t g_count = 0;
+    PendingPrint g_pendingPrint;
+    MdiQueue g_queue;
     bool g_moving = false;
     StepMotion g_motion;
 
@@ -119,8 +128,7 @@ namespace
 
     void pop()
     {
-        g_head = (g_head + 1) % QUEUE_LEN;
-        g_count--;
+        g_queue.pop();
         g_moving = false;
     }
 
@@ -140,17 +148,25 @@ namespace Mode::Detail
 {
     void mdiBegin()
     {
-        g_session.begin(*Gcode::find("linuxcnc"), 0, 0, params(), &paramSource());
+        g_session.begin(*Gcode::find("linuxcnc"), 0, 0, params(), &paramSource(), &g_pendingPrint);
     }
 
     bool mdiActive()
     {
-        return g_count > 0;
+        return g_queue.count() > 0;
     }
 
     void mdiTick(int64_t spindlePos)
     {
-        const Gcode::Step &s = g_queue[g_head];
+        const Gcode::Step &s = g_queue.head();
+        if (s.kind == Gcode::StepKind::Print) {
+            printSink().print(g_queue.headText());
+            pop();
+            if (!g_queue.count()) {
+                releaseAxes();
+            }
+            return;
+        }
         if (!isMotion(s.kind)) {
             Gcode::Step step = s;
             pop();
@@ -159,7 +175,7 @@ namespace Mode::Detail
                 fail(refusal);
                 return;
             }
-            if (!g_count) {
+            if (!g_queue.count()) {
                 releaseAxes();
             }
             return;
@@ -189,22 +205,31 @@ namespace Mode::Detail
                                 g_motion.probeMotorDu);
         }
         pop();
-        if (!g_count) {
+        if (!g_queue.count()) {
             releaseAxes();
         }
     }
 
     void mdiClear()
     {
-        g_head = 0;
-        g_count = 0;
+        g_queue.clear();
         g_moving = false;
     }
 }
 
 namespace Mode
 {
-    const char *mdi(const char *line, bool ui)
+    int32_t mdiFree()
+    {
+        return (int32_t)g_queue.free();
+    }
+
+    uint32_t mdiDone()
+    {
+        return g_queue.completed();
+    }
+
+    const char *mdi(const char *line, bool ui, MdiAccepted &accepted)
     {
         Detail::Guard guard;
         if (running()) {
@@ -214,19 +239,19 @@ namespace Mode
             return "homing";
         }
         // The end position of a G38 move is not known until it ends.
-        for (size_t i = 0; i < g_count; i++) {
-            if (g_queue[(g_head + i) % QUEUE_LEN].kind == Gcode::StepKind::Probe) {
+        for (size_t i = 0; i < g_queue.count(); i++) {
+            if (g_queue.at(i).kind == Gcode::StepKind::Probe) {
                 return "probe running";
             }
         }
         // Jog, handwheel, modes and programs move the axes between MDI lines.
-        if (!g_count) {
+        if (!g_queue.count()) {
             g_session.setPosition((int32_t)Wcs::position(Stepper::Axis::Z), (int32_t)Wcs::position(Stepper::Axis::X));
             g_session.setWcs(wcsState());
         }
         Gcode::Mdi saved = g_session;
         LineSteps steps;
-        const char *err = g_session.line(line, ui, QUEUE_LEN - g_count, steps);
+        const char *err = g_session.line(line, ui, g_queue.free(), steps);
         if (err) {
             return err;
         }
@@ -239,19 +264,25 @@ namespace Mode
         err = claimMoved(steps, saved.zDu(), saved.xDu(), saved.wcsActive());
         if (err) {
             g_session = saved;
-            if (!g_count) {
+            if (!g_queue.count()) {
                 Detail::releaseAxes();
             }
             return err;
         }
-        if (!g_count && steps.count) {
+        accepted.done = g_queue.completed();
+        if (!g_queue.count() && steps.count) {
             Detail::resetFeedOverride();
             Detail::setLastError("");
         }
         for (size_t i = 0; i < steps.count; i++) {
-            g_queue[(g_head + g_count) % QUEUE_LEN] = steps.steps[i];
-            g_count++;
+            if (steps.steps[i].kind == Gcode::StepKind::Print) {
+                g_queue.pushPrint(g_pendingPrint.text);
+            } else {
+                g_queue.push(steps.steps[i]);
+            }
         }
+        accepted.steps = (uint32_t)steps.count;
+        accepted.free = (int32_t)g_queue.free();
         return nullptr;
     }
 }

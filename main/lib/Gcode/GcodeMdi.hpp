@@ -34,7 +34,7 @@ namespace Gcode
     public:
         static constexpr size_t MAX_LINE_STEPS = 4;
 
-        void begin(Dialect &dialect, int32_t zDu, int32_t xDu, Params &params, ParamSource *source);
+        void begin(Dialect &dialect, int32_t zDu, int32_t xDu, Params &params, ParamSource *source, PrintSink *printer = nullptr);
         void setPosition(int32_t zDu, int32_t xDu);
         void setWcs(const WcsState &wcs);
         // After a G38 move: the trip point, work du, and the probed axis's
@@ -65,6 +65,7 @@ namespace Gcode
         uint32_t lineNo_;
         Params *params_;
         ParamSource *source_;
+        PrintSink *printer_;
     };
 }
 

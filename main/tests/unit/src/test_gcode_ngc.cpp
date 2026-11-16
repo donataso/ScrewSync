@@ -485,6 +485,49 @@ ZTEST(gcode_ngc, test_builtin_zero)
     zassert_equal(skipped.count, 1);
 }
 
+namespace
+{
+    Program::Status runPrint(const char *text, Prints &prints, const char *&error)
+    {
+        static Program program;
+        Collect sink;
+        g_params.clear();
+        g_params.setNumbered(1, 2.5);
+        program.begin({find("linuxcnc"), &g_params, nullptr, nullptr, false, &prints}, text, strlen(text), 0, 0);
+        Program::Status status;
+        while ((status = program.next(sink, 1000)) == Program::Status::Steps) {
+        }
+        error = program.error();
+        return status;
+    }
+}
+
+ZTEST(gcode_ngc, test_print_formats_supported_parameters)
+{
+    Prints prints;
+    const char *error = nullptr;
+    zassert_not_equal(runPrint("(PRINT, a #1)\n", prints, error), Program::Status::Error);
+    zassert_str_equal(prints.last, "a 2.500000");
+}
+
+ZTEST(gcode_ngc, test_print_unsupported_parameter_is_job_error)
+{
+    Prints prints;
+    const char *error = nullptr;
+    zassert_equal(runPrint("(PRINT, x #5241)\n", prints, error), Program::Status::Error);
+    zassert_str_equal(error, "unsupported parameter");
+    zassert_str_equal(prints.last, "");
+}
+
+ZTEST(gcode_ngc, test_print_undefined_named_parameter_is_job_error)
+{
+    Prints prints;
+    const char *error = nullptr;
+    zassert_equal(runPrint("(PRINT, x #<nope>)\n", prints, error), Program::Status::Error);
+    zassert_str_equal(error, "undefined parameter");
+    zassert_str_equal(prints.last, "");
+}
+
 ZTEST(gcode_ngc, test_builtin_backlash)
 {
     uint32_t line = 0;

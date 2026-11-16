@@ -21,7 +21,6 @@
 #include "GcodeMeta.hpp"
 #include "GcodeProgram.hpp"
 #include "GcodeStore.hpp"
-#include "Events.hpp"
 #include "Pins.hpp"
 #include "Wcs.hpp"
 #include <stdio.h>
@@ -53,16 +52,6 @@ namespace
         }
     };
 
-    struct Printer : Gcode::PrintSink
-    {
-        void print(const char *text) override
-        {
-            Events::Print msg = {};
-            strncpy(msg.text, text, sizeof(msg.text) - 1);
-            Events::publish(&PRINT_CHAN, &msg);
-        }
-    };
-
     struct Job
     {
         Gcode::Step pending[QUEUE_LEN];
@@ -78,7 +67,6 @@ namespace
     uint8_t g_dummyParams[1];
     Gcode::Program g_program;
     Routines g_routines;
-    Printer g_printer;
     Job g_job;
     char g_callText[Gcode::MAX_LINE_LEN];
     const char *g_call = nullptr;
@@ -234,7 +222,7 @@ namespace
         g_job = {};
         g_job.spindleGated = g_call == nullptr;
         GcodeStore::resetRoutines();
-        g_program.begin({dialect, &params(), &paramSource(), &g_routines, false, &g_printer}, text, len, zDu, xDu,
+        g_program.begin({dialect, &params(), &paramSource(), &g_routines, false, &printSink()}, text, len, zDu, xDu,
                         wcsState());
         return nullptr;
     }
@@ -319,6 +307,7 @@ namespace
             g_job.pendingIndex++;
             g_job.phase = Phase::Paused;
             break;
+        case Gcode::StepKind::Print:
         case Gcode::StepKind::End:
             g_job.pendingIndex++;
             finish();

@@ -12,6 +12,13 @@ export function addToHistory(history: string[], line: string): string[] {
   return [...history, trimmed].slice(-HISTORY_MAX)
 }
 
+export function splitLines(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+}
+
 export interface Recall {
   index: number // history.length = the draft
   draft: string

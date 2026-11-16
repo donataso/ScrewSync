@@ -914,7 +914,7 @@ namespace Gcode
         return nullptr;
     }
 
-    void formatPrint(const char *message, Context &ctx, char *out, size_t outMax)
+    const char *formatPrint(const char *message, Context &ctx, char *out, size_t outMax)
     {
         size_t n = 0;
         for (const char *p = message; *p && n + 1 < outMax;) {
@@ -945,14 +945,19 @@ namespace Gcode
             Parser ps{ref, ctx, 0};
             int32_t number = 0;
             char name[LABEL_MAX + 1];
-            if (!len || ps.reference(number, name) || *ps.p || ps.read(number, name, v)) {
+            if (!len || ps.reference(number, name) || *ps.p) {
                 out[n++] = *p++;
                 continue;
+            }
+            const char *readErr = ps.read(number, name, v);
+            if (readErr) {
+                return readErr;
             }
             int w = snprintf(out + n, outMax - n, "%.6f", v);
             n = w > 0 && (size_t)w < outMax - n ? n + (size_t)w : outMax - 1;
             p = s;
         }
         out[n] = '\0';
+        return nullptr;
     }
 }

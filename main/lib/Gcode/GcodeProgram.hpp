@@ -35,13 +35,6 @@ namespace Gcode
         {}
     };
 
-    struct PrintSink
-    {
-        virtual void print(const char *text) = 0;
-        virtual ~PrintSink()
-        {}
-    };
-
     class Program
     {
     public:

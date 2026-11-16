@@ -57,6 +57,8 @@ namespace Status
         s.probeContact = ProbeInput::contact();
         s.homing = Homing::active();
         s.wcs = WCS_NAMES[Wcs::active()];
+        s.mdiFree = Mode::mdiFree();
+        s.mdiDone = (int32_t)Mode::mdiDone();
         s.rpm = Rpm::value();
         s.state = Machine::stateName();
         s.angleDeg = Motion::spindleAngleDeg();

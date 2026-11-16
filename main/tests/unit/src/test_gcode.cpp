@@ -216,6 +216,8 @@ namespace
             return "spindle-angle";
         case StepKind::Probe:
             return "probe";
+        case StepKind::Print:
+            return "print";
         }
         return "?";
     }

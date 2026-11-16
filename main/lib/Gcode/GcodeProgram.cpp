@@ -421,7 +421,10 @@ namespace Gcode
             }
             if (line_.comment == Comment::Print && setup_.printer && !setup_.dryRun) {
                 char text[MESSAGE_MAX * 2];
-                formatPrint(line_.message, ctx, text, sizeof(text));
+                const char *printErr = formatPrint(line_.message, ctx, text, sizeof(text));
+                if (printErr) {
+                    return fail(printErr);
+                }
                 setup_.printer->print(text);
             }
             Counter counter(sink);

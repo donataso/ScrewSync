@@ -44,14 +44,18 @@ namespace Gcode
 {
     bool isMdiLine(const char *text)
     {
+        if (text[0] == '#' || text[0] == '(') {
+            return true;
+        }
         return text[0] && strchr("gmtfxzGMTFXZ", text[0]) && text[1] && strchr("-+.0123456789", text[1]);
     }
 
-    void Mdi::begin(Dialect &dialect, int32_t zDu, int32_t xDu, Params &params, ParamSource *source)
+    void Mdi::begin(Dialect &dialect, int32_t zDu, int32_t xDu, Params &params, ParamSource *source, PrintSink *printer)
     {
         dialect_ = &dialect;
         params_ = &params;
         source_ = source;
+        printer_ = printer;
         lineNo_ = 0;
         dialect.begin(interp_, zDu, xDu);
         interp_.setMdi(true);
@@ -88,6 +92,14 @@ namespace Gcode
         if (parsed.okind != OKind::None) {
             return "O-word not in MDI";
         }
+        char printText[MESSAGE_MAX * 2];
+        bool printLine = parsed.comment == Comment::Print && printer_;
+        if (printLine) {
+            err = formatPrint(parsed.message, ctx, printText, sizeof(printText));
+            if (err) {
+                return err;
+            }
+        }
         Buffer buf;
         ++lineNo_;
         if (parsed.words.count) {
@@ -103,12 +115,20 @@ namespace Gcode
         for (size_t i = 0; i < buf.count; i++) {
             stepCount += !isProgramFlow(buf.steps[i].kind);
         }
+        stepCount += printLine;
         if (stepCount > room) {
             return "queue full";
         }
         err = applyAssigns(parsed, *params_, source_);
         if (err) {
             return err;
+        }
+        if (printLine) {
+            printer_->print(printText);
+            Step printStep = {};
+            printStep.kind = StepKind::Print;
+            printStep.line = lineNo_;
+            sink.emit(printStep);
         }
         if (ui) {
             interp_.setPosition(work.zDu(), work.xDu());

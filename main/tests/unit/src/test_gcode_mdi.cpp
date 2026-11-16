@@ -39,11 +39,25 @@ namespace
 
     Params g_params;
 
-    Mdi session()
+    struct Printed : PrintSink
+    {
+        char text[4][64];
+        size_t count = 0;
+        void print(const char *line) override
+        {
+            if (count < 4) {
+                strncpy(text[count], line, sizeof(text[count]) - 1);
+                text[count][sizeof(text[count]) - 1] = '\0';
+                count++;
+            }
+        }
+    };
+
+    Mdi session(PrintSink *printer = nullptr)
     {
         g_params.clear();
         Mdi mdi;
-        mdi.begin(*find("linuxcnc"), 0, 0, g_params, nullptr);
+        mdi.begin(*find("linuxcnc"), 0, 0, g_params, nullptr, printer);
         return mdi;
     }
 
@@ -60,12 +74,83 @@ ZTEST_SUITE(gcode_mdi, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 ZTEST(gcode_mdi, test_detection)
 {
-    for (const char *line : {"G0 Z1", "g91", "M110", "T1", "F100", "X-1", "Z.5", "z+1"}) {
+    for (const char *line : {"G0 Z1", "g91", "M110", "T1", "F100", "X-1", "Z.5", "z+1", "#1 = 2", "#<depth> = 0.5", "(PRINT, hi)"}) {
         zassert_true(isMdiLine(line), "%s", line);
     }
     for (const char *line : {"", "G", "move z to 0", "zero z", "mode turn", "gear", "x", "ping", "@G0 Z1", " G0"}) {
         zassert_false(isMdiLine(line), "%s", line);
     }
+}
+
+ZTEST(gcode_mdi, test_print_comment_prints_with_parameters)
+{
+    Printed printed;
+    Mdi mdi = session(&printed);
+    Collect sink;
+    zassert_is_null(mdi.line("#<d> = 0.5", false, 4, sink));
+    zassert_equal(printed.count, 0);
+    zassert_is_null(mdi.line("(PRINT, d #<d>)", false, 4, sink));
+    zassert_equal(printed.count, 1);
+    zassert_true(strncmp(printed.text[0], "d 0.5", 5) == 0, "%s", printed.text[0]);
+}
+
+ZTEST(gcode_mdi, test_print_not_repeated_for_refused_line)
+{
+    Printed printed;
+    Mdi mdi = session(&printed);
+    Collect sink;
+    zassert_equal_ptr(mdi.line("G0 Z1 (PRINT, go)", false, 0, sink), "queue full");
+    zassert_equal(printed.count, 0);
+    zassert_is_null(mdi.line("G0 Z1 (PRINT, go)", false, 4, sink));
+    zassert_equal(printed.count, 1);
+}
+
+ZTEST(gcode_mdi, test_print_takes_one_queue_slot)
+{
+    Printed printed;
+    Mdi mdi = session(&printed);
+    Collect sink;
+    zassert_equal_ptr(mdi.line("(PRINT, x)", false, 0, sink), "queue full");
+    zassert_is_null(mdi.line("(PRINT, x)", false, 1, sink));
+    zassert_equal(sink.count, 1);
+    zassert_equal(sink.steps[0].kind, StepKind::Print);
+    zassert_equal_ptr(mdi.line("G0 Z1 (PRINT, y)", false, 1, sink), "queue full");
+    zassert_is_null(mdi.line("G0 Z1 (PRINT, y)", false, 2, sink));
+    zassert_equal(sink.count, 3);
+    zassert_equal(sink.steps[1].kind, StepKind::Print);
+    zassert_equal(sink.steps[2].kind, StepKind::Rapid);
+}
+
+ZTEST(gcode_mdi, test_print_unsupported_parameter_refuses_line)
+{
+    Printed printed;
+    Mdi mdi = session(&printed);
+    Collect sink;
+    zassert_str_equal(mdi.line("G0 Z1 (PRINT, x #5241)", false, 4, sink), "unsupported parameter");
+    zassert_str_equal(mdi.line("(PRINT, x #<nope>)", false, 4, sink), "undefined parameter");
+    zassert_equal(sink.count, 0);
+    zassert_equal(printed.count, 0);
+    zassert_equal(mdi.zDu(), 0);
+}
+
+ZTEST(gcode_mdi, test_print_supported_parameters_format)
+{
+    Printed printed;
+    Mdi mdi = session(&printed);
+    Collect sink;
+    zassert_is_null(mdi.line("#1 = 3", false, 4, sink));
+    zassert_is_null(mdi.line("(PRINT, a #1)", false, 4, sink));
+    zassert_true(strncmp(printed.text[0], "a 3", 3) == 0, "%s", printed.text[0]);
+}
+
+ZTEST(gcode_mdi, test_other_comments_do_not_print)
+{
+    Printed printed;
+    Mdi mdi = session(&printed);
+    Collect sink;
+    zassert_is_null(mdi.line("G0 Z1 (MSG, hello)", false, 4, sink));
+    zassert_is_null(mdi.line("(just a note)", false, 4, sink));
+    zassert_equal(printed.count, 0);
 }
 
 ZTEST(gcode_mdi, test_modal_state_kept)

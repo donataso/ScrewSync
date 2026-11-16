@@ -33,6 +33,11 @@
 // the rotation their "spindle" param names and stop on the other. Tapers
 // are diameter change per length, + = growing toward the chuck, whatever
 // the feed direction.
+namespace Gcode
+{
+    struct PrintSink;
+}
+
 namespace Mode::Detail
 {
     enum class Kind : uint8_t
@@ -122,6 +127,8 @@ namespace Mode::Detail
 
     // MDI runs its queued steps when no mode runs. mdiClear() drops the
     // queue and leaves the axes to the caller.
+    Gcode::PrintSink &printSink();
+
     void mdiBegin();
     bool mdiActive();
     void mdiTick(int64_t spindlePos);

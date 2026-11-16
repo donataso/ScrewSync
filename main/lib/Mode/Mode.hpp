@@ -75,7 +75,15 @@ namespace Mode
 
     // One G-code line into the MDI queue; nullptr if accepted. ui: a UI
     // line, run without changing the MDI modal state.
-    const char *mdi(const char *line, bool ui);
+    struct MdiAccepted
+    {
+        int32_t free;
+        uint32_t steps;
+        uint32_t done;
+    };
+    const char *mdi(const char *line, bool ui, MdiAccepted &accepted);
+    int32_t mdiFree();
+    uint32_t mdiDone();
 
     // Each returns nullptr on success, else the reason it was refused.
     const char *select(Id id);

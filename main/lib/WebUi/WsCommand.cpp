@@ -31,6 +31,7 @@
 #include "Settings.hpp"
 #include "Wifi.hpp"
 #include "Machine.hpp"
+#include "Mode.hpp"
 #include "WebHttp.hpp"
 #include "WsMessages.hpp"
 
@@ -295,6 +296,8 @@ namespace
         uint32_t lastStatusMs;
         uint32_t lastPingMs;
         bool wasScanBusy;
+        int32_t lastMdiFree;
+        int32_t lastMdiDone;
 
         bool statusDue(uint32_t now) const
         {
@@ -350,7 +353,12 @@ namespace
                 k_spin_unlock(&g_printLock, key);
                 sendTo(sock, json, WsMessages::typed(json, JSON_REPLY_BUF, "print", print.text));
             }
-            if (atomic_test_and_clear_bit(&g_statusDirty, slot) || statusDue(now)) {
+            int32_t mdiFree = Mode::mdiFree();
+            int32_t mdiDone = (int32_t)Mode::mdiDone();
+            bool mdiChanged = mdiFree != lastMdiFree || mdiDone != lastMdiDone;
+            lastMdiFree = mdiFree;
+            lastMdiDone = mdiDone;
+            if (atomic_test_and_clear_bit(&g_statusDirty, slot) || mdiChanged || statusDue(now)) {
                 sendTo(sock, json, WsMessages::status(json, JSON_REPLY_BUF));
                 bool scanBusy = Wifi::scanBusy();
                 if (wasScanBusy && !scanBusy) {
@@ -458,7 +466,7 @@ namespace
             k_sem_take(&g_wsReady[slot], K_FOREVER);
             uint32_t now = k_uptime_get_32();
             Session s = {slot, g_clients[slot].sock, g_json[slot], g_bigJson[slot],
-                         now - Settings::g_active.statusPushIntervalMs, now, Wifi::scanBusy()};
+                         now - Settings::g_active.statusPushIntervalMs, now, Wifi::scanBusy(), Mode::mdiFree(), (int32_t)Mode::mdiDone()};
             serve(s);
 
             k_mutex_lock(&g_clientsLock, K_FOREVER);

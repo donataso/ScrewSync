@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { addToHistory, freshRecall, HISTORY_MAX, stepHistory } from "./mdi-history"
+import { addToHistory, freshRecall, HISTORY_MAX, splitLines, stepHistory } from "./mdi-history"
 
 describe("addToHistory", () => {
   it("skips empty lines and repeats of the last line", () => {
@@ -43,5 +43,11 @@ describe("stepHistory", () => {
   it("does nothing with an empty history", () => {
     const step = stepHistory([], freshRecall([]), "G1", -1)
     expect(step.text).toBe("G1")
+  })
+})
+
+describe("splitLines", () => {
+  it("trims lines and drops empty ones", () => {
+    expect(splitLines("G90\r\n\n  #1 = 2  \n(PRINT, x)\n")).toEqual(["G90", "#1 = 2", "(PRINT, x)"])
   })
 })

@@ -55,6 +55,7 @@ namespace Gcode
         SelectWcs,
         SpindleAngle, // M110: the current angle becomes feed millidegrees
         Probe,        // G38.x: one axis toward zDu/xDu at feed, see the probe flags
+        Print,        // MDI only: the queue holds the text
     };
 
     constexpr uint8_t PROBE_AWAY = 1;     // G38.4/.5: stops when the contact opens
@@ -89,6 +90,13 @@ namespace Gcode
     {
         virtual void emit(const Step &step) = 0;
         virtual ~StepSink()
+        {}
+    };
+
+    struct PrintSink
+    {
+        virtual void print(const char *text) = 0;
+        virtual ~PrintSink()
         {}
     };
 

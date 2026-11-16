@@ -19,6 +19,7 @@
 #include "RunSettings.hpp"
 #include "Encoder.hpp"
 #include "Events.hpp"
+#include "GcodeCore.hpp"
 #include "Homing.hpp"
 #include "Machine.hpp"
 #include "Pins.hpp"
@@ -161,10 +162,27 @@ namespace
             k_sleep(K_MSEC(TICK_PERIOD_MS));
         }
     }
+
+    struct Printer : Gcode::PrintSink
+    {
+        void print(const char *text) override
+        {
+            Events::Print msg = {};
+            strncpy(msg.text, text, sizeof(msg.text) - 1);
+            Events::publish(&PRINT_CHAN, &msg);
+        }
+    };
+
+    Printer g_printer;
 }
 
 namespace Mode::Detail
 {
+    Gcode::PrintSink &printSink()
+    {
+        return g_printer;
+    }
+
     void lock()
     {
         k_mutex_lock(&g_lock, K_FOREVER);

@@ -74,6 +74,8 @@ namespace
         JSON_OBJ_DESCR_PRIM_NAMED(StatusMsg, "probeContact", snap.probeContact, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(StatusMsg, "homing", snap.homing, JSON_TOK_TRUE),
         JSON_OBJ_DESCR_PRIM_NAMED(StatusMsg, "wcs", snap.wcs, JSON_TOK_STRING),
+        JSON_OBJ_DESCR_PRIM_NAMED(StatusMsg, "mdiFree", snap.mdiFree, JSON_TOK_NUMBER),
+        JSON_OBJ_DESCR_PRIM_NAMED(StatusMsg, "mdiDone", snap.mdiDone, JSON_TOK_NUMBER),
     };
 
     struct SettingsMsg

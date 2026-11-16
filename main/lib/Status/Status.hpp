@@ -58,6 +58,8 @@ namespace Status
         bool probeContact;
         bool homing;
         const char *wcs;
+        int32_t mdiFree;
+        int32_t mdiDone;
     };
 
     Snapshot get();

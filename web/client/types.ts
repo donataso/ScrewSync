@@ -27,6 +27,8 @@ export interface StatusPush {
   probeContact: boolean
   homing: boolean
   wcs: string
+  mdiFree: number
+  mdiDone: number
   job: JobStatus
   error: string
 }

@@ -151,7 +151,7 @@ namespace Gcode
     const char *applyAssigns(const Line &line, Params &params, ParamSource *source);
 
     // (PRINT, ...) text with each #n / #<name> replaced by its value.
-    void formatPrint(const char *message, Context &ctx, char *out, size_t outMax);
+    const char *formatPrint(const char *message, Context &ctx, char *out, size_t outMax);
 }
 
 #endif

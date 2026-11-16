@@ -275,11 +275,12 @@ namespace Command
             return;
         }
         if (isMdi) {
-            const char *refusal = pinsFault ? pinsFault : Mode::mdi(gcode, ui);
+            Mode::MdiAccepted accepted = {};
+            const char *refusal = pinsFault ? pinsFault : Mode::mdi(gcode, ui, accepted);
             if (refusal) {
                 snprintf(out, outMax, "err %s%s", pinsFault ? "pins: " : "", refusal);
             } else {
-                snprintf(out, outMax, "ok");
+                snprintf(out, outMax, "ok free=%d steps=%u done=%u", (int)accepted.free, (unsigned)accepted.steps, (unsigned)accepted.done);
             }
             return;
         }

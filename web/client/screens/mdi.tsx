@@ -1,28 +1,34 @@
 "use client"
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react"
 import { sendCommand } from "../api"
-import { addToHistory, freshRecall, loadHistory, saveHistory, stepHistory, type Recall } from "../mdi-history"
+import { addToHistory, freshRecall, loadHistory, saveHistory, splitLines, stepHistory, type Recall } from "../mdi-history"
 import { useDeviceState } from "../state-provider"
-import type { CmdOutcome } from "../types"
+import { MdiQueue, type Entry } from "../mdi-queue"
+import { wsSubscribe } from "../ws"
 import { Button, Panel, Select, TextInput } from "../ui/primitives"
 
-interface Entry {
-  id: number
-  line: string
-  reply: string | null
-  ok: boolean
+function statusText(e: Entry): string {
+  if (e.status === "sending") {
+    return "sending"
+  }
+  if (e.status === "replied" && e.ok && e.stage) {
+    return e.stage
+  }
+  return e.status === "replied" ? e.reply : e.status
 }
 
-function replyText(outcome: CmdOutcome): { reply: string; ok: boolean } {
-  if (outcome.status === "denied") {
-    return { reply: `err ${outcome.msg}`, ok: false }
+function statusClass(e: Entry): string {
+  if (e.status !== "replied") {
+    return "text-muted-foreground"
   }
-  if (outcome.status === "unconfirmed") {
-    return { reply: "no reply", ok: false }
+  if (!e.ok) {
+    return "text-destructive"
   }
-  const msg = (outcome.data as { msg?: unknown } | undefined)?.msg
-  return { reply: typeof msg === "string" && msg ? `ok ${msg}` : "ok", ok: true }
+  if (e.stage === "running") {
+    return "text-amber-500 dark:text-amber-400"
+  }
+  return e.stage === "accepted" ? "text-muted-foreground" : "text-emerald-500 dark:text-emerald-400"
 }
 
 const WCS_WORDS = ["G54", "G55", "G56", "G57", "G58", "G59"]
@@ -33,23 +39,37 @@ export function MdiScreen() {
   const [recall, setRecall] = useState<Recall>(() => freshRecall(history))
   const [input, setInput] = useState("")
   const [log, setLog] = useState<Entry[]>([])
-  const nextId = useRef(0)
   const logEnd = useRef<HTMLDivElement>(null)
+  const queue = useMemo(() => new MdiQueue(sendCommand, setLog), [])
   const homed = !!state && state.z.homed && (!capabilities?.has_x_motor || state.x.homed)
 
   useEffect(() => {
     logEnd.current?.scrollIntoView({ block: "nearest" })
   }, [log])
 
-  async function run(id: number, line: string) {
-    const { reply, ok } = replyText(await sendCommand(line))
-    setLog((l) => l.map((e) => (e.id === id ? { ...e, reply, ok } : e)))
-  }
+  useEffect(() => wsSubscribe({ onPrint: (text) => queue.addPrint(text) }), [queue])
 
-  function send(line: string) {
-    const id = nextId.current++
-    setLog((l) => [...l, { id, line, reply: null, ok: true }])
-    void run(id, line)
+  useEffect(() => {
+    if (state) {
+      queue.setFree(state.mdiFree, state.mdiDone)
+    }
+  }, [queue, state])
+
+  function onPaste(e: ClipboardEvent<HTMLInputElement>) {
+    const lines = splitLines(e.clipboardData.getData("text"))
+    if (lines.length < 2) {
+      return
+    }
+    e.preventDefault()
+    let next = history
+    for (const line of lines) {
+      next = addToHistory(next, line)
+    }
+    setHistory(next)
+    saveHistory(next)
+    setRecall(freshRecall(next))
+    setInput("")
+    queue.enqueue(lines)
   }
 
   function submit() {
@@ -62,7 +82,7 @@ export function MdiScreen() {
     saveHistory(next)
     setRecall(freshRecall(next))
     setInput("")
-    send(line)
+    queue.enqueue([line])
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -85,10 +105,10 @@ export function MdiScreen() {
       title="MDI"
       action={
         <div className="flex gap-2">
-          <Button onClick={() => setLog([])} disabled={!log.length}>
+          <Button onClick={() => queue.clear()} disabled={!log.length}>
             Clear
           </Button>
-          <Button variant="danger" onClick={() => send("stop")}>
+          <Button variant="danger" onClick={() => queue.sendNow("stop")}>
             Stop
           </Button>
         </div>
@@ -97,17 +117,17 @@ export function MdiScreen() {
       {state && (
         <div className="mb-2 flex flex-wrap items-center gap-2">
           {state.state === "estop" ? (
-            <Button variant="danger" onClick={() => send("estop off")}>
+            <Button variant="danger" onClick={() => queue.sendNow("estop off")}>
               EStop on
             </Button>
           ) : (
-            <Button onClick={() => send("estop on")}>EStop off</Button>
+            <Button onClick={() => queue.sendNow("estop on")}>EStop off</Button>
           )}
-          <Button variant={state.z.enabled ? "primary" : "secondary"} onClick={() => send(`power ${state.z.enabled ? "off" : "on"} z`)}>
+          <Button variant={state.z.enabled ? "primary" : "secondary"} onClick={() => queue.sendNow(`power ${state.z.enabled ? "off" : "on"} z`)}>
             Z motor {state.z.enabled ? "on" : "off"}
           </Button>
           {capabilities?.has_x_motor && (
-            <Button variant={state.x.enabled ? "primary" : "secondary"} onClick={() => send(`power ${state.x.enabled ? "off" : "on"} x`)}>
+            <Button variant={state.x.enabled ? "primary" : "secondary"} onClick={() => queue.sendNow(`power ${state.x.enabled ? "off" : "on"} x`)}>
               X motor {state.x.enabled ? "on" : "off"}
             </Button>
           )}
@@ -115,7 +135,7 @@ export function MdiScreen() {
             <Button
               variant={homed ? "primary" : "secondary"}
               disabled={state.homing}
-              onClick={() => send(homed ? "unhome" : "home")}
+              onClick={() => queue.enqueue([homed ? "unhome" : "home"])}
             >
               {state.homing ? "Homing" : homed ? "Homed" : "Not homed"}
             </Button>
@@ -126,7 +146,7 @@ export function MdiScreen() {
               aria-label="Work coordinate system"
               value={state.wcs ?? "G54"}
               onChange={(e) => {
-                send(e.target.value)
+                queue.enqueue([e.target.value])
               }}
             >
               {WCS_WORDS.map((word) => (
@@ -140,9 +160,9 @@ export function MdiScreen() {
       )}
       <div className="h-80 overflow-y-auto rounded-md border border-border bg-muted/30 p-2 font-mono text-sm">
         {log.map((e) => (
-          <div key={e.id}>
-            <div>&gt; {e.line}</div>
-            {e.reply !== null && <div className={e.ok ? "text-muted-foreground" : "text-destructive"}>{e.reply}</div>}
+          <div key={e.id} className={`flex justify-between gap-4 rounded px-1 ${e.stage === "running" ? "bg-accent" : ""}`}>
+            <span className={e.status === "print" ? "text-muted-foreground" : ""}>{e.status === "print" ? e.line : `> ${e.line}`}</span>
+            {e.status !== "print" && <span className={`shrink-0 ${statusClass(e)}`}>{statusText(e)}</span>}
           </div>
         ))}
         <div ref={logEnd} />
@@ -156,16 +176,17 @@ export function MdiScreen() {
             setInput(e.target.value)
           }}
           onKeyDown={onKeyDown}
+          onPaste={onPaste}
           placeholder="G-code (LinuxCNC) or a command, e.g. G91 G0 Z-1"
           spellCheck={false}
           autoCapitalize="off"
           autoComplete="off"
         />
-        <Button variant="danger" onClick={() => send("stop")}>
+        <Button variant="danger" onClick={() => queue.sendNow("stop")}>
           Stop
         </Button>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">Enter sends. Up and Down recall earlier lines. Esc clears the line.</p>
+      <p className="mt-1 text-xs text-muted-foreground">Enter sends. Up and Down recall earlier lines. Esc clears the line. Pasted lines run one by one; an error skips the rest.</p>
     </Panel>
   )
 }
