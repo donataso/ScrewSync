@@ -130,7 +130,11 @@ on estopBtn.up:
   send("estop on")
 
 on homeBtn.up:
-  send("home")
+  if (homeState.val == HOME_ALL) {
+    send("unhome")
+  } else {
+    send("home")
+  }
 
 on wcsBtn.up:
   if (menuOpen) {

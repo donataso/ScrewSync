@@ -46,7 +46,7 @@
   - Estop icon: a tap sends `estop on`. In estop a full-screen cover shows
     a big estop icon. A tap on it sends `estop off`. A line at the bottom
     says to tap to disarm; a refusal replaces it in red.
-  - Home icon: a tap sends `home`. Its colour shows the homed state: grey =
+  - Home icon: a tap sends `home`, or `unhome` when all axes are homed. Its colour shows the homed state: grey =
     not homed, green = homed, blue = homing in progress. Only axes with a
     home input count.
   - WCS selector: a button with the active work coordinate system. A tap
