@@ -76,7 +76,7 @@ namespace HomingSeq
         case State::Slow:
             return {true, in.position + params_.slowSearchSteps, params_.slowSpeed, Watch::Contact, nullptr};
         case State::PullOff:
-            return {true, in.latchPosition - params_.pullOffSteps, params_.slowSpeed, Watch::None, nullptr};
+            return {true, in.latchPosition - params_.pullOffSteps, params_.fastSpeed / 2, Watch::None, nullptr};
         default:
             return {false, 0, 0, Watch::None, nullptr};
         }
