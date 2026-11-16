@@ -58,7 +58,7 @@ return <AppearanceScreen />
 }
 
 function availableWhenOffline(path: string) {
-  return path.startsWith("/device") || path.startsWith("/appearance")
+  return path.startsWith("/appearance")
 }
 
 export function App() {

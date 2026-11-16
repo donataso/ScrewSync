@@ -70,8 +70,7 @@ setStoredDisplay(parseDisplayInfo(String((outcome.data as { msg?: string })?.msg
   }
 
   useEffect(() => {
-    loadDisplayInfo()
-    loadFeatures()
+    loadDisplayInfo().then(loadFeatures)
   }, [])
 
   async function uploadDisplayFile() {
@@ -212,6 +211,17 @@ toast.push("Reboot requested.", "info")
     }
   }
 
+  if (features === null || storedDisplay === undefined) {
+    return (
+      <div className="flex flex-col gap-4">
+        <h1 className="text-lg font-semibold">Device</h1>
+        <Panel>
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </Panel>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-lg font-semibold">Device</h1>
@@ -222,9 +232,9 @@ toast.push("Reboot requested.", "info")
           {FEATURES.map((f) => (
             <label key={f.key} className="flex items-center gap-2 text-sm">
               <Toggle
-                checked={features?.[f.key] ?? false}
+                checked={features[f.key]}
                 onChange={(on) => setFeature(f.key, on)}
-                disabled={busy || !configureOk || features === null}
+                disabled={busy || !configureOk}
                 label={f.label}
               />
               <span>{f.label}</span>
@@ -307,11 +317,9 @@ toast.push("Reboot requested.", "info")
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {storedDisplay === undefined
-                ? "Stored: unknown"
-                : storedDisplay
-                  ? `Stored: ${(storedDisplay.length / 1024).toFixed(0)} KiB, CRC ${storedDisplay.crc}`
-                  : "Nothing stored"}
+              {storedDisplay
+                ? `Stored: ${(storedDisplay.length / 1024).toFixed(0)} KiB, CRC ${storedDisplay.crc}`
+                : "Nothing stored"}
             </span>
             <Button disabled={!canUpload || busy || !storedDisplay} onClick={flashStoredDisplay}>
               Flash stored display firmware
