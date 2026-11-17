@@ -142,6 +142,9 @@ namespace Mode
     void stop();
 
     void onAxisDisabled(Stepper::Axis axis);
+
+    void restartHelix();
+    void clearHelix(Stepper::Axis axis);
 }
 
 #endif

@@ -76,6 +76,7 @@ namespace Motion
         int32_t countsPerRev = spindleCountsPerRev();
         int64_t origin = (Encoder::position() - (int64_t)llround(deg * countsPerRev / 360.0)) % countsPerRev;
         Encoder::setOrigin(origin < 0 ? origin + countsPerRev : origin);
+        Mode::restartHelix();
     }
 
     float spindleAngleDeg()

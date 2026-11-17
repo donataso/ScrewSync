@@ -102,3 +102,12 @@ ZTEST(sync_ratio, test_reruns_land_in_same_groove)
         zassert_equal((a - b) % 80, 0);
     }
 }
+
+ZTEST(sync_ratio, test_axis_at_reference_starts_on_phase_at_angle_zero)
+{
+    double perCount = Sync::ratio(800, 4000, 1, 40000, 2400);
+    int64_t angleZeroCount = 777;
+    int64_t phase = Sync::helixPhase(angleZeroCount, 0, perCount);
+    zassert_equal(Sync::nextOnPhase(angleZeroCount, phase, 2400, 1), angleZeroCount);
+    zassert_equal(Sync::nextOnPhase(angleZeroCount, phase, 2400, -1), angleZeroCount);
+}

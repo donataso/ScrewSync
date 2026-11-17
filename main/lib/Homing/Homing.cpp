@@ -122,6 +122,7 @@ namespace
     {
         Machine::setOrigin(axis, llround(Motion::stepsToDu(axis, Stepper::position(axis))) - cfgOf(axis).homePositionDu);
         setHomed(axis, true);
+        Mode::clearHelix(axis);
         if (++g_index == g_count) {
             end();
             return;

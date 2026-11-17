@@ -181,11 +181,13 @@ How to operate ScrewSync. For wiring and flashing, see
 
 ### Thread alignment
 
-- Thread mode, G-code threading and Gear follow the spindle angle zero
-  and the axis zero. Thus a rerun cuts in the same groove: stop, measure,
-  run again.
-- If you re-zero the angle or the axis, or reboot, the next cut starts a
-  new helix.
+- Thread mode, G-code threading and Gear follow the spindle angle zero.
+  Thus a rerun cuts in the same groove: stop, measure, run again.
+- If you re-zero the angle, home an axis or reboot, the next cut starts a
+  new helix. Zeroing the angle puts the new helix through the current
+  tool position, so Gear starts at once.
+- Thread mode starts X moving to depth only once Z follows the helix, so
+  a cut can start on an existing thread.
 - At start, Gear holds the axis for up to one spindle turn, until the
   spindle reaches the phase of the thread.
 

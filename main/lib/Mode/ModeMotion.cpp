@@ -23,6 +23,7 @@
 #include "SyncRatio.hpp"
 #include <math.h>
 #include <stdlib.h>
+#include <initializer_list>
 #include <zephyr/sys/util.h>
 
 namespace
@@ -31,6 +32,8 @@ namespace
     {
         return axis == Stepper::Axis::Z ? Settings::g_active.z : Settings::g_active.x;
     }
+
+    int64_t g_helixRef[2];
 
     void endOnClamp(Stepper::Axis axis)
     {
@@ -77,7 +80,7 @@ namespace Mode::Detail
 
     int64_t helixPhase(const Sync::Link &link, int64_t refAxisPos)
     {
-        return Sync::helixPhase(Encoder::origin(), refAxisPos, link.stepsPerCount());
+        return Sync::helixPhase(Encoder::origin(), refAxisPos - g_helixRef[(size_t)link.axis], link.stepsPerCount());
     }
 
     int64_t helixOrigin(const Sync::Link &link, int64_t refAxisPos, int64_t aheadCounts, int64_t spindlePos)
@@ -111,5 +114,22 @@ namespace Mode::Detail
             return false;
         }
         return target == to && Stepper::arrived(axis) && Stepper::position(axis) == to;
+    }
+}
+
+namespace Mode
+{
+    void restartHelix()
+    {
+        Detail::Guard guard;
+        for (Stepper::Axis axis : {Stepper::Axis::Z, Stepper::Axis::X}) {
+            g_helixRef[(size_t)axis] = Stepper::position(axis);
+        }
+    }
+
+    void clearHelix(Stepper::Axis axis)
+    {
+        Detail::Guard guard;
+        g_helixRef[(size_t)axis] = 0;
     }
 }

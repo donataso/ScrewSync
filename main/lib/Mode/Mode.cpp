@@ -514,6 +514,7 @@ namespace Mode
     void onAxisDisabled(Stepper::Axis axis)
     {
         Detail::Guard guard;
+        clearHelix(axis);
         if (ownedFlag(axis)) {
             stop();
         }

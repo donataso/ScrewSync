@@ -89,7 +89,7 @@ See [docs/calibration.md](docs/calibration.md).
   way.
 - **Live feed override** while a job runs.
 - **Web client** that stays in sync with the display: settings, thread
-  table, G-code, backups, logs and firmware updates.
+  table, G-code, backups, logs and firmware updates. Supports dark mode.
 
 <img src="docs/images/web-threads.png" width="400" />
 

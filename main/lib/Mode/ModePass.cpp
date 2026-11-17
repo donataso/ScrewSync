@@ -109,11 +109,12 @@ namespace
                 target = end;
             }
             Stepper::moveTo(j.main, target, rapidSpeed(j.main));
-            if (j.taper != 0) {
-                int64_t aux = passAux(j) + taperOffset(j, Stepper::position(j.main));
+            int64_t aux = passAux(j) + taperOffset(j, Stepper::position(j.main));
+            if ((spindlePos - j.link.originSpindlePos) * spindleSign() >= 0) {
                 Stepper::moveTo(j.aux, aux, rapidSpeed(j.aux));
             }
-            return target == end && Stepper::arrived(j.main) && Stepper::position(j.main) == end;
+            return target == end && Stepper::arrived(j.main) && Stepper::position(j.main) == end &&
+                   Stepper::arrived(j.aux) && Stepper::position(j.aux) == aux;
         }
         case PassFeed::Timed:
             if (*j.speedDuPerMin == 0) {
@@ -161,7 +162,11 @@ namespace Mode::Detail
             return;
         case Phase::Settle:
             if (moveAndWait(j.main, levelStart(j, nextLevel(j)))) {
-                enter(j, advance(j) ? Phase::Plunge : Phase::Home);
+                if (!advance(j)) {
+                    enter(j, Phase::Home);
+                } else {
+                    enter(j, j.feed == PassFeed::Phased ? Phase::Cut : Phase::Plunge);
+                }
             }
             return;
         case Phase::Plunge:
