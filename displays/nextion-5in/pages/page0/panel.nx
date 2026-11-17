@@ -7,6 +7,7 @@ const KIND_ANGLE = 4
 const KIND_TOGGLE = 5
 const KIND_PICKER = 6
 const KIND_LATCH = 7
+const KIND_PIN = 8
 const ZERO_FOR_START = 0
 const ZERO_FOR_Z = 1
 const ZERO_FOR_X = 2
@@ -81,30 +82,31 @@ function layoutPanel(shown: number):
   vis c14,v
   v = shown && cKind15 > KIND_HIDDEN && cKind15 != KIND_PICKER ? 1 : 0
   vis c15,v
-  v = shown && cKind15 == KIND_PICKER ? 1 : 0
+  var chrome = shown && !pinsOpen ? 1 : 0
+  v = chrome && cKind15 == KIND_PICKER ? 1 : 0
   vis picker,v
-  v = shown && ovrOn.val ? 1 : 0
+  v = chrome && ovrOn.val ? 1 : 0
   vis ovrMinus,v
   vis ovr,v
   vis ovrPlus,v
-  v = shown && !canSkip.val && !(gcodeOn.val && gcodePaused.val) && !(probeOn.val && !running.val) ? 1 : 0
+  v = chrome && !canSkip.val && !(gcodeOn.val && gcodePaused.val) && !(probeOn.val && !running.val) ? 1 : 0
   vis startStop,v
-  v = shown && canSkip.val && !(gcodeOn.val && gcodePaused.val) ? 1 : 0
+  v = chrome && canSkip.val && !(gcodeOn.val && gcodePaused.val) ? 1 : 0
   vis stopPass,v
   vis skip,v
-  v = shown && gcodeOn.val && gcodePaused.val ? 1 : 0
+  v = chrome && gcodeOn.val && gcodePaused.val ? 1 : 0
   vis gcodeResume,v
   vis gcodeStop,v
-  v = shown && gcodeOn.val && gcodeLoaded.val && picOn.val ? 1 : 0
+  v = chrome && gcodeOn.val && gcodeLoaded.val && picOn.val ? 1 : 0
   vis gcodePic,v
   v = v && gcodeToolOn.val ? 1 : 0
   vis gcodeTool,v
-  v = shown && gcodeOn.val && gcodeLoaded.val ? 1 : 0
+  v = chrome && gcodeOn.val && gcodeLoaded.val ? 1 : 0
   vis gcodeName,v
   vis gcodeProgress,v
-  v = shown && gcodeOn.val && !gcodeLoaded.val ? 1 : 0
+  v = chrome && gcodeOn.val && !gcodeLoaded.val ? 1 : 0
   vis gcodeEmpty,v
-  v = shown && probeOn.val ? 1 : 0
+  v = chrome && probeOn.val ? 1 : 0
   vis probePhase,v
   vis probeUp,v
   vis probeLeft,v
@@ -116,8 +118,10 @@ function refreshPanel():
   layoutPanel(overlayOpen() ? 0 : 1)
 
 function openCell(cmd: text, kind: number, slot: number):
-  kpCmd.txt = cmd
-  openKeypad(KEYPAD_LEFT, TARGET_CELL, kind, slot)
+  if (kind != KIND_PIN) {
+    kpCmd.txt = cmd
+    openKeypad(KEYPAD_LEFT, TARGET_CELL, kind, slot)
+  }
 
 // A latch cell's command is the flip the firmware set up.
 function narrowCell(cmd: text, kind: number, slot: number):

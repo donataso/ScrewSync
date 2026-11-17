@@ -362,6 +362,16 @@ namespace Pins
         return wiredIn(saved);
     }
 
+    bool inputActive(Fn fn, size_t nth, uint64_t levels)
+    {
+        const Assignment *a = find(g_active, fn, nth);
+        int gpio = a ? gpioOf(g_board, *a, 0) : -1;
+        if (gpio < 0 || gpio > (int)MAX_GPIO) {
+            return false;
+        }
+        return (bool)(levels >> gpio & 1) != a->options[0].invert;
+    }
+
     size_t sampledGpios(uint8_t *out, size_t outMax)
     {
         return PinMap::sampledGpios(g_board, g_active, out, outMax);

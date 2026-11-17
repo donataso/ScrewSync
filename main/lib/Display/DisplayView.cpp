@@ -21,7 +21,6 @@
 #include "HomeInput.hpp"
 #include "JogStep.hpp"
 #include "Machine.hpp"
-#include "Settings.hpp"
 #include "Wifi.hpp"
 #include "display_config.hpp"
 #include <ctype.h>
@@ -231,7 +230,7 @@ namespace
             writeCommand("click modeSync,1");
         }
         pushMenu(current);
-        bool layoutChanged = pushPanel(current, s.params);
+        bool layoutChanged = pinsOpen() ? pushPins() : pushPanel(current, s.params);
         layoutChanged |= pushRun(current, s.running, s.homing, s.ready, s.job);
         layoutChanged |= pushOverride(current, s.running, s.feedOverridePct);
         layoutChanged |= pushNum("picOn.val", current == Mode::Id::Gcode && atomic_get(&g_previewLoaded));
@@ -297,14 +296,6 @@ namespace
         }
     }
 
-    void pushFeatures()
-    {
-        const Settings::Conf &conf = Settings::g_active;
-        pushSelected("featX", conf.xMotorEnabled);
-        pushSelected("featHome", conf.homingEnabled);
-        pushSelected("featProbe", conf.probeEnabled);
-    }
-
     void pushWifi()
     {
         Wifi::Mode m = Wifi::mode();
@@ -352,11 +343,12 @@ namespace Display::Detail
         pushAxis('x', s.x);
         pushJogStep(s.jogStepDu);
         pushMode(s);
+        pushPinsView();
         pushJobError(s.error, s.running);
         pushEstop();
         pushHome(s);
         pushWifi();
-        pushFeatures();
+        pushText("versionValue.txt", "%s", FW_VERSION);
     }
 
     void pushSoon()

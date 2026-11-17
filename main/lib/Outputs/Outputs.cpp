@@ -32,13 +32,15 @@ namespace
         gpio_dt_spec pins[PinMap::MAX_ASSIGNMENTS];
         size_t count;
         bool initial;
+        bool on;
     };
 
-    Lamp g_running = {Fn::RunningOut, {}, 0, false};
-    Lamp g_estop = {Fn::EstopOut, {}, 0, true};
+    Lamp g_running = {Fn::RunningOut, {}, 0, false, false};
+    Lamp g_estop = {Fn::EstopOut, {}, 0, true, true};
 
-    void set(const Lamp &lamp, bool on)
+    void set(Lamp &lamp, bool on)
     {
+        lamp.on = on;
         for (size_t i = 0; i < lamp.count; i++) {
             gpio_pin_set_dt(&lamp.pins[i], on);
         }
@@ -79,5 +81,10 @@ namespace Outputs
     {
         configure(g_running, "running");
         configure(g_estop, "estop");
+    }
+
+    bool commanded(Fn fn)
+    {
+        return (fn == Fn::RunningOut ? g_running : g_estop).on;
     }
 }

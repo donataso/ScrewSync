@@ -301,7 +301,7 @@ namespace Mode
         }
         Detail::mdiBegin();
         k_thread_create(&g_runnerThread, g_runnerStack, K_THREAD_STACK_SIZEOF(g_runnerStack), runnerLoop, nullptr,
-                        nullptr, nullptr, K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
+                        nullptr, nullptr, K_PRIO_PREEMPT(4), 0, K_NO_WAIT);
     }
 
     const char *name(Id id)

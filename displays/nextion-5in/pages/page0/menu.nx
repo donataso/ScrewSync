@@ -82,7 +82,7 @@ function restoreModeSelection():
 // Slots the firmware left without a mode stay hidden.
 function setMenu(shown: number):
   menuOpen = shown
-  if (shown && settingsOpen) {
+  if (shown && (settingsOpen || pinsOpen)) {
     hideModeSelection()
   } else if (!shown) {
     restoreModeSelection()
@@ -112,6 +112,7 @@ function setMenu(shown: number):
   v = shown && menuCmd9.txt != "" ? 1 : 0
   vis menu9,v
   vis menuSettings,shown
+  vis menuPins,shown
   if (!shown) {
     refreshPanel()
   }
@@ -139,12 +140,17 @@ function setSettings(shown: number):
   vis wifiState,shown
   vis ipLabel,shown
   vis wifiIp,shown
-  vis featLabel,shown
-  vis featX,shown
-  vis featHome,shown
-  vis featProbe,shown
+  vis versionLabel,shown
+  vis versionValue,shown
   if (!shown) {
     refreshPanel()
+  }
+
+function setPins(shown: number):
+  if (shown) {
+    send("ui pins on")
+  } else {
+    send("ui pins off")
   }
 
 function pickMode(name: text):
@@ -154,23 +160,30 @@ function pickMode(name: text):
     setSettings(0)
     mode.txt = modeName.txt
   }
-  ref 0
-
-function toggleFeature(field: text, on: number):
-  if (on) {
-    send("settings set " + field + " off")
-  } else {
-    send("settings set " + field + " on")
+  if (pinsOpen) {
+    setPins(0)
   }
+  ref 0
 
 function setTpiEntry(on: number):
   tpiEntry.val = on
   pitchAsPitch.bco = on ? COLOR_BUTTON : COLOR_SELECTED
   pitchAsTpi.bco = on ? COLOR_SELECTED : COLOR_BUTTON
 
+on pinsSync.down:
+  if (pinsOpen) {
+    if (settingsOpen) {
+      setSettings(0)
+    }
+    mode.txt = "PINS"
+  } else if (settingsOpen == 0) {
+    mode.txt = modeName.txt
+  }
+  refreshPanel()
+
 // Clicked by the firmware after it updates modeName.
 on modeSync.down:
-  if (settingsOpen == 0) {
+  if (settingsOpen == 0 && pinsOpen == 0) {
     mode.txt = modeName.txt
   }
 
@@ -216,8 +229,21 @@ on menu9.up:
 on menuSettings.up:
   setMenu(0)
   if (settingsOpen == 0) {
+    if (pinsOpen) {
+      setPins(0)
+    }
     mode.txt = "SETTINGS"
     setSettings(1)
+  }
+  ref 0
+
+on menuPins.up:
+  setMenu(0)
+  if (pinsOpen == 0) {
+    if (settingsOpen) {
+      setSettings(0)
+    }
+    setPins(1)
   }
   ref 0
 
@@ -244,15 +270,3 @@ on apOn.up:
 
 on apOff.up:
   send("wifi ap off")
-
-on featX.up:
-  var on = featX.bco == COLOR_SELECTED ? 1 : 0
-  toggleFeature("xMotorEnabled", on)
-
-on featHome.up:
-  var on = featHome.bco == COLOR_SELECTED ? 1 : 0
-  toggleFeature("homingEnabled", on)
-
-on featProbe.up:
-  var on = featProbe.bco == COLOR_SELECTED ? 1 : 0
-  toggleFeature("probeEnabled", on)

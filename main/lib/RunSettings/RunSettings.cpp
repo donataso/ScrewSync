@@ -34,6 +34,7 @@ namespace
     int32_t g_jogStepDu = DEFAULT_JOG_STEP_DU;
     int32_t g_customJogStepDu = 0;
     Mode::Id g_mode = Mode::Id::Gear;
+    bool g_pinsView = false;
 
     template <typename T>
     void loadValue(const char *key, T &value)
@@ -84,6 +85,7 @@ namespace RunSettings
         if ((size_t)g_mode >= Mode::COUNT) {
             g_mode = Mode::Id::Gear;
         }
+        loadValue("pinsView", g_pinsView);
     }
 
     void setAxisDisabled(Stepper::Axis axis, bool disabled)
@@ -166,6 +168,15 @@ namespace RunSettings
     void setMode(Mode::Id mode)
     {
         store("mode", g_mode, mode);
+    }
+
+    bool pinsView()
+    {
+        return read(g_pinsView);
+    }
+    void setPinsView(bool open)
+    {
+        store("pinsView", g_pinsView, open);
     }
 
     bool loadModeParams(const char *key, void *out, size_t size)

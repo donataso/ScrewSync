@@ -41,6 +41,7 @@ on page0.load:
   vis modeSync,1
   vis toastShow,1
   vis layoutSync,1
+  vis pinsSync,1
   vis toastHide,1
   vis estopBtn,1
   vis estopSync,1

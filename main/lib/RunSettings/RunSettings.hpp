@@ -60,6 +60,9 @@ namespace RunSettings
     Mode::Id mode();
     void setMode(Mode::Id mode);
 
+    bool pinsView();
+    void setPinsView(bool open);
+
     // Per-mode parameter struct, stored under the mode's name. False (out
     // untouched) when absent or stored with a different size.
     bool loadModeParams(const char *key, void *out, size_t size);

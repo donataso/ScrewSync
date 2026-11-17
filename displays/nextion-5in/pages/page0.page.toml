@@ -1523,7 +1523,7 @@ xcen = 0
 txt_maxl = 40
 
 [[component]]
-name = "featLabel"
+name = "versionLabel"
 type = "text"
 vscope = 1
 x = 320
@@ -1532,53 +1532,22 @@ w = 152
 h = 44
 bco = 2178
 pco = 36019
-txt = "Features"
+txt = "Version"
 xcen = 0
 
 [[component]]
-name = "featX"
-type = "button"
+name = "versionValue"
+type = "text"
 vscope = 1
 x = 480
 y = 412
-w = 100
+w = 312
 h = 44
-style = 0
-bco = 8485
-bco2 = 12711
+bco = 2178
 pco = 59262
-pco2 = 59262
-txt = "X motor"
-
-[[component]]
-name = "featHome"
-type = "button"
-vscope = 1
-x = 586
-y = 412
-w = 100
-h = 44
-style = 0
-bco = 8485
-bco2 = 12711
-pco = 59262
-pco2 = 59262
-txt = "Homing"
-
-[[component]]
-name = "featProbe"
-type = "button"
-vscope = 1
-x = 692
-y = 412
-w = 100
-h = 44
-style = 0
-bco = 8485
-bco2 = 12711
-pco = 59262
-pco2 = 59262
-txt = "Probe"
+txt = "dev"
+xcen = 0
+txt_maxl = 40
 
 [[component]]
 name = "menuBg"
@@ -1758,7 +1727,7 @@ type = "button"
 vscope = 1
 x = 320
 y = 360
-w = 472
+w = 232
 h = 48
 style = 0
 bco = 10829
@@ -1766,6 +1735,21 @@ bco2 = 15089
 pco = 59262
 pco2 = 59262
 txt = "Settings"
+
+[[component]]
+name = "menuPins"
+type = "button"
+vscope = 1
+x = 560
+y = 360
+w = 232
+h = 48
+style = 0
+bco = 10829
+bco2 = 15089
+pco = 59262
+pco2 = 59262
+txt = "Pins"
 
 [[component]]
 name = "kpDismiss"
@@ -2467,6 +2451,14 @@ h = 2
 name = "layoutSync"
 type = "hotspot"
 x = 794
+y = 478
+w = 2
+h = 2
+
+[[component]]
+name = "pinsSync"
+type = "hotspot"
+x = 788
 y = 478
 w = 2
 h = 2

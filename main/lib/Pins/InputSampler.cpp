@@ -31,6 +31,8 @@ namespace
     uint64_t g_published = 0;
     uint32_t g_publishedMs = 0;
     InputSampler::ChangeCallback g_callback = nullptr;
+    size_t g_users = 0;
+    K_MUTEX_DEFINE(g_usersLock);
     struct k_spinlock g_lock;
     struct k_work_delayable g_work;
 
@@ -60,6 +62,27 @@ namespace
         }
         k_work_reschedule(&g_work, K_MSEC(SAMPLE_PERIOD_MS));
     }
+
+    void startSampling()
+    {
+        uint64_t levels = sample();
+        k_spinlock_key_t key = k_spin_lock(&g_lock);
+        g_published = levels;
+        g_publishedMs = k_uptime_get_32();
+        k_spin_unlock(&g_lock, key);
+        if (g_callback) {
+            g_callback();
+        }
+        k_work_reschedule(&g_work, K_MSEC(SAMPLE_PERIOD_MS));
+    }
+
+    void stopSampling()
+    {
+        k_work_cancel_delayable(&g_work);
+        k_spinlock_key_t key = k_spin_lock(&g_lock);
+        g_published = 0;
+        k_spin_unlock(&g_lock, key);
+    }
 }
 
 namespace InputSampler
@@ -75,23 +98,25 @@ namespace InputSampler
 
     void start()
     {
-        uint64_t levels = sample();
-        k_spinlock_key_t key = k_spin_lock(&g_lock);
-        g_published = levels;
-        g_publishedMs = k_uptime_get_32();
-        k_spin_unlock(&g_lock, key);
-        if (g_callback) {
-            g_callback();
+        k_mutex_lock(&g_usersLock, K_FOREVER);
+        bool first = g_users == 0;
+        g_users++;
+        if (first) {
+            startSampling();
         }
-        k_work_reschedule(&g_work, K_MSEC(SAMPLE_PERIOD_MS));
+        k_mutex_unlock(&g_usersLock);
     }
 
     void stop()
     {
-        k_work_cancel_delayable(&g_work);
-        k_spinlock_key_t key = k_spin_lock(&g_lock);
-        g_published = 0;
-        k_spin_unlock(&g_lock, key);
+        k_mutex_lock(&g_usersLock, K_FOREVER);
+        if (g_users > 0) {
+            g_users--;
+            if (g_users == 0) {
+                stopSampling();
+            }
+        }
+        k_mutex_unlock(&g_usersLock);
     }
 
     void onChange(ChangeCallback callback)

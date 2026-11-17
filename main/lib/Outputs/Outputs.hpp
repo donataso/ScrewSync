@@ -18,11 +18,15 @@
 #ifndef Outputs_h
 #define Outputs_h
 
+#include "PinMap.hpp"
+
 // Output functions of the pin map.
 namespace Outputs
 {
     // Call after Pins::begin().
     void begin();
+
+    bool commanded(PinMap::Fn fn);
 }
 
 #endif

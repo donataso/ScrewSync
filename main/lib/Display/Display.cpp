@@ -129,6 +129,10 @@ namespace
             selectPickerGroup(line + 11);
             return;
         }
+        if (!strncmp(line, "ui pins ", 8)) {
+            setPinsOpen(!strcmp(line + 8, "on"));
+            return;
+        }
         if (!strncmp(line, "ui ", 3)) {
             return;
         }

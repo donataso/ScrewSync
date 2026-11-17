@@ -45,14 +45,6 @@ namespace
         }
     }
 
-    // Returns whether the cell's type changed.
-    bool pushCellType(size_t slot, CellType type)
-    {
-        char key[KEY_MAX];
-        snprintf(key, sizeof(key), "cKind%u", (unsigned)slot);
-        return pushNum(key, (int)type);
-    }
-
     bool pushLatch(size_t slot, const char *mode, const Cell &c, const char *raw)
     {
         bool on = !strcmp(raw, "on");
@@ -78,6 +70,7 @@ namespace
         pushText(key, "%s: %s", c.label, set || required ? text : "off");
         snprintf(key, sizeof(key), "c%u", (unsigned)slot);
         pushColor(key, "pco", set || !required ? COLOR_TEXT : COLOR_NOT_SET);
+        pushColor(key, "bco", COLOR_BUTTON);
         snprintf(key, sizeof(key), "cCmd%u.txt", (unsigned)slot);
         pushText(key, "%s %s ", probe ? "settings set" : Mode::name(id), c.param);
         return pushCellType(slot, valueType(c.kind));
@@ -136,6 +129,13 @@ namespace
 
 namespace Display::Detail
 {
+    bool pushCellType(size_t slot, CellType type)
+    {
+        char key[KEY_MAX];
+        snprintf(key, sizeof(key), "cKind%u", (unsigned)slot);
+        return pushNum(key, (int)type);
+    }
+
     bool pushPanel(Mode::Id id, const char *params)
     {
         char probeParams[64];

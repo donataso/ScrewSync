@@ -43,6 +43,8 @@ namespace Pins
     void clearDisabledFeatures();
     Settings::Wired savedWired();
 
+    bool inputActive(PinMap::Fn fn, size_t nth, uint64_t levels);
+
     size_t sampledGpios(uint8_t *out, size_t outMax);
     int readRaw(int gpio);
 

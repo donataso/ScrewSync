@@ -121,7 +121,7 @@ namespace Jog
         k_mutex_init(&g_jogX.mutex);
         k_thread_create(&g_pollThreadData, g_pollStack, K_THREAD_STACK_SIZEOF(g_pollStack),
                         pollLoop, nullptr, nullptr, nullptr,
-                        K_PRIO_PREEMPT(5), 0, K_NO_WAIT);
+                        K_PRIO_PREEMPT(4), 0, K_NO_WAIT);
     }
 
     const char *tap(Stepper::Axis axis, int direction)

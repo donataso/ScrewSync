@@ -5,6 +5,7 @@ target_sources(app PRIVATE
     ${SCREWSYNC_MAIN_DIR}/lib/Display/DisplayText.cpp
     ${SCREWSYNC_MAIN_DIR}/lib/Display/DisplayView.cpp
     ${SCREWSYNC_MAIN_DIR}/lib/Display/DisplayPanel.cpp
+    ${SCREWSYNC_MAIN_DIR}/lib/Display/DisplayPins.cpp
     ${SCREWSYNC_MAIN_DIR}/lib/Display/DisplayPicker.cpp
     ${SCREWSYNC_MAIN_DIR}/lib/Display/DisplayImage.cpp
     ${SCREWSYNC_MAIN_DIR}/lib/Display/DisplayImageStore.cpp

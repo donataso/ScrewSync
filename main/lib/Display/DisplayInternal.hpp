@@ -43,6 +43,13 @@ namespace Display::Detail
     void pushSoon();
     void clearPreview();
 
+    bool pushCellType(size_t slot, Theme::CellType type);
+
+    bool pinsOpen();
+    void setPinsOpen(bool open);
+    bool pushPins();
+    void pushPinsView();
+
     void pushMenu(Mode::Id current);
     // Returns whether any cell's type changed.
     bool pushPanel(Mode::Id id, const char *params);

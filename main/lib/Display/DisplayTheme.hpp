@@ -61,6 +61,7 @@ namespace Display::Theme
         Toggle = 5,
         Picker = 6,
         Latch = 7,
+        Pin = 8,
     };
 
     // Page ids, displays/nextion-5in/app.toml order.
