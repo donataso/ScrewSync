@@ -27,7 +27,7 @@ namespace
 {
     using namespace Mode::Detail;
 
-    // Along Z, X steps deeper each pass (deeper first passes).
+    // Along Z, X steps deeper each pass.
     struct Thread
     {
         int32_t pitchDu;
@@ -115,7 +115,7 @@ namespace
         g_job.depthDu = g_params.depthDu;
         g_job.levels = g_params.passes;
         g_job.starts = g_params.starts;
-        g_job.squaredDepth = true;
+        g_job.depthProfile = DepthProfile::Sandvik;
         g_job.retractToStart = true;
         g_job.feed = PassFeed::Phased;
         g_job.pitchDu = &g_params.pitchDu;

@@ -40,7 +40,7 @@ namespace
 
     PassPlan plan(const PassJob &j)
     {
-        return {j.levels, j.finishLevels, j.starts, j.squaredDepth,
+        return {j.levels, j.finishLevels, j.starts, j.depthProfile,
                 j.depthDu, j.lengthDu, j.endReductionDu, j.flankTan};
     }
 

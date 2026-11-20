@@ -26,3 +26,5 @@
 - Pin map: reset to board defaults from the display menu, with a
   confirmation.
 - G-code: G92.
+- Default pass count per entry in the thread library.
+- Stepper driver alarm input support.

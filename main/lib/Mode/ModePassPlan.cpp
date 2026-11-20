@@ -16,12 +16,38 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ModePassPlan.hpp"
+#include <math.h>
 
 namespace
 {
+    constexpr double SANDVIK_FIRST_PASS_AREA = 0.3;
+
     int32_t depthLevel(const Mode::Detail::PassPlan &plan, int32_t level)
     {
         return level < plan.levels ? level : plan.levels;
+    }
+
+    double linearFraction(int32_t level, int32_t levels)
+    {
+        return (double)level / levels;
+    }
+
+    double squaredFraction(int32_t level, int32_t levels)
+    {
+        double remaining = 1 - linearFraction(level, levels);
+        return 1 - remaining * remaining;
+    }
+
+    double sandvikFraction(int32_t level, int32_t levels)
+    {
+        if (level == 0) {
+            return 0;
+        }
+        if (levels == 1) {
+            return 1;
+        }
+        double area = level == 1 ? SANDVIK_FIRST_PASS_AREA : level - 1;
+        return sqrt(area / (levels - 1));
     }
 }
 
@@ -34,11 +60,16 @@ namespace Mode::Detail
 
     double passDepthFraction(const PassPlan &plan, int32_t level)
     {
-        double fraction = (double)depthLevel(plan, level) / plan.levels;
-        if (plan.squaredDepth) {
-            fraction = 1 - (1 - fraction) * (1 - fraction);
+        int32_t depth = depthLevel(plan, level);
+        switch (plan.depthProfile) {
+        case DepthProfile::Squared:
+            return squaredFraction(depth, plan.levels);
+        case DepthProfile::Sandvik:
+            return sandvikFraction(depth, plan.levels);
+        case DepthProfile::Linear:
+            break;
         }
-        return fraction;
+        return linearFraction(depth, plan.levels);
     }
 
     double passDepthDu(const PassPlan &plan, int32_t level)

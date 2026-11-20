@@ -17,6 +17,7 @@
  */
 #include <zephyr/ztest.h>
 #include "ModePassPlan.hpp"
+#include <math.h>
 
 using namespace Mode::Detail;
 
@@ -24,7 +25,7 @@ namespace
 {
     PassPlan makePlan(int32_t levels, int32_t finishLevels = 0, int32_t starts = 1)
     {
-        return {levels, finishLevels, starts, false, 1000, 5000, 0, 0};
+        return {levels, finishLevels, starts, DepthProfile::Linear, 1000, 5000, 0, 0};
     }
 }
 
@@ -43,7 +44,7 @@ ZTEST(mode_pass_plan, test_linear_depth_steps_evenly)
 ZTEST(mode_pass_plan, test_squared_depth_cuts_deeper_first)
 {
     PassPlan plan = makePlan(4);
-    plan.squaredDepth = true;
+    plan.depthProfile = DepthProfile::Squared;
     zassert_within(passDepthFraction(plan, 1), 0.4375, 1e-9);
     zassert_within(passDepthFraction(plan, 4), 1, 1e-9);
     double previousCut = passDepthFraction(plan, 1);
@@ -52,6 +53,56 @@ ZTEST(mode_pass_plan, test_squared_depth_cuts_deeper_first)
         zassert_true(cut > 0 && cut < previousCut);
         previousCut = cut;
     }
+}
+
+ZTEST(mode_pass_plan, test_sandvik_single_level_cuts_full_depth)
+{
+    PassPlan plan = makePlan(1);
+    plan.depthProfile = DepthProfile::Sandvik;
+    zassert_within(passDepthFraction(plan, 0), 0, 1e-9);
+    zassert_within(passDepthFraction(plan, 1), 1, 1e-9);
+}
+
+ZTEST(mode_pass_plan, test_sandvik_depths)
+{
+    PassPlan plan = makePlan(8);
+    plan.depthProfile = DepthProfile::Sandvik;
+    zassert_within(passDepthFraction(plan, 0), 0, 1e-9);
+    zassert_within(passDepthFraction(plan, 1), sqrt(0.3 / 7), 1e-9);
+    zassert_within(passDepthFraction(plan, 2), sqrt(1.0 / 7), 1e-9);
+    zassert_within(passDepthFraction(plan, 8), 1, 1e-9);
+}
+
+ZTEST(mode_pass_plan, test_sandvik_equal_chip_area_after_second_pass)
+{
+    PassPlan plan = makePlan(8);
+    plan.depthProfile = DepthProfile::Sandvik;
+    double firstArea = pow(passDepthFraction(plan, 3), 2) - pow(passDepthFraction(plan, 2), 2);
+    for (int32_t level = 4; level <= 8; level++) {
+        double area = pow(passDepthFraction(plan, level), 2) - pow(passDepthFraction(plan, level - 1), 2);
+        zassert_within(area, firstArea, 1e-9);
+    }
+}
+
+ZTEST(mode_pass_plan, test_sandvik_finish_level_stays_at_full_depth)
+{
+    PassPlan plan = makePlan(8, 2);
+    plan.depthProfile = DepthProfile::Sandvik;
+    zassert_within(passDepthFraction(plan, 9), 1, 1e-9);
+    zassert_within(passDepthFraction(plan, 10), 1, 1e-9);
+}
+
+ZTEST(mode_pass_plan, test_sandvik_flank_offset)
+{
+    PassPlan plan = makePlan(4, 1);
+    plan.depthProfile = DepthProfile::Sandvik;
+    plan.flankTan = 0.5;
+    double step2 = (passDepthFraction(plan, 2) - passDepthFraction(plan, 1)) * 1000 * 0.5;
+    double step3 = (passDepthFraction(plan, 3) - passDepthFraction(plan, 2)) * 1000 * 0.5;
+    zassert_within(passFlankOffsetDu(plan, 1), 0, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 2), step2, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 3), step2 - step3, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 5), passFlankOffsetDu(plan, 4), 1e-9);
 }
 
 ZTEST(mode_pass_plan, test_length_shortens_each_level)

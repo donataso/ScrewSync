@@ -25,12 +25,19 @@
 // Each level runs once per start.
 namespace Mode::Detail
 {
+    enum class DepthProfile : uint8_t
+    {
+        Linear,
+        Squared,
+        Sandvik,
+    };
+
     struct PassPlan
     {
         int32_t levels;
         int32_t finishLevels;
         int32_t starts;
-        bool squaredDepth; // deeper first passes
+        DepthProfile depthProfile;
         double depthDu;
         double lengthDu;
         double endReductionDu; // shortens each successive level

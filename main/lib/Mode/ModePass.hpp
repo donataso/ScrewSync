@@ -45,7 +45,7 @@ namespace Mode::Detail
         double depthDu;
         int32_t levels;
         int32_t starts;
-        bool squaredDepth;   // deeper first passes
+        DepthProfile depthProfile;
         bool retractToStart; // else retract from the pass depth
         double endReductionDu; // shortens each successive pass
         PassFeed feed;
