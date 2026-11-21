@@ -49,6 +49,11 @@ namespace
         return {Kind::Cycle, param, label, texts, values, nullptr, nullptr, nullptr};
     }
 
+    constexpr Cell button(const char *label, const char *command)
+    {
+        return {Kind::Button, nullptr, label, nullptr, command, nullptr, nullptr, nullptr};
+    }
+
     constexpr Cell GAP = {Kind::Gap, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 
     constexpr Cell AXIS = toggle("axis", "Z", "z", "X", "x");
@@ -78,8 +83,29 @@ namespace
         DIR,
         value(Kind::Length, "length", "Length"),
         SIDE,
+        GAP,
+        GAP,
+        GAP,
+        GAP,
         value(Kind::Count, "passes", "Passes"),
-        SPINDLE,
+        cycle("spindle", "Spindle", "fwd|rev", "Fwd|Rev"),
+        button("More", "ui page 1"),
+    };
+
+    constexpr Cell TURN_FINISH[] = {
+        value(Kind::Length, "finish", "Finish"),
+        value(Kind::Feed, "finish-feed", "Fin. feed"),
+        toggle("spring", "No spring", "off", "Spring", "on"),
+        GAP,
+        GAP,
+        GAP,
+        GAP,
+        GAP,
+        GAP,
+        GAP,
+        GAP,
+        GAP,
+        button("Back", "ui page 0"),
     };
 
     constexpr Cell THREAD[] = {
@@ -134,13 +160,22 @@ namespace
         const char *label;
         const Cell *cells;
         size_t count;
+        const Cell *moreCells;
+        size_t moreCount;
     };
 
     template <size_t N>
     constexpr ModeLayout layout(const char *label, const Cell (&cells)[N])
     {
         static_assert(N <= ModeCells::MAX, "too many cells");
-        return {label, cells, N};
+        return {label, cells, N, nullptr, 0};
+    }
+
+    template <size_t N, size_t M>
+    constexpr ModeLayout layout(const char *label, const Cell (&cells)[N], const Cell (&moreCells)[M])
+    {
+        static_assert(N <= ModeCells::MAX && M <= ModeCells::MAX, "too many cells");
+        return {label, cells, N, moreCells, M};
     }
 
     // Settings fields: the probe panel is not a mode.
@@ -152,12 +187,12 @@ namespace
     constexpr ModeLayout LAYOUTS[Mode::COUNT] = {
         layout("Gear", GEAR),
         layout("Async", ASYNC),
-        layout("Turn", TURN),
+        layout("Turn", TURN, TURN_FINISH),
         layout("Thread", THREAD),
         layout("Part", PART),
         layout("Slot", SLOT),
         layout("Ellipse", ELLIPSE),
-        {"G-code", nullptr, 0},
+        {"G-code", nullptr, 0, nullptr, 0},
         layout("Probe", PROBE),
     };
 }
@@ -169,9 +204,15 @@ namespace ModeCells
         return LAYOUTS[(size_t)id].label;
     }
 
-    const Cell *cells(Mode::Id id, size_t &count)
+    size_t pages(Mode::Id id)
     {
-        count = LAYOUTS[(size_t)id].count;
-        return LAYOUTS[(size_t)id].cells;
+        return LAYOUTS[(size_t)id].moreCells ? 2 : 1;
+    }
+
+    const Cell *cells(Mode::Id id, size_t page, size_t &count)
+    {
+        const ModeLayout &l = LAYOUTS[(size_t)id];
+        count = page ? l.moreCount : l.count;
+        return page ? l.moreCells : l.cells;
     }
 }

@@ -18,6 +18,7 @@
   optional taper, optional stop after a length.
 - **Async**: feed per minute, independent of spindle rotation.
 - **Turn**: turning (Z) or facing (X), multi-pass, external/internal.
+  Optional finish pass with its own feed, and a spring pass.
 - **Thread**: see below.
 - **Part**: part-off with an optional peck depth.
 - **Slot**: slot cutting with the spindle stopped.

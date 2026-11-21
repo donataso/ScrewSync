@@ -74,7 +74,10 @@ namespace Mode::Detail
 
     double passDepthDu(const PassPlan &plan, int32_t level)
     {
-        return plan.depthDu * passDepthFraction(plan, level);
+        if (level > plan.levels) {
+            return plan.depthDu;
+        }
+        return (plan.depthDu - plan.finishDu) * passDepthFraction(plan, level);
     }
 
     double passFlankOffsetDu(const PassPlan &plan, int32_t level)
@@ -85,7 +88,7 @@ namespace Mode::Detail
         double du = 0;
         for (int32_t i = 2; i <= depthLevel(plan, level); i++) {
             int side = plan.flank == FlankInfeed::OneSide || i % 2 == 0 ? 1 : -1;
-            du += side * (passDepthFraction(plan, i) - passDepthFraction(plan, i - 1)) * plan.depthDu * plan.flankTan;
+            du += side * (passDepthDu(plan, i) - passDepthDu(plan, i - 1)) * plan.flankTan;
         }
         return du;
     }

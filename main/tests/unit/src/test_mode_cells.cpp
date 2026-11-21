@@ -30,17 +30,19 @@ namespace
 
     bool hasValue(Kind kind)
     {
-        return kind != Kind::Gap && kind != Kind::Picker;
+        return kind != Kind::Gap && kind != Kind::Picker && kind != Kind::Button;
     }
 
     template <typename Check>
     void forEachCell(Check check)
     {
         for (size_t id = 0; id < Mode::COUNT; id++) {
-            size_t count = 0;
-            const Cell *cells = ModeCells::cells((Mode::Id)id, count);
-            for (size_t slot = 0; slot < count; slot++) {
-                check(cells, count, slot);
+            for (size_t page = 0; page < ModeCells::pages((Mode::Id)id); page++) {
+                size_t count = 0;
+                const Cell *cells = ModeCells::cells((Mode::Id)id, page, count);
+                for (size_t slot = 0; slot < count; slot++) {
+                    check(cells, count, slot);
+                }
             }
         }
     }
@@ -61,7 +63,7 @@ ZTEST(mode_cells, test_cells_fit_the_panel)
 {
     for (size_t id = 0; id < Mode::COUNT; id++) {
         size_t count = 0;
-        const Cell *cells = ModeCells::cells((Mode::Id)id, count);
+        const Cell *cells = ModeCells::cells((Mode::Id)id, 0, count);
         zassert_true(count <= ModeCells::MAX);
         zassert_true(count == 0 || cells != nullptr);
     }
@@ -78,6 +80,9 @@ ZTEST(mode_cells, test_value_cells_have_param)
             zassert_not_null(c.valueA);
             zassert_not_null(c.valueB);
             zassert_equal(c.labelA == nullptr, c.labelB == nullptr);
+        } else if (c.kind == Kind::Button) {
+            zassert_not_null(c.label);
+            zassert_not_null(c.valueA);
         } else if (c.kind == Kind::Cycle) {
             zassert_not_null(c.valueA);
             zassert_not_null(c.labelA);
@@ -107,7 +112,8 @@ ZTEST(mode_cells, test_picker_and_latch_slots)
         if (cells[slot].kind == Kind::Picker) {
             zassert_equal(slot, PICKER_SLOT);
         }
-        if (cells[slot].kind == Kind::Latch || cells[slot].kind == Kind::Cycle) {
+        if (cells[slot].kind == Kind::Latch || cells[slot].kind == Kind::Cycle ||
+            cells[slot].kind == Kind::Button) {
             zassert_true(slot >= ModeCells::NARROW_FIRST);
         }
     });
@@ -126,6 +132,31 @@ ZTEST(mode_cells, test_narrow_rows_do_not_overlap_the_grid)
             zassert_equal(cells[i].kind, Kind::Gap, "slot %zu overlaps slot %zu", slot, i);
         }
     });
+}
+
+ZTEST(mode_cells, test_turn_has_a_finish_page)
+{
+    zassert_equal(ModeCells::pages(Mode::Id::Turn), 2);
+    zassert_equal(ModeCells::pages(Mode::Id::Thread), 1);
+    size_t count = 0;
+    const Cell *cells = ModeCells::cells(Mode::Id::Turn, 0, count);
+    zassert_str_equal(cells[10].param, "passes");
+    zassert_str_equal(cells[11].param, "spindle");
+    zassert_equal(cells[11].kind, Kind::Cycle);
+    zassert_str_equal(cells[11].valueA, "fwd|rev");
+    zassert_equal(cells[12].kind, Kind::Button);
+    zassert_str_equal(cells[12].valueA, "ui page 1");
+    cells = ModeCells::cells(Mode::Id::Turn, 1, count);
+    zassert_str_equal(cells[0].param, "finish");
+    zassert_str_equal(cells[1].param, "finish-feed");
+    zassert_str_equal(cells[2].param, "spring");
+    zassert_equal(cells[2].kind, Kind::Toggle);
+    zassert_str_equal(cells[2].valueA, "off");
+    zassert_str_equal(cells[2].valueB, "on");
+    zassert_equal(cells[10].kind, Kind::Gap);
+    zassert_equal(cells[11].kind, Kind::Gap);
+    zassert_equal(cells[12].kind, Kind::Button);
+    zassert_str_equal(cells[12].valueA, "ui page 0");
 }
 
 ZTEST(mode_cells, test_when_names_a_param_of_the_mode)

@@ -34,13 +34,16 @@ namespace
         int32_t passes;
         bool internal;
         bool spindleReverse;
+        int32_t finishDu;
+        int32_t finishPitchDu;
+        bool spring;
     };
 
     constexpr double MAX_PITCH_DU = 1000000;
     constexpr double MAX_LENGTH_DU = 10000000;
     constexpr double MAX_PASSES = 1000;
 
-    Turn g_params = {0, false, Stepper::Axis::Z, 0, 0, 5, false, false};
+    Turn g_params = {0, false, Stepper::Axis::Z, 0, 0, 5, false, false, 0, 0, false};
 
     const Param PARAMS[] = {
         {"pitch", Kind::Du, offsetof(Turn, pitchDu), 0, MAX_PITCH_DU, true, true},
@@ -51,12 +54,21 @@ namespace
         {"passes", Kind::Count, offsetof(Turn, passes), 1, MAX_PASSES, false},
         {"internal", Kind::Flag, offsetof(Turn, internal), 0, 0, false},
         {"spindle", Kind::Flag, offsetof(Turn, spindleReverse), 0, 0, false, false, "fwd|rev"},
+        {"finish", Kind::Du, offsetof(Turn, finishDu), 0, MAX_LENGTH_DU, false},
+        {"finish-feed", Kind::Du, offsetof(Turn, finishPitchDu), 0, MAX_PITCH_DU, false},
+        {"spring", Kind::Flag, offsetof(Turn, spring), 0, 0, false},
     };
 
     PassJob g_job;
 
     const char *startMode(int64_t spindlePos)
     {
+        if (g_params.finishDu > 0 && g_params.finishDu >= g_params.depthDu) {
+            return "finish must be below depth";
+        }
+        if (g_params.finishDu > 0 && g_params.finishPitchDu == 0) {
+            return "set finish-feed first";
+        }
         bool facing = g_params.axis == Stepper::Axis::X;
         g_job = {};
         g_job.main = g_params.axis;
@@ -64,10 +76,15 @@ namespace
         g_job.auxSign = g_params.internal ? 1 : -1;
         g_job.lengthDu = g_params.lengthDu;
         g_job.depthDu = g_params.depthDu;
+        g_job.finishDu = g_params.finishDu;
         g_job.levels = g_params.passes;
         g_job.starts = 1;
         g_job.feed = PassFeed::Spindle;
         g_job.pitchDu = &g_params.pitchDu;
+        if (g_params.finishDu > 0) {
+            g_job.finishPitchDu = &g_params.finishPitchDu;
+        }
+        g_job.finishLevels = (g_params.finishDu > 0 ? 1 : 0) + (g_params.spring ? 1 : 0);
         g_job.reverse = g_params.reverse;
         return passBegin(g_job, spindlePos);
     }

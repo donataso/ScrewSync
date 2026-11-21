@@ -54,6 +54,9 @@ namespace Display::Detail
     // Returns whether any cell's type changed.
     bool pushPanel(Mode::Id id, const char *params);
 
+    void setPanelPage(size_t page);
+    size_t panelPage();
+
     void openPicker();
     void pushPicker();
     void selectPickerGroup(const char *group);

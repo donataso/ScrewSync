@@ -221,6 +221,11 @@ replies; see `docs/screen.md`.
   off|on|side`: radial, alternating or one-side flank infeed. Each pass
   shifts along Z to slide down the flank the previous pass cut; `side`
   always shifts ahead in the cut direction. `spring on`: one extra pass at full depth.
+- `turn finish <du>`: finish allowance, 0 = no finish pass. The `passes`
+  cut the depth less the finish, then one pass cuts to the full depth at
+  `finish-feed` (start refused while it is 0). `turn spring on`: one extra
+  pass at full depth, at `finish-feed` when `finish` is set. Neither counts
+  in `passes`.
 - `threads groups | list <group> [<offset>] | reset`: thread table names,
   paged designations (`next` = offset to continue from), back to the
   built-in defaults.

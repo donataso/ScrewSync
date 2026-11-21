@@ -42,6 +42,7 @@ namespace ModeCells
         Picker, // opens the thread picker page; no param; slot 15 only
         Latch,  // on/off flag, one button lit while on; narrow slots only
         Cycle,
+        Button,
         Gap,
     };
 
@@ -58,7 +59,8 @@ namespace ModeCells
     };
 
     const char *label(Mode::Id id);
-    const Cell *cells(Mode::Id id, size_t &count);
+    size_t pages(Mode::Id id);
+    const Cell *cells(Mode::Id id, size_t page, size_t &count);
 }
 
 #endif

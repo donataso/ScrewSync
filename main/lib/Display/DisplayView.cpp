@@ -139,7 +139,7 @@ namespace
     // Returns whether the override row's visibility toggled.
     bool pushOverride(Mode::Id current, bool running, int32_t pct)
     {
-        bool shown = Mode::hasFeedOverride(current);
+        bool shown = Mode::hasFeedOverride(current) && panelPage() == 0;
         if (shown) {
             pushText("ovrMinus.txt", "-%d%%", (int)Mode::OVERRIDE_STEP_PCT);
             pushText("ovrPlus.txt", "+%d%%", (int)Mode::OVERRIDE_STEP_PCT);

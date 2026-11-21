@@ -147,7 +147,10 @@ How to operate ScrewSync. For wiring and flashing, see
 - **Async**: the axis feeds per minute, independent of the spindle.
   Optional stop after a length.
 - **Turn**: axis Z turns (depth on X), axis X faces (depth on Z). Internal
-  reverses the depth direction.
+  reverses the depth direction. Finish is an allowance: the passes cut
+  the depth less the finish, then one finish pass cuts to the full depth
+  at the finish feed. Set the finish feed when Finish is not 0. Spring adds
+  one more pass at full depth, at the finish feed when Finish is set.
 - **Thread**: see [Threading](#threading).
 - **Part**: X feeds in to the depth. Peck sets the depth of each pass;
   0 cuts the full depth in one pass. Internal reverses the X direction.

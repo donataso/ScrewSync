@@ -43,6 +43,7 @@ namespace Mode::Detail
         int auxSign; // aux direction into the work
         double lengthDu;
         double depthDu;
+        double finishDu;
         int32_t levels;
         int32_t starts;
         DepthProfile depthProfile;
@@ -50,12 +51,13 @@ namespace Mode::Detail
         double endReductionDu; // shortens each successive pass
         PassFeed feed;
         const int32_t *pitchDu;       // read every tick
+        const int32_t *finishPitchDu; // feed of finish levels, nullptr = pitchDu
         const int32_t *speedDuPerMin; // Timed
         bool reverse;                 // feeds +main
         float taper;                  // main Z only, aux X follows
         FlankInfeed flank;
         double flankTan;              // Z shift per depth
-        int32_t finishLevels;         // spring passes at full depth
+        int32_t finishLevels;         // passes at full depth
 
         int cutDirection;
         int64_t mainStart;

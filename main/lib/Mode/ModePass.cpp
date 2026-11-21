@@ -41,7 +41,7 @@ namespace
     PassPlan plan(const PassJob &j)
     {
         return {j.levels, j.finishLevels, j.starts, j.depthProfile,
-                j.depthDu, j.lengthDu, j.endReductionDu, j.flank, j.flankTan};
+                j.depthDu, j.finishDu, j.lengthDu, j.endReductionDu, j.flank, j.flankTan};
     }
 
     int64_t passAux(const PassJob &j)
@@ -83,6 +83,11 @@ namespace
         return duToSteps(j.aux, towardChuckDu * (double)j.taper / 2);
     }
 
+    const int32_t *levelPitchDu(const PassJob &j)
+    {
+        return j.finishPitchDu && j.cursor.level > j.levels ? j.finishPitchDu : j.pitchDu;
+    }
+
     // True once the cut reached the pass end.
     bool cut(PassJob &j, int64_t spindlePos)
     {
@@ -93,11 +98,11 @@ namespace
             if (!j.entered) {
                 j.spindleFeed.begin(j.main, start, end, spindlePos);
             }
-            return j.spindleFeed.tick(spindlePos, overridden(*j.pitchDu));
+            return j.spindleFeed.tick(spindlePos, overridden(*levelPitchDu(j)));
         case PassFeed::Phased:
         {
             if (!j.entered) {
-                int32_t dupr = spindleSign() * signedDu(*j.pitchDu, j.reverse);
+                int32_t dupr = spindleSign() * signedDu(*levelPitchDu(j), j.reverse);
                 j.link = {j.main, dupr, j.starts, 0, start};
                 int64_t startOffset = (int64_t)j.cursor.startIndex * countsPerRev() / j.starts;
                 j.link.originSpindlePos = helixOrigin(j.link, j.mainStart, startOffset, spindlePos);

@@ -23,6 +23,7 @@
 #include "Mode.hpp"
 #include "display_config.hpp"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
@@ -131,6 +132,10 @@ namespace
         }
         if (!strncmp(line, "ui pins ", 8)) {
             setPinsOpen(!strcmp(line + 8, "on"));
+            return;
+        }
+        if (!strncmp(line, "ui page ", 8)) {
+            setPanelPage((size_t)atoi(line + 8));
             return;
         }
         if (!strncmp(line, "ui ", 3)) {

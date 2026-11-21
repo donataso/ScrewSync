@@ -33,8 +33,8 @@
 - Each page's load event sends `sendme`; the reply's page id tells the
   firmware to resync and push that page.
 - `ui ...` lines are display-local navigation (thread picker tab, `ui pins
-  on|off` for the Pins view), handled by the Display link, not the command
-  dispatcher.
+  on|off` for the Pins view, `ui page <n>` for a mode's cell page),
+  handled by the Display link, not the command dispatcher.
 - Liveness: firmware periodically pings the display (Nextion's `sendme`,
   which replies with the current page). No reply -> controlled stop of any
   running operation or jog (not EStop).
@@ -116,11 +116,16 @@ What each mode does: `docs/features.md`. Display specifics:
   pitch, depth, taper and flank angle from the thread table. The "custom"
   group starts empty. Flank cycles off, alternating and one side. Spring is a latching button. Passes,
   starts, taper, Flank and Spring use 3-column rows.
+- Turn has two cell pages. Page 1: feed, axis, depth, direction, length,
+  side, then a 3-column row with Passes, Spindle and More. Spindle cycles
+  Fwd and Rev. Page 2: Finish, Finish feed, a Spring toggle, then a
+  3-column row with Back only. Page 2 has no feed override row. More and
+  Back switch the page. The page resets to 1 when the mode changes.
 - Probe: a panel, not a mode; `docs/probe.md`.
 - A mode that needs a missing feature (X motor, probe) is not in the menu.
   The X column stays; with no X motor it shows X off, the X power button is refused and the
   X jog buttons do nothing.
-- Turn, Thread, Part and Ellipse have a spindle Fwd/Rev toggle.
+- Turn, Thread, Part and Ellipse have a spindle Fwd/Rev setting.
 - Multi-pass modes show phase and pass n/m, and offer skip.
 - Every mode but Thread has a feed override row above
   start/stop: step down, the current percentage (tap = 100%, orange when
