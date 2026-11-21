@@ -97,36 +97,91 @@ namespace
         snprintf(key, sizeof(key), "c%u", (unsigned)slot);
         pushColor(key, "pco", set || !required ? COLOR_TEXT : COLOR_NOT_SET);
         pushColor(key, "bco", COLOR_BUTTON);
+        pushColor(key, "borderc", COLOR_BUTTON);
         snprintf(key, sizeof(key), "cCmd%u.txt", (unsigned)slot);
         pushText(key, "%s %s ", probe ? "settings set" : Mode::name(id), c.param);
         return pushCellType(slot, valueType(c.kind));
     }
 
+    // nullptr labels: arrows along the mode's axis.
+    int toggleLabels(const Cell &c, const char *params, const char *labels[2])
+    {
+        if (c.labelA) {
+            labels[0] = c.labelA;
+            labels[1] = c.labelB;
+            return FONT_LABEL;
+        }
+        char axis[4];
+        bool onX = paramValue(params, "axis", axis, sizeof(axis)) && !strcmp(axis, "x");
+        labels[0] = onX ? "↓" : "←";
+        labels[1] = onX ? "↑" : "→";
+        return FONT_SYMBOLS;
+    }
+
+    void pushHalf(size_t slot, const char *side, const char *text, int font)
+    {
+        char key[KEY_MAX];
+        snprintf(key, sizeof(key), "c%u%s.txt", (unsigned)slot, side);
+        pushText(key, "%s", text);
+        snprintf(key, sizeof(key), "c%u%s.font", (unsigned)slot, side);
+        pushNum(key, font);
+    }
+
     bool pushToggle(size_t slot, const char *mode, const Cell &c, const char *raw, const char *params)
     {
-        const char *labels[] = {c.labelA, c.labelB};
-        int font = FONT_LABEL;
-        if (!c.labelA) {
-            char axis[4];
-            bool onX = paramValue(params, "axis", axis, sizeof(axis)) && !strcmp(axis, "x");
-            labels[0] = onX ? "↓" : "←";
-            labels[1] = onX ? "↑" : "→";
-            font = FONT_SYMBOLS;
-        }
+        const char *labels[2];
+        int font = toggleLabels(c, params, labels);
         char key[KEY_MAX];
         snprintf(key, sizeof(key), "cCmd%u.txt", (unsigned)slot);
         pushText(key, "%s %s %s|%s %s %s", mode, c.param, c.valueA, mode, c.param, c.valueB);
         static const char *const SIDES[] = {"a", "b"};
         const char *values[] = {c.valueA, c.valueB};
         for (size_t i = 0; i < 2; i++) {
-            snprintf(key, sizeof(key), "c%u%s.txt", (unsigned)slot, SIDES[i]);
-            pushText(key, "%s", labels[i]);
-            snprintf(key, sizeof(key), "c%u%s.font", (unsigned)slot, SIDES[i]);
-            pushNum(key, font);
+            pushHalf(slot, SIDES[i], labels[i], font);
             snprintf(key, sizeof(key), "c%u%s", (unsigned)slot, SIDES[i]);
             pushSelected(key, !strcmp(raw, values[i]));
         }
         return pushCellType(slot, CellType::Toggle);
+    }
+
+    // Toggle: shows the current value. Latch: shows its label, lit while on. The command flips it.
+    bool pushFlip(size_t slot, const char *side, const char *mode, const Cell &c, const char *params,
+                  char *command, size_t commandMax)
+    {
+        char raw[24];
+        if (!c.param || !paramValue(params, c.param, raw, sizeof(raw))) {
+            return false;
+        }
+        char key[KEY_MAX];
+        snprintf(key, sizeof(key), "c%u%s", (unsigned)slot, side);
+        if (c.kind == Kind::Latch) {
+            bool on = !strcmp(raw, "on");
+            pushHalf(slot, side, c.label, FONT_LABEL);
+            pushSelected(key, on);
+            snprintf(command, commandMax, "%s %s %s", mode, c.param, on ? "off" : "on");
+            return true;
+        }
+        const char *labels[2];
+        int font = toggleLabels(c, params, labels);
+        bool onB = !strcmp(raw, c.valueB);
+        pushHalf(slot, side, labels[onB], font);
+        pushSelected(key, false);
+        snprintf(command, commandMax, "%s %s %s", mode, c.param, onB ? c.valueA : c.valueB);
+        return true;
+    }
+
+    bool pushPair(size_t slot, const char *mode, const Cell &c, const char *params)
+    {
+        char left[48];
+        char right[48] = "";
+        if (!pushFlip(slot, "a", mode, *c.left, params, left, sizeof(left))) {
+            return pushCellType(slot, CellType::Hidden);
+        }
+        bool both = c.right && pushFlip(slot, "b", mode, *c.right, params, right, sizeof(right));
+        char key[KEY_MAX];
+        snprintf(key, sizeof(key), "cCmd%u.txt", (unsigned)slot);
+        pushText(key, "%s|%s", left, right);
+        return pushCellType(slot, both ? CellType::Toggle : CellType::Half);
     }
 
     bool pushCell(size_t slot, Mode::Id id, const Cell &c, const char *params)
@@ -140,6 +195,9 @@ namespace
             }
             pushText("picker.txt", "%s", c.label);
             return pushCellType(slot, CellType::Picker);
+        }
+        if (c.kind == Kind::Pair) {
+            return pushPair(slot, Mode::name(id), c, params);
         }
         char raw[24];
         if (c.kind == Kind::Gap || !cellShown(c, params) || !paramValue(params, c.param, raw, sizeof(raw))) {

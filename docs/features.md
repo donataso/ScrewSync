@@ -3,11 +3,7 @@
 ## Display
 
 - One page per mode, with every parameter of that mode visible and editable.
-- Header icons: estop, and with home switches, home and the work coordinate
-  selector.
-- Always visible: Z/X position, axis enable toggles, spindle RPM and angle,
-  current mode, start/stop, mm/inch, jog buttons and jog step.
-- Numeric entry on an on-screen keypad with a computer numpad layout.
+- Numeric entry on an on-screen keypad.
 - Each mode's parameters are remembered.
 - The display and the web client show the same state; a change on one shows
   up on the other.
@@ -30,8 +26,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 
 ## Threading
 
-- Thread library: tabs per standard and a grid of designations. Picking one
-  fills pitch, depth, taper and flank angle. Every value stays editable, and
+- Thread library by standard and designation. Picking one fills pitch, depth, taper and flank angle. Every value stays editable, and
   custom entries can be added.
 - The thread table is editable on the web client.
 - Constant chip area per pass (Sandvik infeed), with a lighter first pass.
@@ -49,7 +44,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
   probe.
 - Fast first touch, slow reprobe, then the axis is zeroed on the surface.
 - The cycle is an NGC routine; a saved routine can replace it.
-- A contact light shows the probe input live.
+- The display shows the probe input live.
 
 ## G-code
 
@@ -100,8 +95,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - Starting a job off zero asks for confirmation.
 - Boot state setting: start in estop, with estop off, or with estop off and
   motors on. Estop stops all motion and turns the motors off, with no
-  restart. Estop icon on the display, estop inputs and an estop
-  output.
+  restart. Estop on the display, estop inputs and an estop output.
 - A home switch signal while an axis moves trips the estop.
 - A lost display link stops any running job or jog.
 - Firmware updates are refused while the machine is running.
@@ -112,8 +106,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - X motor, homing and probe can each be turned off, on the display or the
   web client. A feature needs its switch on and its pins assigned.
 - A missing feature is hidden in the pin editor, the modes that need it and
-  the web client, and its commands are refused. The display keeps the X
-  column, with X off.
+  the web client, and its commands are refused.
 - G-code with an X word (programs) or G38 is refused when that feature is
   missing. Routines can skip parts with `#<_has_x>` and `#<_has_probe>`.
 

@@ -21,6 +21,7 @@
 #include "HomeInput.hpp"
 #include "JogStep.hpp"
 #include "Machine.hpp"
+#include "RunSettings.hpp"
 #include "Wifi.hpp"
 #include "display_config.hpp"
 #include <ctype.h>
@@ -106,6 +107,10 @@ namespace
         formatLength(stepDu, label, sizeof(label));
         trimZeros(label);
         pushText("stepCustom.txt", "%s", custom ? label : "...");
+        int32_t lastCustom = RunSettings::customJogStepDu();
+        formatLength(lastCustom, label, sizeof(label));
+        trimZeros(label);
+        pushText("stepLast.txt", "%s", lastCustom ? label : "");
     }
 
     // Returns whether the run state or the skip layout (narrow stop + skip) toggled.
@@ -124,14 +129,15 @@ namespace
         } else {
             pushText("startStop.txt", active ? "STOP" : "START");
         }
+        bool startable = ready && !keypadOpen();
         int startStopColor = COLOR_AXIS_OFF;
         if (active) {
             startStopColor = COLOR_STOP;
-        } else if (ready) {
+        } else if (startable) {
             startStopColor = COLOR_START;
         }
         pushColor("startStop", "bco", startStopColor);
-        pushColor("startStop", "pco", active || ready ? COLOR_TEXT : COLOR_DIM);
+        pushColor("startStop", "pco", active || startable ? COLOR_TEXT : COLOR_DIM);
         bool skipChanged = pushNum("canSkip.val", canSkip);
         return runChanged || skipChanged;
     }

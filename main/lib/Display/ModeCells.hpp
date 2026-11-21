@@ -43,6 +43,7 @@ namespace ModeCells
         Latch,  // on/off flag, one button lit while on; narrow slots only
         Cycle,
         Button,
+        Pair, // two Toggle or Latch cells, one button each; right may be nullptr
         Gap,
     };
 
@@ -56,6 +57,8 @@ namespace ModeCells
         const char *labelB;
         const char *valueB;
         const char *when; // "name=value": shown only while that param has that value
+        const Cell *left = nullptr; // Pair
+        const Cell *right = nullptr;
     };
 
     const char *label(Mode::Id id);

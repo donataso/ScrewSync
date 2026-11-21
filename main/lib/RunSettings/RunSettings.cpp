@@ -125,6 +125,11 @@ namespace RunSettings
     {
         return read(g_jogStepDu);
     }
+
+    int32_t customJogStepDu()
+    {
+        return read(g_customJogStepDu);
+    }
     bool jogStepValid(int32_t du)
     {
         return du > 0 && du <= Jog::MAX_STEP_DU;

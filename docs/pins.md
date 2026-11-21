@@ -1,7 +1,7 @@
 # Pin mapping
 
 Assign each function (motors, encoders, switches, outputs) to any free
-connector pin from the web client, Pins page. No rebuild.
+connector pin from the web client. No rebuild.
 
 ## Use
 
@@ -9,24 +9,22 @@ connector pin from the web client, Pins page. No rebuild.
    function that can start there.
 2. Set the options of each signal: invert, and for inputs pull (none, up,
    down).
-3. Push "Save and reboot". The new map applies after the reboot.
+3. Save. The new map applies after a reboot.
 
 - A function uses pins next to each other in one connector, in its signal
   order (for example ENA, DIR, STEP).
 - Reserved pins are locked. Strapping pins give a warning: they can stop
   the board from booting if the wiring pulls them at reset.
 - You can only save when the machine is idle and the map has no errors.
-- Click a connector name to rename it for your wiring. An empty name sets
-  the board's name back.
-- "Print sheet": a printable pin map with your connector names,
-  optionally in colour and with details. Keep it with the machine.
+- Connectors can be renamed to match your wiring. An empty name sets the
+  board's name back.
+- A printable pin map sheet with your connector names. Keep it with the
+  machine.
 - The editor hides the functions of a feature that is off (X motor,
   homing, probe). Saving the settings with a feature off removes its
   functions from the saved map. See [manual.md](manual.md#features).
-- The connectors view shows a dot on each pin that has an input function
-  (not an encoder). The dot is lit when the input is active: the raw level
-  with "invert" applied. It follows the edited map, before you save. The
-  function view shows the raw level of each input signal.
+- The editor shows the live state of each input (not encoders), with
+  "invert" applied. It follows the edited map, before you save.
 - Pins that no function uses are inputs with no pull. Other inputs keep
   their own pull setting.
 - Some functions can have more than one assignment, for example two Stop
@@ -63,10 +61,10 @@ Each encoder has a filter, in µs:
 - A switch held at boot does not act.
 - A switch sends the same command as the display, with the same refusal
   rules. A refused command shows as a toast on the display.
-- "Start here" starts without the "Go to zero first?" question.
+- "Start here" starts without the offer to go to zero first.
 - "Go to zero" moves Z to 0, then X to 0 (the routine `o<zero>`).
-- "G54" to "G59" select the work coordinate system, like the display's
-  selector. Systems G55 to G59 need home inputs.
+- "G54" to "G59" select the work coordinate system. Systems G55 to G59
+  need home inputs.
 
 ## Home inputs
 
@@ -84,8 +82,8 @@ Each encoder has a filter, in µs:
 
 ## Jog
 
-- Jog Z+, Z-, X+, X- buttons work like the display's jog buttons: a short
-  press moves one step, a long press moves until the release.
+- Jog Z+, Z-, X+, X- buttons: a short press moves one step, a long press
+  moves until the release.
 - If a jog is refused (for example, the axis is off), the button does
   nothing more until you release it.
 - "Jog step cycle" selects the next preset, then the custom step, then the

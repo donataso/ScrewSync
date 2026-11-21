@@ -54,35 +54,41 @@ namespace
         return {Kind::Button, nullptr, label, nullptr, command, nullptr, nullptr, nullptr};
     }
 
+    constexpr Cell pair(const Cell &left, const Cell *right = nullptr)
+    {
+        return {Kind::Pair, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &left, right};
+    }
+
     constexpr Cell GAP = {Kind::Gap, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 
     constexpr Cell AXIS = toggle("axis", "Z", "z", "X", "x");
     constexpr Cell DIR = toggle("dir", nullptr, "-", nullptr, "+");
     constexpr Cell SIDE = toggle("internal", "Ext", "off", "Int", "on");
     constexpr Cell SPINDLE = toggle("spindle", "Fwd", "fwd", "Rev", "rev");
+    constexpr Cell HAND = toggle("hand", "LH", "lh", "RH", "rh");
+    constexpr Cell AXIS_DIR = pair(AXIS, &DIR);
+    constexpr Cell SPRING = latch("spring", "Spring");
 
     constexpr Cell GEAR[] = {
         value(Kind::Pitch, "pitch", "Feed"),
-        AXIS,
+        AXIS_DIR,
         value(Kind::Length, "stop-after", "Stop"),
-        DIR,
         value(Kind::Angle, "taper", "Taper", "axis=z"),
     };
 
     constexpr Cell ASYNC[] = {
         value(Kind::Speed, "speed", "Speed"),
-        AXIS,
+        AXIS_DIR,
         value(Kind::Length, "stop-after", "Stop"),
-        DIR,
     };
 
     constexpr Cell TURN[] = {
         value(Kind::Feed, "pitch", "Feed"),
-        AXIS,
+        AXIS_DIR,
         value(Kind::Length, "depth", "Depth"),
-        DIR,
+        pair(SIDE, &SPRING),
         value(Kind::Length, "length", "Length"),
-        SIDE,
+        GAP,
         GAP,
         GAP,
         GAP,
@@ -95,7 +101,7 @@ namespace
     constexpr Cell TURN_FINISH[] = {
         value(Kind::Length, "finish", "Finish"),
         value(Kind::Feed, "finish-feed", "Fin. feed"),
-        toggle("spring", "No spring", "off", "Spring", "on"),
+        GAP,
         GAP,
         GAP,
         GAP,
@@ -110,11 +116,11 @@ namespace
 
     constexpr Cell THREAD[] = {
         value(Kind::Pitch, "pitch", "Pitch"),
-        toggle("hand", "LH", "lh", "RH", "rh"),
+        pair(HAND, &SIDE),
         value(Kind::Length, "depth", "Depth"),
-        SIDE,
+        pair(SPINDLE, &SPRING),
         value(Kind::Length, "length", "Length"),
-        SPINDLE,
+        GAP,
         GAP,
         GAP,
         GAP,
@@ -123,25 +129,22 @@ namespace
         value(Kind::Count, "starts", "Starts"),
         value(Kind::Angle, "taper", "Taper"),
         cycle("flank", "Flank", "off|on|side", "off|\\/|/"),
-        latch("spring", "Spring"),
+        GAP,
         picker("Library"),
     };
 
     constexpr Cell PART[] = {
         value(Kind::Feed, "pitch", "Feed"),
-        SIDE,
+        pair(SIDE, &SPINDLE),
         value(Kind::Length, "depth", "Depth"),
-        SPINDLE,
         value(Kind::Length, "peck", "Peck"),
     };
 
     constexpr Cell SLOT[] = {
         value(Kind::Speed, "speed", "Speed"),
-        DIR,
+        pair(DIR, &SIDE),
         value(Kind::Length, "depth", "Depth"),
-        SIDE,
         value(Kind::Length, "length", "Length"),
-        GAP,
         value(Kind::Count, "passes", "Passes"),
     };
 
@@ -149,9 +152,8 @@ namespace
         value(Kind::Feed, "pitch", "Feed"),
         toggle("concave", "Convex", "off", "Concave", "on"),
         value(Kind::Length, "depth", "Depth"),
-        DIR,
+        pair(DIR, &SPINDLE),
         value(Kind::Length, "length", "Length"),
-        SPINDLE,
         value(Kind::Count, "passes", "Passes"),
     };
 

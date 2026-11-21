@@ -30,7 +30,21 @@ namespace
 
     bool hasValue(Kind kind)
     {
-        return kind != Kind::Gap && kind != Kind::Picker && kind != Kind::Button;
+        return kind != Kind::Gap && kind != Kind::Picker && kind != Kind::Button && kind != Kind::Pair;
+    }
+
+    // Params of a cell, a Pair's halves included.
+    template <typename Visit>
+    void forEachParam(const Cell &c, Visit visit)
+    {
+        if (c.kind == Kind::Pair) {
+            visit(c.left->param);
+            if (c.right) {
+                visit(c.right->param);
+            }
+        } else if (c.param) {
+            visit(c.param);
+        }
     }
 
     template <typename Check>
@@ -83,6 +97,20 @@ ZTEST(mode_cells, test_value_cells_have_param)
         } else if (c.kind == Kind::Button) {
             zassert_not_null(c.label);
             zassert_not_null(c.valueA);
+        } else if (c.kind == Kind::Pair) {
+            zassert_not_null(c.left);
+            const Cell *halves[] = {c.left, c.right};
+            for (const Cell *half : halves) {
+                if (half && half->kind == Kind::Latch) {
+                    zassert_not_null(half->param);
+                    zassert_not_null(half->label);
+                } else if (half) {
+                    zassert_equal(half->kind, Kind::Toggle);
+                    zassert_not_null(half->param);
+                    zassert_not_null(half->valueA);
+                    zassert_not_null(half->valueB);
+                }
+            }
         } else if (c.kind == Kind::Cycle) {
             zassert_not_null(c.valueA);
             zassert_not_null(c.labelA);
@@ -96,13 +124,15 @@ ZTEST(mode_cells, test_value_cells_have_param)
 ZTEST(mode_cells, test_params_unique_within_a_mode)
 {
     forEachCell([](const Cell *cells, size_t, size_t slot) {
-        if (!cells[slot].param) {
-            return;
-        }
-        for (size_t other = 0; other < slot; other++) {
-            zassert_true(!cells[other].param || strcmp(cells[other].param, cells[slot].param) != 0, "param %s twice",
-                         cells[slot].param);
-        }
+        forEachParam(cells[slot], [&](const char *param) {
+            size_t seen = 0;
+            for (size_t other = 0; other <= slot; other++) {
+                forEachParam(cells[other], [&](const char *p) {
+                    seen += !strcmp(p, param);
+                });
+            }
+            zassert_equal(seen, 1, "param %s twice", param);
+        });
     });
 }
 
@@ -115,6 +145,9 @@ ZTEST(mode_cells, test_picker_and_latch_slots)
         if (cells[slot].kind == Kind::Latch || cells[slot].kind == Kind::Cycle ||
             cells[slot].kind == Kind::Button) {
             zassert_true(slot >= ModeCells::NARROW_FIRST);
+        }
+        if (cells[slot].kind == Kind::Pair) {
+            zassert_true(slot < ModeCells::NARROW_FIRST);
         }
     });
 }
@@ -140,6 +173,9 @@ ZTEST(mode_cells, test_turn_has_a_finish_page)
     zassert_equal(ModeCells::pages(Mode::Id::Thread), 1);
     size_t count = 0;
     const Cell *cells = ModeCells::cells(Mode::Id::Turn, 0, count);
+    zassert_equal(cells[3].kind, Kind::Pair);
+    zassert_str_equal(cells[3].left->param, "internal");
+    zassert_str_equal(cells[3].right->param, "spring");
     zassert_str_equal(cells[10].param, "passes");
     zassert_str_equal(cells[11].param, "spindle");
     zassert_equal(cells[11].kind, Kind::Cycle);
@@ -149,14 +185,25 @@ ZTEST(mode_cells, test_turn_has_a_finish_page)
     cells = ModeCells::cells(Mode::Id::Turn, 1, count);
     zassert_str_equal(cells[0].param, "finish");
     zassert_str_equal(cells[1].param, "finish-feed");
-    zassert_str_equal(cells[2].param, "spring");
-    zassert_equal(cells[2].kind, Kind::Toggle);
-    zassert_str_equal(cells[2].valueA, "off");
-    zassert_str_equal(cells[2].valueB, "on");
+    zassert_equal(cells[2].kind, Kind::Gap);
     zassert_equal(cells[10].kind, Kind::Gap);
     zassert_equal(cells[11].kind, Kind::Gap);
     zassert_equal(cells[12].kind, Kind::Button);
     zassert_str_equal(cells[12].valueA, "ui page 0");
+}
+
+ZTEST(mode_cells, test_thread_pairs_short_toggles)
+{
+    size_t count = 0;
+    const Cell *cells = ModeCells::cells(Mode::Id::Thread, 0, count);
+    zassert_equal(cells[1].kind, Kind::Pair);
+    zassert_str_equal(cells[1].left->param, "hand");
+    zassert_str_equal(cells[1].right->param, "internal");
+    zassert_equal(cells[3].kind, Kind::Pair);
+    zassert_str_equal(cells[3].left->param, "spindle");
+    zassert_str_equal(cells[3].right->param, "spring");
+    zassert_equal(cells[3].right->kind, Kind::Latch);
+    zassert_equal(cells[5].kind, Kind::Gap);
 }
 
 ZTEST(mode_cells, test_when_names_a_param_of_the_mode)
@@ -171,8 +218,9 @@ ZTEST(mode_cells, test_when_names_a_param_of_the_mode)
         zassert_true(eq[1] != '\0');
         bool found = false;
         for (size_t i = 0; i < count; i++) {
-            const char *param = cells[i].param;
-            found |= param && strlen(param) == (size_t)(eq - when) && !strncmp(param, when, eq - when);
+            forEachParam(cells[i], [&](const char *param) {
+                found |= strlen(param) == (size_t)(eq - when) && !strncmp(param, when, eq - when);
+            });
         }
         zassert_true(found, "when %s names no param", when);
     });

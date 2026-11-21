@@ -36,10 +36,10 @@ The full image also carries the display UI. Send it to the display once,
 either way:
 
 - USB console: `display flash`
-- Web client: Device page, "Flash stored display firmware"
+- Web client: flash the stored display firmware
 
-Later updates go through the web client's Device page: "Firmware update"
-takes `firmware.bin`, and "Display firmware" takes a `.tft`.
+Later updates go through the web client: `firmware.bin` for the
+controller, a `.tft` for the display.
 
 Building from source needs a Zephyr workspace and nxwright. Each target
 (`targets/<target>/`) has its own make rules, such as `<target>-build`
@@ -47,8 +47,7 @@ and `<target>-flash`. See [design.md](design.md).
 
 ## First setup
 
-- The display's Network page turns Wi-Fi on and shows the address of the
-  web client.
+- Turn Wi-Fi on at the display. It shows the address of the web client.
 - Machine settings are on the web client only: lead screw pitch, motor
   steps, speeds, travel and backlash per axis, and the spindle encoder
   resolution.
@@ -61,9 +60,9 @@ and `<target>-flash`. See [design.md](design.md).
 - The spindle angle must increase when the spindle turns forward. If it
   decreases, toggle the `invertEncoder` setting.
 - Turn off the features that the machine does not have (X motor, homing,
-  probe) on the display (Settings) or the web client (Device page). A
-  change applies after a reboot. See [manual.md](manual.md#features).
+  probe) on the display or the web client. A change applies after a
+  reboot. See [manual.md](manual.md#features).
 - Set "invert" of the Probe pin so that contact is active. With a contact
-  plate, touch the plate to the tool: the contact light must turn green.
+  plate, touch the plate to the tool: the display must show contact.
 
 If the controller does not start: [troubleshooting.md](troubleshooting.md).

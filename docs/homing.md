@@ -5,7 +5,7 @@ limits, work systems G54–G59 and saved offsets.
 
 ## Cycle
 
-- With a home input on each axis, the home icon in the header, the `home`
+- With a home input on each axis, homing from the display, the `home`
   command or the Home switch homes X, then Z. The machine must be idle and
   the motors on. `stop` ends it.
 - Each axis moves toward the switch, backs off, finds it again slowly and
@@ -109,5 +109,5 @@ In the pin map (see [pins.md](pins.md)), set both home inputs to:
 - invert: off
 
 All sensors idle: the channels are closed and the pin is low. Any sensor
-triggered or a broken wire: the pin is high, which is active. Check it on
-the Pins page: the pin's dot must light when you trigger each sensor.
+triggered or a broken wire: the pin is high, which is active. Check that
+the pin map shows each sensor as active when you trigger it.

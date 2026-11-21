@@ -47,6 +47,7 @@ namespace
     uint32_t g_lastPongMs = 0;
     uint32_t g_pageChangeMs = 0;
     bool g_alive = false;
+    bool g_keypadOpen = false;
 
     struct k_spinlock g_toastLock;
     char g_toast[Events::REFUSAL_MAX];
@@ -132,6 +133,11 @@ namespace
         }
         if (!strncmp(line, "ui pins ", 8)) {
             setPinsOpen(!strcmp(line + 8, "on"));
+            return;
+        }
+        if (!strncmp(line, "ui keypad ", 10)) {
+            g_keypadOpen = !strcmp(line + 10, "on");
+            pushSoon();
             return;
         }
         if (!strncmp(line, "ui page ", 8)) {
@@ -228,6 +234,7 @@ namespace
             break;
         case 0x88:
             LOG_INF("display started");
+            g_keypadOpen = false;
             clearPreview();
             writeCommand("bkcmd=2");
             setPage(PAGE_MAIN);
@@ -262,6 +269,14 @@ ZBUS_LISTENER_DEFINE(DISPLAY_REFUSAL_LIS, onRefusal);
 ZBUS_CHAN_ADD_OBS(REFUSAL_CHAN, DISPLAY_REFUSAL_LIS, 3);
 ZBUS_LISTENER_DEFINE(DISPLAY_RUNNING_LIS, onRunning);
 ZBUS_CHAN_ADD_OBS(RUNNING_CHAN, DISPLAY_RUNNING_LIS, 3);
+
+namespace Display::Detail
+{
+    bool keypadOpen()
+    {
+        return g_keypadOpen;
+    }
+}
 
 namespace Display
 {

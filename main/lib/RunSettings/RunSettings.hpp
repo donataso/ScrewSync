@@ -49,6 +49,7 @@ namespace RunSettings
     void setUnits(Units units);
 
     int32_t jogStepDu();
+    int32_t customJogStepDu(); // 0 = none
     bool jogStepValid(int32_t du);
     // False if out of range. A step that is not a preset is also the custom step.
     bool setJogStepDu(int32_t du, bool persist = true);

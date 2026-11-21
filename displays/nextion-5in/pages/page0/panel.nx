@@ -8,6 +8,7 @@ const KIND_TOGGLE = 5
 const KIND_PICKER = 6
 const KIND_LATCH = 7
 const KIND_PIN = 8
+const KIND_HALF = 9
 const ZERO_FOR_START = 0
 const ZERO_FOR_Z = 1
 const ZERO_FOR_X = 2
@@ -20,55 +21,65 @@ function overlayOpen() -> number:
 // draw over one.
 function layoutPanel(shown: number):
   var v = 0
-  v = shown && cKind0 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind0 == KIND_TOGGLE || cKind0 == KIND_HALF) ? 1 : 0
   vis c0a,v
+  v = shown && cKind0 == KIND_TOGGLE ? 1 : 0
   vis c0b,v
-  v = shown && cKind0 > KIND_HIDDEN && cKind0 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind0 > KIND_HIDDEN && cKind0 != KIND_TOGGLE && cKind0 != KIND_HALF ? 1 : 0
   vis c0,v
-  v = shown && cKind1 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind1 == KIND_TOGGLE || cKind1 == KIND_HALF) ? 1 : 0
   vis c1a,v
+  v = shown && cKind1 == KIND_TOGGLE ? 1 : 0
   vis c1b,v
-  v = shown && cKind1 > KIND_HIDDEN && cKind1 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind1 > KIND_HIDDEN && cKind1 != KIND_TOGGLE && cKind1 != KIND_HALF ? 1 : 0
   vis c1,v
-  v = shown && cKind2 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind2 == KIND_TOGGLE || cKind2 == KIND_HALF) ? 1 : 0
   vis c2a,v
+  v = shown && cKind2 == KIND_TOGGLE ? 1 : 0
   vis c2b,v
-  v = shown && cKind2 > KIND_HIDDEN && cKind2 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind2 > KIND_HIDDEN && cKind2 != KIND_TOGGLE && cKind2 != KIND_HALF ? 1 : 0
   vis c2,v
-  v = shown && cKind3 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind3 == KIND_TOGGLE || cKind3 == KIND_HALF) ? 1 : 0
   vis c3a,v
+  v = shown && cKind3 == KIND_TOGGLE ? 1 : 0
   vis c3b,v
-  v = shown && cKind3 > KIND_HIDDEN && cKind3 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind3 > KIND_HIDDEN && cKind3 != KIND_TOGGLE && cKind3 != KIND_HALF ? 1 : 0
   vis c3,v
-  v = shown && cKind4 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind4 == KIND_TOGGLE || cKind4 == KIND_HALF) ? 1 : 0
   vis c4a,v
+  v = shown && cKind4 == KIND_TOGGLE ? 1 : 0
   vis c4b,v
-  v = shown && cKind4 > KIND_HIDDEN && cKind4 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind4 > KIND_HIDDEN && cKind4 != KIND_TOGGLE && cKind4 != KIND_HALF ? 1 : 0
   vis c4,v
-  v = shown && cKind5 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind5 == KIND_TOGGLE || cKind5 == KIND_HALF) ? 1 : 0
   vis c5a,v
+  v = shown && cKind5 == KIND_TOGGLE ? 1 : 0
   vis c5b,v
-  v = shown && cKind5 > KIND_HIDDEN && cKind5 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind5 > KIND_HIDDEN && cKind5 != KIND_TOGGLE && cKind5 != KIND_HALF ? 1 : 0
   vis c5,v
-  v = shown && cKind6 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind6 == KIND_TOGGLE || cKind6 == KIND_HALF) ? 1 : 0
   vis c6a,v
+  v = shown && cKind6 == KIND_TOGGLE ? 1 : 0
   vis c6b,v
-  v = shown && cKind6 > KIND_HIDDEN && cKind6 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind6 > KIND_HIDDEN && cKind6 != KIND_TOGGLE && cKind6 != KIND_HALF ? 1 : 0
   vis c6,v
-  v = shown && cKind7 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind7 == KIND_TOGGLE || cKind7 == KIND_HALF) ? 1 : 0
   vis c7a,v
+  v = shown && cKind7 == KIND_TOGGLE ? 1 : 0
   vis c7b,v
-  v = shown && cKind7 > KIND_HIDDEN && cKind7 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind7 > KIND_HIDDEN && cKind7 != KIND_TOGGLE && cKind7 != KIND_HALF ? 1 : 0
   vis c7,v
-  v = shown && cKind8 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind8 == KIND_TOGGLE || cKind8 == KIND_HALF) ? 1 : 0
   vis c8a,v
+  v = shown && cKind8 == KIND_TOGGLE ? 1 : 0
   vis c8b,v
-  v = shown && cKind8 > KIND_HIDDEN && cKind8 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind8 > KIND_HIDDEN && cKind8 != KIND_TOGGLE && cKind8 != KIND_HALF ? 1 : 0
   vis c8,v
-  v = shown && cKind9 == KIND_TOGGLE ? 1 : 0
+  v = shown && (cKind9 == KIND_TOGGLE || cKind9 == KIND_HALF) ? 1 : 0
   vis c9a,v
+  v = shown && cKind9 == KIND_TOGGLE ? 1 : 0
   vis c9b,v
-  v = shown && cKind9 > KIND_HIDDEN && cKind9 != KIND_TOGGLE ? 1 : 0
+  v = shown && cKind9 > KIND_HIDDEN && cKind9 != KIND_TOGGLE && cKind9 != KIND_HALF ? 1 : 0
   vis c9,v
   v = shown && cKind10 > KIND_HIDDEN && cKind10 != KIND_PICKER ? 1 : 0
   vis c10,v

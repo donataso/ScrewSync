@@ -40,42 +40,27 @@
   running operation or jog (not EStop).
 - Each ping also zeroes the display's `linkAge` and sets `linkFlashing`
   (`program.nx` globals). Every page ages the link on a timer and shows a
-  non-dismissable blocking toast: blue while flashing, red once the link is
-  lost. It starts shown, so it covers boot until the first heartbeat.
-- Header icons at the top left of page0 (icons from the Lucide set, drawn
-  from SVG files in `pictures/icons`):
-  - Estop icon: a tap sends `estop on`. In estop a full-screen cover shows
-    a big estop icon. A tap on it sends `estop off`. A line at the bottom
-    says to tap to disarm; a refusal replaces it in red.
-  - Home icon: a tap sends `home`, or `unhome` when all axes are homed. Its colour shows the homed state: grey =
-    not homed, green = homed, blue = homing in progress. Only axes with a
-    home input count.
-  - WCS selector: a button with the active work coordinate system. A tap
-    opens a list of G54 to G59. A pick sends the G-code word as an MDI line.
-    A refusal shows as a toast.
-  - The home icon and the WCS selector show only when the pin map has home
-    inputs.
-- Axis enable buttons send `power on|off z|x`.
+  non-dismissable blocking toast while flashing or once the link is lost.
+  It starts shown, so it covers boot until the first heartbeat.
+- Icons are from the Lucide set, drawn from SVG files in `pictures/icons`.
+- In estop a full-screen cover blocks the UI until the estop is cleared.
+- Homing and the work coordinate selector show only when the pin map has
+  home inputs. A coordinate system pick is sent as an MDI line.
 
 ## Layout
 
 - Dark theme.
-- Always-visible area: Z/X position, axis enable toggles, spindle RPM and
-  angle, current mode (tap -> mode picker), start/stop, mm/inch selection,
-  jog buttons and step selection.
-- Rest of the screen: current mode's page.
-- Numeric input: on-screen keypad, computer numpad layout.
-- Network page: Wi-Fi enable/disable, force AP mode, connection state and
-  IP. Network info appears only on this page.
+- Machine state, axes and jog are always visible; the rest of the screen
+  is the current mode's page.
+- Numeric input: on-screen keypad.
 - Machine settings are web-only.
-- Pins view (mode menu): one cell per configured probe, home, e-stop,
-  e-stop out and running out pin, green while active. Information only; a
-  mode pick or Settings closes it. The firmware samples and pushes pin
-  states only while it is open.
+- Pins view: the live state of the configured probe, home, e-stop and
+  output pins. Information only. The firmware samples and pushes pin states
+  only while it is open.
 
 ## Axes
 
-- Enable/disable toggle per axis. Disabled = driver de-energized for manual
+- Enable/disable per axis. Disabled = driver de-energized for manual
   cranking; readout shown as stale (no scales) and kept until re-zeroed.
   Disabling an axis stops any mode using it; a mode can't start while one
   of its axes is disabled; that axis's jog buttons are inactive.
@@ -111,25 +96,15 @@
 
 What each mode does: `docs/features.md`. Display specifics:
 
-- One page per mode; the firmware lays out the mode's parameter cells.
-- Thread: the Library page (tabs per standard, grid of designations) fills
-  pitch, depth, taper and flank angle from the thread table. The "custom"
-  group starts empty. Flank cycles off, alternating and one side. Spring is a latching button. Passes,
-  starts, taper, Flank and Spring use 3-column rows.
-- Turn has two cell pages. Page 1: feed, axis, depth, direction, length,
-  side, then a 3-column row with Passes, Spindle and More. Spindle cycles
-  Fwd and Rev. Page 2: Finish, Finish feed, a Spring toggle, then a
-  3-column row with Back only. Page 2 has no feed override row. More and
-  Back switch the page. The page resets to 1 when the mode changes.
+- The firmware lays out each mode's parameter cells. A mode can have more
+  than one cell page; it opens on the first.
+- Thread: the Library page fills pitch, depth, taper and flank angle from
+  the thread table. The "custom" group starts empty.
 - Probe: a panel, not a mode; `docs/probe.md`.
 - A mode that needs a missing feature (X motor, probe) is not in the menu.
   The X column stays; with no X motor it shows X off, the X power button is refused and the
   X jog buttons do nothing.
-- Turn, Thread, Part and Ellipse have a spindle Fwd/Rev setting.
 - Multi-pass modes show phase and pass n/m, and offer skip.
-- Every mode but Thread has a feed override row above
-  start/stop: step down, the current percentage (tap = 100%, orange when
-  not 100%), step up. Active only while running; scales every feed of the
-  job, not rapids.
-- The `pitch` param shows as "Feed" everywhere but Thread.
+- Every mode but Thread has a feed override while running. It scales every
+  feed of the job, not rapids.
 - Selected mode and its parameters persist in `RunSettings`.

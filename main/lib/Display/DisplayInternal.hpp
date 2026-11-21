@@ -45,6 +45,8 @@ namespace Display::Detail
 
     bool pushCellType(size_t slot, Theme::CellType type);
 
+    bool keypadOpen();
+
     bool pinsOpen();
     void setPinsOpen(bool open);
     bool pushPins();

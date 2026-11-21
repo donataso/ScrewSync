@@ -130,6 +130,7 @@ function openKeypad(left: number, target: number, kind: number, field: number):
   kpSign.pco = target == TARGET_Z_POS || target == TARGET_X_POS || kind == KIND_ANGLE ? COLOR_KEY_TEXT : COLOR_KEY_DIM
   kpDot.pco = kind != KIND_COUNT ? COLOR_KEY_TEXT : COLOR_KEY_DIM
   setKeypad(1)
+  send("ui keypad on")
   if (left == KEYPAD_LEFT) {
     vis kpBgLeft,1
   } else {
@@ -141,6 +142,7 @@ function closeKeypad():
   setFieldBorder(COLOR_BUTTON)
   kpField = FIELD_NONE
   setKeypad(0)
+  send("ui keypad off")
   refreshPanel()
   ref 0
 
@@ -287,7 +289,7 @@ on kpDel.up:
   }
 
 on kpClr.up:
-  kpDigits.txt = ""
+  kpDigits.txt = "0"
   kpNeg = 0
   kpDotUsed = 0
   kpShow()

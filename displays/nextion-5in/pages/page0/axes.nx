@@ -106,3 +106,8 @@ on step2.up:
 
 on stepCustom.up:
   openKeypad(KEYPAD_RIGHT, TARGET_STEP, KIND_LENGTH, FIELD_NONE)
+  kpDigits.txt = stepLast.txt
+  kpFrac.txt = ""
+  spstr kpDigits.txt,kpFrac.txt,".",1
+  kpDotUsed = kpFrac.txt != "" ? 1 : 0
+  kpShow()

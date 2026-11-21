@@ -23,44 +23,32 @@ How to operate ScrewSync. For wiring and flashing, see
    (AP). Its name is `ScrewSync-` followed by four characters of its
    hardware address.
 2. Connect a phone or a computer to the AP. Open the IP address that the
-   display shows (Settings, Network), then `/wifi`.
-3. Type the SSID and the password of your network and push
-   "Save & connect". The controller connects to that network as a
-   station.
+   display shows, then `/wifi`.
+3. Save the SSID and the password of your network. The controller
+   connects to that network as a station.
 4. Read the new IP address on the display, or open
    `screwsync-xxxx.local` (the AP name in lower case).
 
-- On the web client, the Network page shows the saved networks. Use it to
-  scan, to join a network, and to remove one.
-- To get the AP again, for example after you move the machine, set
-  "Force AP" to On (Settings, Network).
+- The web client shows the saved networks. Use it to scan, to join a
+  network, and to remove one.
+- To get the AP again, for example after you move the machine, force AP
+  mode on the display.
 
 ## Screen
 
-- Always visible: spindle RPM and angle, the mode name, and for each axis
-  its toggle, position, →0 button and jog buttons, and the jog step.
-- Tap the mode name to open the menu: the modes and Settings. The rest of
-  the screen shows the page of the selected mode.
-- Settings on the display: units (mm/inch), pitch entry (Pitch/TPI),
-  Network (Wi-Fi On/Off, Force AP, status, IP), and the feature switches
-  (see [Features](#features)).
-- Header icons: estop, and with home switches, home and the work coordinate
-  selector. See [Estop](#estop), [Homing](#homing) and
-  [Work coordinates](#work-coordinates).
-- Tap a field to edit it on the numpad. Each mode keeps its values.
+- Each mode keeps its values.
 - The display and the web client show the same state.
 
 ## Features
 
-- The switches X motor, Homing and Probe are on the display (Settings) and
-  on the web client (Device page, Features). A feature works when its switch
-  is on and its function has pins (see [pins.md](pins.md)).
+- The X motor, Homing and Probe features can be switched off on the
+  display and on the web client. A feature works when its switch is on and
+  its function has pins (see [pins.md](pins.md)).
 - A change is saved at once and applies after a reboot. Turning a feature
   off removes its functions from the saved pin map.
-- Without the X motor, the X column stays on the display, but the X toggle
-  stays off and the X jog buttons do nothing. The modes that need X
-  (Turn, Thread, Part, Slot, Ellipse) are hidden on the display and
-  the web client. The web client hides the X settings and checks.
+- Without the X motor, the modes that need X (Turn, Thread, Part, Slot,
+  Ellipse) are hidden on the display and the web client. The web client
+  hides the X settings and checks.
 - Without homing, `home` is refused. Without the probe, the Probe mode is
   hidden (it works without the X motor, on Z only) and the probe settings and checks are hidden on the web client.
 - A G-code program that has an X word needs the X motor. A program or
@@ -70,18 +58,12 @@ How to operate ScrewSync. For wiring and flashing, see
 
 ## Axes and jog
 
-- Tap a jog button to move one step. Hold it to move continuously.
-- The step buttons set the jog step. "..." types a custom step.
 - The handwheels move the axes too. The travel for one handwheel turn is
   a setting for each axis.
 - Physical jog buttons, a step cycle button and a step encoder can be
   added. See [pins.md](pins.md#jog).
-- →0 opens a choice: "Go to zero" moves the axis to 0, "Set zero" makes
-  the current position 0.
-- Tap a position to type its value.
-- Tap the spindle angle to zero it.
-- Turn an axis toggle off to de-energize its motor and crank by hand. The
-  readout is dimmed and does not count the cranking.
+- Turn an axis off to de-energize its motor and crank by hand. The
+  readout does not count the cranking.
 - At power-on, the Boot state setting sets the motors (see [Estop](#estop)).
   The motor on/off state is not saved.
 - `power on|off [z|x]` turns the motors on or off, both without an axis.
@@ -97,9 +79,7 @@ How to operate ScrewSync. For wiring and flashing, see
   other restart (watchdog, crash, brownout, `reboot`, firmware update), the
   machine starts in estop. An active estop input at start also keeps the
   estop.
-- Estop icon in the header: tap it to trip the estop. In estop the display
-  shows a big estop icon: tap the screen to clear it. Then turn the motors on
-  again.
+- After you clear the estop, turn the motors on again.
 - In estop, start, jog, the handwheels, MDI, routines and motor on are
   refused. The serial and web commands are `estop on`, `estop off`,
   `power on` and `power off`.
@@ -108,8 +88,7 @@ How to operate ScrewSync. For wiring and flashing, see
 
 ## Homing
 
-- With a home switch on each axis, the home icon in the header, the `home`
-  command or the Home switch homes X, then Z. The machine must be idle and
+- With a home switch on each axis, homing homes X, then Z. The machine must be idle and
   the motors on. `stop` ends it.
 - A home switch signal while an axis moves trips the estop.
 - Cycle, require homing, sensors and wiring: see [homing.md](homing.md).
@@ -120,8 +99,8 @@ How to operate ScrewSync. For wiring and flashing, see
   coordinate system. G54 is active at boot. `G10 L20 P0 Z0` sets zero in the
   active system, `P1`–`P6` in G54–G59. The Set zero switches and the probe
   set the active system.
-- With home switches, select G54–G59 with the selector in the header, on the
-  web MDI page, or with `G55` etc. Also before homing. The offsets are saved.
+- With home switches, select G54–G59 on the display, the web client or
+  with `G55` etc. Also before homing. The offsets are saved.
 - Without home switches, only G54 exists. Its offset is lost at reboot.
 - `G53 G0 Z… X…` moves in machine coordinates, for that line only.
 
@@ -130,15 +109,14 @@ How to operate ScrewSync. For wiring and flashing, see
 1. Touch the tool off on the work, or probe it, and set zero on Z and X
    there. This point is the engage point.
 2. Select the mode and set its values.
-3. Push START.
+3. Start.
 
 - Turn, Thread, Part, Slot and Ellipse start at zero. If the tool is not
-  at zero, START asks "Go to zero first?".
-- Multi-pass modes show the phase and the pass number. SKIP goes to the
-  next pass.
+  at zero, start offers to go to zero first.
+- Multi-pass modes can skip to the next pass.
 - During a job, the feed override changes all feeds of the job, but not
   rapids. Thread has no override. Each start resets it to 100%.
-- STOP ends the job with a controlled stop.
+- Stop ends the job with a controlled stop.
 
 ## Modes
 
@@ -173,13 +151,13 @@ How to operate ScrewSync. For wiring and flashing, see
 
 ## Threading
 
-- Push Library to open the thread library. Select a designation to fill
-  pitch, depth, taper and flank angle. You can edit all values after this.
-  Edit the thread table on the web client.
+- The thread library fills pitch, depth, taper and flank angle from a
+  designation. You can edit all values after this. Edit the thread table
+  on the web client.
 - Each pass removes the same chip area; the first pass is lighter.
-- Flank: each pass shifts sideways, so only one edge of the tool cuts.
-  Push to cycle: `off` (straight in), `\/` (alternating sides), `/` (one
-  side, the leading edge cuts).
+- Flank: each pass shifts sideways, so only one edge of the tool cuts:
+  alternating sides, or one side (the leading edge cuts). Off plunges
+  straight in.
 - Spring: final pass at full depth.
 - Thread in Rev keeps the selected hand, but feeds away from the chuck.
   Set the engage point at the chuck end, for example to thread out from a
@@ -192,8 +170,10 @@ How to operate ScrewSync. For wiring and flashing, see
 - If you re-zero the angle, home an axis or reboot, the next cut starts a
   new helix. Zeroing the angle puts the new helix through the current
   tool position, so Gear starts at once.
-- Thread mode starts X moving to depth only once Z follows the helix, so
-  a cut can start on an existing thread.
+- Thread mode starts Z and X when the spindle reaches the helix phase. Z
+  accelerates from rest, so it is off the helix for a short length while X
+  is already at depth. A cut that starts on an existing thread damages it
+  there. Higher Z acceleration makes that length shorter.
 - At start, Gear holds the axis for up to one spindle turn, until the
   spindle reaches the phase of the thread.
 
@@ -211,7 +191,7 @@ How to operate ScrewSync. For wiring and flashing, see
   any other text as LinuxCNC. You can change it.
 - Program zero is the tool zero: X0 on the centerline (X is radius), Z0
   where the program expects it (LatheCode: the right edge of the stock).
-- If the tool is not at zero, START asks you to confirm. The first move
+- If the tool is not at zero, start asks you to confirm. The first move
   starts from the current tool position.
 - Generate LatheCode programs with `AXES RIGHT DOWN`. The web client
   refuses other directions and offers to flip the axes.
@@ -220,7 +200,7 @@ How to operate ScrewSync. For wiring and flashing, see
   G1 only.
 - `G10 L20 P0 Z… X…` makes the current position read the given values in the active work system (`P1`–`P6`: G54–G59).
 - Motion pauses while the spindle is stopped and continues when it turns.
-- M0/M1 pause until START. M2/M30 or STOP end the program.
+- M0/M1 pause until start. M2/M30 or stop end the program.
 - LinuxCNC programs can use NGC parameters, expressions, O-words and
   routine calls ([protocol.md](protocol.md), "NGC"). The web client shows
   no preview for them, and the step count is unknown when it depends on
@@ -243,8 +223,7 @@ How to operate ScrewSync. For wiring and flashing, see
 - Parameter and comment lines work too, e.g. `#<depth> = 0.5` and
   `(PRINT, depth #<depth>)`. PRINT output shows in the console.
 - On the web client you can paste several lines at once. Each line shows
-  its status on the right: queued, `ok` (green) or the error. Lines are
-  sent as the queue has room.
+  its status. Lines are sent as the queue has room.
 - After an error, the rest of the lines are skipped.
 - Stop, estop and motor power go out at once and skip all unfinished
   lines.
@@ -255,9 +234,8 @@ How to operate ScrewSync. For wiring and flashing, see
 
 - With a contact plate, the tool must be earthed (usually through the
   machine frame). Before you probe, touch the plate to the tool: the
-  contact light must turn green.
-- Set the probe distance and offset on the Probe panel or in the web
-  settings. The cycle is a routine you can replace; see
+  display must show contact.
+- Set the probe distance and offset. The cycle is a routine you can replace; see
   [probe.md](probe.md).
 
 ## Stops

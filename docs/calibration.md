@@ -1,6 +1,6 @@
 # Calibration
 
-A web client tab with checks for one-time machine setup. Each check shows the measured value next to the current setting, and an Apply button writes it with `settings set`. There is no display UI.
+A web client tab with checks for one-time machine setup. Each check shows the measured value next to the current setting, and applies it with `settings set`. There is no display UI.
 
 All checks need the machine idle. A check can be stopped at any time.
 
@@ -22,7 +22,7 @@ Order in the tab: spindle direction, encoder PPR, axis direction, steps/mm, back
 
 ### Spindle direction and PPR
 
-The web client takes the count delta between Start and Done. Direction: a negative delta gives `invertEncoder` toggled. PPR: `delta / (2 × N)`, because the count is 2x-decoded.
+The web client takes the count delta between the start and the end of the check. Direction: a negative delta gives `invertEncoder` toggled. PPR: `delta / (2 × N)`, because the count is 2x-decoded.
 
 ### Steps/mm
 

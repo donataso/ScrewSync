@@ -11,8 +11,7 @@ The probe is a digital input with a pull-up and an RC filter against stepper noi
 
 For both types, `offset` is the distance from the trigger point to the workpiece surface. For a plate that is its thickness; for a switch it is measured once.
 
-The probe needs its switch on (display Settings, or the web client Device
-page) and a Probe input in the pin map. Without that, the Probe mode, the
+The probe needs its switch on and a Probe input in the pin map. Without that, the Probe mode, the
 probe settings are hidden, and G38 moves and
 `o<probe>` are refused with `probe disabled` or `probe not wired`. The X
 probe also needs the X motor. The Probe mode works without the X motor, on
@@ -30,7 +29,7 @@ Z only: an X probe is refused with the X motor error.
 
 The cycle is the built-in NGC routine `o<probe>`
 (`main/lib/GcodeStore/routines/probe.ngc`). A saved `ngc` routine named
-`probe` replaces it. The display arrows send `o<probe> call [<axis>]
+`probe` replaces it. The display sends `o<probe> call [<axis>]
 [<dir>]`; see `docs/protocol.md`, "NGC".
 
 1. Refuse to start if the distance is not set, or if the probe input
@@ -58,20 +57,6 @@ A jog on the axis stops the cycle, as it does for any job.
 
 ## Display
 
-- In the mode picker, the Probe entry uses the Settings colour, so it stands apart from the cutting modes. It is a panel, not a mode.
+- Probe is a panel, not a mode. Its direction buttons start the cycle.
 - Triggering the probe by hand before probing confirms the wiring and, for a plate, the tool's earth.
-
-| Row        | Col 1                                        | Col 2         | Col 3                  |
-|------------|----------------------------------------------|---------------|------------------------|
-| 1          | Distance + value (2-col)                     |               | Offset + value (2-col) |
-| 2          |                                              | `X ↑`         |                        |
-| 3          | `← Z`                                        | contact light | `Z →`                  |
-| 4          |                                              | `↓ X`         |                        |
-| 5          | Phase or last error, plain text (full width) |               |                        |
-| start slot | STOP while running                           |               |                        |
-
-- The arrows match the jog panel: up is X-, toward the centerline.
-- The contact light is grey when open and green when triggered.
-- Direction buttons use the jog button colours, and are greyed out and inactive while their axis is disabled.
-- The start slot is hidden while idle; the direction buttons start the cycle.
-- There is no feed override row.
+- There is no feed override.

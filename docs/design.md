@@ -175,8 +175,8 @@ User side: [pins.md](pins.md).
 - Turn, thread and slot share a pass engine (`ModePass`): plunge, cut,
   retract, return to start approaching in the cut direction (backlash taken
   up before the cut). A thread pass has no separate plunge: X moves to
-  depth once Z follows the helix, so the entry never cuts across the
-  flanks of an existing thread.
+  depth when the spindle reaches the helix phase, while Z still
+  accelerates onto the helix (see `TODO.md`).
 - Thread mode, G-code threading (G33) and Gear share one helix per pitch: through the
   axis position at the last angle zeroing (axis 0 until then) at
   spindle angle 0, offset per start. Passes and reruns land in the same

@@ -2513,6 +2513,14 @@ txt = ""
 txt_maxl = 1
 
 [[component]]
+name = "stepLast"
+type = "variable"
+vscope = 1
+sta = 1
+txt = ""
+txt_maxl = 8
+
+[[component]]
 name = "kpDigits"
 type = "variable"
 vscope = 1
