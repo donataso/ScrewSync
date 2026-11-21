@@ -11,7 +11,7 @@ The probe is a digital input with a pull-up and an RC filter against stepper noi
 
 For both types, `offset` is the distance from the trigger point to the workpiece surface. For a plate that is its thickness; for a switch it is measured once.
 
-The probe needs its switch on and a Probe input in the pin map. Without that, the Probe mode, the
+The probe needs its switch on and a Probe input in the pin map. Without that, the Probe mode and the
 probe settings are hidden, and G38 moves and
 `o<probe>` are refused with `probe disabled` or `probe not wired`. The X
 probe also needs the X motor. The Probe mode works without the X motor, on

@@ -65,4 +65,24 @@ namespace Sync
         }
         return false;
     }
+
+    double rampHalfCounts(double stepsPerCount, double countsPerSec, double accelStepsPerSec2)
+    {
+        if (accelStepsPerSec2 <= 0) {
+            return 0;
+        }
+        return fabs(stepsPerCount) * countsPerSec * countsPerSec / (2 * accelStepsPerSec2);
+    }
+
+    double rampOffset(double travel, double halfCounts, double stepsPerCount)
+    {
+        if (travel >= halfCounts) {
+            return stepsPerCount * travel;
+        }
+        if (travel <= -halfCounts) {
+            return 0;
+        }
+        double t = travel + halfCounts;
+        return stepsPerCount * t * t / (4 * halfCounts);
+    }
 }

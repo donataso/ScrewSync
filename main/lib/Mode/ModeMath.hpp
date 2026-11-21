@@ -31,6 +31,12 @@ namespace Mode::Detail
     double spindleFeedStepsPerCount(int32_t motorSteps, int32_t pitchDu, int32_t screwPitchDu,
                                     int32_t countsPerRev);
 
+    // Rest-to-rest trapezoid, starting and ending at speedStart; steps and steps/s.
+    double moveTimeSec(double steps, double speedStart, double accel, double decel, double maxSpeed);
+    // Travel at helix speed until the tool is on the helix at depth: the start
+    // ramp, then the travel while the plunge takes plungeSec.
+    double leadInSteps(double speed, double accel, double plungeSec);
+
     // Pecking: passes of peckDu down to depthDu, the last one shorter. peckDu 0 = one pass.
     int32_t peckPasses(int32_t depthDu, int32_t peckDu);
     int64_t peckDepthDu(int32_t pass, int32_t passes, int32_t peckDu, int32_t depthDu);

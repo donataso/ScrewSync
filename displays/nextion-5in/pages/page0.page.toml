@@ -1042,6 +1042,7 @@ pco = 59262
 pco2 = 59262
 txt = "START"
 font = 2
+txt_maxl = 16
 
 [[component]]
 name = "stopPass"
@@ -1075,6 +1076,55 @@ pco = 59262
 pco2 = 59262
 txt = "SKIP"
 font = 2
+
+[[component]]
+name = "goStart"
+type = "button"
+vscope = 1
+x = 320
+y = 380
+w = 154
+h = 92
+style = 0
+bco = 9254
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "GO TO\r\nSTART"
+font = 2
+txt_maxl = 12
+
+[[component]]
+name = "startHere"
+type = "button"
+vscope = 1
+x = 482
+y = 380
+w = 154
+h = 92
+style = 0
+bco = 9254
+bco2 = 12711
+pco = 59262
+pco2 = 59262
+txt = "START\r\nHERE"
+font = 2
+txt_maxl = 12
+
+[[component]]
+name = "leadIn"
+type = "text"
+vscope = 1
+x = 320
+y = 80
+w = 472
+h = 48
+bco = 2178
+pco = 59262
+txt = ""
+xcen = 1
+ycen = 1
+txt_maxl = 48
 
 [[component]]
 name = "gcodePic"
@@ -2799,6 +2849,21 @@ vscope = 1
 
 [[component]]
 name = "ovrOn"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "runView"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "prepares"
+type = "variable"
+vscope = 1
+
+[[component]]
+name = "leadInOn"
 type = "variable"
 vscope = 1
 

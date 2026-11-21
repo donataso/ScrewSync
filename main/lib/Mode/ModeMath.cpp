@@ -46,6 +46,33 @@ namespace Mode::Detail
         return (double)motorSteps * abs(pitchDu) / ((double)screwPitchDu * countsPerRev);
     }
 
+    double moveTimeSec(double steps, double speedStart, double accel, double decel, double maxSpeed)
+    {
+        steps = fabs(steps);
+        if (steps == 0 || accel <= 0 || decel <= 0) {
+            return 0;
+        }
+        double floor = speedStart < maxSpeed ? speedStart : maxSpeed;
+        if (floor <= 0) {
+            floor = 1;
+        }
+        double ramps = 1 / (2 * accel) + 1 / (2 * decel);
+        double peak = sqrt(floor * floor + steps / ramps);
+        if (peak > maxSpeed) {
+            peak = maxSpeed > floor ? maxSpeed : floor;
+        }
+        double rampSteps = (peak * peak - floor * floor) * ramps;
+        double rampSec = (peak - floor) / accel + (peak - floor) / decel;
+        return rampSec + (steps - rampSteps) / peak;
+    }
+
+    double leadInSteps(double speed, double accel, double plungeSec)
+    {
+        speed = fabs(speed);
+        double ramp = accel > 0 ? speed * speed / (2 * accel) : 0;
+        return ramp + speed * plungeSec;
+    }
+
     int32_t peckPasses(int32_t depthDu, int32_t peckDu)
     {
         return peckDu > 0 ? (depthDu + peckDu - 1) / peckDu : 1;

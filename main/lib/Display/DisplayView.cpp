@@ -22,6 +22,7 @@
 #include "JogStep.hpp"
 #include "Machine.hpp"
 #include "RunSettings.hpp"
+#include "RunView.hpp"
 #include "Wifi.hpp"
 #include "display_config.hpp"
 #include <ctype.h>
@@ -41,6 +42,7 @@ LOG_MODULE_DECLARE(display);
 namespace
 {
     uint32_t g_lastPushMs = 0;
+    RunView g_runView;
 
     // RAM files are lost when the display restarts.
     atomic_t g_previewLoaded = ATOMIC_INIT(0);
@@ -113,21 +115,34 @@ namespace
         pushText("stepLast.txt", "%s", lastCustom ? label : "");
     }
 
-    // Returns whether the run state or the skip layout (narrow stop + skip) toggled.
-    bool pushRun(Mode::Id current, bool running, bool homing, bool ready, const Mode::Progress &job)
+    void pushArmed(bool startable)
+    {
+        bool toStart = startable && Mode::startPrompt() == Mode::StartPrompt::OfferZero;
+        pushColor("goStart", "bco", toStart ? COLOR_START : COLOR_AXIS_OFF);
+        pushColor("goStart", "pco", toStart ? COLOR_TEXT : COLOR_DIM);
+        pushColor("startHere", "bco", startable ? COLOR_START : COLOR_AXIS_OFF);
+        pushColor("startHere", "pco", startable ? COLOR_TEXT : COLOR_DIM);
+    }
+
+    // Returns whether the run state, the run view or the skip layout (narrow stop + skip) toggled.
+    bool pushRun(Mode::Id current, bool running, bool homing, bool ready, const Mode::Progress &job, RunState view)
     {
         bool active = (running && !job.waiting) || homing;
         bool runChanged = pushNum("running.val", active);
         pushNum("ready.val", ready);
         pushNum("needZero.val", (int)Mode::startPrompt());
+        pushNum("prepares.val", RunView::available(current));
+        bool viewChanged = pushNum("runView.val", (int)view);
         bool passCount = running && active && job.passes > 1;
         bool canSkip = passCount && Mode::canSkip(current);
         if (canSkip) {
             pushText("stopPass.txt", "STOP %d/%d", (int)job.pass, (int)job.passes);
         } else if (passCount) {
             pushText("startStop.txt", "STOP %d/%d", (int)job.pass, (int)job.passes);
+        } else if (active) {
+            pushText("startStop.txt", "STOP");
         } else {
-            pushText("startStop.txt", active ? "STOP" : "START");
+            pushText("startStop.txt", RunView::available(current) ? "PREPARE" : "START");
         }
         bool startable = ready && !keypadOpen();
         int startStopColor = COLOR_AXIS_OFF;
@@ -138,14 +153,20 @@ namespace
         }
         pushColor("startStop", "bco", startStopColor);
         pushColor("startStop", "pco", active || startable ? COLOR_TEXT : COLOR_DIM);
+        bool armed = view == RunState::Armed;
+        if (armed) {
+            pushArmed(startable);
+        }
+        pushText("skip.txt", "%s", armed ? "BACK" : "SKIP");
         bool skipChanged = pushNum("canSkip.val", canSkip);
-        return runChanged || skipChanged;
+        return runChanged || viewChanged || skipChanged;
     }
 
     // Returns whether the override row's visibility toggled.
-    bool pushOverride(Mode::Id current, bool running, int32_t pct)
+    bool pushOverride(Mode::Id current, bool running, int32_t pct, RunState view)
     {
-        bool shown = Mode::hasFeedOverride(current) && panelPage() == 0;
+        bool inView = RunView::available(current) ? view == RunState::Running : panelPage() == 0;
+        bool shown = Mode::hasFeedOverride(current) && inView;
         if (shown) {
             pushText("ovrMinus.txt", "-%d%%", (int)Mode::OVERRIDE_STEP_PCT);
             pushText("ovrPlus.txt", "+%d%%", (int)Mode::OVERRIDE_STEP_PCT);
@@ -158,6 +179,26 @@ namespace
             pushColor("ovrPlus", "pco", running && pct < Mode::OVERRIDE_MAX_PCT ? COLOR_TEXT : COLOR_DIM);
         }
         return pushNum("ovrOn.val", shown);
+    }
+
+    // Shown to 0.1 mm or 0.01 in, so it is pushed only when that changes.
+    bool pushLeadIn(RunState view, int32_t rpm)
+    {
+        double du;
+        bool shown = view != RunState::Closed && Mode::leadInDu(du);
+        if (shown) {
+            if (rpm == 0) {
+                pushText("leadIn.txt", "Lead-in: start spindle to get the reading");
+            } else {
+                double stepDu = inchUnits() ? 254 : 1000;
+                char text[24];
+                formatLength(round(du / stepDu) * stepDu, text, sizeof(text));
+                trimZeros(text);
+                pushText("leadIn.txt", "Lead-in: %s %s", text, unitSuffix());
+            }
+            pushColor("leadIn", "pco", rpm == 0 ? COLOR_ERROR : COLOR_TEXT);
+        }
+        return pushNum("leadInOn.val", shown);
     }
 
     int previewPx(int origin, int span, float imagePx)
@@ -237,8 +278,10 @@ namespace
         }
         pushMenu(current);
         bool layoutChanged = pinsOpen() ? pushPins() : pushPanel(current, s.params);
-        layoutChanged |= pushRun(current, s.running, s.homing, s.ready, s.job);
-        layoutChanged |= pushOverride(current, s.running, s.feedOverridePct);
+        RunState view = g_runView.update(current, s.running);
+        layoutChanged |= pushRun(current, s.running, s.homing, s.ready, s.job, view);
+        layoutChanged |= pushOverride(current, s.running, s.feedOverridePct, view);
+        layoutChanged |= pushLeadIn(view, s.rpm);
         layoutChanged |= pushNum("picOn.val", current == Mode::Id::Gcode && atomic_get(&g_previewLoaded));
         layoutChanged |= pushGcode(current, s);
         layoutChanged |= pushProbe(current, s);
@@ -355,6 +398,16 @@ namespace Display::Detail
         pushHome(s);
         pushWifi();
         pushText("versionValue.txt", "%s", FW_VERSION);
+    }
+
+    void armRunView(bool armed)
+    {
+        if (armed) {
+            g_runView.arm(Mode::current());
+        } else {
+            g_runView.cancel();
+        }
+        pushSoon();
     }
 
     void pushSoon()

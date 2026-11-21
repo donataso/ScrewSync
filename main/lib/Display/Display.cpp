@@ -140,6 +140,10 @@ namespace
             pushSoon();
             return;
         }
+        if (!strncmp(line, "ui run ", 7)) {
+            armRunView(!strcmp(line + 7, "on"));
+            return;
+        }
         if (!strncmp(line, "ui page ", 8)) {
             setPanelPage((size_t)atoi(line + 8));
             return;

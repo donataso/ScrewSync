@@ -111,3 +111,34 @@ ZTEST(sync_ratio, test_axis_at_reference_starts_on_phase_at_angle_zero)
     zassert_equal(Sync::nextOnPhase(angleZeroCount, phase, 2400, 1), angleZeroCount);
     zassert_equal(Sync::nextOnPhase(angleZeroCount, phase, 2400, -1), angleZeroCount);
 }
+
+ZTEST(sync_ratio, test_ramp_half_counts)
+{
+    // 0.5 steps/count at 1000 counts/s is 500 steps/s; at 1000 steps/s^2 the
+    // ramp is 125 steps over 0.5 s, half of it 250 counts.
+    zassert_within(Sync::rampHalfCounts(0.5, 1000, 1000), 250, 1e-9);
+    zassert_within(Sync::rampHalfCounts(-0.5, 1000, 1000), 250, 1e-9);
+    zassert_equal(Sync::rampHalfCounts(0.5, 1000, 0), 0);
+}
+
+ZTEST(sync_ratio, test_ramp_offset_joins_helix_tangentially)
+{
+    double k = -0.5;
+    double half = 250;
+    zassert_equal(Sync::rampOffset(-300, half, k), 0);
+    zassert_equal(Sync::rampOffset(-half, half, k), 0);
+    zassert_within(Sync::rampOffset(half, half, k), k * half, 1e-9);
+    zassert_within(Sync::rampOffset(400, half, k), k * 400, 1e-9);
+    double slope = Sync::rampOffset(half - 0.001, half, k) - Sync::rampOffset(half - 0.002, half, k);
+    zassert_within(slope / 0.001, k, 1e-3);
+    // Constant acceleration: the second difference is the same everywhere on the ramp.
+    double a = Sync::rampOffset(-100, half, k) - 2 * Sync::rampOffset(-99, half, k) + Sync::rampOffset(-98, half, k);
+    double b = Sync::rampOffset(100, half, k) - 2 * Sync::rampOffset(101, half, k) + Sync::rampOffset(102, half, k);
+    zassert_within(a, b, 1e-9);
+}
+
+ZTEST(sync_ratio, test_ramp_offset_without_ramp_is_helix)
+{
+    zassert_equal(Sync::rampOffset(-10, 0, 0.5), 0);
+    zassert_within(Sync::rampOffset(10, 0, 0.5), 5, 1e-9);
+}

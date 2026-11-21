@@ -39,6 +39,13 @@ namespace Sync
 
     // The first count on phase after from, up to and including to.
     bool crossedPhase(int64_t from, int64_t to, int64_t phase, int64_t countsPerRev, int64_t &at);
+
+    // Start ramp onto a helix: a parabola from rest that joins the helix
+    // tangentially, centred on the helix origin. Half its length in spindle
+    // counts, for the helix slope at countsPerSec and the axis acceleration.
+    double rampHalfCounts(double stepsPerCount, double countsPerSec, double accelStepsPerSec2);
+    // Axis offset from the start point, travel counts past the helix origin.
+    double rampOffset(double travel, double halfCounts, double stepsPerCount);
 }
 
 #endif

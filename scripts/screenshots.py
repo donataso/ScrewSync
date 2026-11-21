@@ -106,6 +106,8 @@ MENU = (['menu%d.txt="%s"' % (i, m) for i, m in enumerate(MODES)]
         + ['modeName.txt="THREAD"', "menu3.bco=%d" % COLOR["SELECTED"],
            "menu%d.bco=%d" % (MODES.index("Probe"), COLOR["SETTINGS"]), "click modeSync,1"])
 
+IDLE = ["ready.val=1", "prepares.val=1", 'startStop.txt="PREPARE"']
+
 THREAD = (['modeName.txt="THREAD"']
           + value(0, "Pitch: 1.75 mm", "Pitch")
           + toggle(1, "LH", "RH", 1)
@@ -118,12 +120,14 @@ THREAD = (['modeName.txt="THREAD"']
           + value(12, "Taper: 0°", "Angle")
           + latch(13, "Flank")
           + latch(14, "Spring")
-          + ['picker.txt="Library"', "cKind15=%d" % KIND["Picker"], "ready.val=1"]
+          + ['picker.txt="Library"', "cKind15=%d" % KIND["Picker"]]
+          + IDLE
           + SYNC)
 
 DIR_AXIS = (toggle(1, "←", "→", 0, FONT_SYMBOLS)
-            + toggle(2, "Z", "X", 0)
-            + ['ovrMinus.txt="-10%"', 'ovrPlus.txt="+10%"', "ovrOn.val=1"])
+            + toggle(2, "Z", "X", 0))
+
+OVERRIDE = ['ovrMinus.txt="-10%"', 'ovrPlus.txt="+10%"', "ovrOn.val=1"]
 
 GEAR = ['modeName.txt="GEAR"'] + DIR_AXIS + value(4, "Taper: 0°", "Angle")
 
@@ -136,6 +140,14 @@ X_DISABLED = ["xOn.val=0", "xPos.pco=%d" % COLOR["DIM"]] + [
 ]
 
 RUNNING = ["running.val=1", "ready.val=1"]
+RUN_VIEW = ["runView.val=2"]
+
+
+def prepared(lead_in, spindle):
+    return (["runView.val=1", "leadInOn.val=1", 'leadIn.txt="Lead-in: %s"' % lead_in,
+             "leadIn.pco=%d" % COLOR["TEXT" if spindle else "ERROR"], 'skip.txt="BACK"',
+             "goStart.bco=%d" % COLOR["START"]]
+            + ([rpm()] if spindle else []))
 
 
 def picker(group, selected):
@@ -254,18 +266,20 @@ OVERLAYS = {"gcode-running": lambda png: paste_preview(png, GCODE_STEPS)}
 def shots():
     return {
         "thread-m12-idle": common() + THREAD,
-        "thread-start-zero-ask": common() + THREAD + ["needZero.val=1", tap("startStop")],
+        "thread-prepared": common() + THREAD + ["needZero.val=1"] + prepared("6.4 mm", True) + SYNC,
+        "thread-prepared-no-spindle": common() + THREAD + ["needZero.val=1"]
+        + prepared("start spindle to get the reading", False) + SYNC,
         "thread-picker": picker("metric", "M12"),
         "mode-picker": common() + MENU + [tap("mode")],
         "settings": common() + MENU + ['wifiState.txt="Workshop"', 'wifiIp.txt="192.168.1.42"',
                                        tap("mode"), tap("menuSettings")],
-        "gear-running-override": common() + GEAR + X_DISABLED + RUNNING
+        "gear-running-override": common() + GEAR + X_DISABLED + RUNNING + RUN_VIEW + OVERRIDE
         + value(0, "Feed: 0.05 mm", "Pitch")
         + value(3, "Stop: 50 mm", "Length")
-        + [rpm(), 'ovr.txt="130%"', "ovr.bco=%d" % COLOR["ZERO"],
+        + [rpm(), 'ovr.txt="130%"', "ovr.bco=%d" % COLOR["ZERO"], "leadInOn.val=1", 'leadIn.txt="Lead-in: 0.1 mm"',
            'startStop.txt="STOP"', "startStop.bco=%d" % COLOR["STOP"]]
         + SYNC,
-        "turn-running-mid-pass": common() + ['modeName.txt="TURN"'] + DIR_AXIS + RUNNING
+        "turn-running-mid-pass": common() + ['modeName.txt="TURN"'] + DIR_AXIS + RUNNING + RUN_VIEW + OVERRIDE
         + value(0, "Feed: 0.1 mm/rev", "Length")
         + toggle(3, "Ext", "Int", 0)
         + value(4, "Length: 30 mm", "Length")
@@ -285,9 +299,8 @@ def shots():
         "gear-feed-keypad": common() + GEAR
         + value(0, "Feed: 0 mm", "Pitch")
         + value(3, "Stop: 100 mm", "Length")
-        + ["c0.pco=%d" % COLOR["NOT_SET"], 'cCmd0.txt="gear pitch "', 'ovr.txt="100%"']
-        + ["%s.pco=%d" % (part, COLOR["DIM"]) for part in ("ovr", "ovrMinus", "ovrPlus", "startStop")]
-        + ["startStop.bco=%d" % COLOR["AXIS_OFF"]]
+        + ["c0.pco=%d" % COLOR["NOT_SET"], 'cCmd0.txt="gear pitch "', "prepares.val=1",
+           'startStop.txt="PREPARE"', "startStop.pco=%d" % COLOR["DIM"], "startStop.bco=%d" % COLOR["AXIS_OFF"]]
         + SYNC
         + [tap("c0"), tap("kp0"), tap("kpDot"), tap("kp0"), tap("kp7")],
         "gcode-running": common() + HOMED + GCODE + RUNNING

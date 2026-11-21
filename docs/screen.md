@@ -33,7 +33,8 @@
 - Each page's load event sends `sendme`; the reply's page id tells the
   firmware to resync and push that page.
 - `ui ...` lines are display-local navigation (thread picker tab, `ui pins
-  on|off` for the Pins view, `ui page <n>` for a mode's cell page),
+  on|off` for the Pins view, `ui run on|off` for the running view, `ui page
+  <n>` for a mode's cell page),
   handled by the Display link, not the command dispatcher.
 - Liveness: firmware periodically pings the display (Nextion's `sendme`,
   which replies with the current page). No reply -> controlled stop of any
@@ -85,8 +86,7 @@
 - No global travel stops. A homed axis has travel limits: the home
   position and `maxTravelMm` below it. An axis that is not homed has none.
 - Each mode defines its own geometry: start = position at engage
-  (touch-off) or typed; lengths/depths typed. A [here] helper may fill a
-  length from the current position, but is never required.
+  (touch-off); lengths and depths are typed.
 
 ## Units
 
@@ -104,7 +104,12 @@ What each mode does: `docs/features.md`. Display specifics:
 - A mode that needs a missing feature (X motor, probe) is not in the menu.
   The X column stays; with no X motor it shows X off, the X power button is refused and the
   X jog buttons do nothing.
-- Multi-pass modes show phase and pass n/m, and offer skip.
-- Every mode but Thread has a feed override while running. It scales every
-  feed of the job, not rapids.
+- Multi-pass modes show pass n/m on the stop button, and offer skip.
+- Running view: replaces the cells from Prepare until the job ends. Before
+  the start it offers Go to start, Start here and Back. A job started
+  elsewhere opens it too. G-code and Probe have none.
+- Every mode but Thread has a feed override in the running view. It scales
+  every feed of the job, not rapids. G-code shows it on its own view.
+- Thread and Gear show the lead-in in the running view. With the spindle
+  stopped, a red line asks to start it.
 - Selected mode and its parameters persist in `RunSettings`.

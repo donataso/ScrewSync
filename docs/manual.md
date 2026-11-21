@@ -109,10 +109,13 @@ How to operate ScrewSync. For wiring and flashing, see
 1. Touch the tool off on the work, or probe it, and set zero on Z and X
    there. This point is the engage point.
 2. Select the mode and set its values.
-3. Start.
+3. Prepare. The running view opens. Nothing moves yet.
+4. Go to start or Start here. Back goes back to the mode values.
 
-- Turn, Thread, Part, Slot and Ellipse start at zero. If the tool is not
-  at zero, start offers to go to zero first.
+- Turn, Thread, Part, Slot and Ellipse start at zero. Go to start moves
+  there first. It is inactive at zero and in the other modes.
+- The running view closes when the job ends.
+- G-code and Probe have no running view: Start starts the job.
 - Multi-pass modes can skip to the next pass.
 - During a job, the feed override changes all feeds of the job, but not
   rapids. Thread has no override. Each start resets it to 100%.
@@ -170,12 +173,18 @@ How to operate ScrewSync. For wiring and flashing, see
 - If you re-zero the angle, home an axis or reboot, the next cut starts a
   new helix. Zeroing the angle puts the new helix through the current
   tool position, so Gear starts at once.
-- Thread mode starts Z and X when the spindle reaches the helix phase. Z
-  accelerates from rest, so it is off the helix for a short length while X
-  is already at depth. A cut that starts on an existing thread damages it
-  there. Higher Z acceleration makes that length shorter.
+- Thread mode, Gear and G33 start the axis from rest on a ramp that joins
+  the helix at full speed. Nothing moves behind the start point. In Thread
+  mode, X goes in only when Z is on the helix.
+- Lead-in: the travel from the start point until the tool is on the helix
+  at full depth (Thread: the deepest pass). The running view shows it at
+  the current spindle speed. Keep it free in front of the work or an
+  existing thread. A slower spindle or a higher Z acceleration shortens it.
+- If a pass is shorter than the lead-in, X does not go in on that pass.
 - At start, Gear holds the axis for up to one spindle turn, until the
-  spindle reaches the phase of the thread.
+  ramp starts.
+- G33 has no plunge and no lead-in reading: the tool is at depth during
+  the ramp. Start the G33 move ahead of the work.
 
 ### Taper sign
 

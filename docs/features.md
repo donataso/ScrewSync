@@ -4,6 +4,8 @@
 
 - One page per mode, with every parameter of that mode visible and editable.
 - Numeric entry on an on-screen keypad.
+- A running view from Prepare to the job end: the start choice, the feed
+  override and the lead-in.
 - Each mode's parameters are remembered.
 - The display and the web client show the same state; a change on one shows
   up on the other.
@@ -22,7 +24,7 @@
 - **G-code**: see below.
 - **Probe**: see [probe.md](probe.md). Needs only the probe, not the X motor.
 
-Multi-pass modes show the phase and pass number, and can skip a pass.
+Multi-pass modes show the pass number, and can skip a pass.
 
 ## Threading
 
@@ -37,6 +39,8 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - Reverse threading with an inverted tool, feeding away from the chuck.
 - Thread mode, G-code threading and Gear follow one helix, so a rerun lands in
   the same groove. See [manual.md](manual.md), "Thread alignment".
+- Thread mode, Gear and G33 ramp onto the helix from rest. The display shows the
+  lead-in for the spindle speed.
 
 ## Probing
 
@@ -92,7 +96,7 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
 - Spindle direction check: Turn, Thread, Part and Ellipse stop if the
   spindle turns the wrong way.
 - Any jog on an axis a running job drives stops the job.
-- Starting a job off zero asks for confirmation.
+- A job off zero starts only on a choice: go to start, or start here.
 - Boot state setting: start in estop, with estop off, or with estop off and
   motors on. Estop stops all motion and turns the motors off, with no
   restart. Estop on the display, estop inputs and an estop output.

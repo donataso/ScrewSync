@@ -129,3 +129,20 @@ ZTEST(mode_math, test_ellipse_speed)
     zassert_within(ellipseSpeed(3000, 2000, true, 0), 3000, 1e-6);
     zassert_within(ellipseSpeed(0, 0, false, 0.5), 1, 1e-12);
 }
+
+ZTEST(mode_math, test_move_time_triangle_and_trapezoid)
+{
+    // From rest at 1000 steps/s^2 both ways: 1000 steps peaks at 1000 steps/s in 1 s each way.
+    zassert_within(moveTimeSec(1000, 0, 1000, 1000, 5000), 2, 1e-2);
+    // Capped at 500 steps/s: 125 steps each ramp, 750 steps at 500 steps/s.
+    zassert_within(moveTimeSec(1000, 0, 1000, 1000, 500), 0.5 + 0.5 + 1.5, 1e-2);
+    zassert_within(moveTimeSec(-1000, 0, 1000, 1000, 500), 2.5, 1e-2);
+    zassert_equal(moveTimeSec(0, 0, 1000, 1000, 500), 0);
+}
+
+ZTEST(mode_math, test_lead_in_is_ramp_plus_plunge_travel)
+{
+    // 1000 steps/s at 500 steps/s^2: 1000 step ramp, then 0.5 s at 1000 steps/s.
+    zassert_within(leadInSteps(1000, 500, 0.5), 1500, 1e-9);
+    zassert_within(leadInSteps(-1000, 500, 0), 1000, 1e-9);
+}

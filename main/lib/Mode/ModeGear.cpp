@@ -19,6 +19,8 @@
 #include "Sync.hpp"
 #include "SyncRatio.hpp"
 #include "Encoder.hpp"
+#include "ModeMath.hpp"
+#include <math.h>
 #include <stddef.h>
 #include <zephyr/sys/util.h>
 
@@ -46,10 +48,9 @@ namespace
     int64_t g_zStart;
     int64_t g_xStart;
     int32_t g_linkPct;
-    // Axis holds until the spindle reaches the thread helix's phase.
-    bool g_waiting;
-    int64_t g_phase;
-    int64_t g_lastSpindle;
+    // Ramps onto the thread helix; the axis follows it once joined.
+    HelixEntry g_entry;
+    bool g_joined;
 
     int32_t signedPitch()
     {
@@ -58,12 +59,13 @@ namespace
 
     void relink(int32_t dupr, int64_t spindlePos)
     {
-        if (!g_waiting) {
+        if (g_joined || g_entry.started) {
             g_link.setDupr(dupr, spindlePos);
+            g_joined = true;
             return;
         }
         g_link.duprDu = dupr;
-        g_phase = helixPhase(g_link, g_link.originAxisPos);
+        g_entry.phase = helixPhase(g_link, g_link.originAxisPos);
     }
 
     const char *startMode(int64_t spindlePos)
@@ -88,9 +90,10 @@ namespace
         }
         g_linkPct = feedOverridePct();
         g_link = {g.axis, overridden(signedPitch()), 1, spindlePos, Stepper::position(g.axis)};
-        g_phase = helixPhase(g_link, g_link.originAxisPos);
-        g_waiting = Sync::nextOnPhase(spindlePos, g_phase, countsPerRev(), 1) != spindlePos;
-        g_lastSpindle = spindlePos;
+        int64_t phase = helixPhase(g_link, g_link.originAxisPos);
+        g_entry.begin(phase, 0);
+        // On the helix already, as after zeroing the angle: follow at once.
+        g_joined = Sync::nextOnPhase(spindlePos, phase, countsPerRev(), 1) == spindlePos;
         g_endDirection = 0;
         if (g.stopAfterDu > 0) {
             g_endDirection = feedDirection(signedPitch());
@@ -107,16 +110,10 @@ namespace
             g_linkPct = feedOverridePct();
             relink(overridden(signedPitch()), spindlePos);
         }
-        if (g_waiting) {
-            int64_t at;
-            if (!Sync::crossedPhase(g_lastSpindle, spindlePos, g_phase, countsPerRev(), at)) {
-                g_lastSpindle = spindlePos;
-                return;
-            }
-            g_link.originSpindlePos = at;
-            g_waiting = false;
+        if (!g_joined && g_entry.joined(g_link, spindlePos)) {
+            g_joined = true;
         }
-        int64_t target = g_link.target(spindlePos);
+        int64_t target = g_joined ? g_link.target(spindlePos) : g_entry.target(g_link, spindlePos);
         if ((g_endDirection > 0 && target > g_endSteps) || (g_endDirection < 0 && target < g_endSteps)) {
             target = g_endSteps;
         }
@@ -126,6 +123,14 @@ namespace
             int64_t x = g_xStart + duToSteps(Stepper::Axis::X, towardChuckDu * (double)g_params.taper / 2);
             Stepper::moveTo(Stepper::Axis::X, x, rapidSpeed(Stepper::Axis::X));
         }
+    }
+
+    double leadInMode(double countsPerSec)
+    {
+        int32_t pitch = isRunning(Mode::Id::Gear) ? overridden(g_params.pitchDu) : g_params.pitchDu;
+        Sync::Link link = {g_params.axis, pitch, 1, 0, 0};
+        double speed = link.stepsPerCount() * countsPerSec;
+        return stepsToDu(g_params.axis, llround(leadInSteps(speed, rampAccel(g_params.axis), 0)));
     }
 
     const char *onLiveChange(const void *)
@@ -141,7 +146,7 @@ namespace
 namespace Mode::Detail
 {
     const Ops GEAR = {false, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
-                      onLiveChange, nullptr, nullptr, nullptr};
+                      onLiveChange, nullptr, nullptr, nullptr, nullptr, nullptr, leadInMode};
 }
 
 namespace Mode

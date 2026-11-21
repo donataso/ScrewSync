@@ -253,7 +253,7 @@ namespace Mode::Detail
         if (s.kind == Gcode::StepKind::Thread) {
             int32_t dupr = (mainTo > mainFrom ? -1 : 1) * abs(s.feed);
             thread = {mainAxis, dupr, 1, 0, mainFrom};
-            thread.originSpindlePos = helixOrigin(thread, mainFrom, 0, spindlePos);
+            threadEntry.begin(helixPhase(thread, mainFrom), spindleSign());
         } else if (s.kind == Gcode::StepKind::Feed) {
             vectorDu = sqrt(dz * dz + dx * dx);
         }
@@ -267,7 +267,8 @@ namespace Mode::Detail
             return driveProbe(*this, s, error);
         }
         if (s.kind == Gcode::StepKind::Thread) {
-            int64_t target = thread.target(spindlePos);
+            int64_t target = threadEntry.joined(thread, spindlePos) ? thread.target(spindlePos)
+                                                                    : threadEntry.target(thread, spindlePos);
             target = CLAMP(target, MIN(mainFrom, mainTo), MAX(mainFrom, mainTo));
             if (Stepper::moveTo(mainAxis, target, rapidSpeed(mainAxis)) != target) {
                 error = clampReason(mainAxis);

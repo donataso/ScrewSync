@@ -19,6 +19,7 @@
 #include "ModeMath.hpp"
 #include "Encoder.hpp"
 #include "Motion.hpp"
+#include "Rpm.hpp"
 #include "Settings.hpp"
 #include "SyncRatio.hpp"
 #include <math.h>
@@ -83,10 +84,59 @@ namespace Mode::Detail
         return Sync::helixPhase(Encoder::origin(), refAxisPos - g_helixRef[(size_t)link.axis], link.stepsPerCount());
     }
 
-    int64_t helixOrigin(const Sync::Link &link, int64_t refAxisPos, int64_t aheadCounts, int64_t spindlePos)
+    double rampAccel(Stepper::Axis axis)
     {
-        int64_t phase = helixPhase(link, refAxisPos) + spindleSign() * aheadCounts;
-        return Sync::nextOnPhase(spindlePos, phase, countsPerRev(), spindleSign());
+        return (double)cfgOf(axis).accelerationSteps * RAMP_ACCEL_PCT / 100;
+    }
+
+    double spindleCountsPerSec()
+    {
+        return fabs((double)Rpm::value()) * countsPerRev() / 60;
+    }
+
+    void HelixEntry::begin(int64_t phaseCount, int fixedDirection)
+    {
+        phase = phaseCount;
+        direction = fixedDirection;
+        rotation = fixedDirection;
+        halfCounts = 0;
+        planned = false;
+        started = false;
+    }
+
+    int64_t HelixEntry::target(Sync::Link &link, int64_t spindlePos)
+    {
+        if (!started) {
+            if (planned && (double)(rotation * (spindlePos - link.originSpindlePos)) > -halfCounts) {
+                started = true;
+            } else {
+                int32_t rpm = Rpm::value();
+                int measured = rpm > 0 ? 1 : (rpm < 0 ? -1 : 0);
+                if (direction == 0 && measured != 0 && measured != rotation) {
+                    rotation = measured;
+                    planned = false;
+                }
+                if (rotation == 0) {
+                    return link.originAxisPos;
+                }
+                double half = Sync::rampHalfCounts(link.stepsPerCount(), spindleCountsPerSec(), rampAccel(link.axis));
+                double travel = (double)(rotation * (spindlePos - link.originSpindlePos));
+                if (!planned || travel > -half) {
+                    int64_t from = spindlePos + rotation * (int64_t)ceil(half);
+                    link.originSpindlePos = Sync::nextOnPhase(from, phase, countsPerRev(), rotation);
+                    planned = true;
+                }
+                halfCounts = half;
+            }
+        }
+        double travel = (double)(rotation * (spindlePos - link.originSpindlePos));
+        double offset = Sync::rampOffset(travel, halfCounts, rotation * link.stepsPerCount());
+        return link.originAxisPos + llround(offset);
+    }
+
+    bool HelixEntry::joined(const Sync::Link &link, int64_t spindlePos) const
+    {
+        return started && (double)(rotation * (spindlePos - link.originSpindlePos)) >= halfCounts;
     }
 
     void SpindleFeed::begin(Stepper::Axis feedAxis, int64_t fromSteps, int64_t toSteps, int64_t spindlePos)

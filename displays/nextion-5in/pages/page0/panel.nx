@@ -9,10 +9,12 @@ const KIND_PICKER = 6
 const KIND_LATCH = 7
 const KIND_PIN = 8
 const KIND_HALF = 9
-const ZERO_FOR_START = 0
 const ZERO_FOR_Z = 1
 const ZERO_FOR_X = 2
 const ZERO_FOR_CONFIRM = 3
+// runView, matching RunState in main/lib/Display/RunView.hpp.
+const RUN_ARMED = 1
+const NEED_ZERO_OFFER = 1
 
 function overlayOpen() -> number:
   return menuOpen || settingsOpen || kpRightOpen ? 1 : 0
@@ -21,90 +23,97 @@ function overlayOpen() -> number:
 // draw over one.
 function layoutPanel(shown: number):
   var v = 0
-  v = shown && (cKind0 == KIND_TOGGLE || cKind0 == KIND_HALF) ? 1 : 0
+  var cells = shown && !runView.val ? 1 : 0
+  v = cells && (cKind0 == KIND_TOGGLE || cKind0 == KIND_HALF) ? 1 : 0
   vis c0a,v
-  v = shown && cKind0 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind0 == KIND_TOGGLE ? 1 : 0
   vis c0b,v
-  v = shown && cKind0 > KIND_HIDDEN && cKind0 != KIND_TOGGLE && cKind0 != KIND_HALF ? 1 : 0
+  v = cells && cKind0 > KIND_HIDDEN && cKind0 != KIND_TOGGLE && cKind0 != KIND_HALF ? 1 : 0
   vis c0,v
-  v = shown && (cKind1 == KIND_TOGGLE || cKind1 == KIND_HALF) ? 1 : 0
+  v = cells && (cKind1 == KIND_TOGGLE || cKind1 == KIND_HALF) ? 1 : 0
   vis c1a,v
-  v = shown && cKind1 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind1 == KIND_TOGGLE ? 1 : 0
   vis c1b,v
-  v = shown && cKind1 > KIND_HIDDEN && cKind1 != KIND_TOGGLE && cKind1 != KIND_HALF ? 1 : 0
+  v = cells && cKind1 > KIND_HIDDEN && cKind1 != KIND_TOGGLE && cKind1 != KIND_HALF ? 1 : 0
   vis c1,v
-  v = shown && (cKind2 == KIND_TOGGLE || cKind2 == KIND_HALF) ? 1 : 0
+  v = cells && (cKind2 == KIND_TOGGLE || cKind2 == KIND_HALF) ? 1 : 0
   vis c2a,v
-  v = shown && cKind2 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind2 == KIND_TOGGLE ? 1 : 0
   vis c2b,v
-  v = shown && cKind2 > KIND_HIDDEN && cKind2 != KIND_TOGGLE && cKind2 != KIND_HALF ? 1 : 0
+  v = cells && cKind2 > KIND_HIDDEN && cKind2 != KIND_TOGGLE && cKind2 != KIND_HALF ? 1 : 0
   vis c2,v
-  v = shown && (cKind3 == KIND_TOGGLE || cKind3 == KIND_HALF) ? 1 : 0
+  v = cells && (cKind3 == KIND_TOGGLE || cKind3 == KIND_HALF) ? 1 : 0
   vis c3a,v
-  v = shown && cKind3 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind3 == KIND_TOGGLE ? 1 : 0
   vis c3b,v
-  v = shown && cKind3 > KIND_HIDDEN && cKind3 != KIND_TOGGLE && cKind3 != KIND_HALF ? 1 : 0
+  v = cells && cKind3 > KIND_HIDDEN && cKind3 != KIND_TOGGLE && cKind3 != KIND_HALF ? 1 : 0
   vis c3,v
-  v = shown && (cKind4 == KIND_TOGGLE || cKind4 == KIND_HALF) ? 1 : 0
+  v = cells && (cKind4 == KIND_TOGGLE || cKind4 == KIND_HALF) ? 1 : 0
   vis c4a,v
-  v = shown && cKind4 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind4 == KIND_TOGGLE ? 1 : 0
   vis c4b,v
-  v = shown && cKind4 > KIND_HIDDEN && cKind4 != KIND_TOGGLE && cKind4 != KIND_HALF ? 1 : 0
+  v = cells && cKind4 > KIND_HIDDEN && cKind4 != KIND_TOGGLE && cKind4 != KIND_HALF ? 1 : 0
   vis c4,v
-  v = shown && (cKind5 == KIND_TOGGLE || cKind5 == KIND_HALF) ? 1 : 0
+  v = cells && (cKind5 == KIND_TOGGLE || cKind5 == KIND_HALF) ? 1 : 0
   vis c5a,v
-  v = shown && cKind5 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind5 == KIND_TOGGLE ? 1 : 0
   vis c5b,v
-  v = shown && cKind5 > KIND_HIDDEN && cKind5 != KIND_TOGGLE && cKind5 != KIND_HALF ? 1 : 0
+  v = cells && cKind5 > KIND_HIDDEN && cKind5 != KIND_TOGGLE && cKind5 != KIND_HALF ? 1 : 0
   vis c5,v
-  v = shown && (cKind6 == KIND_TOGGLE || cKind6 == KIND_HALF) ? 1 : 0
+  v = cells && (cKind6 == KIND_TOGGLE || cKind6 == KIND_HALF) ? 1 : 0
   vis c6a,v
-  v = shown && cKind6 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind6 == KIND_TOGGLE ? 1 : 0
   vis c6b,v
-  v = shown && cKind6 > KIND_HIDDEN && cKind6 != KIND_TOGGLE && cKind6 != KIND_HALF ? 1 : 0
+  v = cells && cKind6 > KIND_HIDDEN && cKind6 != KIND_TOGGLE && cKind6 != KIND_HALF ? 1 : 0
   vis c6,v
-  v = shown && (cKind7 == KIND_TOGGLE || cKind7 == KIND_HALF) ? 1 : 0
+  v = cells && (cKind7 == KIND_TOGGLE || cKind7 == KIND_HALF) ? 1 : 0
   vis c7a,v
-  v = shown && cKind7 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind7 == KIND_TOGGLE ? 1 : 0
   vis c7b,v
-  v = shown && cKind7 > KIND_HIDDEN && cKind7 != KIND_TOGGLE && cKind7 != KIND_HALF ? 1 : 0
+  v = cells && cKind7 > KIND_HIDDEN && cKind7 != KIND_TOGGLE && cKind7 != KIND_HALF ? 1 : 0
   vis c7,v
-  v = shown && (cKind8 == KIND_TOGGLE || cKind8 == KIND_HALF) ? 1 : 0
+  v = cells && (cKind8 == KIND_TOGGLE || cKind8 == KIND_HALF) ? 1 : 0
   vis c8a,v
-  v = shown && cKind8 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind8 == KIND_TOGGLE ? 1 : 0
   vis c8b,v
-  v = shown && cKind8 > KIND_HIDDEN && cKind8 != KIND_TOGGLE && cKind8 != KIND_HALF ? 1 : 0
+  v = cells && cKind8 > KIND_HIDDEN && cKind8 != KIND_TOGGLE && cKind8 != KIND_HALF ? 1 : 0
   vis c8,v
-  v = shown && (cKind9 == KIND_TOGGLE || cKind9 == KIND_HALF) ? 1 : 0
+  v = cells && (cKind9 == KIND_TOGGLE || cKind9 == KIND_HALF) ? 1 : 0
   vis c9a,v
-  v = shown && cKind9 == KIND_TOGGLE ? 1 : 0
+  v = cells && cKind9 == KIND_TOGGLE ? 1 : 0
   vis c9b,v
-  v = shown && cKind9 > KIND_HIDDEN && cKind9 != KIND_TOGGLE && cKind9 != KIND_HALF ? 1 : 0
+  v = cells && cKind9 > KIND_HIDDEN && cKind9 != KIND_TOGGLE && cKind9 != KIND_HALF ? 1 : 0
   vis c9,v
-  v = shown && cKind10 > KIND_HIDDEN && cKind10 != KIND_PICKER ? 1 : 0
+  v = cells && cKind10 > KIND_HIDDEN && cKind10 != KIND_PICKER ? 1 : 0
   vis c10,v
-  v = shown && cKind11 > KIND_HIDDEN && cKind11 != KIND_PICKER ? 1 : 0
+  v = cells && cKind11 > KIND_HIDDEN && cKind11 != KIND_PICKER ? 1 : 0
   vis c11,v
-  v = shown && cKind12 > KIND_HIDDEN && cKind12 != KIND_PICKER ? 1 : 0
+  v = cells && cKind12 > KIND_HIDDEN && cKind12 != KIND_PICKER ? 1 : 0
   vis c12,v
-  v = shown && cKind13 > KIND_HIDDEN && cKind13 != KIND_PICKER ? 1 : 0
+  v = cells && cKind13 > KIND_HIDDEN && cKind13 != KIND_PICKER ? 1 : 0
   vis c13,v
-  v = shown && cKind14 > KIND_HIDDEN && cKind14 != KIND_PICKER ? 1 : 0
+  v = cells && cKind14 > KIND_HIDDEN && cKind14 != KIND_PICKER ? 1 : 0
   vis c14,v
-  v = shown && cKind15 > KIND_HIDDEN && cKind15 != KIND_PICKER ? 1 : 0
+  v = cells && cKind15 > KIND_HIDDEN && cKind15 != KIND_PICKER ? 1 : 0
   vis c15,v
   var chrome = shown && !pinsOpen ? 1 : 0
-  v = chrome && cKind15 == KIND_PICKER ? 1 : 0
+  v = chrome && !runView.val && cKind15 == KIND_PICKER ? 1 : 0
   vis picker,v
   v = chrome && ovrOn.val ? 1 : 0
   vis ovrMinus,v
   vis ovr,v
   vis ovrPlus,v
-  v = chrome && !canSkip.val && !(gcodeOn.val && gcodePaused.val) && !(probeOn.val && !running.val) ? 1 : 0
+  var armed = chrome && runView.val == RUN_ARMED ? 1 : 0
+  v = chrome && !armed && !canSkip.val && !(gcodeOn.val && gcodePaused.val) && !(probeOn.val && !running.val) ? 1 : 0
   vis startStop,v
   v = chrome && canSkip.val && !(gcodeOn.val && gcodePaused.val) ? 1 : 0
   vis stopPass,v
+  v = v || armed ? 1 : 0
   vis skip,v
+  vis goStart,armed
+  vis startHere,armed
+  v = chrome && runView.val && leadInOn.val ? 1 : 0
+  vis leadIn,v
   v = chrome && gcodeOn.val && gcodePaused.val ? 1 : 0
   vis gcodeResume,v
   vis gcodeStop,v
@@ -166,9 +175,6 @@ function openZeroAsk(target: number):
   } else if (target == ZERO_FOR_CONFIRM) {
     zeroAsk.txt = "Not at zero. Start here?"
     zeroNo.txt = "Start"
-  } else {
-    zeroAsk.txt = "Go to zero first?"
-    zeroNo.txt = "Start here"
   }
   setZeroAsk(1)
   if (target == ZERO_FOR_CONFIRM) {
@@ -191,13 +197,23 @@ on startStop.up:
   if (running.val) {
     send("stop")
   } else if (ready.val && !kpOpen) {
-    if (needZero.val == 2) {
+    if (prepares.val) {
+      send("ui run on")
+    } else if (needZero.val == 2) {
       openZeroAsk(ZERO_FOR_CONFIRM)
-    } else if (needZero.val) {
-      openZeroAsk(ZERO_FOR_START)
     } else {
       send("start")
     }
+  }
+
+on goStart.up:
+  if (ready.val && needZero.val == NEED_ZERO_OFFER) {
+    send("start zero")
+  }
+
+on startHere.up:
+  if (ready.val) {
+    send("start")
   }
 
 on zeroYes.up:
@@ -206,8 +222,6 @@ on zeroYes.up:
     send("o<zero> call [1] [0]")
   } else if (zeroFor == ZERO_FOR_X) {
     send("o<zero> call [0] [1]")
-  } else {
-    send("start zero")
   }
 
 on zeroNo.up:
@@ -230,7 +244,11 @@ on stopPass.up:
   send("stop")
 
 on skip.up:
-  send("skip")
+  if (runView.val == RUN_ARMED) {
+    send("ui run off")
+  } else {
+    send("skip")
+  }
 
 on gcodeResume.up:
   send("start")

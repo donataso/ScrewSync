@@ -16,6 +16,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ModePass.hpp"
+#include "ModeMath.hpp"
+#include "Settings.hpp"
 #include "ThreadStore.hpp"
 #include <math.h>
 #include <stddef.h>
@@ -143,12 +145,26 @@ namespace
     {
         passSkip(g_job);
     }
+
+    // Deepest pass: from the retract position to full depth.
+    double leadInMode(double countsPerSec)
+    {
+        const Settings::Axis &x = Settings::g_active.x;
+        Sync::Link link = {Stepper::Axis::Z, g_params.pitchDu, g_params.starts, 0, 0};
+        double speed = link.stepsPerCount() * countsPerSec;
+        bool retracts = g_params.passes + (g_params.spring ? 1 : 0) > 1;
+        double plungeDu = g_params.depthDu + (retracts ? Settings::g_active.safeDistanceDu : 0);
+        double plungeSec = moveTimeSec((double)duToSteps(Stepper::Axis::X, plungeDu), x.speedStartSteps,
+                                       x.accelerationSteps, x.decelerationSteps, x.speedRapidSteps);
+        double steps = leadInSteps(speed, rampAccel(Stepper::Axis::Z), plungeSec);
+        return stepsToDu(Stepper::Axis::Z, llround(steps));
+    }
 }
 
 namespace Mode::Detail
 {
     const Ops THREAD = {true, &g_params, sizeof(g_params), PARAMS, ARRAY_SIZE(PARAMS), startMode, tickMode,
-                        nullptr, onChange, progressMode, skipMode, &g_params.spindleReverse};
+                        nullptr, onChange, progressMode, skipMode, &g_params.spindleReverse, nullptr, leadInMode};
 }
 
 namespace Mode

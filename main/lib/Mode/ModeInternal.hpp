@@ -84,6 +84,8 @@ namespace Mode::Detail
         const bool *spindleReverse;
         // Optional. Continues a job waiting for start; false if it isn't waiting.
         bool (*resume)();
+        // Optional. Mode::leadInDu() at the spindle speed.
+        double (*leadIn)(double countsPerSec);
     };
 
     extern const Ops GEAR;
@@ -175,9 +177,30 @@ namespace Mode::Detail
     // and later passes land in the same groove.
     // A spindle count where link puts refAxisPos on that helix.
     int64_t helixPhase(const Sync::Link &link, int64_t refAxisPos);
-    // The first such count at or ahead of spindlePos in the cutting
-    // rotation, shifted aheadCounts further along it.
-    int64_t helixOrigin(const Sync::Link &link, int64_t refAxisPos, int64_t aheadCounts, int64_t spindlePos);
+
+    // Share of the axis acceleration the start ramp uses.
+    constexpr int32_t RAMP_ACCEL_PCT = 100;
+    double rampAccel(Stepper::Axis axis);
+    double spindleCountsPerSec();
+
+    // Ramps an axis from rest at link.originAxisPos onto the helix, so it
+    // joins at helix speed. Until the ramp starts, each tick replans
+    // link.originSpindlePos for the spindle speed: the first count on phase
+    // a ramp half ahead.
+    struct HelixEntry
+    {
+        int64_t phase;
+        int direction; // spindle rotation, 0 = the measured one
+        int rotation;
+        double halfCounts;
+        bool planned;
+        bool started;
+
+        void begin(int64_t phaseCount, int fixedDirection);
+        int64_t target(Sync::Link &link, int64_t spindlePos);
+        // On the helix: link.target() from here on.
+        bool joined(const Sync::Link &link, int64_t spindlePos) const;
+    };
 
     // Feed per spindle rev integrated tick by tick, so a live pitch change
     // doesn't jump the position. Clamped between from and to.

@@ -69,6 +69,8 @@ namespace Mode::Detail
         int64_t offsetSteps;
         int64_t retractAux;
         Sync::Link link;
+        HelixEntry entry;
+        bool plunged; // Phased: aux went in once on the helix
         SpindleFeed spindleFeed;
     };
 

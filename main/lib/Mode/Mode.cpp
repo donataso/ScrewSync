@@ -494,6 +494,17 @@ namespace Mode
         return p;
     }
 
+    bool leadInDu(double &du)
+    {
+        Detail::Guard guard;
+        const Ops *ops = OPS[(size_t)current()];
+        if (!ops || !ops->leadIn) {
+            return false;
+        }
+        du = ops->leadIn(Detail::spindleCountsPerSec());
+        return true;
+    }
+
     const char *lastError()
     {
         Detail::Guard guard;

@@ -61,7 +61,7 @@ Each encoder has a filter, in µs:
 - A switch held at boot does not act.
 - A switch sends the same command as the display, with the same refusal
   rules. A refused command shows as a toast on the display.
-- "Start here" starts without the offer to go to zero first.
+- "Start here" starts the job at once, without Prepare.
 - "Go to zero" moves Z to 0, then X to 0 (the routine `o<zero>`).
 - "G54" to "G59" select the work coordinate system. Systems G55 to G59
   need home inputs.

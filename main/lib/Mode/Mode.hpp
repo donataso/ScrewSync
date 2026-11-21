@@ -94,7 +94,7 @@ namespace Mode
     // Feed override of the running job, percent of the set feed. Every mode
     // but thread; back to 100 on each start.
     constexpr int32_t OVERRIDE_MIN_PCT = 50;
-    constexpr int32_t OVERRIDE_MAX_PCT = 150;
+    constexpr int32_t OVERRIDE_MAX_PCT = 200;
     constexpr int32_t OVERRIDE_STEP_PCT = 10;
     bool hasFeedOverride(Id id);
     bool canSkip(Id id);
@@ -134,6 +134,9 @@ namespace Mode
     void probeEdge(bool contactNow);
 
     Gear gear();
+    // Travel from the start point until the tool is on the helix at full
+    // depth, at the spindle speed. False if the selected mode has none.
+    bool leadInDu(double &du);
     Progress progress();
 
     // Why the last job ended on its own ("" if it finished normally).

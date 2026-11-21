@@ -56,6 +56,8 @@ namespace Display::Detail
     // Returns whether any cell's type changed.
     bool pushPanel(Mode::Id id, const char *params);
 
+    void armRunView(bool armed);
+
     void setPanelPage(size_t page);
     size_t panelPage();
 

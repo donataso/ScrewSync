@@ -22,6 +22,7 @@ target_sources(app PRIVATE
     src/test_mode_pass_plan.cpp
     src/test_mode_turn_plan.cpp
     src/test_panel_page.cpp
+    src/test_run_view.cpp
     src/test_mode_param_codec.cpp
     src/test_mode_math.cpp
     src/test_mode_mdi_queue.cpp

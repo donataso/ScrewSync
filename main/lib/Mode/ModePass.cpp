@@ -105,21 +105,25 @@ namespace
                 int32_t dupr = spindleSign() * signedDu(*levelPitchDu(j), j.reverse);
                 j.link = {j.main, dupr, j.starts, 0, start};
                 int64_t startOffset = (int64_t)j.cursor.startIndex * countsPerRev() / j.starts;
-                j.link.originSpindlePos = helixOrigin(j.link, j.mainStart, startOffset, spindlePos);
+                j.entry.begin(helixPhase(j.link, j.mainStart) + spindleSign() * startOffset, spindleSign());
+                j.plunged = false;
             }
-            int64_t target = j.link.target(spindlePos);
+            bool onHelix = j.entry.joined(j.link, spindlePos);
+            int64_t target = onHelix ? j.link.target(spindlePos) : j.entry.target(j.link, spindlePos);
             if ((target - start) * j.cutDirection < 0) {
                 target = start;
             } else if ((target - end) * j.cutDirection > 0) {
                 target = end;
             }
             Stepper::moveTo(j.main, target, rapidSpeed(j.main));
+            // Joining past the end cuts nothing: the aux stays out.
+            j.plunged = j.plunged || (onHelix && target != end);
             int64_t aux = passAux(j) + taperOffset(j, Stepper::position(j.main));
-            if ((spindlePos - j.link.originSpindlePos) * spindleSign() >= 0) {
+            if (j.plunged) {
                 Stepper::moveTo(j.aux, aux, rapidSpeed(j.aux));
             }
             return target == end && Stepper::arrived(j.main) && Stepper::position(j.main) == end &&
-                   Stepper::arrived(j.aux) && Stepper::position(j.aux) == aux;
+                   (!j.plunged || (Stepper::arrived(j.aux) && Stepper::position(j.aux) == aux));
         }
         case PassFeed::Timed:
             if (*j.speedDuPerMin == 0) {

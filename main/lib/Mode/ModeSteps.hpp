@@ -20,6 +20,7 @@
 
 #include "GcodeCore.hpp"
 #include "GcodeNgc.hpp"
+#include "ModeInternal.hpp"
 #include "Stepper.hpp"
 #include "Sync.hpp"
 
@@ -53,6 +54,7 @@ namespace Mode::Detail
         int64_t mainFrom, mainTo, auxFrom, auxTo;
         double vectorDu; // Feed only: path length for the per-minute speed split
         Sync::Link thread;
+        HelixEntry threadEntry;
         bool probeStarted;
         // G38 done: whether it tripped, and where (work du, main axis).
         bool probeFound;
