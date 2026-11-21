@@ -33,8 +33,9 @@ Multi-pass modes show the phase and pass number, and can skip a pass.
   fills pitch, depth, taper and flank angle. Every value stays editable, and
   custom entries can be added.
 - The thread table is editable on the web client.
-- Alternating flank infeed: each pass shifts sideways so only one edge of
-  the tool cuts, alternating sides.
+- Constant chip area per pass (Sandvik infeed), with a lighter first pass.
+- Flank infeed: each pass shifts sideways so only one edge of the tool
+  cuts. One side (leading edge) or alternating sides.
 - Spring pass at full depth.
 - Multiple starts, left/right hand, external/internal, tapered threads.
 - Reverse threading with an inverted tool, feeding away from the chuck.

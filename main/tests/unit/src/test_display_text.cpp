@@ -55,6 +55,19 @@ namespace
 
 ZTEST_SUITE(display_text, NULL, NULL, NULL, NULL, NULL);
 
+ZTEST(display_text, test_list_item_and_index)
+{
+    char out[8];
+    zassert_true(listItem("off|on|side", 0, out, sizeof(out)));
+    zassert_str_equal(out, "off");
+    zassert_true(listItem("off|on|side", 2, out, sizeof(out)));
+    zassert_str_equal(out, "side");
+    zassert_false(listItem("off|on|side", 3, out, sizeof(out)));
+    zassert_equal(listIndex("off|on|side", "side"), 2);
+    zassert_equal(listIndex("off|on|side", "on"), 1);
+    zassert_equal(listIndex("off|on|side", "nope"), 0);
+}
+
 ZTEST(display_text, test_format_length)
 {
     zassert_str_equal(length(12340, false), "1.234");

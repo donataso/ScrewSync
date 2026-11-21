@@ -64,6 +64,7 @@ Other modes:
 2. Flank mode: 3-state enum with automatic side, one-side offset in
    `passFlankOffsetDu`, multi-value param kind if missing, stored
    settings migration, display button cycle, web client, unit tests.
-3. Thread run-out: discuss more before any change.
+3. Thread run-out: not planned. It leaves an unfinished thread at the
+   end. Kept as an idea for later.
 4. Turn finish allowance: `finish`, `finish-pitch`. Check display space
    for Turn first.

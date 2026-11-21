@@ -79,13 +79,13 @@ namespace Mode::Detail
 
     double passFlankOffsetDu(const PassPlan &plan, int32_t level)
     {
-        if (plan.flankTan == 0 || level <= 1) {
+        if (plan.flank == FlankInfeed::Off || level <= 1) {
             return 0;
         }
         double du = 0;
         for (int32_t i = 2; i <= depthLevel(plan, level); i++) {
-            du += (i % 2 ? -1 : 1) * (passDepthFraction(plan, i) - passDepthFraction(plan, i - 1)) * plan.depthDu *
-                  plan.flankTan;
+            int side = plan.flank == FlankInfeed::OneSide || i % 2 == 0 ? 1 : -1;
+            du += side * (passDepthFraction(plan, i) - passDepthFraction(plan, i - 1)) * plan.depthDu * plan.flankTan;
         }
         return du;
     }

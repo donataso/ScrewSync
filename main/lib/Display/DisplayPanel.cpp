@@ -45,18 +45,37 @@ namespace
         }
     }
 
-    bool pushLatch(size_t slot, const char *mode, const Cell &c, const char *raw)
+    bool pushLatchCell(size_t slot, const char *text, bool on, const char *mode, const char *param, const char *next)
     {
-        bool on = !strcmp(raw, "on");
         char key[KEY_MAX];
         snprintf(key, sizeof(key), "c%u.txt", (unsigned)slot);
-        pushText(key, "%s", c.label);
+        pushText(key, "%s", text);
         snprintf(key, sizeof(key), "c%u", (unsigned)slot);
         pushSelected(key, on);
         pushColor(key, "borderc", on ? COLOR_SELECTED : COLOR_BUTTON);
         snprintf(key, sizeof(key), "cCmd%u.txt", (unsigned)slot);
-        pushText(key, "%s %s %s", mode, c.param, on ? "off" : "on");
+        pushText(key, "%s %s %s", mode, param, next);
         return pushCellType(slot, CellType::Latch);
+    }
+
+    bool pushLatch(size_t slot, const char *mode, const Cell &c, const char *raw)
+    {
+        bool on = !strcmp(raw, "on");
+        return pushLatchCell(slot, c.label, on, mode, c.param, on ? "off" : "on");
+    }
+
+    bool pushCycle(size_t slot, const char *mode, const Cell &c, const char *raw)
+    {
+        size_t index = listIndex(c.valueA, raw);
+        char next[16];
+        if (!listItem(c.valueA, index + 1, next, sizeof(next))) {
+            listItem(c.valueA, 0, next, sizeof(next));
+        }
+        char shown[16];
+        listItem(c.labelA, index, shown, sizeof(shown));
+        char text[32];
+        snprintf(text, sizeof(text), "%s: %s", c.label, shown);
+        return pushLatchCell(slot, text, index != 0, mode, c.param, next);
     }
 
     bool pushValue(size_t slot, Mode::Id id, const Cell &c, const char *raw)
@@ -119,6 +138,9 @@ namespace
         const char *mode = Mode::name(id);
         if (c.kind == Kind::Latch) {
             return pushLatch(slot, mode, c, raw);
+        }
+        if (c.kind == Kind::Cycle) {
+            return pushCycle(slot, mode, c, raw);
         }
         if (c.kind == Kind::Toggle) {
             return pushToggle(slot, mode, c, raw, params);

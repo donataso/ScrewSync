@@ -44,6 +44,11 @@ namespace
         return {Kind::Latch, param, label, nullptr, nullptr, nullptr, nullptr, nullptr};
     }
 
+    constexpr Cell cycle(const char *param, const char *label, const char *values, const char *texts)
+    {
+        return {Kind::Cycle, param, label, texts, values, nullptr, nullptr, nullptr};
+    }
+
     constexpr Cell GAP = {Kind::Gap, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 
     constexpr Cell AXIS = toggle("axis", "Z", "z", "X", "x");
@@ -91,7 +96,7 @@ namespace
         value(Kind::Count, "passes", "Passes"),
         value(Kind::Count, "starts", "Starts"),
         value(Kind::Angle, "taper", "Taper"),
-        latch("flank", "Flank"),
+        cycle("flank", "Flank", "off|on|side", "off|\\/|/"),
         latch("spring", "Spring"),
         picker("Library"),
     };

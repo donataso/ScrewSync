@@ -30,15 +30,22 @@ namespace
     constexpr double RAD_PER_DEG = 3.14159265358979323846 / 180;
     constexpr size_t TOKEN_MAX = 64;
 
+    bool choiceName(const char *choices, size_t index, char *out, size_t outMax)
+    {
+        for (size_t i = 0; i < index; i++) {
+            choices = strchr(choices, '|');
+            if (!choices) {
+                return false;
+            }
+            choices++;
+        }
+        snprintf(out, outMax, "%.*s", (int)strcspn(choices, "|"), choices);
+        return true;
+    }
+
     void flagName(const Param &p, bool value, char *out, size_t outMax)
     {
-        const char *choices = p.choices ? p.choices : "off|on";
-        const char *bar = strchr(choices, '|');
-        if (value) {
-            snprintf(out, outMax, "%s", bar + 1);
-        } else {
-            snprintf(out, outMax, "%.*s", (int)(bar - choices), choices);
-        }
+        choiceName(p.choices ? p.choices : "off|on", value, out, outMax);
     }
 
     const char *parseNumber(const Param &p, const char *value, int32_t *field)
@@ -76,6 +83,18 @@ namespace
         return nullptr;
     }
 
+    const char *parseChoice(const Param &p, const char *value, uint8_t *field)
+    {
+        char name[TOKEN_MAX];
+        for (size_t i = 0; choiceName(p.choices, i, name, sizeof(name)); i++) {
+            if (!strcmp(value, name)) {
+                *field = (uint8_t)i;
+                return nullptr;
+            }
+        }
+        return p.choices;
+    }
+
     const char *parseAngle(const Param &p, const char *value, float *field)
     {
         char *end;
@@ -109,6 +128,8 @@ namespace
             return nullptr;
         case Kind::Flag:
             return parseFlag(p, value, (bool *)field);
+        case Kind::Choice:
+            return parseChoice(p, value, (uint8_t *)field);
         case Kind::Angle:
             return parseAngle(p, value, (float *)field);
         case Kind::Text:
@@ -145,6 +166,12 @@ namespace
         {
             char name[8];
             flagName(p, *(const bool *)field, name, sizeof(name));
+            return snprintf(out, outMax, "%s=%s", p.name, name);
+        }
+        case Kind::Choice:
+        {
+            char name[TOKEN_MAX] = "";
+            choiceName(p.choices, *(const uint8_t *)field, name, sizeof(name));
             return snprintf(out, outMax, "%s=%s", p.name, name);
         }
         case Kind::Angle:

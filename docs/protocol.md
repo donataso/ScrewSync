@@ -217,9 +217,10 @@ replies; see `docs/screen.md`.
 - Spindle-fed modes (turn, thread, part, ellipse) cut in the `spindle`
   rotation and stop with `wrong spindle direction` on the other.
 - `thread preset <group> <designation>` fills pitch, depth, taper and
-  `angle` (included flank angle) from the thread table. `flank on`:
-  alternating flank infeed, each pass shifted along Z to slide down the
-  flank the previous pass cut. `spring on`: one extra pass at full depth.
+  `angle` (included flank angle) from the thread table. `flank
+  off|on|side`: radial, alternating or one-side flank infeed. Each pass
+  shifts along Z to slide down the flank the previous pass cut; `side`
+  always shifts ahead in the cut direction. `spring on`: one extra pass at full depth.
 - `threads groups | list <group> [<offset>] | reset`: thread table names,
   paged designations (`next` = offset to continue from), back to the
   built-in defaults.

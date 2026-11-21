@@ -163,10 +163,10 @@ ZTEST(nextion_attrs, test_num_text_color)
     zassert_str_equal(g_lastCommand, "b0.bco=2178");
 }
 
-ZTEST(nextion_attrs, test_text_has_no_quote_or_backslash)
+ZTEST(nextion_attrs, test_text_has_no_quote_and_doubled_backslash)
 {
     Nextion::pushText("t0.txt", "%s", "say \"hi\" \\ bye");
-    zassert_str_equal(g_lastCommand, "t0.txt=\"say 'hi' / bye\"");
+    zassert_str_equal(g_lastCommand, "t0.txt=\"say 'hi' \\\\ bye\"");
     zassert_equal(Nextion::safeChar('a'), 'a');
 }
 

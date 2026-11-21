@@ -57,11 +57,12 @@ See [docs/probe.md](docs/probe.md).
 ### Threading
 
 A thread library by designation, multiple starts, tapered threads and
-reverse threading. Alternating flank infeed: plunging straight in makes
-both edges of the tool cut at once, which chatters and tears on deeper
-threads. With alternating flank infeed, each pass shifts sideways so only
-one edge cuts, alternating sides. A spring pass at full depth finishes the
-thread.
+reverse threading. Pass depths follow Sandvik's constant chip area
+infeed, so the deep passes do not load the spindle and motors more than
+the first ones. Flank infeed: plunging straight in makes both edges of the
+tool cut at once, which chatters and tears on deeper threads. With flank
+infeed, each pass shifts sideways so only one edge cuts, on one side or
+alternating sides. A spring pass at full depth finishes the thread.
 
 ### Pin mapping
 

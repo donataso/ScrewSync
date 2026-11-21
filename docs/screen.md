@@ -114,8 +114,8 @@ What each mode does: `docs/features.md`. Display specifics:
 - One page per mode; the firmware lays out the mode's parameter cells.
 - Thread: the Library page (tabs per standard, grid of designations) fills
   pitch, depth, taper and flank angle from the thread table. The "custom"
-  group starts empty. Flank and Spring are latching buttons. Passes,
-  starts, taper and the latches use 3-column rows.
+  group starts empty. Flank cycles off, alternating and one side. Spring is a latching button. Passes,
+  starts, taper, Flank and Spring use 3-column rows.
 - Probe: a panel, not a mode; `docs/probe.md`.
 - A mode that needs a missing feature (X motor, probe) is not in the menu.
   The X column stays; with no X motor it shows X off, the X power button is refused and the

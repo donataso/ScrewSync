@@ -173,7 +173,10 @@ How to operate ScrewSync. For wiring and flashing, see
 - Push Library to open the thread library. Select a designation to fill
   pitch, depth, taper and flank angle. You can edit all values after this.
   Edit the thread table on the web client.
+- Each pass removes the same chip area; the first pass is lighter.
 - Flank: each pass shifts sideways, so only one edge of the tool cuts.
+  Push to cycle: `off` (straight in), `\/` (alternating sides), `/` (one
+  side, the leading edge cuts).
 - Spring: final pass at full depth.
 - Thread in Rev keeps the selected hand, but feeds away from the chuck.
   Set the engage point at the chuck end, for example to thread out from a

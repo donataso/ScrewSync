@@ -46,6 +46,7 @@ namespace Mode::Detail
         Count, // int32_t
         Axis,  // Stepper::Axis, "z"|"x"
         Flag,  // bool, "off"|"on" or Param::choices
+        Choice,
         Angle, // float ratio, diameter change per length; set and shown as half-angle degrees
         Text,  // char[max], read-only
     };
@@ -59,7 +60,7 @@ namespace Mode::Detail
         double max;
         bool live;                     // may change while the mode runs
         bool required = false;         // Du: 0 = not set, start refused
-        const char *choices = nullptr; // Flag: "false|true" names
+        const char *choices = nullptr; // Flag: "false|true" names, Choice: all names
     };
 
     struct Ops

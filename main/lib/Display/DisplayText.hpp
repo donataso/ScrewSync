@@ -39,6 +39,8 @@ namespace Display::Detail
     void groupLabel(const char *name, char *out, size_t outMax);
     // "M10x1.25" -> "M10×1.25".
     void designationLabel(const char *designation, char *out, size_t outMax);
+    bool listItem(const char *list, size_t index, char *out, size_t outMax);
+    size_t listIndex(const char *list, const char *item);
     // Next item of a comma-separated list; false at its end.
     bool nextItem(const char *&list, char *out, size_t outMax);
     bool hasItem(const char *list, const char *name);

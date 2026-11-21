@@ -78,6 +78,10 @@ ZTEST(mode_cells, test_value_cells_have_param)
             zassert_not_null(c.valueA);
             zassert_not_null(c.valueB);
             zassert_equal(c.labelA == nullptr, c.labelB == nullptr);
+        } else if (c.kind == Kind::Cycle) {
+            zassert_not_null(c.valueA);
+            zassert_not_null(c.labelA);
+            zassert_not_null(c.label);
         } else if (c.kind != Kind::Gap) {
             zassert_not_null(c.label);
         }
@@ -103,7 +107,7 @@ ZTEST(mode_cells, test_picker_and_latch_slots)
         if (cells[slot].kind == Kind::Picker) {
             zassert_equal(slot, PICKER_SLOT);
         }
-        if (cells[slot].kind == Kind::Latch) {
+        if (cells[slot].kind == Kind::Latch || cells[slot].kind == Kind::Cycle) {
             zassert_true(slot >= ModeCells::NARROW_FIRST);
         }
     });

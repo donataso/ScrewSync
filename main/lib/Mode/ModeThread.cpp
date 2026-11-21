@@ -39,7 +39,7 @@ namespace
         bool internal;
         float taper; // + = diameter grows toward the chuck
         bool spindleReverse;
-        bool flank;  // alternating flank infeed
+        FlankInfeed flank;
         bool spring; // extra pass at full depth
         int32_t flankAngle; // included, degrees; set by the preset
         char group[ThreadTable::GROUP_NAME_MAX];
@@ -56,7 +56,7 @@ namespace
     constexpr double FLANK_RELIEF_DEG = 3;
     constexpr double RAD_PER_DEG = 3.14159265358979323846 / 180;
 
-    Thread g_params = {0, false, 0, 0, 5, 1, false, 0, false, false, false, DEFAULT_FLANK_ANGLE, "", ""};
+    Thread g_params = {0, false, 0, 0, 5, 1, false, 0, false, FlankInfeed::Off, false, DEFAULT_FLANK_ANGLE, "", ""};
 
     const Param PARAMS[] = {
         {"pitch", Kind::Du, offsetof(Thread, pitchDu), 0, MAX_PITCH_DU, false, true},
@@ -68,7 +68,7 @@ namespace
         {"internal", Kind::Flag, offsetof(Thread, internal), 0, 0, false},
         {"taper", Kind::Angle, offsetof(Thread, taper), -1, 1, false},
         {"spindle", Kind::Flag, offsetof(Thread, spindleReverse), 0, 0, false, false, "fwd|rev"},
-        {"flank", Kind::Flag, offsetof(Thread, flank), 0, 0, false},
+        {"flank", Kind::Choice, offsetof(Thread, flank), 0, 0, false, false, "off|on|side"},
         {"spring", Kind::Flag, offsetof(Thread, spring), 0, 0, false},
         {"angle", Kind::Count, offsetof(Thread, flankAngle), 1, MAX_FLANK_ANGLE - 1, false},
         {"group", Kind::Text, offsetof(Thread, group), 0, ThreadTable::GROUP_NAME_MAX, false},
@@ -122,7 +122,8 @@ namespace
         // Reverse rotation cuts the same helix feeding the other way.
         g_job.reverse = g_params.leftHand != g_params.spindleReverse;
         g_job.taper = g_params.taper;
-        if (g_params.flank) {
+        g_job.flank = g_params.flank;
+        if (g_params.flank != FlankInfeed::Off) {
             double halfAngle = g_params.flankAngle / 2.0 - FLANK_RELIEF_DEG;
             g_job.flankTan = halfAngle > 0 ? tan(halfAngle * RAD_PER_DEG) : 0;
         }

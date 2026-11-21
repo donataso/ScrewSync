@@ -53,7 +53,8 @@ namespace Mode::Detail
         const int32_t *speedDuPerMin; // Timed
         bool reverse;                 // feeds +main
         float taper;                  // main Z only, aux X follows
-        double flankTan;              // alternating flank infeed: Z shift per depth, 0 = radial
+        FlankInfeed flank;
+        double flankTan;              // Z shift per depth
         int32_t finishLevels;         // spring passes at full depth
 
         int cutDirection;

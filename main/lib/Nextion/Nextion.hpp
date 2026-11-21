@@ -57,7 +57,7 @@ namespace Nextion
     bool pushNum(const char *key, int value);
     __attribute__((format(printf, 2, 3))) bool pushText(const char *key, const char *fmt, ...);
     void pushColor(const char *component, const char *attr, int color);
-    // Quotes and backslashes can't be escaped in a Nextion string.
+    // Quotes and backslashes can't go raw into a Nextion string; pushText doubles backslashes.
     char safeChar(char c);
     // Attributes pushed from now on belong to page.
     void setPage(uint8_t page);

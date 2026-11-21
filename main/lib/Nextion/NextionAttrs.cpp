@@ -81,11 +81,19 @@ namespace Nextion
         va_start(args, fmt);
         vsnprintf(text, sizeof(text), fmt, args);
         va_end(args);
-        for (char *s = text; *s; s++) {
-            *s = safeChar(*s);
+        char v[2 * sizeof(text) + 3];
+        size_t n = 0;
+        v[n++] = '"';
+        for (const char *s = text; *s; s++) {
+            if (*s == '\\') {
+                v[n++] = '\\';
+                v[n++] = '\\';
+            } else {
+                v[n++] = safeChar(*s);
+            }
         }
-        char v[sizeof(text) + 2];
-        snprintf(v, sizeof(v), "\"%s\"", text);
+        v[n++] = '"';
+        v[n] = '\0';
         return pushAttr(key, v);
     }
 

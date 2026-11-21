@@ -144,6 +144,30 @@ namespace Display::Detail
         out[n] = '\0';
     }
 
+    bool listItem(const char *list, size_t index, char *out, size_t outMax)
+    {
+        for (size_t i = 0; i < index; i++) {
+            list = strchr(list, '|');
+            if (!list) {
+                return false;
+            }
+            list++;
+        }
+        snprintf(out, outMax, "%.*s", (int)strcspn(list, "|"), list);
+        return true;
+    }
+
+    size_t listIndex(const char *list, const char *item)
+    {
+        char name[16];
+        for (size_t i = 0; listItem(list, i, name, sizeof(name)); i++) {
+            if (!strcmp(name, item)) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
     bool nextItem(const char *&list, char *out, size_t outMax)
     {
         if (!*list) {

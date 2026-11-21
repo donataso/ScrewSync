@@ -25,7 +25,7 @@ namespace
 {
     PassPlan makePlan(int32_t levels, int32_t finishLevels = 0, int32_t starts = 1)
     {
-        return {levels, finishLevels, starts, DepthProfile::Linear, 1000, 5000, 0, 0};
+        return {levels, finishLevels, starts, DepthProfile::Linear, 1000, 5000, 0, FlankInfeed::Off, 0};
     }
 }
 
@@ -96,6 +96,7 @@ ZTEST(mode_pass_plan, test_sandvik_flank_offset)
 {
     PassPlan plan = makePlan(4, 1);
     plan.depthProfile = DepthProfile::Sandvik;
+    plan.flank = FlankInfeed::Alternating;
     plan.flankTan = 0.5;
     double step2 = (passDepthFraction(plan, 2) - passDepthFraction(plan, 1)) * 1000 * 0.5;
     double step3 = (passDepthFraction(plan, 3) - passDepthFraction(plan, 2)) * 1000 * 0.5;
@@ -129,6 +130,7 @@ ZTEST(mode_pass_plan, test_no_flank_offset_when_radial)
 ZTEST(mode_pass_plan, test_flank_offset_alternates_sides)
 {
     PassPlan plan = makePlan(4, 1);
+    plan.flank = FlankInfeed::Alternating;
     plan.flankTan = 0.5;
     // Each level is 250 deeper: a 125 shift, one side then the other.
     zassert_within(passFlankOffsetDu(plan, 1), 0, 1e-9);
@@ -136,6 +138,33 @@ ZTEST(mode_pass_plan, test_flank_offset_alternates_sides)
     zassert_within(passFlankOffsetDu(plan, 3), 0, 1e-9);
     zassert_within(passFlankOffsetDu(plan, 4), 125, 1e-9);
     zassert_within(passFlankOffsetDu(plan, 5), 125, 1e-9);
+}
+
+ZTEST(mode_pass_plan, test_one_side_flank_offset_keeps_moving_ahead)
+{
+    PassPlan plan = makePlan(4, 1);
+    plan.flank = FlankInfeed::OneSide;
+    plan.flankTan = 0.5;
+    zassert_within(passFlankOffsetDu(plan, 1), 0, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 2), 125, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 3), 250, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 4), 375, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 5), 375, 1e-9);
+}
+
+ZTEST(mode_pass_plan, test_one_side_flank_offset_with_sandvik)
+{
+    PassPlan plan = makePlan(8, 1);
+    plan.depthProfile = DepthProfile::Sandvik;
+    plan.flank = FlankInfeed::OneSide;
+    plan.flankTan = 0.5;
+    zassert_within(passFlankOffsetDu(plan, 1), 0, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 2), (sqrt(1.0 / 7) - sqrt(0.3 / 7)) * 500, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 8), (1 - sqrt(0.3 / 7)) * 500, 1e-9);
+    zassert_within(passFlankOffsetDu(plan, 9), passFlankOffsetDu(plan, 8), 1e-9);
+    for (int32_t level = 3; level <= 8; level++) {
+        zassert_true(passFlankOffsetDu(plan, level) > passFlankOffsetDu(plan, level - 1));
+    }
 }
 
 ZTEST(mode_pass_plan, test_runs_every_level_once)

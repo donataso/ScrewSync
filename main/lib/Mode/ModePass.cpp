@@ -41,7 +41,7 @@ namespace
     PassPlan plan(const PassJob &j)
     {
         return {j.levels, j.finishLevels, j.starts, j.depthProfile,
-                j.depthDu, j.lengthDu, j.endReductionDu, j.flankTan};
+                j.depthDu, j.lengthDu, j.endReductionDu, j.flank, j.flankTan};
     }
 
     int64_t passAux(const PassJob &j)

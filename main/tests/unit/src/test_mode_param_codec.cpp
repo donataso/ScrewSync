@@ -33,6 +33,7 @@ namespace
         bool internal;
         float taper;
         char preset[8];
+        uint8_t infeed;
     };
 
     const Param TABLE[] = {
@@ -43,6 +44,7 @@ namespace
         {"internal", Kind::Flag, offsetof(Params, internal), 0, 0, false},
         {"taper", Kind::Angle, offsetof(Params, taper), -1, 1, false},
         {"preset", Kind::Text, offsetof(Params, preset), 0, sizeof(Params::preset), false},
+        {"infeed", Kind::Choice, offsetof(Params, infeed), 0, 0, false, false, "off|on|side"},
     };
     constexpr size_t COUNT = sizeof(TABLE) / sizeof(TABLE[0]);
 
@@ -67,7 +69,7 @@ namespace
 
     void reset(void *)
     {
-        g_params = {15000, 5, Stepper::Axis::Z, false, false, 0, ""};
+        g_params = {15000, 5, Stepper::Axis::Z, false, false, 0, "", 0};
     }
 }
 
@@ -136,6 +138,19 @@ ZTEST(mode_param_codec, test_flag_with_choices)
     zassert_str_equal(set("dir", "on"), "-|+");
 }
 
+ZTEST(mode_param_codec, test_choice)
+{
+    zassert_is_null(set("infeed", "side"));
+    zassert_equal(g_params.infeed, 2);
+    zassert_is_null(set("infeed", "on"));
+    zassert_equal(g_params.infeed, 1);
+    zassert_is_null(set("infeed", "off"));
+    zassert_equal(g_params.infeed, 0);
+    zassert_str_equal(set("infeed", "sid"), "off|on|side");
+    zassert_str_equal(set("infeed", "1"), "off|on|side");
+    zassert_equal(g_params.infeed, 0);
+}
+
 ZTEST(mode_param_codec, test_angle_is_stored_as_diameter_ratio)
 {
     // NPT: 1.7899 degrees half-angle = 1:16 on diameter.
@@ -159,11 +174,11 @@ ZTEST(mode_param_codec, test_describe)
 {
     char out[128];
     describeParams(TABLE, COUNT, raw(), out, sizeof(out));
-    zassert_str_equal(out, "pitch=15000 passes=5 axis=z dir=- internal=off taper=0 preset=-");
+    zassert_str_equal(out, "pitch=15000 passes=5 axis=z dir=- internal=off taper=0 preset=- infeed=off");
 
-    g_params = {12500, 8, Stepper::Axis::X, true, true, 0.0625f, "M8x1"};
+    g_params = {12500, 8, Stepper::Axis::X, true, true, 0.0625f, "M8x1", 2};
     describeParams(TABLE, COUNT, raw(), out, sizeof(out));
-    zassert_str_equal(out, "pitch=12500 passes=8 axis=x dir=+ internal=on taper=1.79 preset=M8x1");
+    zassert_str_equal(out, "pitch=12500 passes=8 axis=x dir=+ internal=on taper=1.79 preset=M8x1 infeed=side");
 }
 
 ZTEST(mode_param_codec, test_describe_into_a_short_buffer)
