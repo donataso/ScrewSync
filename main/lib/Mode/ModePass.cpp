@@ -85,7 +85,7 @@ namespace
 
     const int32_t *levelPitchDu(const PassJob &j)
     {
-        return j.finishPitchDu && j.cursor.level > j.levels ? j.finishPitchDu : j.pitchDu;
+        return passUsesFinishFeed(j.finishPitchDu != nullptr, j.cursor.level, j.levels) ? j.finishPitchDu : j.pitchDu;
     }
 
     // True once the cut reached the pass end.

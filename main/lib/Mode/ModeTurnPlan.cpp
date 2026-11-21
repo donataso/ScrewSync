@@ -1,0 +1,37 @@
+/*
+ * This file is part of the ScrewSync project.
+ * Copyright (c) 2026 Donatas Olsevičius
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "ModeTurnPlan.hpp"
+
+namespace Mode::Detail
+{
+    const char *turnFinishError(int32_t finishDu, int32_t depthDu, int32_t finishPitchDu)
+    {
+        if (finishDu > 0 && finishDu >= depthDu) {
+            return "finish must be below depth";
+        }
+        if (finishDu > 0 && finishPitchDu == 0) {
+            return "set finish-feed first";
+        }
+        return nullptr;
+    }
+
+    int32_t turnFinishLevels(int32_t finishDu, bool spring)
+    {
+        return (finishDu > 0 ? 1 : 0) + (spring ? 1 : 0);
+    }
+}

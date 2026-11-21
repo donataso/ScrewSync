@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "DisplayInternal.hpp"
+#include "PanelPage.hpp"
 #include "Settings.hpp"
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,8 +30,7 @@ using ModeCells::Kind;
 
 namespace
 {
-    Mode::Id g_pageMode = Mode::Id::Gear;
-    size_t g_page = 0;
+    PanelPage g_panelPage;
 
     static_assert(Mode::COUNT <= MENU_SLOTS, "mode menu too small");
 
@@ -164,14 +164,13 @@ namespace Display::Detail
     void setPanelPage(size_t page)
     {
         Mode::Id id = Mode::current();
-        g_page = page < ModeCells::pages(id) ? page : 0;
-        g_pageMode = id;
+        g_panelPage.select(id, ModeCells::pages(id), page);
         pushSoon();
     }
 
     size_t panelPage()
     {
-        return g_pageMode == Mode::current() ? g_page : 0;
+        return g_panelPage.shown(Mode::current());
     }
 
     bool pushCellType(size_t slot, CellType type)
@@ -190,11 +189,8 @@ namespace Display::Detail
             params = probeParams;
         }
         size_t count;
-        if (id != g_pageMode) {
-            g_pageMode = id;
-            g_page = 0;
-        }
-        const Cell *cells = ModeCells::cells(id, g_page, count);
+        g_panelPage.enter(id);
+        const Cell *cells = ModeCells::cells(id, g_panelPage.page, count);
         bool changed = false;
         for (size_t slot = 0; slot < ModeCells::MAX; slot++) {
             if (slot < count) {

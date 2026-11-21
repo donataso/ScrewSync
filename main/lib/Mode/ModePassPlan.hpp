@@ -76,6 +76,8 @@ namespace Mode::Detail
     bool passAdvance(const PassPlan &plan, PassCursor &cursor);
     void passSkipLevel(const PassPlan &plan, PassCursor &cursor);
 
+    bool passUsesFinishFeed(bool hasFinishFeed, int32_t level, int32_t levels);
+
     int32_t passCount(const PassPlan &plan);
     // 1-based, 0 before the first pass.
     int32_t passNumber(const PassPlan &plan, const PassCursor &cursor);

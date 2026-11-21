@@ -129,6 +129,11 @@ namespace Mode::Detail
         }
     }
 
+    bool passUsesFinishFeed(bool hasFinishFeed, int32_t level, int32_t levels)
+    {
+        return hasFinishFeed && level > levels;
+    }
+
     int32_t passCount(const PassPlan &plan)
     {
         return passTotalLevels(plan) * plan.starts;

@@ -36,6 +36,7 @@ target_sources(app PRIVATE
     lib/Mode/ModeAsync.cpp
     lib/Mode/ModePass.cpp
     lib/Mode/ModePassPlan.cpp
+    lib/Mode/ModeTurnPlan.cpp
     lib/Mode/ModeTurn.cpp
     lib/Mode/ModeThread.cpp
     lib/Mode/ModePart.cpp

@@ -290,3 +290,10 @@ ZTEST(mode_pass_plan, test_skip_applies_after_the_last_start)
     zassert_equal(cursor.level, 3);
     zassert_equal(cursor.startIndex, 0);
 }
+
+ZTEST(mode_pass_plan, test_finish_feed_only_after_depth_levels)
+{
+    zassert_false(passUsesFinishFeed(true, 3, 3));
+    zassert_true(passUsesFinishFeed(true, 4, 3));
+    zassert_false(passUsesFinishFeed(false, 4, 3));
+}

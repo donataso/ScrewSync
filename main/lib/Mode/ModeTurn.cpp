@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ModePass.hpp"
+#include "ModeTurnPlan.hpp"
 #include <stddef.h>
 #include <zephyr/sys/util.h>
 
@@ -63,11 +64,8 @@ namespace
 
     const char *startMode(int64_t spindlePos)
     {
-        if (g_params.finishDu > 0 && g_params.finishDu >= g_params.depthDu) {
-            return "finish must be below depth";
-        }
-        if (g_params.finishDu > 0 && g_params.finishPitchDu == 0) {
-            return "set finish-feed first";
+        if (const char *error = turnFinishError(g_params.finishDu, g_params.depthDu, g_params.finishPitchDu)) {
+            return error;
         }
         bool facing = g_params.axis == Stepper::Axis::X;
         g_job = {};
@@ -84,7 +82,7 @@ namespace
         if (g_params.finishDu > 0) {
             g_job.finishPitchDu = &g_params.finishPitchDu;
         }
-        g_job.finishLevels = (g_params.finishDu > 0 ? 1 : 0) + (g_params.spring ? 1 : 0);
+        g_job.finishLevels = turnFinishLevels(g_params.finishDu, g_params.spring);
         g_job.reverse = g_params.reverse;
         return passBegin(g_job, spindlePos);
     }

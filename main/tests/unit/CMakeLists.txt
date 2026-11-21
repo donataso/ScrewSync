@@ -20,6 +20,8 @@ target_sources(app PRIVATE
     src/test_gcode_ngc.cpp
     src/test_mode_cells.cpp
     src/test_mode_pass_plan.cpp
+    src/test_mode_turn_plan.cpp
+    src/test_panel_page.cpp
     src/test_mode_param_codec.cpp
     src/test_mode_math.cpp
     src/test_mode_mdi_queue.cpp
@@ -54,6 +56,7 @@ target_sources(app PRIVATE
     ${FIRMWARE_DIR}/lib/Display/ModeCells.cpp
     ${FIRMWARE_DIR}/lib/Display/DisplayText.cpp
     ${FIRMWARE_DIR}/lib/Mode/ModePassPlan.cpp
+    ${FIRMWARE_DIR}/lib/Mode/ModeTurnPlan.cpp
     ${FIRMWARE_DIR}/lib/Mode/ModeParamCodec.cpp
     ${FIRMWARE_DIR}/lib/Mode/ModeMath.cpp
     ${FIRMWARE_DIR}/lib/Encoder/EncoderFilter.cpp
