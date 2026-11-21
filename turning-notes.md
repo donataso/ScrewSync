@@ -66,5 +66,32 @@ Other modes:
    settings migration, display button cycle, web client, unit tests.
 3. Thread run-out: not planned. It leaves an unfinished thread at the
    end. Kept as an idea for later.
-4. Turn finish allowance: `finish`, `finish-pitch`. Check display space
-   for Turn first.
+4. Turn finish allowance: see below.
+
+## Turn finish allowance
+
+One light pass at a finer feed at the end sets the finish and the final
+size. The rough passes can then be heavier.
+
+Behavior:
+- Rough passes split `depth − finish` evenly over `passes`. The last
+  pass cuts to full `depth` at the finish feed.
+- `finish` 0 = no finish pass (current behavior).
+- Facing (axis X) works the same way.
+
+Parameters:
+- `finish`: allowance, same unit as `depth`.
+- `finish-feed`: feed per revolution of the finish pass.
+
+Code:
+- `PassPlan` gets `finishDu`. Rough levels cut to `depth − finishDu`,
+  finish levels cut to full depth. Thread spring = `finishDu` 0.
+- `PassJob` reads the feed through `pitchDu`; switch it to the finish
+  feed when the finish level starts.
+- Display: Turn has 8 cells, Thread about 15, so 2 more cells fit.
+
+Open questions:
+1. Does `passes` include the finish pass?
+2. `finish-feed` 0: use the rough feed, or make it required when
+   `finish` > 0?
+3. Add a spring pass to Turn too (cheap with the shared mechanism)?

@@ -4,3 +4,6 @@ source "Kconfig.zephyr"
 
 config SCREWSYNC_DISPLAY_IMAGE
 	bool "Store and flash a display firmware image"
+
+config SCREWSYNC_ENCODER_EDGE_LOG
+	bool "Log spindle encoder A/B edge statistics"
